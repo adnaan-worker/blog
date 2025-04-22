@@ -129,6 +129,7 @@ const globalStyles = css`
 
   body {
     position: relative;
+    height: auto;
   }
 
   #root {
