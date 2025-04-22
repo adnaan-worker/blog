@@ -22,6 +22,46 @@ const globalStyles = css`
     --card-shadow: 0 8px 30px rgba(81, 131, 245, 0.08);
     --transition-normal: all 0.25s cubic-bezier(.4,0,.2,1);
   }
+    
+  /* 自定义滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(81, 131, 245, 0.2);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(81, 131, 245, 0.6);
+  }
+  
+  /* 火狐浏览器滚动条 */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(81, 131, 245, 0.2) transparent;
+  }
+  
+  /* 深色模式滚动条 */
+  [data-theme='dark'] ::-webkit-scrollbar-thumb {
+    background: rgba(81, 131, 245, 0.3);
+  }
+  
+  [data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(81, 131, 245, 0.7);
+  }
+  
+  [data-theme='dark'] * {
+    scrollbar-color: rgba(81, 131, 245, 0.3) transparent;
+  }
 
   [data-theme='dark'] {
     --bg-primary: #121212;
@@ -44,6 +84,8 @@ const globalStyles = css`
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(81, 131, 245, 0.2) transparent;
   }
 
   html,
@@ -137,21 +179,23 @@ const globalStyles = css`
   }
   
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   
   ::-webkit-scrollbar-track {
     background: transparent;
+    border-radius: 10px;
   }
   
   ::-webkit-scrollbar-thumb {
     background: rgba(81, 131, 245, 0.2);
     border-radius: 10px;
+    transition: all 0.3s ease;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(81, 131, 245, 0.4);
+    background: rgba(81, 131, 245, 0.6);
   }
   
   [data-theme='dark'] ::-webkit-scrollbar-thumb {
@@ -159,7 +203,11 @@ const globalStyles = css`
   }
   
   [data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
-    background: rgba(81, 131, 245, 0.5);
+    background: rgba(81, 131, 245, 0.7);
+  }
+  
+  [data-theme='dark'] * {
+    scrollbar-color: rgba(81, 131, 245, 0.3) transparent;
   }
   
   .page-transition-enter {
@@ -254,30 +302,47 @@ const RootLayout = () => {
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
-  // 滚动监听 - 尽可能简单直接
+  // 滚动监听 - 优化防抖处理
   useEffect(() => {
+    let timeoutId: number | null = null;
+    
     function onScroll() {
-      // 直接获取滚动位置并更新状态
-      const scrollPosition = window.scrollY || window.pageYOffset;
-      const newScrolledState = scrollPosition > 5;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       
-      setIsScrolled(newScrolledState);
-      console.log(`滚动位置: ${scrollPosition}, 滚动状态: ${newScrolledState}`);
+      // 添加10ms防抖，减少状态更新频率
+      timeoutId = window.setTimeout(() => {
+        const scrollPosition = window.scrollY || window.pageYOffset;
+        const newScrolledState = scrollPosition > 5;
+        
+        // 只有状态变化时才更新
+        if (isScrolled !== newScrolledState) {
+          setIsScrolled(newScrolledState);
+          console.log(`滚动状态变化: ${newScrolledState}, 位置: ${scrollPosition}px`);
+        }
+      }, 10);
     }
     
     // 初始检查
     onScroll();
     
-    // 添加事件监听
-    window.addEventListener('scroll', onScroll);
+    // 添加事件监听，使用passive优化性能
+    window.addEventListener('scroll', onScroll, { passive: true });
     
     // 清理函数
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [isScrolled]);
 
   if (!mounted) return null;
 
   return (
+    <>
+    {/* 添加全局滚动条样式 */}
+    <Global styles={globalStyles} />
     <ThemeProvider>
       <Global styles={globalStyles} />
       <MainContainer>
@@ -303,6 +368,7 @@ const RootLayout = () => {
         <Footer />
       </MainContainer>
     </ThemeProvider>
+    </>
   );
 };
 

@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { motion, useAnimation, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiArrowRight, FiCalendar, FiClock, FiMessageCircle, FiGithub, FiMail } from 'react-icons/fi';
+import { Global, css } from '@emotion/react';
 
 // 使用motion直接访问组件
 const MotionDiv = motion.div;
@@ -52,18 +53,31 @@ const PageContainer = styled.div`
   padding: 0 1rem;
 `;
 
+// 添加首屏容器
+const HeroSection = styled.div`
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-top: calc(var(--header-height) + 2rem);
+  
+  @media (max-width: 768px) {
+    height: 100vh;
+    padding-top: calc(var(--header-height) + 1rem);
+  }
+`;
+
 const Hero = styled(MotionDiv)`
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10rem 0 10rem;
   position: relative;
+  flex: 1;
   
   @media (max-width: 768px) {
     flex-direction: column;
-    gap: 2rem;
-    padding: 3rem 0 2rem;
+    gap: 1.5rem;
   }
 `;
 
@@ -199,9 +213,64 @@ const Quote = styled(MotionDiv)`
   font-size: 0.9rem;
   opacity: 0.8;
   text-align: center;
-  padding: 1rem 0 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 0;
+  margin-bottom: 0.5rem;
 `;
+
+// 新增滚动指示器组件
+const ScrollIndicator = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  width: 100%;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 5rem;
+  
+  svg {
+    width: 28px;
+    height: 40px;
+  }
+  
+  @media (max-width: 768px) {
+    margin-bottom: 1rem;
+    
+    svg {
+      width: 24px;
+      height: 32px;
+    }
+  }
+`;
+
+const mouseScrollVariants = {
+  initial: { opacity: 0.5, y: 0 },
+  animate: {
+    opacity: [0.5, 1, 0.5],
+    y: [0, 5, 0],
+    transition: {
+      repeat: Infinity,
+      duration: 1.5,
+      ease: "easeInOut"
+    }
+  }
+};
+
+const scrollWheelVariants = {
+  initial: { opacity: 0.5, scaleY: 1 },
+  animate: {
+    opacity: [0.5, 1, 0.5],
+    scaleY: [1, 0.7, 1],
+    transition: {
+      repeat: Infinity,
+      duration: 1.5,
+      ease: "easeInOut",
+      delay: 0.2
+    }
+  }
+};
 
 const SectionTitle = styled(motion.h2)`
   font-size: 1.3rem;
@@ -621,253 +690,279 @@ const Home = () => {
   }, [heroControls, articlesControls, activitiesControls, chartControls]);
 
   return (
-    <PageContainer>
-      <Hero>
-        <HeroContent
+    <>
+      <PageContainer>
+        <HeroSection>
+          <Hero>
+            <HeroContent
+              variants={staggerContainerVariants}
+              initial="hidden"
+              animate={heroControls}
+            >
+              <Title variants={fadeInUpVariants}>
+                Hi, I'm adnaan <motion.span 
+                  className="wave" 
+                  variants={iconVariants}
+                  initial="hidden"
+                  animate="visible"
+                >👋</motion.span>
+              </Title>
+              
+              <Subtitle variants={fadeInUpVariants}>
+                A NodeJS Full Stack <code>&lt;Developer /&gt;</code>
+              </Subtitle>
+              
+              <Description variants={fadeInUpVariants}>
+                An independent developer coding with love.
+              </Description>
+              
+              <SocialLinks variants={staggerContainerVariants}>
+                <SocialLink 
+                  href="mailto:example@example.com" 
+                  aria-label="Email"
+                  initial={{ opacity: 1, scale: 1 }}
+                  whileHover={{ y: -3, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FiMail />
+                </SocialLink>
+                <SocialLink 
+                  href="https://github.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  aria-label="GitHub"
+                  initial={{ opacity: 1, scale: 1 }}
+                  whileHover={{ y: -3, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FiGithub />
+                </SocialLink>
+                <SocialLink 
+                  href="https://bilibili.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  aria-label="Bilibili"
+                  initial={{ opacity: 1, scale: 1 }}
+                  whileHover={{ y: -3, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906L17.813 4.653z" />
+                  </svg>
+                </SocialLink>
+                <SocialLink 
+                  href="https://twitter.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  aria-label="Twitter"
+                  initial={{ opacity: 1, scale: 1 }}
+                  whileHover={{ y: -3, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"></path>
+                  </svg>
+                </SocialLink>
+                <SocialLink 
+                  href="/rss.xml" 
+                  aria-label="RSS Feed"
+                  initial={{ opacity: 1, scale: 1 }}
+                  whileHover={{ y: -3, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 20.001C19 11.729 12.271 5 4 5v2c7.168 0 13 5.832 13 13.001h2z"></path>
+                    <path d="M12 20.001h2C14 14.486 9.514 10 4 10v2c4.411 0 8 3.589 8 8.001z"></path>
+                    <circle cx="6" cy="18" r="2"></circle>
+                  </svg>
+                </SocialLink>
+              </SocialLinks>
+            </HeroContent>
+            
+            <HeroImage
+              initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ duration: 0.7, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="Innei" />
+            </HeroImage>
+          </Hero>
+          
+          <Quote
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.8 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            请保持理性，冰冷的数字总是比七彩门的炫法走得更久。 —— 猴哥蔡嵩
+          </Quote>
+          
+          {/* 添加滚动指示器 */}
+          <ScrollIndicator>
+            <motion.div
+              initial="initial"
+              animate="animate"
+              variants={mouseScrollVariants}
+            >
+              <svg viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="26" height="38" rx="13" stroke="currentColor" strokeWidth="2"/>
+                <motion.rect 
+                  x="12" 
+                  y="10" 
+                  width="4" 
+                  height="8" 
+                  rx="2" 
+                  fill="currentColor"
+                  variants={scrollWheelVariants}
+                />
+              </svg>
+            </motion.div>
+          </ScrollIndicator>
+        </HeroSection>
+        
+        <ContentSection 
           variants={staggerContainerVariants}
           initial="hidden"
-          animate={heroControls}
+          animate={articlesControls}
         >
-          <Title variants={fadeInUpVariants}>
-            Hi, I'm adnaan <motion.span 
-              className="wave" 
-              variants={iconVariants}
-              initial="hidden"
-              animate="visible"
-            >👋</motion.span>
-          </Title>
+          <SectionTitle variants={fadeInUpVariants}>
+            最近更新的文稿
+            <motion.a 
+              href="/blog" 
+              whileHover={{ x: 5 }}
+              variants={fadeInUpVariants}
+            >
+              查看全部 <FiArrowRight size={12} />
+            </motion.a>
+          </SectionTitle>
           
-          <Subtitle variants={fadeInUpVariants}>
-            A NodeJS Full Stack <code>&lt;Developer /&gt;</code>
-          </Subtitle>
-          
-          <Description variants={fadeInUpVariants}>
-            An independent developer coding with love.
-          </Description>
-          
-          <SocialLinks variants={staggerContainerVariants}>
-            <SocialLink 
-              href="mailto:example@example.com" 
-              aria-label="Email"
-              variants={iconVariants}
-              whileHover={{ y: -3, scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiMail />
-            </SocialLink>
-            <SocialLink 
-              href="https://github.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              aria-label="GitHub"
-              variants={iconVariants}
-              whileHover={{ y: -3, scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiGithub />
-            </SocialLink>
-            <SocialLink 
-              href="https://bilibili.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              aria-label="Bilibili"
-              variants={iconVariants}
-              whileHover={{ y: -3, scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906L17.813 4.653z" />
-              </svg>
-            </SocialLink>
-            <SocialLink 
-              href="https://twitter.com" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              aria-label="Twitter"
-              variants={iconVariants}
-              whileHover={{ y: -3, scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"></path>
-              </svg>
-            </SocialLink>
-            <SocialLink 
-              href="/rss.xml" 
-              aria-label="RSS Feed"
-              variants={iconVariants}
-              whileHover={{ y: -3, scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 20.001C19 11.729 12.271 5 4 5v2c7.168 0 13 5.832 13 13.001h2z"></path>
-                <path d="M12 20.001h2C14 14.486 9.514 10 4 10v2c4.411 0 8 3.589 8 8.001z"></path>
-                <circle cx="6" cy="18" r="2"></circle>
-              </svg>
-            </SocialLink>
-          </SocialLinks>
-        </HeroContent>
-        
-        <HeroImage
-          initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="Innei" />
-        </HeroImage>
-      </Hero>
-      
-      <Quote
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.8 }}
-        transition={{ duration: 0.8, delay: 0.5 }}
-      >
-        请保持理性，冰冷的数字总是比七彩门的炫法走得更久。 —— 猴哥蔡嵩
-      </Quote>
-      
-      <ContentSection 
-        variants={staggerContainerVariants}
-        initial="hidden"
-        animate={articlesControls}
-      >
-        <SectionTitle variants={fadeInUpVariants}>
-          最近更新的文稿
-          <motion.a 
-            href="/blog" 
-            whileHover={{ x: 5 }}
-            variants={fadeInUpVariants}
-          >
-            查看全部 <FiArrowRight size={12} />
-          </motion.a>
-        </SectionTitle>
-        
-        <ArticleGrid variants={staggerContainerVariants}>
-          {mockArticles.map((article, index) => (
-            <ArticleCard 
-              to={`/blog/${article.id}`} 
-              key={article.id}
-              variants={cardVariants}
-              whileHover={{ y: -5 }}
-              custom={index}
-            >
-              <ArticleImage>
-                <img src={article.image} alt={article.title} />
-              </ArticleImage>
-              <ArticleContent>
-                <ArticleTitle>{article.title}</ArticleTitle>
-                <ArticleMeta>
-                  <span><FiCalendar size={12} /> {article.date}</span>
-                  <span><FiClock size={12} /> {article.views} 次阅读</span>
-                </ArticleMeta>
-                <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
-                <ReadMore>
-                  阅读更多 <FiArrowRight size={12} />
-                </ReadMore>
-              </ArticleContent>
-            </ArticleCard>
-          ))}
-        </ArticleGrid>
-      </ContentSection>
-      
-      <ActivitySection 
-        variants={staggerContainerVariants}
-        initial="hidden"
-        animate={activitiesControls}
-      >
-        <SectionTitle variants={fadeInUpVariants}>
-          最近发生的事
-          <motion.a 
-            href="/activities" 
-            whileHover={{ x: 5 }}
-            variants={fadeInUpVariants}
-          >
-            查看全部 <FiArrowRight size={12} />
-          </motion.a>
-        </SectionTitle>
-        
-        <ActivityList variants={staggerContainerVariants}>
-          {mockActivities.map((activity, index) => (
-            <ActivityItem 
-              key={activity.id}
-              variants={activityVariants}
-              custom={index}
-              whileHover={{ y: -3, x: 3 }}
-            >
-              <ActivityIcon>
-                {activity.type === 'comment' && <FiMessageCircle size={16} />}
-                {activity.type === 'post' && <FiCalendar size={16} />}
-                {activity.type === 'like' && <span>❤️</span>}
-              </ActivityIcon>
-              <ActivityContent>
-                <ActivityTitle>{activity.title}</ActivityTitle>
-                <ActivityTime>{activity.time}</ActivityTime>
-              </ActivityContent>
-            </ActivityItem>
-          ))}
-        </ActivityList>
-      </ActivitySection>
-      
-      <ChartSection 
-        variants={staggerContainerVariants}
-        initial="hidden"
-        animate={chartControls}
-      >
-        <SectionTitle variants={fadeInUpVariants}>
-          热力图
-        </SectionTitle>
-        
-        <ChartContainer
-          variants={fadeInUpVariants}
-          whileHover={{ y: -3 }}
-        >
-          <ChartHeader>热力图的千篇一律，所以我做成了时间线</ChartHeader>
-          <Chart>
-            {chartData.map((item, index) => (
-              <ChartBar 
-                key={index} 
-                height={item.value}
+          <ArticleGrid variants={staggerContainerVariants}>
+            {mockArticles.map((article, index) => (
+              <ArticleCard 
+                to={`/blog/${article.id}`} 
+                key={article.id}
+                variants={cardVariants}
+                whileHover={{ y: -5 }}
                 custom={index}
-                variants={barVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover={{ scaleY: 1.2, opacity: 1 }}
-              />
+              >
+                <ArticleImage>
+                  <img src={article.image} alt={article.title} />
+                </ArticleImage>
+                <ArticleContent>
+                  <ArticleTitle>{article.title}</ArticleTitle>
+                  <ArticleMeta>
+                    <span><FiCalendar size={12} /> {article.date}</span>
+                    <span><FiClock size={12} /> {article.views} 次阅读</span>
+                  </ArticleMeta>
+                  <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
+                  <ReadMore>
+                    阅读更多 <FiArrowRight size={12} />
+                  </ReadMore>
+                </ArticleContent>
+              </ArticleCard>
             ))}
-          </Chart>
-          <ChartLabels>
-            {chartData.map((item, index) => (
-              index % 3 === 0 && <span key={index}>{item.month}</span>
+          </ArticleGrid>
+        </ContentSection>
+        
+        <ActivitySection 
+          variants={staggerContainerVariants}
+          initial="hidden"
+          animate={activitiesControls}
+        >
+          <SectionTitle variants={fadeInUpVariants}>
+            最近发生的事
+            <motion.a 
+              href="/activities" 
+              whileHover={{ x: 5 }}
+              variants={fadeInUpVariants}
+            >
+              查看全部 <FiArrowRight size={12} />
+            </motion.a>
+          </SectionTitle>
+          
+          <ActivityList variants={staggerContainerVariants}>
+            {mockActivities.map((activity, index) => (
+              <ActivityItem 
+                key={activity.id}
+                variants={activityVariants}
+                custom={index}
+                whileHover={{ y: -3, x: 3 }}
+              >
+                <ActivityIcon>
+                  {activity.type === 'comment' && <FiMessageCircle size={16} />}
+                  {activity.type === 'post' && <FiCalendar size={16} />}
+                  {activity.type === 'like' && <span>❤️</span>}
+                </ActivityIcon>
+                <ActivityContent>
+                  <ActivityTitle>{activity.title}</ActivityTitle>
+                  <ActivityTime>{activity.time}</ActivityTime>
+                </ActivityContent>
+              </ActivityItem>
             ))}
-          </ChartLabels>
-        </ChartContainer>
-      </ChartSection>
-      
-      <SpecialSectionHeader
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        viewport={{ once: true }}
-      >
-        <motion.h3
-          initial={{ opacity: 0, y: 10 }}
+          </ActivityList>
+        </ActivitySection>
+        
+        <ChartSection 
+          variants={staggerContainerVariants}
+          initial="hidden"
+          animate={chartControls}
+        >
+          <SectionTitle variants={fadeInUpVariants}>
+            热力图
+          </SectionTitle>
+          
+          <ChartContainer
+            variants={fadeInUpVariants}
+            whileHover={{ y: -3 }}
+          >
+            <ChartHeader>热力图的千篇一律，所以我做成了时间线</ChartHeader>
+            <Chart>
+              {chartData.map((item, index) => (
+                <ChartBar 
+                  key={index} 
+                  height={item.value}
+                  custom={index}
+                  variants={barVariants}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover={{ scaleY: 1.2, opacity: 1 }}
+                />
+              ))}
+            </Chart>
+            <ChartLabels>
+              {chartData.map((item, index) => (
+                index % 3 === 0 && <span key={index}>{item.month}</span>
+              ))}
+            </ChartLabels>
+          </ChartContainer>
+        </ChartSection>
+        
+        <SpecialSectionHeader
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          transition={{ duration: 0.5 }}
           viewport={{ once: true }}
         >
-          风向标
-        </motion.h3>
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          viewport={{ once: true }}
-        >
-          去到别处看看？
-        </motion.p>
-      </SpecialSectionHeader>
-    </PageContainer>
+          <motion.h3
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            viewport={{ once: true }}
+          >
+            风向标
+          </motion.h3>
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            viewport={{ once: true }}
+          >
+            去到别处看看？
+          </motion.p>
+        </SpecialSectionHeader>
+      </PageContainer>
+    </>
   );
 };
 

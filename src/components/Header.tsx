@@ -6,6 +6,11 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { css, Global } from '@emotion/react';
 
+// 定义Header组件的props接口
+interface HeaderProps {
+  scrolled?: boolean;
+}
+
 // 使用motion组件增强
 const MotionNav = motion.nav;
 const MotionDiv = motion.div;
@@ -558,41 +563,35 @@ const mobileNavVariants = {
 /**
  * Header组件 - 使用原生CSS变量和类名控制动态样式
  */
-const Header = () => {
+const Header = ({ scrolled = false }: HeaderProps) => {
   const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const headerRef = useRef<HTMLDivElement>(null);
 
-  // 使用window的原生事件监听，不使用react状态
+  // 不再需要监听滚动，直接使用传入的scrolled属性
+  // 只在组件挂载时执行一次console.log，用于调试
   useEffect(() => {
-    const handleScroll = () => {
-      const header = document.querySelector('.header');
-      if (!header) {
-        console.error('未找到.header元素');
-        return;
-      }
-
-      // 直接操作DOM元素添加/移除类名
-      if (window.scrollY > 5) {
-        header.classList.add('scrolled');
-        console.log('添加scrolled类 - 当前滚动位置:', window.scrollY);
-      } else {
-        header.classList.remove('scrolled');
-        console.log('移除scrolled类 - 当前滚动位置:', window.scrollY);
-      }
-    };
-
-    // 立即检查一次
-    setTimeout(handleScroll, 50);
-
-    // 添加事件监听
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    console.log('Header组件已挂载, scrolled状态:', scrolled);
   }, []);
+
+  // 当scrolled属性变化时执行
+  useEffect(() => {
+    const header = document.querySelector('.header');
+    if (!header) {
+      console.error('未找到.header元素');
+      return;
+    }
+
+    // 直接根据props添加/移除类名
+    if (scrolled) {
+      header.classList.add('scrolled');
+      console.log('添加scrolled类 - 来自父组件的状态');
+    } else {
+      header.classList.remove('scrolled');
+      console.log('移除scrolled类 - 来自父组件的状态');
+    }
+  }, [scrolled]);
 
   // 检测当前路径是否属于某一类别
   const isWenGaoActive = location.pathname.startsWith('/category') || location.pathname.startsWith('/notes') || location.pathname.startsWith('/timeline') || location.pathname.startsWith('/thoughts');
@@ -623,7 +622,7 @@ const Header = () => {
       <Global styles={headerStyles} />
       
       {/* 使用class而不是styled-components动态属性 */}
-      <div className="header" ref={headerRef}>
+      <div className={`header ${scrolled ? 'scrolled' : ''}`} ref={headerRef}>
         <HeaderContent>
           {/* 左侧Logo */}
           <Logo>
