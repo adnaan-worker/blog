@@ -173,15 +173,6 @@ const DirectoryItem = styled(motion(Link))`
   }
 `;
 
-const StatsDisplay = styled(motion.div)`
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  opacity: 0.6;
-`;
-
 const SocialLinks = styled.div`
   display: flex;
   gap: 0.8rem;
@@ -319,13 +310,6 @@ const Footer = () => {
           </PoweredBy>
         </FooterBottom>
       </FooterContent>
-      
-      <StatsDisplay
-        variants={itemVariants}
-        whileHover={{ scale: 1.05 }}
-      >
-        正在被 {Math.floor(Math.random() * 10)} 人看爆
-      </StatsDisplay>
     </FooterContainer>
   );
 };

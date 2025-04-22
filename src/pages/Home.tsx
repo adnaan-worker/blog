@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { motion, useAnimation, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiArrowRight, FiCalendar, FiClock, FiMessageCircle, FiGithub, FiMail } from 'react-icons/fi';
-import { Global, css } from '@emotion/react';
+
 
 // 使用motion直接访问组件
 const MotionDiv = motion.div;
@@ -55,15 +55,15 @@ const PageContainer = styled.div`
 
 // 添加首屏容器
 const HeroSection = styled.div`
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
-  padding-top: calc(var(--header-height) + 2rem);
   
   @media (max-width: 768px) {
-    height: 100vh;
-    padding-top: calc(var(--header-height) + 1rem);
+    min-height: 100vh;
+   
+    padding-bottom: 2rem;
   }
 `;
 
@@ -77,7 +77,8 @@ const Hero = styled(MotionDiv)`
   
   @media (max-width: 768px) {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
+    margin-bottom: 2rem;
   }
 `;
 
@@ -94,29 +95,195 @@ const HeroContent = styled(MotionDiv)`
 `;
 
 const HeroImage = styled(MotionDiv)`
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  overflow: hidden;
+  width: 320px;
+  height: 450px;
   position: relative;
   z-index: 1;
-  box-shadow: 0 8px 24px rgba(81, 131, 245, 0.2);
+  perspective: 1000px;
+  
+  @media (max-width: 768px) {
+    width: 280px;
+    height: 380px;
+    order: 1;
+    margin-bottom: 1rem;
+  }
+`;
+
+const ProfileCard = styled.div`
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(81, 131, 245, 0.2);
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(81, 131, 245, 0.3);
+  }
+  
+  &.flipped {
+    transform: rotateY(180deg);
+  }
+`;
+
+const CardFace = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 16px;
+  overflow: hidden;
+`;
+
+const CardFront = styled(CardFace)`
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(81,131,245,0.1) 100%);
+  border: 1px solid rgba(81, 131, 245, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem;
+  transform: rotateY(0deg);
+  
+  [data-theme='dark'] & {
+    background: linear-gradient(135deg, rgba(30,30,30,0.5) 0%, rgba(81,131,245,0.15) 100%);
+    border: 1px solid rgba(81, 131, 245, 0.2);
+  }
+`;
+
+const CardBack = styled(CardFace)`
+  background: linear-gradient(135deg, rgba(81,131,245,0.1) 0%, rgba(255,255,255,0.1) 100%);
+  border: 1px solid rgba(81, 131, 245, 0.1);
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  padding: 1.2rem 1rem;
+  overflow-y: auto;
+  
+  [data-theme='dark'] & {
+    background: linear-gradient(135deg, rgba(81,131,245,0.15) 0%, rgba(30,30,30,0.5) 100%);
+    border: 1px solid rgba(81, 131, 245, 0.2);
+  }
+`;
+
+const ProfileImage = styled.div`
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(81, 131, 245, 0.3);
+  margin-bottom: 1.2rem;
+  flex-shrink: 0;
   
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.5s ease;
+  }
+`;
+
+const ProfileName = styled.h3`
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  background: linear-gradient(90deg, #5183f5, #8bb2f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+`;
+
+const ProfileTitle = styled.div`
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.2rem;
+  text-align: center;
+`;
+
+const ProfileInfoList = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+`;
+
+const ProfileInfoItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px dashed var(--border-color);
+  
+  &:last-child {
+    border-bottom: none;
   }
   
-  &:hover img {
-    transform: scale(1.05);
+  span:first-of-type {
+    color: var(--text-secondary);
   }
   
-  @media (max-width: 768px) {
-    width: 140px;
-    height: 140px;
-    order: 1;
+  span:last-of-type {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+`;
+
+const CardTitle = styled.h4`
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  color: var(--text-primary);
+  position: relative;
+  padding-bottom: 0.4rem;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, #5183f5, transparent);
+    border-radius: 3px;
+  }
+`;
+
+const SkillList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+  margin-bottom: 1.5rem;
+`;
+
+const SkillItem = styled.span`
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+  background: rgba(81, 131, 245, 0.1);
+  border-radius: 4px;
+  color: var(--accent-color);
+  
+  [data-theme='dark'] & {
+    background: rgba(81, 131, 245, 0.15);
+  }
+`;
+
+const CardFlipHint = styled.div`
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  
+  svg {
+    width: 14px;
+    height: 14px;
   }
 `;
 
@@ -236,8 +403,8 @@ const ScrollIndicator = styled(motion.div)`
   }
   
   @media (max-width: 768px) {
-    margin-bottom: 1rem;
-    
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
     svg {
       width: 24px;
       height: 32px;
@@ -689,6 +856,13 @@ const Home = () => {
     };
   }, [heroControls, articlesControls, activitiesControls, chartControls]);
 
+  // 添加卡片翻转状态
+  const [isFlipped, setIsFlipped] = useState(false);
+  
+  const handleCardFlip = () => {
+    setIsFlipped(!isFlipped);
+  };
+
   return (
     <>
       <PageContainer>
@@ -780,13 +954,69 @@ const Home = () => {
             </HeroContent>
             
             <HeroImage
-              initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ duration: 0.7, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="card-container"
             >
-              <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="Innei" />
+              <ProfileCard className={isFlipped ? 'flipped' : ''} onClick={handleCardFlip}>
+                <CardFront className="card-face">
+                  <ProfileImage>
+                    <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="Adnaan" />
+                  </ProfileImage>
+                  <ProfileName>Adnaan</ProfileName>
+                  <ProfileTitle>NodeJS 全栈开发者 & 设计爱好者</ProfileTitle>
+                  
+                  <ProfileInfoList>
+                    <ProfileInfoItem>
+                      <span>MBTI</span>
+                      <span>INFJ</span>
+                    </ProfileInfoItem>
+                    <ProfileInfoItem>
+                      <span>地点</span>
+                      <span>大连, 中国</span>
+                    </ProfileInfoItem>
+                    <ProfileInfoItem>
+                      <span>职业</span>
+                      <span>全栈开发者</span>
+                    </ProfileInfoItem>
+                    <ProfileInfoItem>
+                      <span>技能</span>
+                      <span>Vue, React, Node.js, Python, Java</span>
+                    </ProfileInfoItem>
+                  </ProfileInfoList>
+                  
+                  <CardFlipHint>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M7 16l-4-4m0 0l4-4m-4 4h18"></path>
+                    </svg>
+                    点击翻转
+                  </CardFlipHint>
+                </CardFront>
+                
+                <CardBack className="card-face card-back">
+                  <CardTitle>关于我</CardTitle>
+                  <p style={{ fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '0.8rem', color: 'var(--text-secondary)' }}>
+                    INTP型人格的开发者，热爱探索新技术和解决复杂问题。
+                  </p>
+                  
+                  <CardTitle>技能标签</CardTitle>
+                  <SkillList>
+                    <SkillItem>React</SkillItem>
+                    <SkillItem>Node.js</SkillItem>
+                    <SkillItem>TypeScript</SkillItem>
+                    <SkillItem>MongoDB</SkillItem>
+                    <SkillItem>UI设计</SkillItem>
+                  </SkillList>
+                  
+                  <CardFlipHint>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    </svg>
+                    返回正面
+                  </CardFlipHint>
+                </CardBack>
+              </ProfileCard>
             </HeroImage>
           </Hero>
           
@@ -798,7 +1028,7 @@ const Home = () => {
             请保持理性，冰冷的数字总是比七彩门的炫法走得更久。 —— 猴哥蔡嵩
           </Quote>
           
-          {/* 添加滚动指示器 */}
+          {/* 滚动指示器 */}
           <ScrollIndicator>
             <motion.div
               initial="initial"

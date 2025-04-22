@@ -94,6 +94,41 @@ const headerStyles = css`
     backdrop-filter: none;
   }
   
+  /* 移动端导航样式 */
+  .mobile-nav {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-primary);
+    z-index: 95;
+    display: flex;
+    flex-direction: column;
+    padding-top: 2rem;
+    gap: 1.5rem;
+    border-radius: 0 0 24px 24px;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    transform: translateY(-100%);
+    overflow-y: auto;
+  }
+  
+  .mobile-nav.open {
+    transform: translateY(0);
+  }
+  
+  /* 移动端菜单遮罩层 */
+  .mobile-overlay {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 90;
+  }
+  
   @media (max-width: 768px) {
     .nav-card {
       display: none;
@@ -455,86 +490,43 @@ const Avatar = styled(motion.div)`
   }
 `;
 
-// 移动端菜单样式
-const MobileNavOverlay = styled(motion.div)`
+// 移动端菜单
+const MobileNav = styled(motion.div)<{ isOpen: boolean }>`
   position: fixed;
-  top: 0;
-  left: 0;
+  top: var(--header-height);
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 90;
-  display: none;
+  width: 50vw;
+  height: 50vh;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  padding: 2.5rem 1.5rem;
+  gap: 1.6rem;
+  overflow-y: auto;
+  z-index: 92;
+  transform: ${({ isOpen }) => (isOpen ? 'translateY(0)' : 'translateY(-100%)')};
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.1);
   
-  @media (max-width: 768px) {
-    display: block;
+  [data-theme='dark'] & {
+    box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.2);
   }
 `;
 
-// 移动端菜单容器
-const MobileNav = styled(MotionNav)<{ isOpen: boolean }>`
+// 移动端菜单遮罩层
+const MobileNavOverlay = styled(motion.div)`
   position: fixed;
   top: var(--header-height);
   left: 0;
   right: 0;
   bottom: 0;
-  flex-direction: column;
-  justify-content: flex-start;
-  padding-top: 2.5rem;
-  background-color: var(--bg-primary);
-  z-index: 91;
-  border-radius: 0 0 24px 24px;
-  gap: 1.6rem;
-  overflow-y: auto;
-  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 90;
   
-  a {
-    padding: 0.8rem 1.5rem;
-    font-size: 1rem;
-    width: 85%;
-    justify-content: center;
-    border-radius: 12px;
-    position: relative;
-    
-    &::after {
-      bottom: -6px;
-      height: 3px;
-      width: 0;
-    }
-    
-    &:hover {
-      position: relative;
-      z-index: 1;
-      
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 110%;
-        height: 100%;
-        background: radial-gradient(
-          ellipse 70% 100% at 50% 50%,
-          rgba(81, 131, 245, 0.25) 0%,
-          rgba(81, 131, 245, 0.16) 30%,
-          rgba(81, 131, 245, 0.08) 60%,
-          rgba(81, 131, 245, 0) 100%
-        );
-        z-index: -1;
-        border-radius: 12px;
-      }
-    }
-    
-    &[active="true"]::after {
-      width: 30%;
-      opacity: 1;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    display: flex;
+  [data-theme='dark'] & {
+    background-color: rgba(0, 0, 0, 0.7);
   }
 `;
 
@@ -729,6 +721,7 @@ const Header = ({ scrolled = false }: HeaderProps) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
                 onClick={() => setIsMenuOpen(false)}
               />
             )}
@@ -739,40 +732,40 @@ const Header = ({ scrolled = false }: HeaderProps) => {
             {isMenuOpen && (
               <MobileNav 
                 isOpen={isMenuOpen}
-                initial="closed"
-                animate="open"
-                exit="closed"
-                variants={mobileNavVariants}
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -20, opacity: 0 }}
+                transition={{ duration: 0.3 }}
               >
-                <NavLink to="/" active={location.pathname === '/' ? "true" : "false"}>
+                <NavLink to="/" active={location.pathname === '/' ? "true" : "false"} onClick={() => setIsMenuOpen(false)}>
                   首页
                   <span className="bg-effect"></span>
                 </NavLink>
-                <NavLink to="/category" active={location.pathname.startsWith('/category') ? "true" : "false"}>
+                <NavLink to="/category" active={location.pathname.startsWith('/category') ? "true" : "false"} onClick={() => setIsMenuOpen(false)}>
                   分类
                   <span className="bg-effect"></span>
                 </NavLink>
-                <NavLink to="/notes" active={location.pathname === '/notes' ? "true" : "false"}>
+                <NavLink to="/notes" active={location.pathname === '/notes' ? "true" : "false"} onClick={() => setIsMenuOpen(false)}>
                   笔记
                   <span className="bg-effect"></span>
                 </NavLink>
-                <NavLink to="/timeline" active={location.pathname === '/timeline' ? "true" : "false"}>
+                <NavLink to="/timeline" active={location.pathname === '/timeline' ? "true" : "false"} onClick={() => setIsMenuOpen(false)}>
                   时光
                   <span className="bg-effect"></span>
                 </NavLink>
-                <NavLink to="/thoughts" active={location.pathname === '/thoughts' ? "true" : "false"}>
+                <NavLink to="/thoughts" active={location.pathname === '/thoughts' ? "true" : "false"} onClick={() => setIsMenuOpen(false)}>
                   思考
                   <span className="bg-effect"></span>
                 </NavLink>
-                <NavLink to="/about" active={location.pathname === '/about' ? "true" : "false"}>
+                <NavLink to="/about" active={location.pathname === '/about' ? "true" : "false"} onClick={() => setIsMenuOpen(false)}>
                   关于
                   <span className="bg-effect"></span>
                 </NavLink>
-                <NavLink to="/projects" active={location.pathname === '/projects' ? "true" : "false"}>
+                <NavLink to="/projects" active={location.pathname === '/projects' ? "true" : "false"} onClick={() => setIsMenuOpen(false)}>
                   项目
                   <span className="bg-effect"></span>
                 </NavLink>
-                <NavLink to="/code" active={location.pathname === '/code' ? "true" : "false"}>
+                <NavLink to="/code" active={location.pathname === '/code' ? "true" : "false"} onClick={() => setIsMenuOpen(false)}>
                   开发者字体
                   <span className="bg-effect"></span>
                 </NavLink>

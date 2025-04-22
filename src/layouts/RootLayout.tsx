@@ -22,7 +22,7 @@ const globalStyles = css`
     --card-shadow: 0 8px 30px rgba(81, 131, 245, 0.08);
     --transition-normal: all 0.25s cubic-bezier(.4,0,.2,1);
   }
-    
+
   /* 自定义滚动条样式 */
   ::-webkit-scrollbar {
     width: 8px;
@@ -61,6 +61,23 @@ const globalStyles = css`
   
   [data-theme='dark'] * {
     scrollbar-color: rgba(81, 131, 245, 0.3) transparent;
+  }
+  
+  /*3D卡片 */
+  .card-container {
+    perspective: 1000px;
+  }
+  
+  .card-face {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .card-back {
+    transform: rotateY(180deg);
   }
 
   [data-theme='dark'] {
