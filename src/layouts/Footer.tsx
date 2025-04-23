@@ -371,7 +371,7 @@ const Footer = () => {
         
         <FooterBottom>
           <Copyright>
-            <span>© {new Date().getFullYear()} ByteBlog</span>
+            <span>© {new Date().getFullYear()} adnaan's Blog</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               用 <FiHeart style={{ color: '#ff6b6b' }} size={12} /> 制作
             </span>

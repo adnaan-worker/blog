@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import RootLayout from './layouts/RootLayout';
+import pageLoadingGif from '@/assets/images/page-loading.gif';
 
 // 使用 React.lazy 懒加载组件
 const Home = lazy(() => import('./pages/Home'));
@@ -13,11 +14,26 @@ const PageLoading = () => (
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'column',
     height: '100vh',
-    color: 'var(--text-secondary)',
-    fontSize: '0.9rem'
   }}>
-    加载中...
+    <img
+      src={pageLoadingGif}
+      alt="加载中..."
+      style={{
+        width: '200px',
+        objectFit: 'contain',
+        borderRadius: '10px',
+        boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.1)',
+        marginBottom: '20px',
+      }}
+    />
+    <p style={{
+      color: 'var(--text-secondary)',
+      fontSize: '0.9rem',
+    }}>
+      加载中...
+    </p>
   </div>
 );
 

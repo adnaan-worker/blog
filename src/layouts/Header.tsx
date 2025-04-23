@@ -21,6 +21,7 @@ const HeaderContainer = styled.header<{ scrolled: boolean }>`
 
 // 定义Logo样式
 const Logo = styled(Link)`
+  font-family: 'Fira Code';
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);

@@ -1,8 +1,8 @@
-import { Outlet, useLocation } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
+import { useState, useEffect, useCallback, useTransition, useRef } from 'react';
 import styled from '@emotion/styled';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import Header from './Header';
+import Footer from './Footer';
 import FloatingToolbar from '../components/FloatingToolbar';
 import { ThemeProvider } from '../context/ThemeContext';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -67,23 +67,83 @@ const RootLayout = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const location = useLocation();
+  const navigationType = useNavigationType();
+  const [isPending, startTransition] = useTransition();
+  
+  // 用于控制加载指示器的完整显示
+  const [showLoader, setShowLoader] = useState(false);
+  const loaderAnimationCompleted = useRef(false);
+  const loaderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 组件挂载处理
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 路由切换时滚动到页面顶部并显示加载动画
+  // 处理加载动画的完整显示
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // 当实际加载状态变化时
+    if (isPending || isLoading) {
+      setShowLoader(true);
+      loaderAnimationCompleted.current = false;
+      
+      // 清除之前的超时
+      if (loaderTimeoutRef.current) {
+        clearTimeout(loaderTimeoutRef.current);
+        loaderTimeoutRef.current = null;
+      }
+    } else {
+      // 当加载完成时，不要立即隐藏加载器，等待动画完成
+      if (!loaderAnimationCompleted.current) {
+        loaderTimeoutRef.current = setTimeout(() => {
+          setShowLoader(false);
+        }, 500); // 确保加载动画有足够时间完成
+      }
+    }
+    
+    return () => {
+      if (loaderTimeoutRef.current) {
+        clearTimeout(loaderTimeoutRef.current);
+      }
+    };
+  }, [isPending, isLoading]);
+
+  // 路由切换时处理加载状态
+  useEffect(() => {
+    // 页面导航开始时设置加载状态
     setIsLoading(true);
     
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 300);
+    // 使用React 18的并发特性处理加载状态
+    startTransition(() => {
+      // 模拟资源加载完成
+      const loadResources = async () => {
+        try {
+          // 预加载当前路由所需的资源
+          await Promise.all([
+            // 这里可以添加实际需要预加载的资源，如图片、数据等
+            new Promise<void>(resolve => {
+              // 监听页面加载完成事件
+              if (document.readyState === 'complete') {
+                resolve();
+              } else {
+                window.addEventListener('load', () => resolve(), { once: true });
+              }
+            })
+          ]);
+        } finally {
+          // 无论加载成功还是失败，都结束加载状态
+          setIsLoading(false);
+        }
+      };
+      
+      loadResources();
+    });
     
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
+    // 滚动到页面顶部
+    if (navigationType !== 'POP') {
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname, navigationType]);
 
   // 创建防抖的滚动监听函数
   const handleScroll = useCallback(() => {
@@ -117,14 +177,26 @@ const RootLayout = () => {
   return (
     <ThemeProvider>
       <MainContainer>
-        {/* 加载指示器 */}
-        {isLoading && (
-          <LoadingIndicator
-            initial={{ width: 0 }}
-            animate={{ width: "100%" }}
-            transition={{ duration: 0.3 }}
-          />
-        )}
+        {/* 加载指示器 - 使用showLoader状态 */}
+        <AnimatePresence>
+          {showLoader && (
+            <LoadingIndicator
+              initial={{ width: 0 }}
+              animate={{ width: "100%" }}
+              exit={{ opacity: 0 }}
+              transition={{ 
+                duration: 0.5,
+                ease: "easeInOut"
+              }}
+              onAnimationComplete={() => {
+                loaderAnimationCompleted.current = true;
+                if (!isPending && !isLoading) {
+                  setShowLoader(false);
+                }
+              }}
+            />
+          )}
+        </AnimatePresence>
         
         {/* 头部导航 */}
         <Header scrolled={isScrolled} />
