@@ -826,25 +826,51 @@ const chartData = [
 ];
 
 const Home = () => {
-  // 使用动画控制器但简化，不使用InView
   const heroControls = useAnimation();
   const articlesControls = useAnimation();
   const activitiesControls = useAnimation();
   const chartControls = useAnimation();
   
-  // 使用简单的timeout来触发动画，而不是基于视图
+  // 添加加载状态
+  const [articlesLoaded, setArticlesLoaded] = useState(false);
+  const [isLoadingArticles, setIsLoadingArticles] = useState(true);
+  
+  // 使用简单的timeout来触发动画，而不是基于视图，优化加载逻辑
   useEffect(() => {
-    // 简单的顺序动画
+    // 首先加载英雄区域
     heroControls.start('visible');
     
-    const articleTimer = setTimeout(() => {
-      articlesControls.start('visible');
-    }, 300);
+    // 确保文章区域加载完成，增加错误处理和重试机制
+    const loadArticles = () => {
+      setIsLoadingArticles(true);
+      
+      try {
+        articlesControls.start('visible')
+          .then(() => {
+            setArticlesLoaded(true);
+            setIsLoadingArticles(false);
+          })
+          .catch(error => {
+            console.error("文章加载动画出错:", error);
+            // 延迟200ms后重试
+            setTimeout(loadArticles, 200);
+          });
+      } catch (error) {
+        console.error("文章加载异常:", error);
+        // 延迟200ms后重试
+        setTimeout(loadArticles, 200);
+      }
+    };
     
+    // 在较短的延迟后加载文章
+    const articleTimer = setTimeout(loadArticles, 200);
+    
+    // 在文章加载后加载活动区域
     const activitiesTimer = setTimeout(() => {
       activitiesControls.start('visible');
     }, 600);
     
+    // 最后加载图表区域
     const chartTimer = setTimeout(() => {
       chartControls.start('visible');
     }, 900);
@@ -1067,32 +1093,46 @@ const Home = () => {
             </motion.a>
           </SectionTitle>
           
-          <ArticleGrid variants={staggerContainerVariants}>
-            {mockArticles.map((article, index) => (
-              <ArticleCard 
-                to={`/blog/${article.id}`} 
-                key={article.id}
-                variants={cardVariants}
-                whileHover={{ y: -5 }}
-                custom={index}
-              >
-                <ArticleImage>
-                  <img src={article.image} alt={article.title} />
-                </ArticleImage>
-                <ArticleContent>
-                  <ArticleTitle>{article.title}</ArticleTitle>
-                  <ArticleMeta>
-                    <span><FiCalendar size={12} /> {article.date}</span>
-                    <span><FiClock size={12} /> {article.views} 次阅读</span>
-                  </ArticleMeta>
-                  <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
-                  <ReadMore>
-                    阅读更多 <FiArrowRight size={12} />
-                  </ReadMore>
-                </ArticleContent>
-              </ArticleCard>
-            ))}
-          </ArticleGrid>
+
+            <ArticleGrid 
+              variants={staggerContainerVariants}
+              // 确保已加载完成
+              initial={articlesLoaded ? "visible" : "hidden"}
+              animate="visible"
+              // 增加key确保组件在重新渲染时有独立标识
+              key="article-grid"
+            >
+              {mockArticles.map((article, index) => (
+                <ArticleCard 
+                  to={`/blog/${article.id}`} 
+                  key={article.id}
+                  variants={cardVariants}
+                  whileHover={{ y: -5 }}
+                  custom={index}
+                >
+                  <ArticleImage>
+                    <img 
+                      src={article.image} 
+                      alt={article.title} 
+                      onError={(e) => {
+                        e.currentTarget.src = "https://img0.baidu.com/it/u=2075518181,1224688219&fm=253&fmt=auto&app=138&f=JPEG?w=617&h=449";
+                      }}
+                    />
+                  </ArticleImage>
+                  <ArticleContent>
+                    <ArticleTitle>{article.title}</ArticleTitle>
+                    <ArticleMeta>
+                      <span><FiCalendar size={12} /> {article.date}</span>
+                      <span><FiClock size={12} /> {article.views} 次阅读</span>
+                    </ArticleMeta>
+                    <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
+                    <ReadMore>
+                      阅读更多 <FiArrowRight size={12} />
+                    </ReadMore>
+                  </ArticleContent>
+                </ArticleCard>
+              ))}
+            </ArticleGrid>
         </ContentSection>
         
         <ActivitySection 
