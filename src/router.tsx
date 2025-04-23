@@ -10,6 +10,12 @@ const Code = lazy(() => import('./pages/Code'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 
+// 个人中心相关页面
+const Profile = lazy(() => import('./pages/Profile'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Favorites = lazy(() => import('./pages/Favorites'));
+const Settings = lazy(() => import('./pages/Settings'));
+
 // 页面加载组件
 const PageLoading = () => (
   <div style={{
@@ -79,6 +85,39 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoading />}>
             <BlogDetail />
+          </Suspense>
+        ),
+      },
+      // 个人中心相关路由
+      {
+        path: '/profile',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <Profile />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/dashboard',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <Dashboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/favorites',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <Favorites />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/settings',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <Settings />
           </Suspense>
         ),
       },

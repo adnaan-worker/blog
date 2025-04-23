@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiChevronDown, FiSun, FiMoon, FiMenu, FiX } from 'react-icons/fi';
+import { FiChevronDown, FiSun, FiMoon, FiMenu, FiX, FiUser, FiSettings, FiFileText, FiHeart, FiLogOut } from 'react-icons/fi';
 import { useTheme } from '../context/ThemeContext';
 
 // 定义Header容器组件样式
@@ -125,6 +125,11 @@ const MobileMenu = styled(motion.div)`
   [data-theme='dark'] & {
     background: var(--bg-primary);
   }
+   @media (max-width: 768px) {
+    background: var(--bg-primary);
+    touch-action: none;
+    overflow: auto;
+  }
 `;
 
 const MobileNavLink = styled(Link)<{ active: string }>`
@@ -173,6 +178,133 @@ const Overlay = styled(motion.div)`
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   z-index: 40;
+`;
+
+// 用户头像样式
+const Avatar = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid var(--accent-color-alpha);
+  transition: all 0.2s ease;
+  margin-left: 0.75rem;
+  
+  &:hover {
+    transform: scale(1.05);
+    border-color: var(--accent-color);
+  }
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+// 移动端头像样式
+const MobileAvatar = styled(Avatar)`
+  display: none;
+  margin-right: 0.5rem;
+  margin-left: 0;
+  
+  @media (max-width: 768px) {
+    display: block;
+  }
+`;
+
+// 用户下拉菜单样式
+const UserDropdownContent = styled(motion.div)`
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 220px;
+  background: var(--bg-primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 100;
+  
+  [data-theme='dark'] & {
+    background: var(--bg-secondary);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  }
+`;
+
+const UserDropdownHeader = styled.div`
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const UserName = styled.div`
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+`;
+
+const UserRole = styled.div`
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+`;
+
+const UserDropdownItem = styled(Link)`
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  gap: 0.75rem;
+  
+  &:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+  
+  [data-theme='dark'] &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  svg {
+    color: var(--text-tertiary);
+  }
+`;
+
+const UserDropdownLogout = styled.button`
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  color: var(--danger-color);
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-top: 1px solid var(--border-color);
+  
+  &:hover {
+    background: var(--bg-secondary);
+  }
+  
+  [data-theme='dark'] &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  svg {
+    color: var(--danger-color);
+  }
 `;
 
 // 定义动画变体
@@ -295,8 +427,10 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileMoreDropdownOpen, setMobileMoreDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
 
   // 如果scrolled属性被传入，则使用它，否则自行监听滚动
   useEffect(() => {
@@ -329,6 +463,9 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
       if (mobileDropdownRef.current && !mobileDropdownRef.current.contains(event.target as Node)) {
         setMobileMoreDropdownOpen(false);
       }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setUserDropdownOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -342,6 +479,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
     setMoreDropdownOpen(false);
     setMobileMenuOpen(false);
     setMobileMoreDropdownOpen(false);
+    setUserDropdownOpen(false);
   };
 
   // 切换更多下拉菜单
@@ -355,6 +493,35 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
     e.stopPropagation();
     setMobileMoreDropdownOpen(!mobileMoreDropdownOpen);
   };
+
+  // 切换用户下拉菜单
+  const toggleUserDropdown = (e: React.MouseEvent<Element, MouseEvent>) => {
+    e.stopPropagation();
+    setUserDropdownOpen(!userDropdownOpen);
+  };
+
+  // 处理登出
+  const handleLogout = () => {
+    // 这里添加登出逻辑
+    alert('登出功能将在后续实现');
+    setUserDropdownOpen(false);
+  };
+
+  // 处理移动菜单打开时的页面滚动
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [mobileMenuOpen]);
 
   return (
     <div className={`header ${internalScrolled ? 'scrolled' : ''}`}>
@@ -411,12 +578,64 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
           </div>
           
           <ThemeToggle />
-        </div>
+          
+          {/* 用户头像 */}
+          <div ref={userDropdownRef} style={{ position: 'relative' }}>
+            <Avatar onClick={toggleUserDropdown}>
+              <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="用户头像" />
+            </Avatar>
+            
+            {userDropdownOpen && (
+              <UserDropdownContent
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={dropdownVariants}
+              >
+                <UserDropdownHeader>
+                  <Avatar>
+                    <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="用户头像" />
+                  </Avatar>
+                  <UserInfo>
+                    <UserName>Adnaan</UserName>
+                    <UserRole>全栈开发者</UserRole>
+                  </UserInfo>
+                </UserDropdownHeader>
+                
+                <UserDropdownItem to="/profile" onClick={handleLinkClick}>
+                  <FiUser size={16} /> 个人资料
+                </UserDropdownItem>
+                
+                <UserDropdownItem to="/dashboard" onClick={handleLinkClick}>
+                  <FiFileText size={16} /> 我的文章
+                </UserDropdownItem>
+                
+                <UserDropdownItem to="/favorites" onClick={handleLinkClick}>
+                  <FiHeart size={16} /> 我的收藏
+                </UserDropdownItem>
+                
+                <UserDropdownItem to="/settings" onClick={handleLinkClick}>
+                  <FiSettings size={16} /> 设置
+                </UserDropdownItem>
+                
+                <UserDropdownLogout onClick={handleLogout}>
+                  <FiLogOut size={16} /> 退出登录
+                </UserDropdownLogout>
+              </UserDropdownContent>
+            )}
+          </div>
+          </div>
         
-        {/* 移动菜单按钮 */}
-        <MenuButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          {mobileMenuOpen ? <FiX /> : <FiMenu />}
-        </MenuButton>
+        {/* 移动端菜单按钮和头像 */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <MobileAvatar onClick={toggleUserDropdown}>
+            <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="用户头像" />
+          </MobileAvatar>
+          
+          <MenuButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <FiX /> : <FiMenu />}
+          </MenuButton>
+        </div>
       </HeaderContainer>
       
       {/* 移动导航菜单 */}
@@ -428,6 +647,24 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
             exit="exit"
             variants={mobileMenuVariants}
           >
+            {/* 移动端菜单顶部显示用户信息 */}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              padding: '1rem', 
+              borderBottom: '1px solid var(--border-color)',
+              marginBottom: '1rem',
+              width: '100%'
+            }}>
+              <Avatar style={{ width: '42px', height: '42px', margin: '0' }}>
+                <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="用户头像" />
+              </Avatar>
+              <div style={{ marginLeft: '1rem' }}>
+                <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Adnaan</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>全栈开发者</div>
+              </div>
+            </div>
+            
             <MobileNavLink 
               to="/" 
               active={location.pathname === '/' ? "true" : "false"} 
@@ -475,9 +712,67 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               )}
             </div>
             
-            <div style={{ marginTop: '1rem' }}>
+            {/* 移动端个人中心入口 */}
+            <MobileNavLink 
+              to="/profile" 
+              active={location.pathname.includes('/profile') ? "true" : "false"} 
+              onClick={handleLinkClick}
+            >
+              个人资料
+            </MobileNavLink>
+            
+            <MobileNavLink 
+              to="/dashboard" 
+              active={location.pathname.includes('/dashboard') ? "true" : "false"} 
+              onClick={handleLinkClick}
+            >
+              我的文章
+            </MobileNavLink>
+            
+            <MobileNavLink 
+              to="/favorites" 
+              active={location.pathname.includes('/favorites') ? "true" : "false"} 
+              onClick={handleLinkClick}
+            >
+              我的收藏
+            </MobileNavLink>
+            
+            <MobileNavLink 
+              to="/settings" 
+              active={location.pathname.includes('/settings') ? "true" : "false"} 
+              onClick={handleLinkClick}
+            >
+              设置
+            </MobileNavLink>
+            
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
               <ThemeToggle />
+              <div style={{ 
+                marginTop: '0.5rem', 
+                fontSize: '0.8rem', 
+                color: 'var(--text-secondary)' 
+              }}>
+                切换主题
+              </div>
             </div>
+            
+            {/* 移动端登出按钮 */}
+            <button 
+              style={{ 
+                width: '100%', 
+                padding: '1rem', 
+                background: 'none',
+                border: 'none',
+                color: 'var(--danger-color)',
+                textAlign: 'center',
+                marginTop: '1rem',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+              onClick={handleLogout}
+            >
+              退出登录
+            </button>
           </MobileMenu>
           
           <Overlay
