@@ -452,7 +452,7 @@ const musicList = [
     id: 1,
     title: "Lo-Fi Chill",
     artist: "Lofi Records",
-    url: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3",
+    url: "https://dlink.host/musics/aHR0cHM6Ly9vbmVkcnYtbXkuc2hhcmVwb2ludC5jb20vOnU6L2cvcGVyc29uYWwvc3Rvcl9vbmVkcnZfb25taWNyb3NvZnRfY29tL0VZaVIwdy1IeUtsRGhYX3FNdHBxa1BJQl8yNVZCczdTOVJUSkRpSk1GZ0lyU2c.mp3",
     lyrics: [
       { time: 0, text: "【轻柔的音乐开始】" },
       { time: 10, text: "让思绪随着节奏飘扬" },

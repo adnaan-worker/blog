@@ -648,13 +648,6 @@ const ChartContainer = styled(motion.div)`
   }
 `;
 
-const ChartHeader = styled.div`
-  margin-bottom: 1rem;
-  font-size: 0.92rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-`;
-
 const Chart = styled.div`
   height: 100px;
   display: flex;
@@ -1347,7 +1340,6 @@ const Home = () => {
             variants={fadeInUpVariants}
             whileHover={{ y: -3 }}
           >
-            <ChartHeader>热力图的千篇一律，所以我做成了时间线</ChartHeader>
             <Chart>
               {chartData.map((item, index) => (
                 <ChartBar 

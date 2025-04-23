@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiChevronDown, FiSun, FiMoon, FiMenu, FiX, FiUser, FiSettings, FiFileText, FiHeart, FiLogOut } from 'react-icons/fi';
+import { FiChevronDown, FiSun, FiMoon, FiMenu, FiX, FiUser, FiSettings, FiFileText, FiHeart, FiLogOut, FiHome, FiBookOpen, FiCode, FiInfo, FiMail } from 'react-icons/fi';
 import { useTheme } from '../context/ThemeContext';
 
 // 定义Header容器组件样式
@@ -37,7 +37,7 @@ const NavLink = styled(Link)<{ active: string }>`
   position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   padding: 0.5rem 0.75rem;
   margin: 0 0.5rem;
   font-size: 0.95rem;
@@ -50,6 +50,15 @@ const NavLink = styled(Link)<{ active: string }>`
   
   &:hover {
     color: var(--text-primary);
+  }
+  
+  svg {
+    opacity: ${(props) => (props.active === "true" ? '1' : '0')};
+    transition: opacity 0.2s ease;
+  }
+  
+  &:hover svg {
+    opacity: 0.5;
   }
 `;
 
@@ -78,6 +87,7 @@ const DropdownItem = styled(Link)`
   color: var(--text-secondary);
   transition: all 0.2s ease;
   font-size: 0.95rem;
+  gap: 8px;
   
   &:hover {
     background: var(--bg-secondary);
@@ -86,6 +96,14 @@ const DropdownItem = styled(Link)`
   
   [data-theme='dark'] &:hover {
     background: rgba(255, 255, 255, 0.05);
+  }
+  
+  svg {
+    opacity: 0;
+  }
+  
+  &:hover svg {
+    opacity: 0.5;
   }
 `;
 
@@ -141,10 +159,23 @@ const MobileNavLink = styled(Link)<{ active: string }>`
   color: ${(props) => (props.active === "true" ? 'var(--text-primary)' : 'var(--text-secondary)')};
   text-align: center;
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   
   &:hover {
     background: var(--bg-secondary);
     color: var(--text-primary);
+  }
+  
+  svg {
+    opacity: ${(props) => (props.active === "true" ? '1' : '0')};
+    transition: opacity 0.2s ease;
+  }
+  
+  &:hover svg {
+    opacity: 0.5;
   }
 `;
 
@@ -370,9 +401,11 @@ const NavLinkWithHover: React.FC<{
   active: boolean;
   onClick?: (e: React.MouseEvent<Element, MouseEvent>) => void;
   children: React.ReactNode;
-}> = ({ to, active, onClick, children }) => {
+  icon: React.ReactNode;
+}> = ({ to, active, onClick, children, icon }) => {
   return (
     <NavLink to={to} active={active ? "true" : "false"} onClick={onClick} className="nav-link-hover">
+      {icon}
       {children}
       <div className="bg-effect" />
     </NavLink>
@@ -534,6 +567,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
             to="/" 
             active={location.pathname === '/'} 
             onClick={handleLinkClick}
+            icon={<FiHome size={16} />}
           >
             首页
           </NavLinkWithHover>
@@ -542,6 +576,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
             to="/blog" 
             active={location.pathname.includes('/blog')} 
             onClick={handleLinkClick}
+            icon={<FiBookOpen size={16} />}
           >
             博客
           </NavLinkWithHover>
@@ -550,6 +585,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
             to="/projects" 
             active={location.pathname.includes('/projects')} 
             onClick={handleLinkClick}
+            icon={<FiCode size={16} />}
           >
             项目
           </NavLinkWithHover>
@@ -559,6 +595,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               to="#" 
               active={location.pathname.includes('/about') || location.pathname.includes('/contact') || location.pathname.includes('/code')} 
               onClick={toggleMoreDropdown}
+              icon={<FiInfo size={16} />}
             >
               更多 <FiChevronDown />
             </NavLinkWithHover>
@@ -570,9 +607,9 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
                 exit="exit"
                 variants={dropdownVariants}
               >
-                <DropdownItem to="/about" onClick={handleLinkClick}>关于我</DropdownItem>
-                <DropdownItem to="/contact" onClick={handleLinkClick}>联系方式</DropdownItem>
-                <DropdownItem to="/code" onClick={handleLinkClick}>开发字体</DropdownItem>
+                <DropdownItem to="/about" onClick={handleLinkClick}><FiInfo size={16} />关于我</DropdownItem>
+                <DropdownItem to="/contact" onClick={handleLinkClick}><FiMail size={16} />联系方式</DropdownItem>
+                <DropdownItem to="/code" onClick={handleLinkClick}><FiCode size={16} />开发字体</DropdownItem>
               </DropdownContent>
             )}
           </div>
@@ -670,7 +707,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               active={location.pathname === '/' ? "true" : "false"} 
               onClick={handleLinkClick}
             >
-              首页
+              <FiHome size={18} />首页
             </MobileNavLink>
             
             <MobileNavLink 
@@ -678,7 +715,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               active={location.pathname.includes('/blog') ? "true" : "false"} 
               onClick={handleLinkClick}
             >
-              博客
+              <FiBookOpen size={18} />博客
             </MobileNavLink>
             
             <MobileNavLink 
@@ -686,7 +723,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               active={location.pathname.includes('/projects') ? "true" : "false"} 
               onClick={handleLinkClick}
             >
-              项目
+              <FiCode size={18} />项目
             </MobileNavLink>
             
             <div ref={mobileDropdownRef} style={{ width: '100%',display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -695,7 +732,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
                 active={location.pathname.includes('/about') || location.pathname.includes('/contact') || location.pathname.includes('/code') ? "true" : "false"} 
                 onClick={toggleMobileMoreDropdown}
               >
-                更多
+                <FiInfo size={18} />更多
               </MobileNavLink>
               
               {mobileMoreDropdownOpen && (
@@ -705,9 +742,9 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <MobileDropdownItem to="/about" onClick={handleLinkClick}>关于我</MobileDropdownItem>
-                  <MobileDropdownItem to="/contact" onClick={handleLinkClick}>联系方式</MobileDropdownItem>
-                  <MobileDropdownItem to="/code" onClick={handleLinkClick}>开发字体</MobileDropdownItem>
+                  <MobileDropdownItem to="/about" onClick={handleLinkClick}><FiInfo size={18} style={{ opacity: location.pathname.includes('/about') ? 1 : 0 }} />关于我</MobileDropdownItem>
+                  <MobileDropdownItem to="/contact" onClick={handleLinkClick}><FiMail size={18} style={{ opacity: location.pathname.includes('/contact') ? 1 : 0 }} />联系方式</MobileDropdownItem>
+                  <MobileDropdownItem to="/code" onClick={handleLinkClick}><FiCode size={18} style={{ opacity: location.pathname.includes('/code') ? 1 : 0 }} />开发字体</MobileDropdownItem>
                 </MobileDropdownContent>
               )}
             </div>
@@ -718,7 +755,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               active={location.pathname.includes('/profile') ? "true" : "false"} 
               onClick={handleLinkClick}
             >
-              个人资料
+              <FiUser size={18} />个人资料
             </MobileNavLink>
             
             <MobileNavLink 
@@ -726,7 +763,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               active={location.pathname.includes('/dashboard') ? "true" : "false"} 
               onClick={handleLinkClick}
             >
-              我的文章
+              <FiFileText size={18} />我的文章
             </MobileNavLink>
             
             <MobileNavLink 
@@ -734,7 +771,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               active={location.pathname.includes('/favorites') ? "true" : "false"} 
               onClick={handleLinkClick}
             >
-              我的收藏
+              <FiHeart size={18} />我的收藏
             </MobileNavLink>
             
             <MobileNavLink 
@@ -742,7 +779,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               active={location.pathname.includes('/settings') ? "true" : "false"} 
               onClick={handleLinkClick}
             >
-              设置
+              <FiSettings size={18} />设置
             </MobileNavLink>
             
             <div style={{ marginTop: '1rem', textAlign: 'center' }}>
@@ -767,11 +804,15 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
                 textAlign: 'center',
                 marginTop: '1rem',
                 fontWeight: '500',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
               }}
               onClick={handleLogout}
             >
-              退出登录
+              <FiLogOut size={18} />退出登录
             </button>
           </MobileMenu>
           
