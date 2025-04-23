@@ -461,6 +461,20 @@ code, pre, .code {
   animation: shimmer 2s infinite;
 }
 
+/* 添加加载器样式 */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(81, 131, 245, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--accent-color);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /**
  * 10. 滚动条样式
  */

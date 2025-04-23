@@ -82,7 +82,7 @@ const Hero = styled(MotionDiv)`
 `;
 
 const HeroContent = styled(MotionDiv)`
-  max-width: 550px;
+  max-width: 800px;
   position: relative;
   z-index: 1;
   
@@ -1068,11 +1068,11 @@ const Home = () => {
               </Title>
               
               <Subtitle variants={fadeInUpVariants}>
-                A NodeJS Full Stack <code>&lt;Developer /&gt;</code>
+              A developer who loves full stack web <code style={{ color: 'var(--accent-color)' }}>&lt;Developer /&gt;</code>
               </Subtitle>
               
               <Description variants={fadeInUpVariants}>
-                An independent developer coding with love.
+              This is my blog, documenting life and learning.
               </Description>
               
               <SocialLinks variants={staggerContainerVariants}>
@@ -1149,7 +1149,7 @@ const Home = () => {
                   <ProfileImage>
                     <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="Adnaan" />
                   </ProfileImage>
-                  <ProfileName>Adnaan</ProfileName>
+                  <ProfileName>adnaan</ProfileName>
                   <ProfileTitle>NodeJS 全栈开发者 & 设计爱好者</ProfileTitle>
                   
                   <ProfileInfoList>
@@ -1182,7 +1182,7 @@ const Home = () => {
                 <CardBack className="card-face card-back">
                   <CardTitle>关于我</CardTitle>
                   <p style={{ fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '0.8rem', color: 'var(--text-secondary)' }}>
-                    INTP型人格的开发者，热爱探索新技术和解决复杂问题。
+                    热衷于探索前沿Web技术，专注于打造流畅优雅的用户界面和交互体验，善于将设计理念转化为精美的代码实现。
                   </p>
                   
                   <CardTitle>技能标签</CardTitle>

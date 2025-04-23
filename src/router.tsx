@@ -7,6 +7,8 @@ import pageLoadingGif from '@/assets/images/page-loading.gif';
 const Home = lazy(() => import('./pages/Home'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Code = lazy(() => import('./pages/Code'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 
 // 页面加载组件
 const PageLoading = () => (
@@ -61,6 +63,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoading />}>
             <Code />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/blog',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <Blog />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/blog/:id',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <BlogDetail />
           </Suspense>
         ),
       },
