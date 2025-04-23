@@ -105,15 +105,15 @@ body {
   font-weight: 400;
   scroll-behavior: smooth;
   letter-spacing: -0.01em;
-  height: 100%;
+  height: auto;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-body {
+/* body {
   position: relative;
   height: auto;
-}
+} */
 
 #root {
   min-height: 100vh;

@@ -39,7 +39,7 @@ const Description = styled(motion.p)`
   margin-bottom: 2.5rem;
 `;
 
-const BackButton = styled(motion(Link))`
+const BackButton = styled(motion.create(Link))`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;

@@ -1,9 +1,9 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
-import { Global } from '@emotion/react';
 import styled from '@emotion/styled';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import FloatingToolbar from '../components/FloatingToolbar';
 import { ThemeProvider } from '../context/ThemeContext';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -65,6 +65,7 @@ const RootLayout = () => {
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState(0);
   const location = useLocation();
 
   // 组件挂载处理
@@ -86,9 +87,10 @@ const RootLayout = () => {
 
   // 创建防抖的滚动监听函数
   const handleScroll = useCallback(() => {
-    const scrollPosition = window.scrollY;
-    const newScrolledState = scrollPosition > 5;
+    const currentScrollPosition = window.scrollY;
+    setScrollPosition(currentScrollPosition);
     
+    const newScrolledState = currentScrollPosition > 5;
     // 只有状态变化时才更新
     if (isScrolled !== newScrolledState) {
       setIsScrolled(newScrolledState);
@@ -142,6 +144,9 @@ const RootLayout = () => {
         
         {/* 页脚 */}
         <Footer />
+        
+        {/* 悬浮工具栏 */}
+        <FloatingToolbar scrollPosition={scrollPosition} />
       </MainContainer>
     </ThemeProvider>
   );

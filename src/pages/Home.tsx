@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { motion, useAnimation, Variants } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiArrowRight, FiCalendar, FiClock, FiMessageCircle, FiGithub, FiMail } from 'react-icons/fi';
+import { FiArrowRight, FiCalendar, FiClock, FiMessageCircle, FiGithub, FiMail, FiExternalLink, FiStar, FiFolderPlus, FiCode } from 'react-icons/fi';
 
 
 // 使用motion直接访问组件
@@ -11,7 +11,6 @@ const MotionH1 = motion.h1;
 const MotionH2 = motion.h2;
 const MotionP = motion.p;
 const MotionSpan = motion.span;
-const MotionLink = motion.create(Link);
 
 // 动画变体定义
 const fadeInUpVariants: Variants = {
@@ -475,7 +474,7 @@ const ArticleGrid = styled(motion.div)`
   }
 `;
 
-const ArticleCard = styled(MotionLink)`
+const ArticleCard = styled(motion.div)`
   background: var(--bg-primary);
   border-radius: 12px;
   overflow: hidden;
@@ -702,24 +701,6 @@ const ChartLabels = styled.div`
   opacity: 0.8;
 `;
 
-const SpecialSectionHeader = styled(motion.div)`
-  text-align: center;
-  margin: 3.5rem 0 2rem;
-  
-  h3 {
-    font-size: 1.2rem;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-  }
-  
-  p {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    opacity: 0.8;
-  }
-`;
-
 // 文章卡片动画变体
 const cardVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -759,6 +740,208 @@ const barVariants: Variants = {
   })
 };
 
+// 添加开源项目相关的样式组件
+const ProjectsSection = styled(motion.section)`
+  margin: 3rem 0 4rem;
+`;
+
+const ProjectsGrid = styled(motion.div)`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ProjectCard = styled(motion.div)`
+  background: var(--bg-primary);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  
+  &:hover {
+    box-shadow: 0 10px 30px rgba(81, 131, 245, 0.1);
+    transform: translateY(-5px);
+    border-color: rgba(81, 131, 245, 0.2);
+  }
+`;
+
+const ProjectHeader = styled.div`
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+`;
+
+const ProjectIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-color-alpha) 0%, var(--accent-color) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+`;
+
+const ProjectTitle = styled.h3`
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+`;
+
+const ProjectContent = styled.div`
+  padding: 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ProjectDescription = styled.p`
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  flex: 1;
+`;
+
+const ProjectMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+`;
+
+const ProjectMetaItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+`;
+
+const ProjectLanguage = styled.div<{ color: string }>`
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  
+  &::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: ${props => props.color};
+  }
+`;
+
+const ProjectLinks = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const ProjectLink = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  
+  &.primary {
+    background-color: var(--accent-color);
+    color: white;
+    
+    &:hover {
+      background-color: var(--accent-color-hover);
+      transform: translateY(-2px);
+    }
+  }
+  
+  &.secondary {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    
+    &:hover {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+  }
+  
+  svg {
+    margin-right: 0.3rem;
+  }
+`;
+
+// 添加演示项目数据
+const mockProjects = [
+  {
+    id: 1,
+    title: "React Native UI Kit",
+    description: "一个高度可定制的UI组件库，为React Native应用提供美观且易用的界面元素。支持深色模式和RTL布局。",
+    language: "TypeScript",
+    languageColor: "#3178c6",
+    stars: 432,
+    forks: 89,
+    lastUpdated: "3天前",
+    repoUrl: "https://github.com/adnaan/react-native-ui-kit",
+    demoUrl: "https://example.com/demo",
+    icon: "components"
+  },
+  {
+    id: 2,
+    title: "NodeJS API Starter",
+    description: "Express和TypeScript打造的API启动模板，集成了认证、权限管理、日志记录和自动化测试。快速启动你的Node.js后端项目。",
+    language: "JavaScript",
+    languageColor: "#f1e05a",
+    stars: 257,
+    forks: 63,
+    lastUpdated: "1周前",
+    repoUrl: "https://github.com/adnaan/node-api-starter",
+    demoUrl: "https://example.com/node-api",
+    icon: "server"
+  },
+  {
+    id: 3,
+    title: "ByteBlogs CMS",
+    description: "专为开发者设计的轻量级内容管理系统，支持Markdown编辑、代码高亮和版本控制。适合技术博客和文档网站。",
+    language: "Vue",
+    languageColor: "#41b883",
+    stars: 189,
+    forks: 41,
+    lastUpdated: "2周前",
+    repoUrl: "https://github.com/adnaan/byte-blogs",
+    demoUrl: "https://example.com/byte-blogs",
+    icon: "blog"
+  }
+];
+
+// 项目卡片动画变体
+const projectVariants: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i) => ({ 
+    opacity: 1, 
+    y: 0,
+    transition: { 
+      duration: 0.5,
+      delay: i * 0.1,
+      ease: [0.25, 1, 0.5, 1]
+    }
+  })
+};
+
+// 示例数据
 const mockArticles = [
   {
     id: 1,
@@ -825,64 +1008,40 @@ const chartData = [
   { month: "2026.4", value: 92 }
 ];
 
-const Home = () => {
-  const heroControls = useAnimation();
-  const articlesControls = useAnimation();
-  const activitiesControls = useAnimation();
-  const chartControls = useAnimation();
-  
-  // 添加加载状态
-  const [articlesLoaded, setArticlesLoaded] = useState(false);
-  const [isLoadingArticles, setIsLoadingArticles] = useState(true);
-  
-  // 使用简单的timeout来触发动画，而不是基于视图，优化加载逻辑
-  useEffect(() => {
-    // 首先加载英雄区域
-    heroControls.start('visible');
-    
-    // 确保文章区域加载完成，增加错误处理和重试机制
-    const loadArticles = () => {
-      setIsLoadingArticles(true);
-      
-      try {
-        articlesControls.start('visible')
-          .then(() => {
-            setArticlesLoaded(true);
-            setIsLoadingArticles(false);
-          })
-          .catch(error => {
-            console.error("文章加载动画出错:", error);
-            // 延迟200ms后重试
-            setTimeout(loadArticles, 200);
-          });
-      } catch (error) {
-        console.error("文章加载异常:", error);
-        // 延迟200ms后重试
-        setTimeout(loadArticles, 200);
-      }
-    };
-    
-    // 在较短的延迟后加载文章
-    const articleTimer = setTimeout(loadArticles, 200);
-    
-    // 在文章加载后加载活动区域
-    const activitiesTimer = setTimeout(() => {
-      activitiesControls.start('visible');
-    }, 600);
-    
-    // 最后加载图表区域
-    const chartTimer = setTimeout(() => {
-      chartControls.start('visible');
-    }, 900);
-    
-    return () => {
-      clearTimeout(articleTimer);
-      clearTimeout(activitiesTimer);
-      clearTimeout(chartTimer);
-    };
-  }, [heroControls, articlesControls, activitiesControls, chartControls]);
+// 项目图标渲染函数
+const renderProjectIcon = (iconType: string) => {
+  switch(iconType) {
+    case 'components':
+      return <FiCode size={20} />;
+    case 'server':
+      return <FiFolderPlus size={20} />;
+    case 'blog':
+      return <FiCalendar size={20} />;
+    default:
+      return <FiCode size={20} />;
+  }
+};
 
-  // 添加卡片翻转状态
+// 添加自定义ArticleLink组件
+interface ArticleLinkProps {
+  to: string;
+  children: React.ReactNode;
+  variants?: any;
+  custom?: any;
+  whileHover?: any;
+}
+
+const ArticleLink: React.FC<ArticleLinkProps> = ({ to, children, ...props }) => (
+  <Link to={to} style={{ textDecoration: 'none' }}>
+    <ArticleCard {...props}>
+      {children}
+    </ArticleCard>
+  </Link>
+);
+
+// 组件
+const Home = () => {
+  // 卡片翻转状态
   const [isFlipped, setIsFlipped] = useState(false);
   
   const handleCardFlip = () => {
@@ -897,7 +1056,7 @@ const Home = () => {
             <HeroContent
               variants={staggerContainerVariants}
               initial="hidden"
-              animate={heroControls}
+              animate="visible"
             >
               <Title variants={fadeInUpVariants}>
                 Hi, I'm adnaan <motion.span 
@@ -960,7 +1119,7 @@ const Home = () => {
                   whileTap={{ scale: 0.95 }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"></path>
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.325.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"></path>
                   </svg>
                 </SocialLink>
                 <SocialLink 
@@ -1077,10 +1236,12 @@ const Home = () => {
           </ScrollIndicator>
         </HeroSection>
         
-        <ContentSection 
-          variants={staggerContainerVariants}
+        {/* 文章部分 */}
+        <ContentSection
           initial="hidden"
-          animate={articlesControls}
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={staggerContainerVariants}
         >
           <SectionTitle variants={fadeInUpVariants}>
             最近更新的文稿
@@ -1093,52 +1254,48 @@ const Home = () => {
             </motion.a>
           </SectionTitle>
           
-
-            <ArticleGrid 
-              variants={staggerContainerVariants}
-              // 确保已加载完成
-              initial={articlesLoaded ? "visible" : "hidden"}
-              animate="visible"
-              // 增加key确保组件在重新渲染时有独立标识
-              key="article-grid"
-            >
-              {mockArticles.map((article, index) => (
-                <ArticleCard 
-                  to={`/blog/${article.id}`} 
-                  key={article.id}
-                  variants={cardVariants}
-                  whileHover={{ y: -5 }}
-                  custom={index}
-                >
-                  <ArticleImage>
-                    <img 
-                      src={article.image} 
-                      alt={article.title} 
-                      onError={(e) => {
-                        e.currentTarget.src = "https://img0.baidu.com/it/u=2075518181,1224688219&fm=253&fmt=auto&app=138&f=JPEG?w=617&h=449";
-                      }}
-                    />
-                  </ArticleImage>
-                  <ArticleContent>
-                    <ArticleTitle>{article.title}</ArticleTitle>
-                    <ArticleMeta>
-                      <span><FiCalendar size={12} /> {article.date}</span>
-                      <span><FiClock size={12} /> {article.views} 次阅读</span>
-                    </ArticleMeta>
-                    <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
-                    <ReadMore>
-                      阅读更多 <FiArrowRight size={12} />
-                    </ReadMore>
-                  </ArticleContent>
-                </ArticleCard>
-              ))}
-            </ArticleGrid>
+          <ArticleGrid 
+            variants={staggerContainerVariants}
+          >
+            {mockArticles.map((article, index) => (
+              <ArticleLink 
+                to={`/blog/${article.id}`} 
+                key={article.id}
+                variants={cardVariants}
+                whileHover={{ y: -5 }}
+                custom={index}
+              >
+                <ArticleImage>
+                  <img 
+                    src={article.image} 
+                    alt={article.title} 
+                    onError={(e) => {
+                      e.currentTarget.src = "https://img0.baidu.com/it/u=2075518181,1224688219&fm=253&fmt=auto&app=138&f=JPEG?w=617&h=449";
+                    }}
+                  />
+                </ArticleImage>
+                <ArticleContent>
+                  <ArticleTitle>{article.title}</ArticleTitle>
+                  <ArticleMeta>
+                    <span><FiCalendar size={12} /> {article.date}</span>
+                    <span><FiClock size={12} /> {article.views} 次阅读</span>
+                  </ArticleMeta>
+                  <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
+                  <ReadMore>
+                    阅读更多 <FiArrowRight size={12} />
+                  </ReadMore>
+                </ArticleContent>
+              </ArticleLink>
+            ))}
+          </ArticleGrid>
         </ContentSection>
         
+        {/* 活动部分 */}
         <ActivitySection 
-          variants={staggerContainerVariants}
           initial="hidden"
-          animate={activitiesControls}
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={staggerContainerVariants}
         >
           <SectionTitle variants={fadeInUpVariants}>
             最近发生的事
@@ -1151,7 +1308,9 @@ const Home = () => {
             </motion.a>
           </SectionTitle>
           
-          <ActivityList variants={staggerContainerVariants}>
+          <ActivityList 
+            variants={staggerContainerVariants}
+          >
             {mockActivities.map((activity, index) => (
               <ActivityItem 
                 key={activity.id}
@@ -1173,10 +1332,12 @@ const Home = () => {
           </ActivityList>
         </ActivitySection>
         
+        {/* 图表部分 */}
         <ChartSection 
-          variants={staggerContainerVariants}
           initial="hidden"
-          animate={chartControls}
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={staggerContainerVariants}
         >
           <SectionTitle variants={fadeInUpVariants}>
             热力图
@@ -1194,8 +1355,6 @@ const Home = () => {
                   height={item.value}
                   custom={index}
                   variants={barVariants}
-                  initial="hidden"
-                  animate="visible"
                   whileHover={{ scaleY: 1.2, opacity: 1 }}
                 />
               ))}
@@ -1208,29 +1367,67 @@ const Home = () => {
           </ChartContainer>
         </ChartSection>
         
-        <SpecialSectionHeader
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
+        {/* 项目部分 */}
+        <ProjectsSection
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={staggerContainerVariants}
         >
-          <motion.h3
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            viewport={{ once: true }}
-          >
-            风向标
-          </motion.h3>
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            去到别处看看？
-          </motion.p>
-        </SpecialSectionHeader>
+          <SectionTitle variants={fadeInUpVariants}>
+            开源项目
+            <motion.a 
+              href="/projects" 
+              whileHover={{ x: 5 }}
+              variants={fadeInUpVariants}
+            >
+              查看全部 <FiArrowRight size={12} />
+            </motion.a>
+          </SectionTitle>
+          
+          <ProjectsGrid>
+            {mockProjects.map((project, index) => (
+              <ProjectCard
+                key={project.id}
+                variants={projectVariants}
+                custom={index}
+                whileHover={{ y: -5 }}
+              >
+                <ProjectHeader>
+                  <ProjectTitle>{project.title}</ProjectTitle>
+                  <ProjectIcon>
+                    {renderProjectIcon(project.icon)}
+                  </ProjectIcon>
+                </ProjectHeader>
+                
+                <ProjectContent>
+                  <ProjectDescription>{project.description}</ProjectDescription>
+                  
+                  <ProjectMeta>
+                    <ProjectLanguage color={project.languageColor}>
+                      {project.language}
+                    </ProjectLanguage>
+                    <ProjectMetaItem>
+                      <FiStar size={14} /> {project.stars}
+                    </ProjectMetaItem>
+                    <ProjectMetaItem>
+                      <FiGithub size={14} /> {project.forks}
+                    </ProjectMetaItem>
+                  </ProjectMeta>
+                  
+                  <ProjectLinks>
+                    <ProjectLink href={project.repoUrl} target="_blank" rel="noopener noreferrer" className="primary">
+                      <FiGithub size={14} /> 查看源码
+                    </ProjectLink>
+                    <ProjectLink href={project.demoUrl} target="_blank" rel="noopener noreferrer" className="secondary">
+                      <FiExternalLink size={14} /> 演示
+                    </ProjectLink>
+                  </ProjectLinks>
+                </ProjectContent>
+              </ProjectCard>
+            ))}
+          </ProjectsGrid>
+        </ProjectsSection>
       </PageContainer>
     </>
   );

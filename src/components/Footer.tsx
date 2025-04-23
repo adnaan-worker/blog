@@ -1,73 +1,209 @@
-import React from 'react';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiGithub, FiMail, FiRss } from 'react-icons/fi';
+import { FiGithub, FiMail, FiRss, FiHeart } from 'react-icons/fi';
+import React from 'react';
 
 // 使用motion组件增强动画效果
 const MotionFooter = motion.footer;
-const MotionDiv = motion.div;
 
 const FooterContainer = styled(MotionFooter)`
   width: 100%;
-  padding: 2rem 0 1rem;
+  padding: 3rem 0 1.5rem;
   background: var(--bg-primary);
-  margin-top: auto;
+  margin-top: 3rem;
   position: relative;
+  border-top: 1px solid var(--border-color);
 `;
 
 const FooterContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 1.5rem;
 `;
 
-const FooterLinks = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  margin-bottom: 1.5rem;
+const FooterTop = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
   
   @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 0.75rem;
+    grid-template-columns: 1fr;
   }
 `;
 
-const LinkGroup = styled(MotionDiv)`
+const FooterLeft = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+`;
+
+// 使用自定义组件包装
+const MotionLinkContainer = styled(motion.div)`
+  display: inline-block;
+`;
+
+const StyledLink = styled(Link)`
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
+  width: fit-content;
   
-  a, span {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    position: relative;
-    &:hover {
-      color: var(--accent-color);
-    }
+  &:hover {
+    color: var(--accent-color);
+    transform: translateX(3px);
   }
   
-  span {
-    color: var(--text-secondary);
-    opacity: 0.6;
-    margin-right: 0.2rem;
-  }
-  
-  a:not(:last-child)::after {
+  &::before {
     content: '';
-    position: absolute;
-    right: -0.7rem;
-    top: 50%;
-    transform: translateY(-50%);
     width: 4px;
     height: 4px;
+    background-color: var(--accent-color);
+    opacity: 0.6;
     border-radius: 50%;
-    background-color: var(--border-color);
+  }
+`;
+
+// 自定义Logo组件
+const LogoContainer = styled(motion.div)`
+  display: inline-block;
+`;
+
+const StyledLogo = styled(Link)`
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  
+  &:hover {
+    color: var(--accent-color);
+  }
+`;
+
+// 新的FooterLink组件
+interface FooterLinkProps {
+  to: string;
+  children: React.ReactNode;
+  variants?: any;
+}
+
+const FooterLink: React.FC<FooterLinkProps> = ({ to, children, variants, ...props }) => (
+  <MotionLinkContainer variants={variants} {...props}>
+    <StyledLink to={to}>
+      {children}
+    </StyledLink>
+  </MotionLinkContainer>
+);
+
+// 新的FooterLogo组件
+interface FooterLogoProps {
+  to: string;
+  children: React.ReactNode;
+  variants?: any;
+}
+
+const FooterLogo: React.FC<FooterLogoProps> = ({ to, children, variants, ...props }) => (
+  <LogoContainer variants={variants} {...props}>
+    <StyledLogo to={to}>
+      {children}
+    </StyledLogo>
+  </LogoContainer>
+);
+
+const FooterDescription = styled(motion.p)`
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 420px;
+`;
+
+const FooterRight = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+`;
+
+const FooterLinks = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const FooterLinkTitle = styled(motion.h4)`
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  position: relative;
+  
+  &:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -0.25rem;
+    width: 24px;
+    height: 2px;
+    background: var(--accent-color);
+    border-radius: 4px;
+  }
+`;
+
+const FooterExternalLink = styled(motion.a)`
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  
+  &:hover {
+    color: var(--accent-color);
+    transform: translateX(3px);
+  }
+  
+  &::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background-color: var(--accent-color);
+    opacity: 0.6;
+    border-radius: 50%;
+  }
+`;
+
+const SocialLinks = styled.div`
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 0.5rem;
+`;
+
+const SocialLink = styled(motion.a)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: var(--accent-color);
+    background-color: rgba(81, 131, 245, 0.1);
+    transform: translateY(-2px);
   }
 `;
 
@@ -75,24 +211,22 @@ const FooterBottom = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  border-top: 1px solid var(--border-color);
   padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
   
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 1rem;
   }
 `;
 
 const Copyright = styled.div`
   display: flex;
-  gap: 0.75rem;
-  font-size: 0.82rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
-  opacity: 0.8;
   
   a {
     color: var(--text-secondary);
@@ -101,27 +235,14 @@ const Copyright = styled.div`
       color: var(--accent-color);
     }
   }
-  
-  span {
-    position: relative;
-    &:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      right: -0.5rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 3px;
-      border-radius: 50%;
-      background-color: var(--border-color);
-    }
-  }
 `;
 
 const PoweredBy = styled.div`
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
-  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   
   a {
     color: var(--accent-color);
@@ -130,71 +251,6 @@ const PoweredBy = styled.div`
     &:hover {
       text-decoration: underline;
     }
-  }
-`;
-
-const DirectorySection = styled.div`
-  margin-bottom: 2rem;
-`;
-
-const DirectoryTitle = styled(motion.h3)`
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  color: var(--text-primary);
-  font-weight: 600;
-`;
-
-const DirectoryGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 0.75rem;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-`;
-
-const DirectoryItem = styled(motion(Link))`
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  transition: color 0.25s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  
-  &:hover {
-    color: var(--accent-color);
-  }
-  
-  &::before {
-    content: '•';
-    color: var(--accent-color);
-    opacity: 0.7;
-  }
-`;
-
-const SocialLinks = styled.div`
-  display: flex;
-  gap: 0.8rem;
-  margin-top: 1rem;
-`;
-
-const SocialLink = styled(motion.a)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
-  
-  &:hover {
-    color: var(--accent-color);
-    border-color: var(--accent-color);
-    transform: translateY(-2px);
   }
 `;
 
@@ -210,7 +266,7 @@ const containerVariants = {
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
@@ -230,83 +286,100 @@ const Footer = () => {
       variants={containerVariants}
     >
       <FooterContent>
-        <DirectorySection>
-          <DirectoryTitle variants={itemVariants}>风向标</DirectoryTitle>
-          <DirectoryGrid>
-            <DirectoryItem to="/blog" variants={itemVariants} whileHover={{ x: 3 }}>文稿</DirectoryItem>
-            <DirectoryItem to="/notes" variants={itemVariants} whileHover={{ x: 3 }}>手记</DirectoryItem>
-            <DirectoryItem to="/timeline" variants={itemVariants} whileHover={{ x: 3 }}>度过的时光呀</DirectoryItem>
-            <DirectoryItem to="/friends" variants={itemVariants} whileHover={{ x: 3 }}>朋友们</DirectoryItem>
-            <DirectoryItem to="/thoughts" variants={itemVariants} whileHover={{ x: 3 }}>写下一点思考</DirectoryItem>
-            <DirectoryItem to="/projects" variants={itemVariants} whileHover={{ x: 3 }}>看看我做些啥</DirectoryItem>
-            <DirectoryItem to="/words" variants={itemVariants} whileHover={{ x: 3 }}>记录下一言</DirectoryItem>
-            <DirectoryItem to="/blog" variants={itemVariants} whileHover={{ x: 3 }}>跃迁</DirectoryItem>
-          </DirectoryGrid>
-        </DirectorySection>
-        
-        <FooterLinks>
-          <LinkGroup variants={itemVariants}>
-            <span>关于</span>
-            <Link to="/about">关于本站</Link>
-            <Link to="/about/me">关于我</Link>
-            <Link to="/projects">关于此项目</Link>
-          </LinkGroup>
+        <FooterTop>
+          <FooterLeft>
+            <motion.div variants={itemVariants}>
+              <FooterLogo to="/">
+                adnaan's Blog
+              </FooterLogo>
+            </motion.div>
+            
+            <motion.div variants={itemVariants}>
+              <FooterDescription>
+                分享编程知识、设计理念与生活感悟。一个记录思考与成长的空间，希望能为你带来一些启发和帮助。
+              </FooterDescription>
+            </motion.div>
+            
+            <SocialLinks>
+              <SocialLink 
+                href="https://github.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                variants={itemVariants}
+                whileHover={{ y: -2, scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="GitHub"
+              >
+                <FiGithub size={18} />
+              </SocialLink>
+              <SocialLink 
+                href="mailto:example@example.com"
+                variants={itemVariants}
+                whileHover={{ y: -2, scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Email"
+              >
+                <FiMail size={18} />
+              </SocialLink>
+              <SocialLink 
+                href="/rss.xml"
+                variants={itemVariants}
+                whileHover={{ y: -2, scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="RSS Feed"
+              >
+                <FiRss size={18} />
+              </SocialLink>
+            </SocialLinks>
+          </FooterLeft>
           
-          <LinkGroup variants={itemVariants}>
-            <span>更多</span>
-            <Link to="/timeline">时间线</Link>
-            <Link to="/friends">友链</Link>
-            <Link to="/analytics">埋点监控</Link>
-          </LinkGroup>
-          
-          <LinkGroup variants={itemVariants}>
-            <span>联系</span>
-            <Link to="/message">写留言</Link>
-            <a href="mailto:example@example.com">发邮件</a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer">GitHub</a>
-          </LinkGroup>
-          
-          <SocialLinks>
-            <SocialLink 
-              href="https://github.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              variants={itemVariants}
-              whileHover={{ y: -2, scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiGithub size={16} />
-            </SocialLink>
-            <SocialLink 
-              href="mailto:example@example.com"
-              variants={itemVariants}
-              whileHover={{ y: -2, scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiMail size={16} />
-            </SocialLink>
-            <SocialLink 
-              href="/rss.xml"
-              variants={itemVariants}
-              whileHover={{ y: -2, scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiRss size={16} />
-            </SocialLink>
-          </SocialLinks>
-        </FooterLinks>
+          <FooterRight>
+            <FooterLinks>
+              <motion.div variants={itemVariants}>
+                <FooterLinkTitle>导航</FooterLinkTitle>
+              </motion.div>
+              <FooterLink to="/" variants={itemVariants}>首页</FooterLink>
+              <FooterLink to="/blog" variants={itemVariants}>博客</FooterLink>
+              <FooterLink to="/notes" variants={itemVariants}>手记</FooterLink>
+              <FooterLink to="/projects" variants={itemVariants}>项目</FooterLink>
+              <FooterLink to="/about" variants={itemVariants}>关于我</FooterLink>
+            </FooterLinks>
+            
+            <FooterLinks>
+              <motion.div variants={itemVariants}>
+                <FooterLinkTitle>资源</FooterLinkTitle>
+              </motion.div>
+              <FooterLink to="/timeline" variants={itemVariants}>时间线</FooterLink>
+              <FooterLink to="/friends" variants={itemVariants}>友情链接</FooterLink>
+              <FooterExternalLink 
+                href="/sitemap.xml" 
+                target="_blank"
+                variants={itemVariants}
+              >
+                网站地图
+              </FooterExternalLink>
+              <FooterExternalLink 
+                href="/rss.xml" 
+                target="_blank"
+                variants={itemVariants}
+              >
+                RSS订阅
+              </FooterExternalLink>
+            </FooterLinks>
+          </FooterRight>
+        </FooterTop>
         
         <FooterBottom>
           <Copyright>
-            <span>© {new Date().getFullYear()} Innei</span>
-            <a href="/rss.xml">RSS</a>
-            <a href="/sitemap.xml">站点地图</a>
-            <a href="/feed">订阅</a>
-            <span>Stay hungry. Stay foolish.</span>
+            <span>© {new Date().getFullYear()} ByteBlog</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              用 <FiHeart style={{ color: '#ff6b6b' }} size={12} /> 制作
+            </span>
           </Copyright>
           
           <PoweredBy>
-            Powered by <a href="#" target="_blank" rel="noopener noreferrer">Mix Space</a>&nbsp;&&nbsp;<a href="#" target="_blank" rel="noopener noreferrer">白い</a> | <a href="#" target="_blank" rel="noopener noreferrer">萌ICP备20236136号</a>
+            由 <a href="#" target="_blank" rel="noopener noreferrer">React</a> 强力驱动 
+            | <a href="#" target="_blank" rel="noopener noreferrer">ICP备20236136号</a>
           </PoweredBy>
         </FooterBottom>
       </FooterContent>

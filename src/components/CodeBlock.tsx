@@ -1,6 +1,5 @@
-import { css } from '@emotion/react';
 import styled from '@emotion/styled';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FiCopy, FiCheck } from 'react-icons/fi';
 
 const Container = styled.div`
