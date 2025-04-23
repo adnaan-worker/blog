@@ -110,11 +110,6 @@ body {
   overflow-x: hidden;
 }
 
-/* body {
-  position: relative;
-  height: auto;
-} */
-
 #root {
   min-height: 100vh;
   width: 100%;
@@ -236,7 +231,7 @@ code, pre, .code {
 }
 
 .header.scrolled {
-  background: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.5);
   backdrop-filter: blur(32px);
   box-shadow: 0 6px 32px 0 rgba(81,131,245,0.10);
 }

@@ -60,9 +60,19 @@ const MusicPlayerPanel = styled(motion.div)`
   overflow: hidden;
   
   @media (max-width: 768px) {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
     width: 100%;
-    max-width: 300px;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
+    max-height: 70vh;
+    overflow-y: auto;
     padding: 1rem;
+    z-index: 200;
   }
   
   &::before {
@@ -118,6 +128,10 @@ const MusicList = styled.div`
   margin: 0.8rem 0;
   max-height: 180px;
   overflow-y: auto;
+  
+  @media (max-width: 768px) {
+    max-height: 200px;
+  }
   
   &::-webkit-scrollbar {
     width: 5px;
@@ -190,6 +204,16 @@ const PlayerControls = styled.div`
   gap: 1.2rem;
   margin: 1.2rem 0 1rem;
   padding: 0.5rem 0;
+  
+  @media (max-width: 768px) {
+    margin: 1.5rem 0 1.2rem;
+    gap: 2rem;
+    
+    button.play-pause {
+      width: 56px;
+      height: 56px;
+    }
+  }
   
   button {
     background: transparent;
@@ -299,6 +323,16 @@ const NowPlayingInfo = styled.div`
     color: var(--text-secondary);
     margin: 0.2rem 0 0;
   }
+  
+  @media (max-width: 768px) {
+    .track-title {
+      font-size: 1.1rem;
+    }
+    
+    .track-artist {
+      font-size: 0.9rem;
+    }
+  }
 `;
 
 // 歌词容器组件
@@ -364,6 +398,51 @@ const FeatureToggleButton = styled.button`
     width: 14px;
     height: 14px;
     margin-right: 5px;
+  }
+`;
+
+// 歌词气泡组件
+const LyricBubble = styled(motion.div)`
+  position: fixed;
+  bottom: 2.3rem;
+  right: 5.8rem;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-hover, #4a76e8));
+  color: white;
+  padding: 0.9rem 1.8rem;
+  border-radius: 24px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  max-width: 300px;
+  text-align: center;
+  z-index: 150;
+  pointer-events: none;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  
+  @media (max-width: 768px) {
+    bottom: 1.8rem; 
+    right: 4.5rem;
+    max-width: 200px;
+    padding: 0.7rem 1.2rem;
+    font-size: 0.9rem;
+    border-radius: 18px;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -10px;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid var(--accent-color-hover, #4a76e8);
+    filter: drop-shadow(2px 0 2px rgba(0, 0, 0, 0.1));
   }
 `;
 
@@ -503,6 +582,7 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
   const [volume, setVolume] = useState(0.7);
   const [showLyrics, setShowLyrics] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showLyricBubble, setShowLyricBubble] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -647,11 +727,38 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
   // 获取当前歌词
   const currentLyric = getCurrentLyric();
   
+  // 处理当前歌词显示逻辑
+  useEffect(() => {
+    if (isPlaying && currentLyric) {
+      setShowLyricBubble(true);
+      
+      const hideTimeout = setTimeout(() => {
+        setShowLyricBubble(false);
+      }, 4000);
+      
+      return () => clearTimeout(hideTimeout);
+    } else if (!isPlaying) {
+      setShowLyricBubble(false);
+    }
+  }, [currentLyric, isPlaying]);
+  
+  // 修改面板关闭处理，确保不影响播放状态
+  const handlePanelClose = () => {
+    setIsMusicOpen(false);
+    // 如果正在播放，延迟显示气泡
+    if (isPlaying && currentLyric) {
+      setTimeout(() => {
+        setShowLyricBubble(true);
+      }, 300);
+    }
+  };
+  
   return (
     <ToolbarContainer>
       <AnimatePresence>
         {isMusicOpen && (
           <MusicPlayerPanel
+            key="music-player-panel"
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -659,7 +766,7 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
           >
             <PlayerHeader>
               <h4>音乐播放器</h4>
-              <button onClick={() => setIsMusicOpen(false)}>
+              <button onClick={handlePanelClose}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -678,7 +785,7 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
                 <MusicList>
                   {musicList.map(track => (
                     <MusicItem 
-                      key={track.id} 
+                      key={`track-${track.id}`} 
                       isActive={track.id === currentTrack.id}
                       onClick={() => playTrack(track)}
                     >
@@ -713,7 +820,7 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
                 <LyricsContainer>
                   {currentTrack.lyrics?.map((line, index) => (
                     <div 
-                      key={index} 
+                      key={`lyric-${index}-${line.time}`} 
                       className={`lyrics-line ${currentLyric?.text === line.text ? 'active' : ''}`}
                     >
                       {line.text}
@@ -821,6 +928,19 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
               </FeatureToggleButton>
             </div>
           </MusicPlayerPanel>
+        )}
+        
+        {/* 添加歌词气泡 */}
+        {showLyricBubble && isPlaying && (
+          <LyricBubble
+            key="lyric-bubble"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.3 }}
+          >
+            {currentLyric?.text}
+          </LyricBubble>
         )}
       </AnimatePresence>
       
