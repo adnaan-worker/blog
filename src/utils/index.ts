@@ -1,0 +1,122 @@
+// 导出HTTP请求工具
+export { default as http } from './http';
+export { HttpRequest } from './http';
+
+// 导出API封装
+export { default as API } from './api';
+
+// 导出类型定义
+export * from './types';
+
+// 导出一些常用的工具函数
+export const formatDate = (date: Date | string | number, format: string = 'YYYY-MM-DD HH:mm:ss'): string => {
+  const d = new Date(date);
+  
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  
+  return format
+    .replace('YYYY', String(year))
+    .replace('MM', month)
+    .replace('DD', day)
+    .replace('HH', hours)
+    .replace('mm', minutes)
+    .replace('ss', seconds);
+};
+
+// 防抖函数
+export const debounce = <T extends (...args: any[]) => any>(
+  fn: T,
+  delay: number = 300
+): ((...args: Parameters<T>) => void) => {
+  let timer: number | null = null;
+  
+  return function(...args: Parameters<T>) {
+    if (timer) clearTimeout(timer);
+    
+    timer = window.setTimeout(() => {
+      fn(...args);
+      timer = null;
+    }, delay);
+  };
+};
+
+// 节流函数
+export const throttle = <T extends (...args: any[]) => any>(
+  fn: T,
+  delay: number = 300
+): ((...args: Parameters<T>) => void) => {
+  let lastTime = 0;
+  
+  return function(...args: Parameters<T>) {
+    const now = Date.now();
+    
+    if (now - lastTime >= delay) {
+      fn(...args);
+      lastTime = now;
+    }
+  };
+};
+
+// 本地存储封装
+export const storage = {
+  // localStorage
+  local: {
+    get<T>(key: string): T | null {
+      const value = localStorage.getItem(key);
+      if (value) {
+        try {
+          return JSON.parse(value);
+        } catch {
+          return value as unknown as T;
+        }
+      }
+      return null;
+    },
+    set(key: string, value: any): void {
+      if (typeof value === 'object') {
+        localStorage.setItem(key, JSON.stringify(value));
+      } else {
+        localStorage.setItem(key, value);
+      }
+    },
+    remove(key: string): void {
+      localStorage.removeItem(key);
+    },
+    clear(): void {
+      localStorage.clear();
+    }
+  },
+  
+  // sessionStorage
+  session: {
+    get<T>(key: string): T | null {
+      const value = sessionStorage.getItem(key);
+      if (value) {
+        try {
+          return JSON.parse(value);
+        } catch {
+          return value as unknown as T;
+        }
+      }
+      return null;
+    },
+    set(key: string, value: any): void {
+      if (typeof value === 'object') {
+        sessionStorage.setItem(key, JSON.stringify(value));
+      } else {
+        sessionStorage.setItem(key, value);
+      }
+    },
+    remove(key: string): void {
+      sessionStorage.removeItem(key);
+    },
+    clear(): void {
+      sessionStorage.clear();
+    }
+  }
+}; 
