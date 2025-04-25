@@ -27,7 +27,7 @@ export const staggerContainerVariants = {
 // 页面容器
 export const PageContainer = styled.div`
   width: 100%;
-  max-width: 1100px;
+  // max-width: 1100px;
   margin: 0 auto;
   padding: 0 1rem;
 `;

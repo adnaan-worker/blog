@@ -619,7 +619,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
           {/* 用户头像 */}
           <div ref={userDropdownRef} style={{ position: 'relative' }}>
             <Avatar onClick={toggleUserDropdown}>
-              <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="用户头像" />
+              <img src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30" alt="用户头像" />
             </Avatar>
             
             {userDropdownOpen && (

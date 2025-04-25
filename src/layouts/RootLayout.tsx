@@ -24,7 +24,6 @@ const MainContainer = styled.div`
 const Content = styled(motion.main)`
   flex: 1;
   width: 100%;
-  max-width: var(--max-width);
   margin: 0 auto;
   padding: 2rem 1.5rem;
   overflow: visible;

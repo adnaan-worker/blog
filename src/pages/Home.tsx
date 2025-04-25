@@ -1140,7 +1140,7 @@ const Home = () => {
               <ProfileCard className={isFlipped ? 'flipped' : ''} onClick={handleCardFlip}>
                 <CardFront className="card-face">
                   <ProfileImage>
-                    <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="Adnaan" />
+                    <img src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100" alt="Adnaan" />
                   </ProfileImage>
                   <ProfileName>adnaan</ProfileName>
                   <ProfileTitle>NodeJS 全栈开发者 & 设计爱好者</ProfileTitle>
