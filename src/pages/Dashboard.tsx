@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
 import { FiEdit2, FiEye, FiTrash2, FiPlus, FiSearch, FiFilter, FiCalendar, FiClock, FiTag, FiHeart, FiMessageSquare } from 'react-icons/fi';
 import { PageContainer } from '../components/BlogComponents';
+import { Link, useNavigate } from 'react-router-dom';
 
 // 定义样式组件
 const DashboardContainer = styled.div`
@@ -348,6 +349,7 @@ const Dashboard: React.FC = () => {
   const [articles] = useState(DUMMY_ARTICLES);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage] = useState(1);
+  const navigate = useNavigate();
   
   // 处理搜索输入变化
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -360,6 +362,11 @@ const Dashboard: React.FC = () => {
       alert(`将删除文章ID: ${id}`);
       // 这里添加删除文章的逻辑
     }
+  };
+
+  // 导航到创建文章页面
+  const navigateToCreateArticle = () => {
+    navigate('/create-article');
   };
   
   return (
@@ -392,7 +399,7 @@ const Dashboard: React.FC = () => {
               <FilterButton>
                 <FiFilter size={16} />
               </FilterButton>
-              <Button primary>
+              <Button primary onClick={navigateToCreateArticle}>
                 <FiPlus size={16} /> 新建文章
               </Button>
             </ButtonGroup>

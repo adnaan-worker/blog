@@ -15,6 +15,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Favorites = lazy(() => import('./pages/Favorites'));
 const Settings = lazy(() => import('./pages/Settings'));
+const CreateArticle = lazy(() => import('./pages/CreateArticle'));
 
 // 页面加载组件
 const PageLoading = () => (
@@ -102,6 +103,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoading />}>
             <Dashboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/create-article',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <CreateArticle />
           </Suspense>
         ),
       },
