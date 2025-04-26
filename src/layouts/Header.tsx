@@ -607,6 +607,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
                 exit="exit"
                 variants={dropdownVariants}
               >
+                <DropdownItem to="/ui-examples" onClick={handleLinkClick}><FiInfo size={16} />组件使用示例</DropdownItem>
                 <DropdownItem to="/about" onClick={handleLinkClick}><FiInfo size={16} />关于我</DropdownItem>
                 <DropdownItem to="/contact" onClick={handleLinkClick}><FiMail size={16} />联系方式</DropdownItem>
                 <DropdownItem to="/code" onClick={handleLinkClick}><FiCode size={16} />开发字体</DropdownItem>

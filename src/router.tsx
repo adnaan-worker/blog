@@ -16,6 +16,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Favorites = lazy(() => import('./pages/Favorites'));
 const Settings = lazy(() => import('./pages/Settings'));
 const CreateArticle = lazy(() => import('./pages/CreateArticle'));
+const UIExamples = lazy(() => import('./pages/UIExamples'));
 
 // 页面加载组件
 const PageLoading = () => (
@@ -130,7 +131,22 @@ const router = createBrowserRouter([
           </Suspense>
         ),
       },
-      // 未来可以在这里添加更多路由
+      {
+        path: 'ui-examples',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <UIExamples />
+          </Suspense>
+        ),
+      },
+      {
+        path: '*',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <NotFound />
+          </Suspense>
+        ),
+      },
     ],
   },
 ]);
