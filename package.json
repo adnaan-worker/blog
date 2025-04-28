@@ -24,6 +24,7 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.8.4",
     "framer-motion": "^12.7.4",
+    "live2d-widget": "^3.1.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",

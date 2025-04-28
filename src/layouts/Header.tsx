@@ -632,7 +632,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               >
                 <UserDropdownHeader>
                   <Avatar>
-                    <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="用户头像" />
+                    <img src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30" alt="用户头像" />
                   </Avatar>
                   <UserInfo>
                     <UserName>Adnaan</UserName>
@@ -667,7 +667,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
         {/* 移动端菜单按钮和头像 */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <MobileAvatar onClick={toggleUserDropdown}>
-            <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="用户头像" />
+            <img src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30" alt="用户头像" />
           </MobileAvatar>
           
           <MenuButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -695,7 +695,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               width: '100%'
             }}>
               <Avatar style={{ width: '42px', height: '42px', margin: '0' }}>
-                <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="用户头像" />
+                <img src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30" alt="用户头像" />
               </Avatar>
               <div style={{ marginLeft: '1rem' }}>
                 <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Adnaan</div>

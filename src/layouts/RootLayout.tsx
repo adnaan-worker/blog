@@ -4,6 +4,7 @@ import styled from '@emotion/styled';
 import Header from './Header';
 import Footer from './Footer';
 import FloatingToolbar from '../components/FloatingToolbar';
+import Live2DModel from '../components/Live2DModel';
 import { ThemeProvider } from '../context/ThemeContext';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -218,6 +219,9 @@ const RootLayout = () => {
         
         {/* 悬浮工具栏 */}
         <FloatingToolbar scrollPosition={scrollPosition} />
+
+        {/* Live2D模型 */}
+        <Live2DModel />
       </MainContainer>
     </ThemeProvider>
   );
