@@ -2,8 +2,18 @@ import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiArrowRight, FiCalendar, FiClock, FiMessageCircle, FiGithub, FiMail, FiExternalLink, FiStar, FiFolderPlus, FiCode } from 'react-icons/fi';
-
+import {
+  FiArrowRight,
+  FiCalendar,
+  FiClock,
+  FiMessageCircle,
+  FiGithub,
+  FiMail,
+  FiExternalLink,
+  FiStar,
+  FiFolderPlus,
+  FiCode,
+} from 'react-icons/fi';
 
 // 使用motion直接访问组件
 const MotionDiv = motion.div;
@@ -15,11 +25,11 @@ const MotionSpan = motion.span;
 // 动画变体定义
 const fadeInUpVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] }
-  }
+    transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] },
+  },
 };
 
 const staggerContainerVariants: Variants = {
@@ -27,22 +37,22 @@ const staggerContainerVariants: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 const iconVariants: Variants = {
   hidden: { scale: 0, opacity: 0 },
-  visible: { 
-    scale: 1, 
-    opacity: 1, 
-    transition: { 
-      type: "spring", 
-      stiffness: 300, 
-      damping: 15 
-    } 
-  }
+  visible: {
+    scale: 1,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 15,
+    },
+  },
 };
 
 const PageContainer = styled.div`
@@ -58,10 +68,10 @@ const HeroSection = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
-  
+
   @media (max-width: 768px) {
     min-height: 100vh;
-   
+
     padding-bottom: 2rem;
   }
 `;
@@ -73,7 +83,7 @@ const Hero = styled(MotionDiv)`
   justify-content: space-between;
   position: relative;
   flex: 1;
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     gap: 2rem;
@@ -85,7 +95,7 @@ const HeroContent = styled(MotionDiv)`
   max-width: 800px;
   position: relative;
   z-index: 1;
-  
+
   @media (max-width: 768px) {
     max-width: 100%;
     text-align: center;
@@ -99,7 +109,7 @@ const HeroImage = styled(MotionDiv)`
   position: relative;
   z-index: 1;
   perspective: 1000px;
-  
+
   @media (max-width: 768px) {
     width: 280px;
     height: 380px;
@@ -117,12 +127,12 @@ const ProfileCard = styled.div`
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(81, 131, 245, 0.2);
   cursor: pointer;
-  
+
   &:hover {
     transform: translateY(-10px);
     box-shadow: 0 15px 35px rgba(81, 131, 245, 0.3);
   }
-  
+
   &.flipped {
     transform: rotateY(180deg);
   }
@@ -139,31 +149,31 @@ const CardFace = styled.div`
 `;
 
 const CardFront = styled(CardFace)`
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(81,131,245,0.1) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(81, 131, 245, 0.1) 100%);
   border: 1px solid rgba(81, 131, 245, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 1.5rem 1rem;
   transform: rotateY(0deg);
-  
+
   [data-theme='dark'] & {
-    background: linear-gradient(135deg, rgba(30,30,30,0.5) 0%, rgba(81,131,245,0.15) 100%);
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.5) 0%, rgba(81, 131, 245, 0.15) 100%);
     border: 1px solid rgba(81, 131, 245, 0.2);
   }
 `;
 
 const CardBack = styled(CardFace)`
-  background: linear-gradient(135deg, rgba(81,131,245,0.1) 0%, rgba(255,255,255,0.1) 100%);
+  background: linear-gradient(135deg, rgba(81, 131, 245, 0.1) 0%, rgba(255, 255, 255, 0.1) 100%);
   border: 1px solid rgba(81, 131, 245, 0.1);
   transform: rotateY(180deg);
   display: flex;
   flex-direction: column;
   padding: 1.2rem 1rem;
   overflow-y: auto;
-  
+
   [data-theme='dark'] & {
-    background: linear-gradient(135deg, rgba(81,131,245,0.15) 0%, rgba(30,30,30,0.5) 100%);
+    background: linear-gradient(135deg, rgba(81, 131, 245, 0.15) 0%, rgba(30, 30, 30, 0.5) 100%);
     border: 1px solid rgba(81, 131, 245, 0.2);
   }
 `;
@@ -176,7 +186,7 @@ const ProfileImage = styled.div`
   border: 3px solid rgba(81, 131, 245, 0.3);
   margin-bottom: 1.2rem;
   flex-shrink: 0;
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -215,15 +225,15 @@ const ProfileInfoItem = styled.div`
   font-size: 0.85rem;
   padding-bottom: 0.4rem;
   border-bottom: 1px dashed var(--border-color);
-  
+
   &:last-child {
     border-bottom: none;
   }
-  
+
   span:first-of-type {
     color: var(--text-secondary);
   }
-  
+
   span:last-of-type {
     color: var(--text-primary);
     font-weight: 500;
@@ -236,7 +246,7 @@ const CardTitle = styled.h4`
   color: var(--text-primary);
   position: relative;
   padding-bottom: 0.4rem;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -263,7 +273,7 @@ const SkillItem = styled.span`
   background: rgba(81, 131, 245, 0.1);
   border-radius: 4px;
   color: var(--accent-color);
-  
+
   [data-theme='dark'] & {
     background: rgba(81, 131, 245, 0.15);
   }
@@ -279,7 +289,7 @@ const CardFlipHint = styled.div`
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  
+
   svg {
     width: 14px;
     height: 14px;
@@ -293,24 +303,40 @@ const Title = styled(MotionH1)`
   display: flex;
   align-items: center;
   gap: 10px;
-  
+
   .wave {
     display: inline-block;
     animation: wave 2.5s ease-in-out infinite;
     transform-origin: 70% 70%;
   }
-  
+
   @keyframes wave {
-    0% { transform: rotate(0deg); }
-    10% { transform: rotate(14deg); }
-    20% { transform: rotate(-8deg); }
-    30% { transform: rotate(14deg); }
-    40% { transform: rotate(-4deg); }
-    50% { transform: rotate(10deg); }
-    60% { transform: rotate(0deg); }
-    100% { transform: rotate(0deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    10% {
+      transform: rotate(14deg);
+    }
+    20% {
+      transform: rotate(-8deg);
+    }
+    30% {
+      transform: rotate(14deg);
+    }
+    40% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(10deg);
+    }
+    60% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(0deg);
+    }
   }
-  
+
   @media (max-width: 768px) {
     font-size: 1.8rem;
     justify-content: center;
@@ -321,11 +347,11 @@ const Subtitle = styled(MotionH2)`
   font-size: 1.8rem;
   font-weight: 600;
   margin-bottom: 0.8rem;
-  
+
   code {
     font-family: var(--font-code);
   }
-  
+
   @media (max-width: 768px) {
     font-size: 1.2rem;
   }
@@ -342,7 +368,7 @@ const SocialLinks = styled(MotionDiv)`
   display: flex;
   gap: 0.75rem;
   margin-top: 1.25rem;
-  
+
   @media (max-width: 768px) {
     justify-content: center;
   }
@@ -359,14 +385,14 @@ const SocialLink = styled(motion.a)`
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  
+
   &:hover {
     color: var(--accent-color);
     background-color: rgba(81, 131, 245, 0.06);
     box-shadow: inset 0 0 0 1px rgba(81, 131, 245, 0.1);
     transform: translateY(-2px);
   }
-  
+
   svg {
     width: 18px;
     height: 18px;
@@ -395,12 +421,12 @@ const ScrollIndicator = styled(motion.div)`
   opacity: 0.7;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 5rem;
-  
+
   svg {
     width: 28px;
     height: 40px;
   }
-  
+
   @media (max-width: 768px) {
     margin-bottom: 2rem;
     padding-bottom: 2rem;
@@ -419,9 +445,9 @@ const mouseScrollVariants = {
     transition: {
       repeat: Infinity,
       duration: 1.5,
-      ease: "easeInOut"
-    }
-  }
+      ease: 'easeInOut',
+    },
+  },
 };
 
 const scrollWheelVariants = {
@@ -432,10 +458,10 @@ const scrollWheelVariants = {
     transition: {
       repeat: Infinity,
       duration: 1.5,
-      ease: "easeInOut",
-      delay: 0.2
-    }
-  }
+      ease: 'easeInOut',
+      delay: 0.2,
+    },
+  },
 };
 
 const SectionTitle = styled(motion.h2)`
@@ -446,14 +472,14 @@ const SectionTitle = styled(motion.h2)`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  
+
   a {
     font-size: 0.85rem;
     color: var(--accent-color);
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -468,7 +494,7 @@ const ArticleGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.25rem;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -483,7 +509,7 @@ const ArticleCard = styled(motion.div)`
   display: flex;
   flex-direction: column;
   height: 100%;
-  
+
   &:hover {
     background-color: rgba(81, 131, 245, 0.06);
     box-shadow: 0 8px 30px rgba(81, 131, 245, 0.1);
@@ -496,14 +522,14 @@ const ArticleImage = styled.div`
   background-color: var(--bg-secondary);
   position: relative;
   overflow: hidden;
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  
+
   ${ArticleCard}:hover & img {
     transform: scale(1.08);
   }
@@ -531,7 +557,7 @@ const ArticleMeta = styled.div`
   font-size: 0.8rem;
   color: var(--text-secondary);
   margin-bottom: 0.7rem;
-  
+
   span {
     display: flex;
     align-items: center;
@@ -559,11 +585,11 @@ const ReadMore = styled(MotionSpan)`
   gap: 0.3rem;
   margin-top: auto;
   font-weight: 500;
-  
+
   svg {
     transition: transform 0.2s ease;
   }
-  
+
   ${ArticleCard}:hover & svg {
     transform: translateX(4px);
   }
@@ -587,7 +613,7 @@ const ActivityItem = styled(motion.div)`
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  
+
   &:hover {
     background-color: rgba(81, 131, 245, 0.06);
     box-shadow: 0 8px 24px rgba(81, 131, 245, 0.08);
@@ -617,10 +643,10 @@ const ActivityTitle = styled.h4`
   font-size: 0.9rem;
   font-weight: 500;
   margin-bottom: 0.3rem;
-  
+
   a {
     color: var(--accent-color);
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -642,7 +668,7 @@ const ChartContainer = styled(motion.div)`
   padding: 1.25rem;
   border: 1px solid var(--border-color);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  
+
   [data-theme='dark'] & {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
@@ -655,7 +681,7 @@ const Chart = styled.div`
   gap: 3px;
   margin-top: 1rem;
   position: relative;
-  
+
   &:after {
     content: '';
     position: absolute;
@@ -670,14 +696,14 @@ const Chart = styled.div`
 
 const ChartBar = styled(motion.div)<{ height: number }>`
   width: 6px;
-  height: ${props => props.height}%;
+  height: ${(props) => props.height}%;
   background-color: var(--accent-color);
   border-radius: 3px 3px 0 0;
   opacity: 0.8;
   transition: all 0.3s ease;
   position: relative;
   cursor: pointer;
-  
+
   &:hover {
     opacity: 1;
     transform: scaleY(1.05);
@@ -697,27 +723,27 @@ const ChartLabels = styled.div`
 // 文章卡片动画变体
 const cardVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { 
+    transition: {
       duration: 0.5,
-      ease: [0.25, 1, 0.5, 1]
-    }
-  }
+      ease: [0.25, 1, 0.5, 1],
+    },
+  },
 };
 
 // 活动项目动画变体
 const activityVariants: Variants = {
   hidden: { opacity: 0, x: -20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     x: 0,
-    transition: { 
+    transition: {
       duration: 0.4,
-      ease: "easeOut"
-    }
-  }
+      ease: 'easeOut',
+    },
+  },
 };
 
 // 图表条动画变体
@@ -725,12 +751,12 @@ const barVariants: Variants = {
   hidden: { scaleY: 0 },
   visible: (custom) => ({
     scaleY: 1,
-    transition: { 
+    transition: {
       duration: 0.5,
       delay: custom * 0.05,
-      ease: [0.25, 1, 0.5, 1]
-    }
-  })
+      ease: [0.25, 1, 0.5, 1],
+    },
+  }),
 };
 
 // 添加开源项目相关的样式组件
@@ -742,7 +768,7 @@ const ProjectsGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -757,7 +783,7 @@ const ProjectCard = styled(motion.div)`
   display: flex;
   flex-direction: column;
   height: 100%;
-  
+
   &:hover {
     box-shadow: 0 10px 30px rgba(81, 131, 245, 0.1);
     transform: translateY(-5px);
@@ -826,13 +852,13 @@ const ProjectLanguage = styled.div<{ color: string }>`
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  
+
   &::before {
     content: '';
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: ${props => props.color};
+    background-color: ${(props) => props.color};
   }
 `;
 
@@ -850,28 +876,28 @@ const ProjectLink = styled.a`
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s ease;
-  
+
   &.primary {
     background-color: var(--accent-color);
     color: white;
-    
+
     &:hover {
       background-color: var(--accent-color-hover);
       transform: translateY(-2px);
     }
   }
-  
+
   &.secondary {
     background-color: var(--bg-secondary);
     color: var(--text-secondary);
-    
+
     &:hover {
       background-color: var(--bg-tertiary);
       color: var(--text-primary);
       transform: translateY(-2px);
     }
   }
-  
+
   svg {
     margin-right: 0.3rem;
   }
@@ -881,129 +907,130 @@ const ProjectLink = styled.a`
 const mockProjects = [
   {
     id: 1,
-    title: "React Native UI Kit",
-    description: "一个高度可定制的UI组件库，为React Native应用提供美观且易用的界面元素。支持深色模式和RTL布局。",
-    language: "TypeScript",
-    languageColor: "#3178c6",
+    title: 'React Native UI Kit',
+    description: '一个高度可定制的UI组件库，为React Native应用提供美观且易用的界面元素。支持深色模式和RTL布局。',
+    language: 'TypeScript',
+    languageColor: '#3178c6',
     stars: 432,
     forks: 89,
-    lastUpdated: "3天前",
-    repoUrl: "https://github.com/adnaan/react-native-ui-kit",
-    demoUrl: "https://example.com/demo",
-    icon: "components"
+    lastUpdated: '3天前',
+    repoUrl: 'https://github.com/adnaan/react-native-ui-kit',
+    demoUrl: 'https://example.com/demo',
+    icon: 'components',
   },
   {
     id: 2,
-    title: "NodeJS API Starter",
-    description: "Express和TypeScript打造的API启动模板，集成了认证、权限管理、日志记录和自动化测试。快速启动你的Node.js后端项目。",
-    language: "JavaScript",
-    languageColor: "#f1e05a",
+    title: 'NodeJS API Starter',
+    description:
+      'Express和TypeScript打造的API启动模板，集成了认证、权限管理、日志记录和自动化测试。快速启动你的Node.js后端项目。',
+    language: 'JavaScript',
+    languageColor: '#f1e05a',
     stars: 257,
     forks: 63,
-    lastUpdated: "1周前",
-    repoUrl: "https://github.com/adnaan/node-api-starter",
-    demoUrl: "https://example.com/node-api",
-    icon: "server"
+    lastUpdated: '1周前',
+    repoUrl: 'https://github.com/adnaan/node-api-starter',
+    demoUrl: 'https://example.com/node-api',
+    icon: 'server',
   },
   {
     id: 3,
-    title: "ByteBlogs CMS",
-    description: "专为开发者设计的轻量级内容管理系统，支持Markdown编辑、代码高亮和版本控制。适合技术博客和文档网站。",
-    language: "Vue",
-    languageColor: "#41b883",
+    title: 'ByteBlogs CMS',
+    description: '专为开发者设计的轻量级内容管理系统，支持Markdown编辑、代码高亮和版本控制。适合技术博客和文档网站。',
+    language: 'Vue',
+    languageColor: '#41b883',
     stars: 189,
     forks: 41,
-    lastUpdated: "2周前",
-    repoUrl: "https://github.com/adnaan/byte-blogs",
-    demoUrl: "https://example.com/byte-blogs",
-    icon: "blog"
-  }
+    lastUpdated: '2周前',
+    repoUrl: 'https://github.com/adnaan/byte-blogs',
+    demoUrl: 'https://example.com/byte-blogs',
+    icon: 'blog',
+  },
 ];
 
 // 项目卡片动画变体
 const projectVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
-  visible: (i) => ({ 
-    opacity: 1, 
+  visible: (i) => ({
+    opacity: 1,
     y: 0,
-    transition: { 
+    transition: {
       duration: 0.5,
       delay: i * 0.1,
-      ease: [0.25, 1, 0.5, 1]
-    }
-  })
+      ease: [0.25, 1, 0.5, 1],
+    },
+  }),
 };
 
 // 示例数据
 const mockArticles = [
   {
     id: 1,
-    title: "使用React Native Screens 和 Native Navigation 提升应用性能",
-    date: "2025-3-10",
-    category: "技术",
+    title: '使用React Native Screens 和 Native Navigation 提升应用性能',
+    date: '2025-3-10',
+    category: '技术',
     views: 630,
-    excerpt: "探索如何利用React Native Screens和Native Navigation优化应用性能，减少启动时间。",
-    image: "https://via.placeholder.com/600x400?text=React+Native"
+    excerpt: '探索如何利用React Native Screens和Native Navigation优化应用性能，减少启动时间。',
+    image: 'https://via.placeholder.com/600x400?text=React+Native',
   },
   {
     id: 2,
-    title: "React Native 构建WebView与原生的深度集成",
-    date: "2025-3-5",
-    category: "开发",
+    title: 'React Native 构建WebView与原生的深度集成',
+    date: '2025-3-5',
+    category: '开发',
     views: 415,
-    excerpt: "详解React Native WebView组件与原生模块的集成方式，实现更流畅的用户体验。",
-    image: "https://via.placeholder.com/600x400?text=WebView"
+    excerpt: '详解React Native WebView组件与原生模块的集成方式，实现更流畅的用户体验。',
+    image: 'https://via.placeholder.com/600x400?text=WebView',
   },
   {
     id: 3,
-    title: "在Expo中使用原生模块的完整指南",
-    date: "2025-2-28",
-    category: "教程",
+    title: '在Expo中使用原生模块的完整指南',
+    date: '2025-2-28',
+    category: '教程',
     views: 527,
-    excerpt: "一步步教你如何在Expo项目中集成和使用原生模块，突破Expo的限制。",
-    image: "https://via.placeholder.com/600x400?text=Expo"
-  }
+    excerpt: '一步步教你如何在Expo项目中集成和使用原生模块，突破Expo的限制。',
+    image: 'https://via.placeholder.com/600x400?text=Expo',
+  },
 ];
 
 const mockActivities = [
   {
     id: 1,
-    type: "comment",
-    title: "在《Monthly Issue - 2025.3》中发表了评论",
-    time: "3天前"
+    type: 'comment',
+    title: '在《Monthly Issue - 2025.3》中发表了评论',
+    time: '3天前',
   },
   {
     id: 2,
-    type: "post",
-    title: "发布了新文章《使用React Native Screens 和 Native Navigation 提升应用性能》",
-    time: "6天前"
+    type: 'post',
+    title: '发布了新文章《使用React Native Screens 和 Native Navigation 提升应用性能》',
+    time: '6天前',
   },
   {
     id: 3,
-    type: "like",
-    title: "赞了文章《应用性能优化的12个技巧》",
-    time: "1周前"
-  }
+    type: 'like',
+    title: '赞了文章《应用性能优化的12个技巧》',
+    time: '1周前',
+  },
 ];
 
 const chartData = [
-  { month: "2025.5", value: 35 },
-  { month: "2025.6", value: 42 },
-  { month: "2025.7", value: 55 },
-  { month: "2025.8", value: 40 },
-  { month: "2025.9", value: 68 },
-  { month: "2025.10", value: 75 },
-  { month: "2025.11", value: 82 },
-  { month: "2025.12", value: 90 },
-  { month: "2026.1", value: 60 },
-  { month: "2026.2", value: 78 },
-  { month: "2026.3", value: 65 },
-  { month: "2026.4", value: 92 }
+  { month: '2025.5', value: 35 },
+  { month: '2025.6', value: 42 },
+  { month: '2025.7', value: 55 },
+  { month: '2025.8', value: 40 },
+  { month: '2025.9', value: 68 },
+  { month: '2025.10', value: 75 },
+  { month: '2025.11', value: 82 },
+  { month: '2025.12', value: 90 },
+  { month: '2026.1', value: 60 },
+  { month: '2026.2', value: 78 },
+  { month: '2026.3', value: 65 },
+  { month: '2026.4', value: 92 },
 ];
 
 // 项目图标渲染函数
 const renderProjectIcon = (iconType: string) => {
-  switch(iconType) {
+  switch (iconType) {
     case 'components':
       return <FiCode size={20} />;
     case 'server':
@@ -1026,9 +1053,7 @@ interface ArticleLinkProps {
 
 const ArticleLink: React.FC<ArticleLinkProps> = ({ to, children, ...props }) => (
   <Link to={to} style={{ textDecoration: 'none' }}>
-    <ArticleCard {...props}>
-      {children}
-    </ArticleCard>
+    <ArticleCard {...props}>{children}</ArticleCard>
   </Link>
 );
 
@@ -1036,7 +1061,7 @@ const ArticleLink: React.FC<ArticleLinkProps> = ({ to, children, ...props }) => 
 const Home = () => {
   // 卡片翻转状态
   const [isFlipped, setIsFlipped] = useState(false);
-  
+
   const handleCardFlip = () => {
     setIsFlipped(!isFlipped);
   };
@@ -1046,31 +1071,24 @@ const Home = () => {
       <PageContainer>
         <HeroSection>
           <Hero>
-            <HeroContent
-              variants={staggerContainerVariants}
-              initial="hidden"
-              animate="visible"
-            >
+            <HeroContent variants={staggerContainerVariants} initial="hidden" animate="visible">
               <Title variants={fadeInUpVariants}>
-                Hi, I'm adnaan <motion.span 
-                  className="wave" 
-                  variants={iconVariants}
-                  initial="hidden"
-                  animate="visible"
-                >👋</motion.span>
+                Hi, I'm adnaan{' '}
+                <motion.span className="wave" variants={iconVariants} initial="hidden" animate="visible">
+                  👋
+                </motion.span>
               </Title>
-              
+
               <Subtitle variants={fadeInUpVariants}>
-              A developer who loves full stack web <code style={{ color: 'var(--accent-color)' }}>&lt;Developer /&gt;</code>
+                A developer who loves full stack web{' '}
+                <code style={{ color: 'var(--accent-color)' }}>&lt;Developer /&gt;</code>
               </Subtitle>
-              
-              <Description variants={fadeInUpVariants}>
-              This is my blog, documenting life and learning.
-              </Description>
-              
+
+              <Description variants={fadeInUpVariants}>This is my blog, documenting life and learning.</Description>
+
               <SocialLinks variants={staggerContainerVariants}>
-                <SocialLink 
-                  href="mailto:example@example.com" 
+                <SocialLink
+                  href="mailto:example@example.com"
                   aria-label="Email"
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
@@ -1078,10 +1096,10 @@ const Home = () => {
                 >
                   <FiMail />
                 </SocialLink>
-                <SocialLink 
-                  href="https://github.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <SocialLink
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="GitHub"
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
@@ -1089,40 +1107,58 @@ const Home = () => {
                 >
                   <FiGithub />
                 </SocialLink>
-                <SocialLink 
-                  href="https://bilibili.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <SocialLink
+                  href="https://bilibili.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Bilibili"
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906L17.813 4.653z" />
                   </svg>
                 </SocialLink>
-                <SocialLink 
-                  href="https://twitter.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <SocialLink
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Twitter"
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.325.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"></path>
                   </svg>
                 </SocialLink>
-                <SocialLink 
-                  href="/rss.xml" 
+                <SocialLink
+                  href="/rss.xml"
                   aria-label="RSS Feed"
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <path d="M19 20.001C19 11.729 12.271 5 4 5v2c7.168 0 13 5.832 13 13.001h2z"></path>
                     <path d="M12 20.001h2C14 14.486 9.514 10 4 10v2c4.411 0 8 3.589 8 8.001z"></path>
                     <circle cx="6" cy="18" r="2"></circle>
@@ -1130,7 +1166,7 @@ const Home = () => {
                 </SocialLink>
               </SocialLinks>
             </HeroContent>
-            
+
             <HeroImage
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1140,11 +1176,14 @@ const Home = () => {
               <ProfileCard className={isFlipped ? 'flipped' : ''} onClick={handleCardFlip}>
                 <CardFront className="card-face">
                   <ProfileImage>
-                    <img src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100" alt="Adnaan" />
+                    <img
+                      src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100"
+                      alt="Adnaan"
+                    />
                   </ProfileImage>
                   <ProfileName>adnaan</ProfileName>
                   <ProfileTitle>NodeJS 全栈开发者 & 设计爱好者</ProfileTitle>
-                  
+
                   <ProfileInfoList>
                     <ProfileInfoItem>
                       <span>MBTI</span>
@@ -1163,21 +1202,35 @@ const Home = () => {
                       <span>Vue, React, Node.js, Python, Java</span>
                     </ProfileInfoItem>
                   </ProfileInfoList>
-                  
+
                   <CardFlipHint>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M7 16l-4-4m0 0l4-4m-4 4h18"></path>
                     </svg>
                     点击翻转
                   </CardFlipHint>
                 </CardFront>
-                
+
                 <CardBack className="card-face card-back">
                   <CardTitle>关于我</CardTitle>
-                  <p style={{ fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <p
+                    style={{
+                      fontSize: '0.85rem',
+                      lineHeight: '1.5',
+                      marginBottom: '0.8rem',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
                     热衷于探索前沿Web技术，专注于打造流畅优雅的用户界面和交互体验，善于将设计理念转化为精美的代码实现。
                   </p>
-                  
+
                   <CardTitle>技能标签</CardTitle>
                   <SkillList>
                     <SkillItem>React</SkillItem>
@@ -1186,9 +1239,16 @@ const Home = () => {
                     <SkillItem>MongoDB</SkillItem>
                     <SkillItem>UI设计</SkillItem>
                   </SkillList>
-                  
+
                   <CardFlipHint>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
                     </svg>
                     返回正面
@@ -1197,30 +1257,22 @@ const Home = () => {
               </ProfileCard>
             </HeroImage>
           </Hero>
-          
-          <Quote
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.8 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-          >
+
+          <Quote initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} transition={{ duration: 0.8, delay: 0.5 }}>
             请保持理性，冰冷的数字总是比七彩门的炫法走得更久。 —— 猴哥蔡嵩
           </Quote>
-          
+
           {/* 滚动指示器 */}
           <ScrollIndicator>
-            <motion.div
-              initial="initial"
-              animate="animate"
-              variants={mouseScrollVariants}
-            >
+            <motion.div initial="initial" animate="animate" variants={mouseScrollVariants}>
               <svg viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="1" y="1" width="26" height="38" rx="13" stroke="currentColor" strokeWidth="2"/>
-                <motion.rect 
-                  x="12" 
-                  y="10" 
-                  width="4" 
-                  height="8" 
-                  rx="2" 
+                <rect x="1" y="1" width="26" height="38" rx="13" stroke="currentColor" strokeWidth="2" />
+                <motion.rect
+                  x="12"
+                  y="10"
+                  width="4"
+                  height="8"
+                  rx="2"
                   fill="currentColor"
                   variants={scrollWheelVariants}
                 />
@@ -1228,7 +1280,7 @@ const Home = () => {
             </motion.div>
           </ScrollIndicator>
         </HeroSection>
-        
+
         {/* 文章部分 */}
         <ContentSection
           initial="hidden"
@@ -1238,40 +1290,39 @@ const Home = () => {
         >
           <SectionTitle variants={fadeInUpVariants}>
             最近更新的文稿
-            <motion.a 
-              href="/blog" 
-              whileHover={{ x: 5 }}
-              variants={fadeInUpVariants}
-            >
+            <motion.a href="/blog" whileHover={{ x: 5 }} variants={fadeInUpVariants}>
               查看全部 <FiArrowRight size={12} />
             </motion.a>
           </SectionTitle>
-          
-          <ArticleGrid 
-            variants={staggerContainerVariants}
-          >
+
+          <ArticleGrid variants={staggerContainerVariants}>
             {mockArticles.map((article, index) => (
-              <ArticleLink 
-                to={`/blog/${article.id}`} 
+              <ArticleLink
+                to={`/blog/${article.id}`}
                 key={article.id}
                 variants={cardVariants}
                 whileHover={{ y: -5 }}
                 custom={index}
               >
                 <ArticleImage>
-                  <img 
-                    src={article.image} 
-                    alt={article.title} 
+                  <img
+                    src={article.image}
+                    alt={article.title}
                     onError={(e) => {
-                      e.currentTarget.src = "https://img0.baidu.com/it/u=2075518181,1224688219&fm=253&fmt=auto&app=138&f=JPEG?w=617&h=449";
+                      e.currentTarget.src =
+                        'https://img0.baidu.com/it/u=2075518181,1224688219&fm=253&fmt=auto&app=138&f=JPEG?w=617&h=449';
                     }}
                   />
                 </ArticleImage>
                 <ArticleContent>
                   <ArticleTitle>{article.title}</ArticleTitle>
                   <ArticleMeta>
-                    <span><FiCalendar size={12} /> {article.date}</span>
-                    <span><FiClock size={12} /> {article.views} 次阅读</span>
+                    <span>
+                      <FiCalendar size={12} /> {article.date}
+                    </span>
+                    <span>
+                      <FiClock size={12} /> {article.views} 次阅读
+                    </span>
                   </ArticleMeta>
                   <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
                   <ReadMore>
@@ -1282,9 +1333,9 @@ const Home = () => {
             ))}
           </ArticleGrid>
         </ContentSection>
-        
+
         {/* 活动部分 */}
-        <ActivitySection 
+        <ActivitySection
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
@@ -1292,25 +1343,14 @@ const Home = () => {
         >
           <SectionTitle variants={fadeInUpVariants}>
             最近发生的事
-            <motion.a 
-              href="/activities" 
-              whileHover={{ x: 5 }}
-              variants={fadeInUpVariants}
-            >
+            <motion.a href="/activities" whileHover={{ x: 5 }} variants={fadeInUpVariants}>
               查看全部 <FiArrowRight size={12} />
             </motion.a>
           </SectionTitle>
-          
-          <ActivityList 
-            variants={staggerContainerVariants}
-          >
+
+          <ActivityList variants={staggerContainerVariants}>
             {mockActivities.map((activity, index) => (
-              <ActivityItem 
-                key={activity.id}
-                variants={activityVariants}
-                custom={index}
-                whileHover={{ y: -3, x: 3 }}
-              >
+              <ActivityItem key={activity.id} variants={activityVariants} custom={index} whileHover={{ y: -3, x: 3 }}>
                 <ActivityIcon>
                   {activity.type === 'comment' && <FiMessageCircle size={16} />}
                   {activity.type === 'post' && <FiCalendar size={16} />}
@@ -1324,26 +1364,21 @@ const Home = () => {
             ))}
           </ActivityList>
         </ActivitySection>
-        
+
         {/* 图表部分 */}
-        <ChartSection 
+        <ChartSection
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
           variants={staggerContainerVariants}
         >
-          <SectionTitle variants={fadeInUpVariants}>
-            热力图
-          </SectionTitle>
-          
-          <ChartContainer
-            variants={fadeInUpVariants}
-            whileHover={{ y: -3 }}
-          >
+          <SectionTitle variants={fadeInUpVariants}>热力图</SectionTitle>
+
+          <ChartContainer variants={fadeInUpVariants} whileHover={{ y: -3 }}>
             <Chart>
               {chartData.map((item, index) => (
-                <ChartBar 
-                  key={index} 
+                <ChartBar
+                  key={index}
                   height={item.value}
                   custom={index}
                   variants={barVariants}
@@ -1352,13 +1387,11 @@ const Home = () => {
               ))}
             </Chart>
             <ChartLabels>
-              {chartData.map((item, index) => (
-                index % 3 === 0 && <span key={index}>{item.month}</span>
-              ))}
+              {chartData.map((item, index) => index % 3 === 0 && <span key={index}>{item.month}</span>)}
             </ChartLabels>
           </ChartContainer>
         </ChartSection>
-        
+
         {/* 项目部分 */}
         <ProjectsSection
           initial="hidden"
@@ -1368,37 +1401,24 @@ const Home = () => {
         >
           <SectionTitle variants={fadeInUpVariants}>
             开源项目
-            <motion.a 
-              href="/projects" 
-              whileHover={{ x: 5 }}
-              variants={fadeInUpVariants}
-            >
+            <motion.a href="/projects" whileHover={{ x: 5 }} variants={fadeInUpVariants}>
               查看全部 <FiArrowRight size={12} />
             </motion.a>
           </SectionTitle>
-          
+
           <ProjectsGrid>
             {mockProjects.map((project, index) => (
-              <ProjectCard
-                key={project.id}
-                variants={projectVariants}
-                custom={index}
-                whileHover={{ y: -5 }}
-              >
+              <ProjectCard key={project.id} variants={projectVariants} custom={index} whileHover={{ y: -5 }}>
                 <ProjectHeader>
                   <ProjectTitle>{project.title}</ProjectTitle>
-                  <ProjectIcon>
-                    {renderProjectIcon(project.icon)}
-                  </ProjectIcon>
+                  <ProjectIcon>{renderProjectIcon(project.icon)}</ProjectIcon>
                 </ProjectHeader>
-                
+
                 <ProjectContent>
                   <ProjectDescription>{project.description}</ProjectDescription>
-                  
+
                   <ProjectMeta>
-                    <ProjectLanguage color={project.languageColor}>
-                      {project.language}
-                    </ProjectLanguage>
+                    <ProjectLanguage color={project.languageColor}>{project.language}</ProjectLanguage>
                     <ProjectMetaItem>
                       <FiStar size={14} /> {project.stars}
                     </ProjectMetaItem>
@@ -1406,7 +1426,7 @@ const Home = () => {
                       <FiGithub size={14} /> {project.forks}
                     </ProjectMetaItem>
                   </ProjectMeta>
-                  
+
                   <ProjectLinks>
                     <ProjectLink href={project.repoUrl} target="_blank" rel="noopener noreferrer" className="primary">
                       <FiGithub size={14} /> 查看源码

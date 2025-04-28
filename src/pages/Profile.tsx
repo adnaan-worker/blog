@@ -23,7 +23,7 @@ const ProfileHeader = styled.div`
   background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     text-align: center;
@@ -41,13 +41,13 @@ const Avatar = styled.div`
   border-radius: 50%;
   overflow: hidden;
   border: 4px solid var(--accent-color-alpha);
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  
+
   @media (max-width: 768px) {
     width: 120px;
     height: 120px;
@@ -69,7 +69,7 @@ const EditAvatarButton = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     transform: scale(1.1);
     background: var(--accent-color-dark);
@@ -96,7 +96,7 @@ const SocialLinks = styled.div`
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
-  
+
   @media (max-width: 768px) {
     justify-content: center;
   }
@@ -112,7 +112,7 @@ const SocialLink = styled.a`
   background: var(--bg-primary);
   color: var(--text-secondary);
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: var(--accent-color);
     color: white;
@@ -134,7 +134,7 @@ const SectionTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  
+
   svg {
     color: var(--accent-color);
   }
@@ -170,7 +170,7 @@ const EditButton = styled.button`
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: var(--accent-color);
     color: white;
@@ -181,11 +181,11 @@ const StatsContainer = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr 1fr;
   }
-  
+
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
   }
@@ -197,7 +197,7 @@ const StatCard = styled.div`
   border-radius: 8px;
   text-align: center;
   transition: all 0.2s ease;
-  
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
@@ -219,37 +219,36 @@ const StatLabel = styled.div`
 // 页面动画
 const pageVariants = {
   initial: { opacity: 0 },
-  animate: { 
+  animate: {
     opacity: 1,
-    transition: { duration: 0.5 }
-  }
+    transition: { duration: 0.5 },
+  },
 };
 
 const Profile: React.FC = () => {
   return (
     <PageContainer>
-      <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-      >
+      <motion.div variants={pageVariants} initial="initial" animate="animate">
         <ProfileContainer>
           <ProfileHeader>
             <AvatarContainer>
               <Avatar>
-                <img src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200" alt="用户头像" />
+                <img
+                  src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200"
+                  alt="用户头像"
+                />
               </Avatar>
               <EditAvatarButton>
                 <FiEdit size={16} />
               </EditAvatarButton>
             </AvatarContainer>
-            
+
             <ProfileInfo>
               <UserName>Adnaan</UserName>
               <UserBio>
                 全栈开发者，热爱编程和技术分享。专注于React、Vue和Node.js生态系统，喜欢探索新技术并分享学习心得。
               </UserBio>
-              
+
               <SocialLinks>
                 <SocialLink href="https://github.com" target="_blank" rel="noopener noreferrer">
                   <FiGithub size={18} />
@@ -266,9 +265,11 @@ const Profile: React.FC = () => {
               </SocialLinks>
             </ProfileInfo>
           </ProfileHeader>
-          
+
           <ProfileSection>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}
+            >
               <SectionTitle>
                 <FiUser size={20} /> 个人信息
               </SectionTitle>
@@ -276,64 +277,64 @@ const Profile: React.FC = () => {
                 <FiEdit size={16} /> 编辑资料
               </EditButton>
             </div>
-            
+
             <InfoItem>
               <InfoLabel>用户名</InfoLabel>
               <InfoValue>adnaan</InfoValue>
             </InfoItem>
-            
+
             <InfoItem>
               <InfoLabel>真实姓名</InfoLabel>
               <InfoValue>张三</InfoValue>
             </InfoItem>
-            
+
             <InfoItem>
               <InfoLabel>邮箱</InfoLabel>
               <InfoValue>example@example.com</InfoValue>
             </InfoItem>
-            
+
             <InfoItem>
               <InfoLabel>职业</InfoLabel>
               <InfoValue>全栈开发工程师</InfoValue>
             </InfoItem>
-            
+
             <InfoItem>
               <InfoLabel>所在地</InfoLabel>
               <InfoValue>北京, 中国</InfoValue>
             </InfoItem>
-            
+
             <InfoItem>
               <InfoLabel>个人网站</InfoLabel>
               <InfoValue>https://adnaan.dev</InfoValue>
             </InfoItem>
-            
+
             <InfoItem>
               <InfoLabel>加入时间</InfoLabel>
               <InfoValue>2024年5月15日</InfoValue>
             </InfoItem>
           </ProfileSection>
-          
+
           <ProfileSection>
             <SectionTitle>
               <FiUser size={20} /> 统计数据
             </SectionTitle>
-            
+
             <StatsContainer>
               <StatCard>
                 <StatNumber>42</StatNumber>
                 <StatLabel>发布的文章</StatLabel>
               </StatCard>
-              
+
               <StatCard>
                 <StatNumber>158</StatNumber>
                 <StatLabel>收到的点赞</StatLabel>
               </StatCard>
-              
+
               <StatCard>
                 <StatNumber>36</StatNumber>
                 <StatLabel>收藏的文章</StatLabel>
               </StatCard>
-              
+
               <StatCard>
                 <StatNumber>89</StatNumber>
                 <StatLabel>评论数</StatLabel>
@@ -346,4 +347,4 @@ const Profile: React.FC = () => {
   );
 };
 
-export default Profile; 
+export default Profile;

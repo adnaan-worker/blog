@@ -66,9 +66,9 @@ const ExampleUsage: React.FC = () => {
     try {
       const response = await API.user.login({
         username: 'admin',
-        password: '123456'
+        password: '123456',
       });
-      
+
       if (response.success) {
         // 存储token
         storage.local.set('token', response.data.token);
@@ -89,7 +89,7 @@ const ExampleUsage: React.FC = () => {
     if (cachedUserInfo) {
       setUserInfo(cachedUserInfo);
     }
-    
+
     // 获取文章列表
     fetchArticles();
   }, []);
@@ -97,7 +97,7 @@ const ExampleUsage: React.FC = () => {
   return (
     <div className="example-container">
       <h1>API工具示例</h1>
-      
+
       {/* 用户信息 */}
       <div className="user-info">
         {userInfo ? (
@@ -109,19 +109,15 @@ const ExampleUsage: React.FC = () => {
           <button onClick={handleLogin}>登录</button>
         )}
       </div>
-      
+
       {/* 搜索框 */}
       <div className="search-box">
-        <input 
-          type="text" 
-          placeholder="搜索文章..." 
-          onChange={(e) => handleSearch(e.target.value)} 
-        />
+        <input type="text" placeholder="搜索文章..." onChange={(e) => handleSearch(e.target.value)} />
       </div>
-      
+
       {/* 错误信息 */}
       {error && <div className="error-message">{error}</div>}
-      
+
       {/* 文章列表 */}
       <div className="article-list">
         <h2>文章列表</h2>
@@ -129,7 +125,7 @@ const ExampleUsage: React.FC = () => {
           <div>加载中...</div>
         ) : (
           <ul>
-            {articles.map(article => (
+            {articles.map((article) => (
               <li key={article.id}>
                 <h3>{article.title}</h3>
                 <p>作者: {article.author}</p>
@@ -143,4 +139,4 @@ const ExampleUsage: React.FC = () => {
   );
 };
 
-export default ExampleUsage; 
+export default ExampleUsage;

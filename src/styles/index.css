@@ -59,7 +59,7 @@
 }
 
 /**
- * 2. 暗色主题变量
+ * 暗色主题变量
  */
 [data-theme='dark'] {
   --text-primary: #f0f0f0;
@@ -73,7 +73,7 @@
 }
 
 /**
- * 3. 主题过渡效果
+ * 主题过渡效果
  */
 .theme-transition {
   transition: color 0.3s ease, 
@@ -83,7 +83,7 @@
 }
 
 /**
- * 4. 全局重置和基础样式
+ * 全局重置和基础样式
  */
 *,
 *::before,
@@ -213,7 +213,7 @@ code, pre, .code {
 }
 
 /**
- * 6. 导航和Header样式
+ * 导航和Header样式
  */
 .header {
   position: fixed;
@@ -349,7 +349,7 @@ code, pre, .code {
 }
 
 /**
- * 7. 卡片和容器样式
+ * 卡片和容器样式
  */
 .card {
   background-color: var(--bg-primary);
@@ -386,7 +386,7 @@ code, pre, .code {
 }
 
 /**
- * 8. 按钮样式
+ * 按钮样式
  */
 .btn {
   display: inline-flex;
@@ -416,7 +416,7 @@ code, pre, .code {
 }
 
 /**
- * 9. 动画和过渡
+ * 动画和过渡
  */
 .page-transition-enter {
   opacity: 0;
@@ -519,9 +519,6 @@ code, pre, .code {
   scrollbar-color: rgba(81, 131, 245, 0.3) transparent;
 }
 
-/**
- * 11. 响应式媒体查询
- */
 @media (max-width: 768px) {
   .nav-card {
     display: none;

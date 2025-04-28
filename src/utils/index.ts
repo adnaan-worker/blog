@@ -11,14 +11,14 @@ export * from './types';
 // 导出一些常用的工具函数
 export const formatDate = (date: Date | string | number, format: string = 'YYYY-MM-DD HH:mm:ss'): string => {
   const d = new Date(date);
-  
+
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   const hours = String(d.getHours()).padStart(2, '0');
   const minutes = String(d.getMinutes()).padStart(2, '0');
   const seconds = String(d.getSeconds()).padStart(2, '0');
-  
+
   return format
     .replace('YYYY', String(year))
     .replace('MM', month)
@@ -31,13 +31,13 @@ export const formatDate = (date: Date | string | number, format: string = 'YYYY-
 // 防抖函数
 export const debounce = <T extends (...args: any[]) => any>(
   fn: T,
-  delay: number = 300
+  delay: number = 300,
 ): ((...args: Parameters<T>) => void) => {
   let timer: number | null = null;
-  
-  return function(...args: Parameters<T>) {
+
+  return function (...args: Parameters<T>) {
     if (timer) clearTimeout(timer);
-    
+
     timer = window.setTimeout(() => {
       fn(...args);
       timer = null;
@@ -48,13 +48,13 @@ export const debounce = <T extends (...args: any[]) => any>(
 // 节流函数
 export const throttle = <T extends (...args: any[]) => any>(
   fn: T,
-  delay: number = 300
+  delay: number = 300,
 ): ((...args: Parameters<T>) => void) => {
   let lastTime = 0;
-  
-  return function(...args: Parameters<T>) {
+
+  return function (...args: Parameters<T>) {
     const now = Date.now();
-    
+
     if (now - lastTime >= delay) {
       fn(...args);
       lastTime = now;
@@ -89,9 +89,9 @@ export const storage = {
     },
     clear(): void {
       localStorage.clear();
-    }
+    },
   },
-  
+
   // sessionStorage
   session: {
     get<T>(key: string): T | null {
@@ -117,6 +117,6 @@ export const storage = {
     },
     clear(): void {
       sessionStorage.clear();
-    }
-  }
-}; 
+    },
+  },
+};

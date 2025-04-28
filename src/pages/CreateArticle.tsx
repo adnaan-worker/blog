@@ -31,7 +31,7 @@ const BackButton = styled.button`
   font-size: 0.9rem;
   padding: 0.5rem;
   border-radius: 4px;
-  
+
   &:hover {
     background: var(--bg-secondary);
   }
@@ -52,17 +52,17 @@ const Button = styled.button<{ primary?: boolean }>`
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  background: ${props => props.primary ? 'var(--accent-color)' : 'var(--bg-secondary)'};
-  color: ${props => props.primary ? 'white' : 'var(--text-primary)'};
+  background: ${(props) => (props.primary ? 'var(--accent-color)' : 'var(--bg-secondary)')};
+  color: ${(props) => (props.primary ? 'white' : 'var(--text-primary)')};
   border: none;
   border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
-    background: ${props => props.primary ? 'var(--accent-color-hover)' : 'var(--bg-tertiary)'};
+    background: ${(props) => (props.primary ? 'var(--accent-color-hover)' : 'var(--bg-tertiary)')};
   }
 `;
 
@@ -86,7 +86,7 @@ const FormInput = styled.input`
   color: var(--text-primary);
   font-size: 1rem;
   transition: all 0.2s ease;
-  
+
   &:focus {
     outline: none;
     border-color: var(--accent-color);
@@ -134,7 +134,7 @@ const ImageUploadContainer = styled.div`
   cursor: pointer;
   overflow: hidden;
   transition: all 0.2s ease;
-  
+
   &:hover {
     border-color: var(--accent-color);
   }
@@ -151,7 +151,7 @@ const UploadPlaceholder = styled.div`
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
-  
+
   svg {
     margin-bottom: 1rem;
   }
@@ -178,7 +178,7 @@ const RemoveImageButton = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: rgba(0, 0, 0, 0.7);
   }
@@ -214,7 +214,7 @@ const ArticlePreview = styled.div`
 const pageVariants = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: 0.3 } },
-  exit: { opacity: 0, transition: { duration: 0.2 } }
+  exit: { opacity: 0, transition: { duration: 0.2 } },
 };
 
 const CreateArticle: React.FC = () => {
@@ -227,9 +227,9 @@ const CreateArticle: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [category, setCategory] = useState('');
   const [excerpt, setExcerpt] = useState('');
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // 标签输入处理
   const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim()) {
@@ -240,17 +240,17 @@ const CreateArticle: React.FC = () => {
       setTagInput('');
     }
   };
-  
+
   // 删除标签
   const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    setTags(tags.filter((tag) => tag !== tagToRemove));
   };
-  
+
   // 处理图片上传
   const handleImageUpload = () => {
     fileInputRef.current?.click();
   };
-  
+
   // 处理文件选择
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -262,7 +262,7 @@ const CreateArticle: React.FC = () => {
       reader.readAsDataURL(file);
     }
   };
-  
+
   // 删除封面图片
   const removeImage = () => {
     setCoverImage(null);
@@ -270,45 +270,45 @@ const CreateArticle: React.FC = () => {
       fileInputRef.current.value = '';
     }
   };
-  
+
   // 返回上一页
   const goBack = () => {
     navigate(-1);
   };
-  
+
   // 保存文章
   const saveArticle = () => {
     if (!title.trim()) {
       alert('请输入文章标题');
       return;
     }
-    
+
     if (!content.trim()) {
       alert('请输入文章内容');
       return;
     }
-    
+
     if (!coverImage) {
       alert('请上传封面图片');
       return;
     }
-    
+
     // 这里可以添加保存文章的逻辑
     alert('文章保存成功！');
     // 保存成功后可以跳转到文章详情页或返回列表页
     navigate('/dashboard');
   };
-  
+
   // 切换预览
   const togglePreview = () => {
     setShowPreview(!showPreview);
   };
-  
+
   // 处理内容变化
   const handleContentChange = (html: string) => {
     setContent(html);
   };
-  
+
   // 自动生成摘要
   useEffect(() => {
     if (content) {
@@ -316,21 +316,16 @@ const CreateArticle: React.FC = () => {
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = content;
       const textContent = tempDiv.textContent || '';
-      
+
       // 使用前100个字符作为摘要
       const autoExcerpt = textContent.trim().substring(0, 100) + (textContent.length > 100 ? '...' : '');
       setExcerpt(autoExcerpt);
     }
   }, [content]);
-  
+
   return (
     <PageContainer>
-      <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-      >
+      <motion.div variants={pageVariants} initial="initial" animate="animate" exit="exit">
         <EditorContainer>
           <PageHeader>
             <BackButton onClick={goBack}>
@@ -346,7 +341,7 @@ const CreateArticle: React.FC = () => {
               </Button>
             </ActionButtons>
           </PageHeader>
-          
+
           {!showPreview ? (
             <>
               <FormSection>
@@ -359,7 +354,7 @@ const CreateArticle: React.FC = () => {
                   placeholder="输入文章标题"
                 />
               </FormSection>
-              
+
               <FormSection>
                 <FormLabel htmlFor="category">文章分类</FormLabel>
                 <FormInput
@@ -370,7 +365,7 @@ const CreateArticle: React.FC = () => {
                   placeholder="输入文章分类，如：前端开发"
                 />
               </FormSection>
-              
+
               <FormSection>
                 <FormLabel htmlFor="tags">文章标签</FormLabel>
                 <FormInput
@@ -394,17 +389,19 @@ const CreateArticle: React.FC = () => {
                   </TagContainer>
                 )}
               </FormSection>
-              
+
               <FormSection>
                 <FormLabel htmlFor="cover">文章封面</FormLabel>
                 <ImageUploadContainer onClick={handleImageUpload}>
                   {coverImage ? (
                     <>
                       <PreviewImage src={coverImage} alt="文章封面" />
-                      <RemoveImageButton onClick={(e) => {
-                        e.stopPropagation();
-                        removeImage();
-                      }}>
+                      <RemoveImageButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeImage();
+                        }}
+                      >
                         <FiX size={18} />
                       </RemoveImageButton>
                     </>
@@ -414,15 +411,10 @@ const CreateArticle: React.FC = () => {
                       <p>点击上传封面图片</p>
                     </UploadPlaceholder>
                   )}
-                  <HiddenInput
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
+                  <HiddenInput ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} />
                 </ImageUploadContainer>
               </FormSection>
-              
+
               <FormSection>
                 <FormLabel htmlFor="excerpt">文章摘要</FormLabel>
                 <FormInput
@@ -432,10 +424,10 @@ const CreateArticle: React.FC = () => {
                   placeholder="文章摘要会在列表中显示，如不填写将自动根据内容生成"
                 />
               </FormSection>
-              
+
               <FormSection>
                 <FormLabel>文章内容</FormLabel>
-                <TextEditor 
+                <TextEditor
                   content={content}
                   onChange={handleContentChange}
                   placeholder="开始写作吧..."
@@ -446,23 +438,25 @@ const CreateArticle: React.FC = () => {
           ) : (
             <PreviewSection>
               <PreviewTitle>文章预览</PreviewTitle>
-              
+
               {/* 文章标题 */}
               <h1 style={{ fontSize: '2.25rem', fontWeight: 700, marginBottom: '1rem', lineHeight: 1.3 }}>
                 {title || '文章标题'}
               </h1>
-              
+
               {/* 文章元信息 */}
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                flexWrap: 'wrap', 
-                gap: '1.25rem', 
-                fontSize: '0.9rem', 
-                color: 'var(--text-secondary)', 
-                marginBottom: '1.5rem' 
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                  gap: '1.25rem',
+                  fontSize: '0.9rem',
+                  color: 'var(--text-secondary)',
+                  marginBottom: '1.5rem',
+                }}
+              >
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <FiUser size={16} /> 作者名
                 </span>
@@ -476,46 +470,46 @@ const CreateArticle: React.FC = () => {
                   <FiTag size={16} /> {category || '未分类'}
                 </span>
               </div>
-              
+
               {/* 封面图片 */}
               {coverImage && (
-                <div style={{ 
-                  marginBottom: '2rem', 
-                  borderRadius: '12px', 
-                  overflow: 'hidden', 
-                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)' 
-                }}>
-                  <img 
-                    src={coverImage} 
-                    alt={title} 
-                    style={{ width: '100%', height: 'auto', objectFit: 'cover' }} 
-                  />
+                <div
+                  style={{
+                    marginBottom: '2rem',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  <img src={coverImage} alt={title} style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
                 </div>
               )}
-              
+
               {/* 文章内容 */}
               <ArticlePreview dangerouslySetInnerHTML={{ __html: content }} />
-              
+
               {/* 文章标签 */}
               {tags.length > 0 && (
-                <div style={{ 
-                  display: 'flex', 
-                  flexWrap: 'wrap', 
-                  gap: '0.6rem', 
-                  marginTop: '2rem' 
-                }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.6rem',
+                    marginTop: '2rem',
+                  }}
+                >
                   {tags.map((tag, index) => (
-                    <div 
+                    <div
                       key={index}
-                      style={{ 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        padding: '0.3rem 0.6rem', 
-                        background: 'rgba(81, 131, 245, 0.1)', 
-                        color: 'var(--accent-color)', 
-                        borderRadius: '4px', 
-                        fontSize: '0.8rem', 
-                        fontWeight: 500 
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '0.3rem 0.6rem',
+                        background: 'rgba(81, 131, 245, 0.1)',
+                        color: 'var(--accent-color)',
+                        borderRadius: '4px',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
                       }}
                     >
                       {tag}
@@ -531,4 +525,4 @@ const CreateArticle: React.FC = () => {
   );
 };
 
-export default CreateArticle; 
+export default CreateArticle;

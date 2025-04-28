@@ -55,7 +55,7 @@ const FontName = styled.div`
 const animationProps = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 }
+  transition: { duration: 0.5 },
 };
 
 const javaScriptSample = `// JavaScript 示例代码
@@ -205,12 +205,10 @@ const Code = () => {
           这个页面展示了使用多种编程语言编写的代码示例，它们都使用了高质量的开发者字体系列。
           这些字体经过精心设计，特别适合代码阅读和编写，提供了更好的可读性和编程体验。
         </Paragraph>
-        
+
         <Subtitle {...animationProps}>字体家族</Subtitle>
-        <Paragraph {...animationProps}>
-          我们使用了以下字体组合，它们会按优先级从高到低依次应用：
-        </Paragraph>
-        
+        <Paragraph {...animationProps}>我们使用了以下字体组合，它们会按优先级从高到低依次应用：</Paragraph>
+
         <FontInfo {...animationProps}>
           <FontName>OperatorMonoSSmLig Nerd Font</FontName>
           <FontName>Cascadia Code PL</FontName>
@@ -223,74 +221,54 @@ const Code = () => {
           <FontName>Monaco</FontName>
           <FontName>Hannotate SC</FontName>
         </FontInfo>
-        
+
         <Subtitle {...animationProps}>JavaScript 示例</Subtitle>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock 
-            code={javaScriptSample} 
-            language="javascript" 
-            showLineNumbers={true} 
-          />
+          <CodeBlock code={javaScriptSample} language="javascript" showLineNumbers={true} />
         </motion.div>
-        
+
         <Subtitle {...animationProps}>TypeScript 示例</Subtitle>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock 
-            code={typescriptSample} 
-            language="typescript" 
-            showLineNumbers={true} 
-          />
+          <CodeBlock code={typescriptSample} language="typescript" showLineNumbers={true} />
         </motion.div>
-        
+
         <Subtitle {...animationProps}>React 组件示例</Subtitle>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock 
-            code={reactSample} 
-            language="tsx" 
-            showLineNumbers={true} 
-          />
+          <CodeBlock code={reactSample} language="tsx" showLineNumbers={true} />
         </motion.div>
-        
+
         <Subtitle {...animationProps}>CSS 示例</Subtitle>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock 
-            code={cssCode} 
-            language="css" 
-            showLineNumbers={true} 
-          />
+          <CodeBlock code={cssCode} language="css" showLineNumbers={true} />
         </motion.div>
-        
+
         <Subtitle {...animationProps}>Python 示例</Subtitle>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock 
-            code={pythonCode} 
-            language="python" 
-            showLineNumbers={true} 
-          />
+          <CodeBlock code={pythonCode} language="python" showLineNumbers={true} />
         </motion.div>
       </Section>
     </PageContainer>
   );
 };
 
-export default Code; 
+export default Code;

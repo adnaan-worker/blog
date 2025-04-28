@@ -11,18 +11,23 @@ const AlertContainer = styled(motion.div)<{ type: string }>`
   padding: 1rem 1.25rem;
   border-radius: var(--radius-medium);
   margin-bottom: 1rem;
-  background-color: ${({ type }) => 
-    type === 'success' ? 'rgba(67, 160, 71, 0.1)' :
-    type === 'info' ? 'rgba(81, 131, 245, 0.1)' :
-    type === 'warning' ? 'rgba(255, 167, 38, 0.1)' : 
-    'rgba(229, 57, 53, 0.1)'
-  };
-  border-left: 4px solid ${({ type }) => 
-    type === 'success' ? 'var(--success-color)' :
-    type === 'info' ? 'var(--accent-color)' :
-    type === 'warning' ? '#FFA726' : 
-    'var(--error-color)'
-  };
+  background-color: ${({ type }) =>
+    type === 'success'
+      ? 'rgba(67, 160, 71, 0.1)'
+      : type === 'info'
+      ? 'rgba(81, 131, 245, 0.1)'
+      : type === 'warning'
+      ? 'rgba(255, 167, 38, 0.1)'
+      : 'rgba(229, 57, 53, 0.1)'};
+  border-left: 4px solid
+    ${({ type }) =>
+      type === 'success'
+        ? 'var(--success-color)'
+        : type === 'info'
+        ? 'var(--accent-color)'
+        : type === 'warning'
+        ? '#FFA726'
+        : 'var(--error-color)'};
   color: var(--text-primary);
 `;
 
@@ -31,12 +36,14 @@ const AlertIconWrapper = styled.div<{ type: string }>`
   align-items: center;
   justify-content: center;
   margin-right: 0.75rem;
-  color: ${({ type }) => 
-    type === 'success' ? 'var(--success-color)' :
-    type === 'info' ? 'var(--accent-color)' :
-    type === 'warning' ? '#FFA726' : 
-    'var(--error-color)'
-  };
+  color: ${({ type }) =>
+    type === 'success'
+      ? 'var(--success-color)'
+      : type === 'info'
+      ? 'var(--accent-color)'
+      : type === 'warning'
+      ? '#FFA726'
+      : 'var(--error-color)'};
 `;
 
 const AlertContent = styled.div`
@@ -68,12 +75,12 @@ const CloseButton = styled.button`
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
     color: var(--text-primary);
   }
-  
+
   [data-theme='dark'] &:hover {
     background-color: rgba(255, 255, 255, 0.1);
   }
@@ -94,30 +101,30 @@ export const Alert: React.FC<AlertProps> = ({
   message,
   closable = true,
   duration = null,
-  onClose
+  onClose,
 }) => {
   const [visible, setVisible] = useState(true);
-  
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    
+
     if (duration) {
       timer = setTimeout(() => {
         setVisible(false);
         onClose && onClose();
       }, duration);
     }
-    
+
     return () => {
       if (timer) clearTimeout(timer);
     };
   }, [duration, onClose]);
-  
+
   const handleClose = () => {
     setVisible(false);
     onClose && onClose();
   };
-  
+
   const getIcon = () => {
     switch (type) {
       case 'success':
@@ -132,7 +139,7 @@ export const Alert: React.FC<AlertProps> = ({
         return <FiInfo size={22} />;
     }
   };
-  
+
   return (
     <AnimatePresence>
       {visible && (
@@ -143,15 +150,13 @@ export const Alert: React.FC<AlertProps> = ({
           exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
           transition={{ duration: 0.2 }}
         >
-          <AlertIconWrapper type={type}>
-            {getIcon()}
-          </AlertIconWrapper>
-          
+          <AlertIconWrapper type={type}>{getIcon()}</AlertIconWrapper>
+
           <AlertContent>
             {title && <AlertTitle>{title}</AlertTitle>}
             <AlertMessage>{message}</AlertMessage>
           </AlertContent>
-          
+
           {closable && (
             <CloseButton onClick={handleClose} aria-label="关闭提示">
               <FiX size={18} />
@@ -188,7 +193,7 @@ const ModalContent = styled(motion.div)`
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  
+
   [data-theme='dark'] & {
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   }
@@ -220,12 +225,12 @@ const ModalCloseButton = styled.button`
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
     color: var(--text-primary);
   }
-  
+
   [data-theme='dark'] &:hover {
     background-color: rgba(255, 255, 255, 0.1);
   }
@@ -255,7 +260,7 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'danger' }>`
   border-radius: 8px;
   transition: all 0.2s ease;
   cursor: pointer;
-  
+
   ${({ variant }) => {
     switch (variant) {
       case 'primary':
@@ -314,7 +319,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelText = '取消',
   confirmVariant = 'primary',
   onConfirm,
-  onCancel
+  onCancel,
 }) => {
   // 处理Esc键关闭
   useEffect(() => {
@@ -323,36 +328,36 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         onCancel();
       }
     };
-    
+
     window.addEventListener('keydown', handleEsc);
-    
+
     return () => {
       window.removeEventListener('keydown', handleEsc);
     };
   }, [open, onCancel]);
-  
+
   // 处理背景点击关闭
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onCancel();
     }
   };
-  
+
   // 动画变量
   const backdropVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1 }
+    visible: { opacity: 1 },
   };
-  
+
   const contentVariants = {
     hidden: { scale: 0.95, opacity: 0 },
-    visible: { 
-      scale: 1, 
+    visible: {
+      scale: 1,
       opacity: 1,
-      transition: { type: 'spring', stiffness: 300, damping: 30 }
-    }
+      transition: { type: 'spring', stiffness: 300, damping: 30 },
+    },
   };
-  
+
   return (
     <AnimatePresence>
       {open && (
@@ -364,23 +369,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           transition={{ duration: 0.2 }}
           onClick={handleBackdropClick}
         >
-          <ModalContent
-            variants={contentVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-          >
+          <ModalContent variants={contentVariants} initial="hidden" animate="visible" exit="hidden">
             <ModalHeader>
               <ModalTitle>{title}</ModalTitle>
               <ModalCloseButton onClick={onCancel} aria-label="关闭">
                 <FiX size={22} />
               </ModalCloseButton>
             </ModalHeader>
-            
-            <ModalBody>
-              {typeof message === 'string' ? <p>{message}</p> : message}
-            </ModalBody>
-            
+
+            <ModalBody>{typeof message === 'string' ? <p>{message}</p> : message}</ModalBody>
+
             <ModalFooter>
               <Button variant="secondary" onClick={onCancel}>
                 {cancelText}
@@ -416,14 +414,17 @@ const ToastItem = styled(motion.div)<{ type: string }>`
   background-color: var(--bg-primary);
   box-shadow: var(--shadow-xl);
   color: var(--text-primary);
-  border-left: 4px solid ${({ type }) => 
-    type === 'success' ? 'var(--success-color)' :
-    type === 'info' ? 'var(--accent-color)' :
-    type === 'warning' ? '#FFA726' : 
-    'var(--error-color)'
-  };
+  border-left: 4px solid
+    ${({ type }) =>
+      type === 'success'
+        ? 'var(--success-color)'
+        : type === 'info'
+        ? 'var(--accent-color)'
+        : type === 'warning'
+        ? '#FFA726'
+        : 'var(--error-color)'};
   width: 100%;
-  
+
   [data-theme='dark'] & {
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   }
@@ -434,12 +435,14 @@ const ToastIconWrapper = styled.div<{ type: string }>`
   align-items: center;
   justify-content: center;
   margin-right: 0.75rem;
-  color: ${({ type }) => 
-    type === 'success' ? 'var(--success-color)' :
-    type === 'info' ? 'var(--accent-color)' :
-    type === 'warning' ? '#FFA726' : 
-    'var(--error-color)'
-  };
+  color: ${({ type }) =>
+    type === 'success'
+      ? 'var(--success-color)'
+      : type === 'info'
+      ? 'var(--accent-color)'
+      : type === 'warning'
+      ? '#FFA726'
+      : 'var(--error-color)'};
 `;
 
 const ToastContent = styled.div`
@@ -469,10 +472,13 @@ export interface ToastProps {
 }
 
 // Toast上下文
-const ToastContext = React.createContext<{
-  addToast: (toast: Omit<ToastProps, 'id'>) => void;
-  removeToast: (id: string) => void;
-} | undefined>(undefined);
+const ToastContext = React.createContext<
+  | {
+      addToast: (toast: Omit<ToastProps, 'id'>) => void;
+      removeToast: (id: string) => void;
+    }
+  | undefined
+>(undefined);
 
 // 生成唯一ID
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -480,11 +486,11 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 // Toast提供者组件
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<ToastProps[]>([]);
-  
+
   const addToast = useCallback((toast: Omit<ToastProps, 'id'>) => {
     const id = generateId();
-    setToasts(prev => [...prev, { ...toast, id }]);
-    
+    setToasts((prev) => [...prev, { ...toast, id }]);
+
     // 自动移除
     if (toast.duration !== 0) {
       setTimeout(() => {
@@ -492,17 +498,17 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }, toast.duration || 3000);
     }
   }, []);
-  
+
   const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
-  
+
   return (
     <ToastContext.Provider value={{ addToast, removeToast }}>
       {children}
       <ToastContainer>
         <AnimatePresence>
-          {toasts.map(toast => (
+          {toasts.map((toast) => (
             <ToastItem
               key={toast.id}
               type={toast.type}
@@ -517,12 +523,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 {toast.type === 'warning' && <FiAlertTriangle size={20} />}
                 {toast.type === 'error' && <FiAlertCircle size={20} />}
               </ToastIconWrapper>
-              
+
               <ToastContent>
                 {toast.title && <ToastTitle>{toast.title}</ToastTitle>}
                 <ToastMessage>{toast.message}</ToastMessage>
               </ToastContent>
-              
+
               <CloseButton onClick={() => removeToast(toast.id)} aria-label="关闭通知">
                 <FiX size={18} />
               </CloseButton>
@@ -537,20 +543,20 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 // 自定义Hook - 用于组件中使用Toast
 export const useToast = () => {
   const context = React.useContext(ToastContext);
-  
+
   if (context === undefined) {
     throw new Error('useToast must be used within a ToastProvider');
   }
-  
+
   return {
     toast: (props: Omit<ToastProps, 'id'>) => context.addToast(props),
-    success: (message: string, title?: string, duration?: number) => 
+    success: (message: string, title?: string, duration?: number) =>
       context.addToast({ type: 'success', message, title, duration }),
-    info: (message: string, title?: string, duration?: number) => 
+    info: (message: string, title?: string, duration?: number) =>
       context.addToast({ type: 'info', message, title, duration }),
-    warning: (message: string, title?: string, duration?: number) => 
+    warning: (message: string, title?: string, duration?: number) =>
       context.addToast({ type: 'warning', message, title, duration }),
-    error: (message: string, title?: string, duration?: number) => 
+    error: (message: string, title?: string, duration?: number) =>
       context.addToast({ type: 'error', message, title, duration }),
   };
 };
@@ -567,7 +573,7 @@ const TooltipContainer = styled(motion.div)`
   z-index: 1000;
   white-space: nowrap;
   pointer-events: none;
-  
+
   [data-theme='dark'] & {
     background-color: var(--bg-secondary);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -580,7 +586,7 @@ const TooltipArrow = styled.div<{ placement: string }>`
   height: 8px;
   background-color: var(--bg-primary);
   transform: rotate(45deg);
-  
+
   ${({ placement }) => {
     switch (placement) {
       case 'top':
@@ -611,7 +617,7 @@ const TooltipArrow = styled.div<{ placement: string }>`
         return '';
     }
   }}
-  
+
   [data-theme='dark'] & {
     background-color: var(--bg-secondary);
   }
@@ -624,220 +630,237 @@ interface TooltipProps {
   delay?: number;
 }
 
-export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(({
-  content,
-  placement = 'top',
-  children,
-  delay = 0
-}, forwardedRef) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const childRef = useRef<HTMLElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // 计算位置
-  const updatePosition = useCallback(() => {
-    if (!childRef.current || !tooltipRef.current) return;
-    
-    const childRect = childRef.current.getBoundingClientRect();
-    const tooltipRect = tooltipRef.current.getBoundingClientRect();
-    
-    let x = 0;
-    let y = 0;
-    
-    // 计算考虑滚动位置的绝对坐标
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
-    switch (placement) {
-      case 'top':
-        x = scrollLeft + childRect.left + (childRect.width / 2) - (tooltipRect.width / 2);
-        y = scrollTop + childRect.top - tooltipRect.height - 8;
-        break;
-      case 'bottom':
-        x = scrollLeft + childRect.left + (childRect.width / 2) - (tooltipRect.width / 2);
-        y = scrollTop + childRect.bottom + 8;
-        break;
-      case 'left':
-        x = scrollLeft + childRect.left - tooltipRect.width - 8;
-        y = scrollTop + childRect.top + (childRect.height / 2) - (tooltipRect.height / 2);
-        break;
-      case 'right':
-        x = scrollLeft + childRect.right + 8;
-        y = scrollTop + childRect.top + (childRect.height / 2) - (tooltipRect.height / 2);
-        break;
-    }
-    
-    // 确保提示框不会超出可视区域
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const maxX = scrollLeft + viewportWidth - tooltipRect.width - 8;
-    const maxY = scrollTop + viewportHeight - tooltipRect.height - 8;
-    
-    x = Math.max(scrollLeft + 8, Math.min(x, maxX));
-    y = Math.max(scrollTop + 8, Math.min(y, maxY));
-    
-    setPosition({ x, y });
-  }, [placement]);
-  
-  const handleMouseEnter = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    if (delay > 0) {
-      timeoutRef.current = setTimeout(() => {
-        setIsVisible(true);
-      }, delay);
-    } else {
-      setIsVisible(true);
-    }
-  }, [delay]);
-  
-  const handleMouseLeave = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    setIsVisible(false);
-  }, []);
-  
-  useEffect(() => {
-    return () => {
+export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
+  ({ content, placement = 'top', children, delay = 0 }, forwardedRef) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const tooltipRef = useRef<HTMLDivElement>(null);
+    const childRef = useRef<HTMLElement>(null);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // 计算位置
+    const updatePosition = useCallback(() => {
+      if (!childRef.current || !tooltipRef.current) return;
+
+      const childRect = childRef.current.getBoundingClientRect();
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+
+      let x = 0;
+      let y = 0;
+
+      // 计算考虑滚动位置的绝对坐标
+      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+      switch (placement) {
+        case 'top':
+          x = scrollLeft + childRect.left + childRect.width / 2 - tooltipRect.width / 2;
+          y = scrollTop + childRect.top - tooltipRect.height - 8;
+          break;
+        case 'bottom':
+          x = scrollLeft + childRect.left + childRect.width / 2 - tooltipRect.width / 2;
+          y = scrollTop + childRect.bottom + 8;
+          break;
+        case 'left':
+          x = scrollLeft + childRect.left - tooltipRect.width - 8;
+          y = scrollTop + childRect.top + childRect.height / 2 - tooltipRect.height / 2;
+          break;
+        case 'right':
+          x = scrollLeft + childRect.right + 8;
+          y = scrollTop + childRect.top + childRect.height / 2 - tooltipRect.height / 2;
+          break;
+      }
+
+      // 确保提示框不会超出可视区域
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const maxX = scrollLeft + viewportWidth - tooltipRect.width - 8;
+      const maxY = scrollTop + viewportHeight - tooltipRect.height - 8;
+
+      x = Math.max(scrollLeft + 8, Math.min(x, maxX));
+      y = Math.max(scrollTop + 8, Math.min(y, maxY));
+
+      setPosition({ x, y });
+    }, [placement]);
+
+    const handleMouseEnter = useCallback(() => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-    };
-  }, []);
-  
-  useEffect(() => {
-    if (isVisible) {
-      updatePosition();
-      window.addEventListener('resize', updatePosition);
-      window.addEventListener('scroll', updatePosition);
-    }
-    
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition);
-    };
-  }, [isVisible, updatePosition]);
-  
-  // 处理鼠标移入事件
-  const handleMouseEnterWithOriginal = useCallback((e: React.MouseEvent) => {
-    handleMouseEnter();
-    // 安全地调用原始onMouseEnter
-    const originalHandler = (children.props as any).onMouseEnter;
-    if (typeof originalHandler === 'function') {
-      originalHandler(e);
-    }
-  }, [children, handleMouseEnter]);
 
-  // 处理鼠标移出事件
-  const handleMouseLeaveWithOriginal = useCallback((e: React.MouseEvent) => {
-    handleMouseLeave();
-    // 安全地调用原始onMouseLeave
-    const originalHandler = (children.props as any).onMouseLeave;
-    if (typeof originalHandler === 'function') {
-      originalHandler(e);
-    }
-  }, [children, handleMouseLeave]);
-
-  // 处理点击事件
-  const handleClickWithOriginal = useCallback((e: React.MouseEvent) => {
-    // 点击时显示tooltip
-    handleMouseEnter();
-    
-    // 安全地调用原始onClick
-    const originalHandler = (children.props as any).onClick;
-    if (typeof originalHandler === 'function') {
-      originalHandler(e);
-    }
-  }, [children, handleMouseEnter]);
-
-  // 处理ref回调
-  const handleRefCallback = useCallback((node: any) => {
-    // 设置内部引用
-    childRef.current = node;
-    
-    // 处理原始子元素的ref
-    const childrenRef = (children as any).ref;
-    if (childrenRef) {
-      if (typeof childrenRef === 'function') {
-        childrenRef(node);
-      } else if (childrenRef.hasOwnProperty('current')) {
-        childrenRef.current = node;
-      }
-    }
-    
-    // 处理forwardedRef
-    if (forwardedRef) {
-      if (typeof forwardedRef === 'function') {
-        forwardedRef(node);
+      if (delay > 0) {
+        timeoutRef.current = setTimeout(() => {
+          setIsVisible(true);
+        }, delay);
       } else {
-        forwardedRef.current = node;
+        setIsVisible(true);
       }
-    }
-  }, [children, forwardedRef]);
-  
-  // 创建带有事件处理的子元素
-  const clonedChild = React.isValidElement(children) 
-    ? React.cloneElement(children, {
-        ...(children.props as any),
-        onMouseEnter: handleMouseEnterWithOriginal,
-        onMouseLeave: handleMouseLeaveWithOriginal,
-        onClick: handleClickWithOriginal,
-        ref: handleRefCallback
-      })
-    : children;
-  
-  return (
-    <>
-      {clonedChild}
-      
-      {isVisible && (
-        <TooltipContainer
-          ref={tooltipRef}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ duration: 0.2 }}
-          style={{ 
-            left: position.x, 
-            top: position.y, 
-            transformOrigin: placement === 'top' ? 'bottom' : 
-                             placement === 'bottom' ? 'top' : 
-                             placement === 'left' ? 'right' : 'left' 
-          }}
-        >
-          {content}
-        </TooltipContainer>
-      )}
-    </>
-  );
-});
+    }, [delay]);
+
+    const handleMouseLeave = useCallback(() => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      setIsVisible(false);
+    }, []);
+
+    useEffect(() => {
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+    }, []);
+
+    useEffect(() => {
+      if (isVisible) {
+        updatePosition();
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('scroll', updatePosition);
+      }
+
+      return () => {
+        window.removeEventListener('resize', updatePosition);
+        window.removeEventListener('scroll', updatePosition);
+      };
+    }, [isVisible, updatePosition]);
+
+    // 处理鼠标移入事件
+    const handleMouseEnterWithOriginal = useCallback(
+      (e: React.MouseEvent) => {
+        handleMouseEnter();
+        // 安全地调用原始onMouseEnter
+        const originalHandler = (children.props as any).onMouseEnter;
+        if (typeof originalHandler === 'function') {
+          originalHandler(e);
+        }
+      },
+      [children, handleMouseEnter],
+    );
+
+    // 处理鼠标移出事件
+    const handleMouseLeaveWithOriginal = useCallback(
+      (e: React.MouseEvent) => {
+        handleMouseLeave();
+        // 安全地调用原始onMouseLeave
+        const originalHandler = (children.props as any).onMouseLeave;
+        if (typeof originalHandler === 'function') {
+          originalHandler(e);
+        }
+      },
+      [children, handleMouseLeave],
+    );
+
+    // 处理点击事件
+    const handleClickWithOriginal = useCallback(
+      (e: React.MouseEvent) => {
+        // 点击时显示tooltip
+        handleMouseEnter();
+
+        // 安全地调用原始onClick
+        const originalHandler = (children.props as any).onClick;
+        if (typeof originalHandler === 'function') {
+          originalHandler(e);
+        }
+      },
+      [children, handleMouseEnter],
+    );
+
+    // 处理ref回调
+    const handleRefCallback = useCallback(
+      (node: any) => {
+        // 设置内部引用
+        childRef.current = node;
+
+        // 处理原始子元素的ref
+        const childrenRef = (children as any).ref;
+        if (childrenRef) {
+          if (typeof childrenRef === 'function') {
+            childrenRef(node);
+          } else if (childrenRef.hasOwnProperty('current')) {
+            childrenRef.current = node;
+          }
+        }
+
+        // 处理forwardedRef
+        if (forwardedRef) {
+          if (typeof forwardedRef === 'function') {
+            forwardedRef(node);
+          } else {
+            forwardedRef.current = node;
+          }
+        }
+      },
+      [children, forwardedRef],
+    );
+
+    // 创建带有事件处理的子元素
+    const clonedChild = React.isValidElement(children)
+      ? React.cloneElement(children, {
+          ...(children.props as any),
+          onMouseEnter: handleMouseEnterWithOriginal,
+          onMouseLeave: handleMouseLeaveWithOriginal,
+          onClick: handleClickWithOriginal,
+          ref: handleRefCallback,
+        })
+      : children;
+
+    return (
+      <>
+        {clonedChild}
+
+        {isVisible && (
+          <TooltipContainer
+            ref={tooltipRef}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              left: position.x,
+              top: position.y,
+              transformOrigin:
+                placement === 'top'
+                  ? 'bottom'
+                  : placement === 'bottom'
+                  ? 'top'
+                  : placement === 'left'
+                  ? 'right'
+                  : 'left',
+            }}
+          >
+            {content}
+          </TooltipContainer>
+        )}
+      </>
+    );
+  },
+);
 
 // ============ Badge徽章组件 ============
 const BadgeContainer = styled.span<{ type: string; dot?: boolean }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: ${({ dot }) => dot ? '0' : '0.75rem'};
+  font-size: ${({ dot }) => (dot ? '0' : '0.75rem')};
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
-  border-radius: ${({ dot }) => dot ? '50%' : 'var(--radius-full)'};
-  padding: ${({ dot }) => dot ? '0' : '0.25rem 0.5rem'};
-  min-width: ${({ dot }) => dot ? '8px' : '20px'};
-  height: ${({ dot }) => dot ? '8px' : 'auto'};
+  border-radius: ${({ dot }) => (dot ? '50%' : 'var(--radius-full)')};
+  padding: ${({ dot }) => (dot ? '0' : '0.25rem 0.5rem')};
+  min-width: ${({ dot }) => (dot ? '8px' : '20px')};
+  height: ${({ dot }) => (dot ? '8px' : 'auto')};
   color: white;
-  background-color: ${({ type }) => 
-    type === 'success' ? 'var(--success-color)' :
-    type === 'info' ? 'var(--accent-color)' :
-    type === 'warning' ? '#FFA726' : 
-    type === 'error' ? 'var(--error-color)' : 
-    'var(--text-tertiary)'
-  };
+  background-color: ${({ type }) =>
+    type === 'success'
+      ? 'var(--success-color)'
+      : type === 'info'
+      ? 'var(--accent-color)'
+      : type === 'warning'
+      ? '#FFA726'
+      : type === 'error'
+      ? 'var(--error-color)'
+      : 'var(--text-tertiary)'};
 `;
 
 interface BadgeProps {
@@ -855,21 +878,16 @@ export const Badge: React.FC<BadgeProps> = ({
   dot = false,
   type = 'default',
   className,
-  style
+  style,
 }) => {
   // 如果count为0且不是dot，则不显示
   if (count === 0 && !dot) return null;
-  
+
   // 计算显示的文本
-  const displayCount = (count && count > overflowCount) ? `${overflowCount}+` : count;
-  
+  const displayCount = count && count > overflowCount ? `${overflowCount}+` : count;
+
   return (
-    <BadgeContainer 
-      className={className}
-      style={style}
-      type={type}
-      dot={dot}
-    >
+    <BadgeContainer className={className} style={style} type={type} dot={dot}>
       {!dot && displayCount}
     </BadgeContainer>
   );
@@ -887,7 +905,7 @@ const TabsHeader = styled.div`
   overflow-x: auto;
   scrollbar-width: none;
   border-bottom: 1px solid var(--border-color);
-  
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -899,16 +917,16 @@ const TabItem = styled.button<{ active: boolean }>`
   background: none;
   font-size: 0.95rem;
   font-weight: 500;
-  color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-secondary)'};
+  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-  
+
   &:hover {
-    color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-primary)'};
+    color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-primary)')};
   }
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -917,7 +935,7 @@ const TabItem = styled.button<{ active: boolean }>`
     width: 100%;
     height: 2px;
     background-color: var(--accent-color);
-    transform: ${props => props.active ? 'scaleX(1)' : 'scaleX(0)'};
+    transform: ${(props) => (props.active ? 'scaleX(1)' : 'scaleX(0)')};
     transition: transform 0.2s ease;
     transform-origin: center;
   }
@@ -942,34 +960,28 @@ interface TabsProps {
   style?: React.CSSProperties;
 }
 
-export const Tabs: React.FC<TabsProps> = ({
-  items,
-  defaultActiveKey,
-  onChange,
-  className,
-  style
-}) => {
+export const Tabs: React.FC<TabsProps> = ({ items, defaultActiveKey, onChange, className, style }) => {
   const [activeKey, setActiveKey] = useState(defaultActiveKey || (items.length > 0 ? items[0].key : ''));
-  
+
   useEffect(() => {
     if (defaultActiveKey && defaultActiveKey !== activeKey) {
       setActiveKey(defaultActiveKey);
     }
   }, [defaultActiveKey]);
-  
+
   const handleTabClick = (key: string) => {
     setActiveKey(key);
     if (onChange) {
       onChange(key);
     }
   };
-  
-  const activeTab = items.find(item => item.key === activeKey);
-  
+
+  const activeTab = items.find((item) => item.key === activeKey);
+
   return (
     <TabsContainer className={className} style={style}>
       <TabsHeader>
-        {items.map(item => (
+        {items.map((item) => (
           <TabItem
             key={item.key}
             active={item.key === activeKey}
@@ -981,13 +993,11 @@ export const Tabs: React.FC<TabsProps> = ({
           </TabItem>
         ))}
       </TabsHeader>
-      
-      <TabContent>
-        {activeTab && activeTab.content}
-      </TabContent>
+
+      <TabContent>{activeTab && activeTab.content}</TabContent>
     </TabsContainer>
   );
 };
 
 // ============ 导出所有组件 ============
-export { Button }; 
+export { Button };

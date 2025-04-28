@@ -4,7 +4,7 @@ export enum HttpMethod {
   POST = 'POST',
   PUT = 'PUT',
   DELETE = 'DELETE',
-  PATCH = 'PATCH'
+  PATCH = 'PATCH',
 }
 
 // 请求配置接口
@@ -30,4 +30,4 @@ export interface ApiResponse<T = any> {
 export interface ErrorResponse {
   code: number;
   message: string;
-} 
+}

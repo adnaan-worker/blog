@@ -49,7 +49,7 @@ const BackButton = styled(motion.create(Link))`
   border-radius: 8px;
   font-weight: 500;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
+
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(81, 131, 245, 0.3);
@@ -59,18 +59,10 @@ const BackButton = styled(motion.create(Link))`
 const NotFoundPage = () => {
   return (
     <NotFoundContainer>
-      <ErrorCode
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
+      <ErrorCode initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
         404
       </ErrorCode>
-      <Title
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-      >
+      <Title initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
         页面不存在
       </Title>
       <Description

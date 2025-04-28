@@ -39,4 +39,4 @@ if (isDev) {
   console.log('当前应用配置:', config);
 }
 
-export default config; 
+export default config;

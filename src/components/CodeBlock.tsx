@@ -11,7 +11,7 @@ const Container = styled.div`
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   box-shadow: var(--card-shadow);
-  
+
   pre {
     margin: 0;
     padding: 1.25rem 1.5rem;
@@ -19,7 +19,7 @@ const Container = styled.div`
     font-size: 0.95rem;
     line-height: 1.6;
     color: var(--text-primary);
-    
+
     &::-webkit-scrollbar {
       height: 4px;
     }
@@ -28,7 +28,7 @@ const Container = styled.div`
       background: rgba(81, 131, 245, 0.2);
     }
   }
-  
+
   [data-theme='dark'] & {
     pre::-webkit-scrollbar-thumb {
       background: rgba(81, 131, 245, 0.3);
@@ -43,7 +43,7 @@ const Header = styled.div`
   padding: 0.6rem 1rem;
   background: rgba(0, 0, 0, 0.04);
   border-bottom: 1px solid var(--border-color);
-  
+
   [data-theme='dark'] & {
     background: rgba(255, 255, 255, 0.04);
   }
@@ -66,7 +66,7 @@ const CopyButton = styled.button`
   padding: 0.3rem;
   border-radius: 5px;
   transition: all 0.25s ease;
-  
+
   &:hover {
     color: var(--accent-color);
     background: rgba(81, 131, 245, 0.08);
@@ -94,24 +94,20 @@ interface CodeBlockProps {
   code: string;
 }
 
-const CodeBlock: React.FC<CodeBlockProps> = ({ 
-  language = 'javascript', 
-  showLineNumbers = true, 
-  code 
-}) => {
+const CodeBlock: React.FC<CodeBlockProps> = ({ language = 'javascript', showLineNumbers = true, code }) => {
   const [copied, setCopied] = useState(false);
-  
+
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
     setCopied(true);
-    
+
     setTimeout(() => {
       setCopied(false);
     }, 2000);
   };
-  
+
   const lines = code.split('\n');
-  
+
   return (
     <Container>
       <Header>
@@ -120,7 +116,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           {copied ? <FiCheck size={16} color="var(--accent-color)" /> : <FiCopy size={16} />}
         </CopyButton>
       </Header>
-      
+
       {showLineNumbers && (
         <LineNumbers>
           {lines.map((_, i) => (
@@ -128,7 +124,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           ))}
         </LineNumbers>
       )}
-      
+
       <pre style={{ paddingLeft: showLineNumbers ? '2.5rem' : '1.5rem' }}>
         <code>{code}</code>
       </pre>
@@ -136,4 +132,4 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   );
 };
 
-export default CodeBlock; 
+export default CodeBlock;

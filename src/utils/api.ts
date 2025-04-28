@@ -14,7 +14,7 @@ export const API = {
     getUserInfo: (): Promise<ApiResponse<any>> => {
       return http.get('/user/info');
     },
-    
+
     /**
      * 用户登录
      * @param data 登录参数
@@ -22,30 +22,30 @@ export const API = {
     login: (data: { username: string; password: string }): Promise<ApiResponse<any>> => {
       return http.post('/user/login', data);
     },
-    
+
     /**
      * 用户登出
      */
     logout: (): Promise<ApiResponse<any>> => {
       return http.post('/user/logout');
-    }
+    },
   },
-  
+
   // 博客文章相关
   article: {
     /**
      * 获取文章列表
      * @param params 查询参数
      */
-    getArticles: (params?: { 
-      page?: number; 
+    getArticles: (params?: {
+      page?: number;
       pageSize?: number;
       categoryId?: number;
       tag?: string;
     }): Promise<ApiResponse<any>> => {
       return http.get('/articles', params);
     },
-    
+
     /**
      * 获取文章详情
      * @param id 文章ID
@@ -53,7 +53,7 @@ export const API = {
     getArticleDetail: (id: string | number): Promise<ApiResponse<any>> => {
       return http.get(`/articles/${id}`);
     },
-    
+
     /**
      * 创建文章
      * @param data 文章数据
@@ -61,7 +61,7 @@ export const API = {
     createArticle: (data: any): Promise<ApiResponse<any>> => {
       return http.post('/articles', data);
     },
-    
+
     /**
      * 更新文章
      * @param id 文章ID
@@ -70,16 +70,16 @@ export const API = {
     updateArticle: (id: string | number, data: any): Promise<ApiResponse<any>> => {
       return http.put(`/articles/${id}`, data);
     },
-    
+
     /**
      * 删除文章
      * @param id 文章ID
      */
     deleteArticle: (id: string | number): Promise<ApiResponse<any>> => {
       return http.delete(`/articles/${id}`);
-    }
+    },
   },
-  
+
   // 分类相关
   category: {
     /**
@@ -87,9 +87,9 @@ export const API = {
      */
     getCategories: (): Promise<ApiResponse<any>> => {
       return http.get('/categories');
-    }
+    },
   },
-  
+
   // 标签相关
   tag: {
     /**
@@ -97,8 +97,8 @@ export const API = {
      */
     getTags: (): Promise<ApiResponse<any>> => {
       return http.get('/tags');
-    }
-  }
+    },
+  },
 };
 
-export default API; 
+export default API;

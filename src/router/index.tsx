@@ -1,32 +1,34 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import RootLayout from './layouts/RootLayout';
+import RootLayout from '../layouts/RootLayout';
 import pageLoadingGif from '@/assets/images/page-loading.gif';
 
 // 使用 React.lazy 懒加载组件
-const Home = lazy(() => import('./pages/Home'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const Code = lazy(() => import('./pages/Code'));
-const Blog = lazy(() => import('./pages/Blog'));
-const BlogDetail = lazy(() => import('./pages/BlogDetail'));
+const Home = lazy(() => import('../pages/Home'));
+const NotFound = lazy(() => import('../pages/NotFound'));
+const Code = lazy(() => import('../pages/Code'));
+const Blog = lazy(() => import('../pages/Blog'));
+const BlogDetail = lazy(() => import('../pages/BlogDetail'));
 
 // 个人中心相关页面
-const Profile = lazy(() => import('./pages/Profile'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Favorites = lazy(() => import('./pages/Favorites'));
-const Settings = lazy(() => import('./pages/Settings'));
-const CreateArticle = lazy(() => import('./pages/CreateArticle'));
-const UIExamples = lazy(() => import('./pages/UIExamples'));
+const Profile = lazy(() => import('../pages/Profile'));
+const Dashboard = lazy(() => import('../pages/Dashboard'));
+const Favorites = lazy(() => import('../pages/Favorites'));
+const Settings = lazy(() => import('../pages/Settings'));
+const CreateArticle = lazy(() => import('../pages/CreateArticle'));
+const UIExamples = lazy(() => import('../pages/UIExamples'));
 
 // 页面加载组件
 const PageLoading = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'column',
-    height: '100vh',
-  }}>
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'column',
+      height: '100vh',
+    }}
+  >
     <img
       src={pageLoadingGif}
       alt="加载中..."
@@ -38,10 +40,12 @@ const PageLoading = () => (
         marginBottom: '20px',
       }}
     />
-    <p style={{
-      color: 'var(--text-secondary)',
-      fontSize: '0.9rem',
-    }}>
+    <p
+      style={{
+        color: 'var(--text-secondary)',
+        fontSize: '0.9rem',
+      }}
+    >
       加载中...
     </p>
   </div>

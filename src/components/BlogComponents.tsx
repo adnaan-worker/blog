@@ -7,11 +7,11 @@ import { FiCalendar, FiClock, FiTag, FiUser, FiShare2, FiMessageCircle, FiHeart,
 // 动画变体定义
 export const fadeInUpVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] }
-  }
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] },
+  },
 };
 
 export const staggerContainerVariants = {
@@ -19,9 +19,9 @@ export const staggerContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 // 页面容器
@@ -38,7 +38,7 @@ export const PageTitle = styled(motion.h1)`
   font-weight: 700;
   margin-bottom: 1.5rem;
   position: relative;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -49,7 +49,7 @@ export const PageTitle = styled(motion.h1)`
     background: var(--accent-color);
     border-radius: 2px;
   }
-  
+
   @media (max-width: 768px) {
     font-size: 1.75rem;
   }
@@ -65,7 +65,7 @@ export const ArticleCard = styled(motion.div)`
   display: flex;
   flex-direction: column;
   height: 100%;
-  
+
   &:hover {
     background-color: rgba(81, 131, 245, 0.06);
     box-shadow: 0 8px 30px rgba(81, 131, 245, 0.1);
@@ -78,14 +78,14 @@ export const ArticleImage = styled.div`
   background-color: var(--bg-secondary);
   position: relative;
   overflow: hidden;
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  
+
   ${ArticleCard}:hover & img {
     transform: scale(1.05);
   }
@@ -114,7 +114,7 @@ export const ArticleMeta = styled.div`
   font-size: 0.85rem;
   color: var(--text-secondary);
   margin-bottom: 1rem;
-  
+
   span {
     display: flex;
     align-items: center;
@@ -151,7 +151,7 @@ export const ArticleTag = styled.span`
   font-size: 0.8rem;
   font-weight: 500;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: var(--accent-color);
     color: white;
@@ -166,14 +166,14 @@ export const ReadMoreButton = styled(Link)`
   font-size: 0.9rem;
   font-weight: 500;
   transition: all 0.2s ease;
-  
+
   svg {
     transition: transform 0.2s ease;
   }
-  
+
   &:hover {
     text-decoration: underline;
-    
+
     svg {
       transform: translateX(3px);
     }
@@ -197,7 +197,7 @@ export const ArticleDetailTitle = styled.h1`
   font-weight: 700;
   margin-bottom: 1rem;
   line-height: 1.3;
-  
+
   @media (max-width: 768px) {
     font-size: 1.75rem;
   }
@@ -212,7 +212,7 @@ export const ArticleDetailMeta = styled.div`
   font-size: 0.9rem;
   color: var(--text-secondary);
   margin-bottom: 1.5rem;
-  
+
   span {
     display: flex;
     align-items: center;
@@ -225,13 +225,13 @@ export const ArticleCover = styled.div`
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  
+
   img {
     width: 100%;
     height: auto;
     object-fit: cover;
   }
-  
+
   [data-theme='dark'] & {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   }
@@ -241,18 +241,18 @@ export const ArticleContent2 = styled.div`
   font-size: 1.05rem;
   line-height: 1.8;
   color: var(--text-primary);
-  
+
   p {
     margin-bottom: 1.5rem;
   }
-  
+
   h2 {
     font-size: 1.6rem;
     font-weight: 600;
     margin: 2.5rem 0 1rem;
     position: relative;
     padding-bottom: 0.5rem;
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -264,22 +264,23 @@ export const ArticleContent2 = styled.div`
       border-radius: 2px;
     }
   }
-  
+
   h3 {
     font-size: 1.3rem;
     font-weight: 600;
     margin: 2rem 0 1rem;
   }
-  
-  ul, ol {
+
+  ul,
+  ol {
     margin-bottom: 1.5rem;
     padding-left: 1.5rem;
-    
+
     li {
       margin-bottom: 0.5rem;
     }
   }
-  
+
   blockquote {
     margin: 1.5rem 0;
     padding: 1rem 1.5rem;
@@ -287,12 +288,12 @@ export const ArticleContent2 = styled.div`
     background: var(--bg-secondary);
     border-radius: 0 8px 8px 0;
     font-style: italic;
-    
+
     p {
       margin-bottom: 0;
     }
   }
-  
+
   code {
     font-family: var(--font-code);
     background: var(--bg-secondary);
@@ -300,27 +301,27 @@ export const ArticleContent2 = styled.div`
     border-radius: 4px;
     font-size: 0.9em;
   }
-  
+
   pre {
     background: var(--bg-secondary);
     padding: 1rem;
     border-radius: 8px;
     overflow-x: auto;
     margin-bottom: 1.5rem;
-    
+
     code {
       background: transparent;
       padding: 0;
       border-radius: 0;
     }
   }
-  
+
   img {
     max-width: 100%;
     border-radius: 8px;
     margin: 1.5rem 0;
   }
-  
+
   @media (max-width: 768px) {
     font-size: 1rem;
   }
@@ -347,7 +348,7 @@ export const ArticleActionButton = styled.button`
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: var(--accent-color-alpha);
     color: var(--accent-color);
@@ -376,23 +377,23 @@ export const PageNumber = styled.button<{ active?: boolean }>`
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid ${props => props.active ? 'var(--accent-color)' : 'var(--border-color)'};
-  background: ${props => props.active ? 'var(--accent-color-alpha)' : 'var(--bg-primary)'};
-  color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-secondary)'};
+  border: 1px solid ${(props) => (props.active ? 'var(--accent-color)' : 'var(--border-color)')};
+  background: ${(props) => (props.active ? 'var(--accent-color-alpha)' : 'var(--bg-primary)')};
+  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: var(--accent-color-alpha);
     color: var(--accent-color);
     border-color: var(--accent-color);
   }
-  
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    
+
     &:hover {
       background: var(--bg-primary);
       color: var(--text-secondary);
@@ -406,7 +407,7 @@ export const ArticleGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 2rem;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
@@ -428,7 +429,7 @@ export const FilterRow = styled.div`
   flex-wrap: wrap;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-color);
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
@@ -451,13 +452,13 @@ export const FilterOptions = styled.div`
 export const FilterOption = styled.button<{ active?: boolean }>`
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
-  border: 1px solid ${props => props.active ? 'var(--accent-color)' : 'var(--border-color)'};
-  background: ${props => props.active ? 'var(--accent-color-alpha)' : 'var(--bg-primary)'};
-  color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-secondary)'};
+  border: 1px solid ${(props) => (props.active ? 'var(--accent-color)' : 'var(--border-color)')};
+  background: ${(props) => (props.active ? 'var(--accent-color-alpha)' : 'var(--bg-primary)')};
+  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: var(--accent-color-alpha);
     color: var(--accent-color);
@@ -475,13 +476,13 @@ export const SearchInput = styled.input`
   transition: all 0.2s ease;
   flex: 1;
   min-width: 200px;
-  
+
   &:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px var(--accent-color-alpha);
   }
-  
+
   &::placeholder {
     color: var(--text-secondary);
     opacity: 0.6;
@@ -501,7 +502,7 @@ export const RelatedTitle = styled.h3`
   margin-bottom: 1.5rem;
   position: relative;
   padding-left: 1rem;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -528,7 +529,7 @@ export const CommentTitle = styled.h3`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  
+
   span {
     color: var(--accent-color);
     font-size: 1rem;
@@ -558,13 +559,13 @@ export const CommentInput = styled.textarea`
   min-height: 120px;
   transition: all 0.2s ease;
   margin-bottom: 1rem;
-  
+
   &:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px var(--accent-color-alpha);
   }
-  
+
   &::placeholder {
     color: var(--text-secondary);
     opacity: 0.6;
@@ -581,7 +582,7 @@ export const SubmitButton = styled.button`
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: var(--accent-color-hover);
   }
@@ -591,7 +592,7 @@ export const SubmitButton = styled.button`
 export const BlogLayoutContainer = styled.div`
   display: flex;
   gap: 2rem;
-  
+
   @media (max-width: 860px) {
     flex-direction: column;
   }
@@ -604,7 +605,7 @@ export const BlogMainContent = styled.div`
 export const BlogSidebar = styled.div`
   width: 300px;
   flex-shrink: 0;
-  
+
   @media (max-width: 860px) {
     width: 100%;
     margin-bottom: 2rem;
@@ -615,7 +616,7 @@ export const BlogSidebar = styled.div`
 export const TimelineContainer = styled(motion.div)`
   position: relative;
   padding-left: 1.5rem;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -631,7 +632,7 @@ export const TimelineContainer = styled(motion.div)`
 export const TimelineItem = styled(motion.div)`
   position: relative;
   margin-bottom: 2.5rem;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -644,7 +645,7 @@ export const TimelineItem = styled(motion.div)`
     border: 2px solid var(--bg-primary);
     box-shadow: 0 0 0 2px var(--accent-color-alpha);
   }
-  
+
   &:last-child {
     margin-bottom: 0;
   }
@@ -665,7 +666,7 @@ export const TimelineContent = styled.div`
   border-radius: 8px;
   padding: 1.25rem;
   transition: all 0.25s ease;
-  
+
   &:hover {
     background: var(--bg-secondary);
     border-color: var(--accent-color-alpha);
@@ -681,13 +682,13 @@ export const SidebarCard = styled.div`
   border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 1.5rem;
-  
+
   h3 {
     font-size: 1.1rem;
     margin-bottom: 1rem;
     position: relative;
     padding-bottom: 0.5rem;
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -715,20 +716,20 @@ export const CategoryItem = styled.button<{ active?: boolean }>`
   border-radius: 6px;
   font-size: 0.9rem;
   text-align: left;
-  background: ${props => props.active ? 'var(--accent-color-alpha)' : 'transparent'};
-  color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-secondary)'};
-  font-weight: ${props => props.active ? '500' : 'normal'};
+  background: ${(props) => (props.active ? 'var(--accent-color-alpha)' : 'transparent')};
+  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
+  font-weight: ${(props) => (props.active ? '500' : 'normal')};
   transition: all 0.2s ease;
-  
+
   &:hover {
     background: var(--accent-color-alpha);
     color: var(--accent-color);
   }
-  
+
   span:last-child {
     font-size: 0.8rem;
-    background: ${props => props.active ? 'var(--accent-color)' : 'var(--bg-secondary)'};
-    color: ${props => props.active ? 'white' : 'var(--text-secondary)'};
+    background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
+    color: ${(props) => (props.active ? 'white' : 'var(--text-secondary)')};
     padding: 0.1rem 0.5rem;
     border-radius: 10px;
     min-width: 24px;
@@ -744,14 +745,14 @@ export const TagCloud = styled.div`
 
 export const TagItem = styled.button<{ active?: boolean }>`
   padding: 0.4rem 0.8rem;
-  background: ${props => props.active ? 'var(--accent-color)' : 'var(--bg-secondary)'};
-  color: ${props => props.active ? 'white' : 'var(--text-secondary)'};
+  background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
+  color: ${(props) => (props.active ? 'white' : 'var(--text-secondary)')};
   border-radius: 20px;
   font-size: 0.85rem;
   transition: all 0.2s ease;
   border: none;
   cursor: pointer;
-  
+
   &:hover {
     background: var(--accent-color);
     color: white;
@@ -780,18 +781,36 @@ export const TimelineArticleComponent: React.FC<{
       <TimelineContent>
         <ArticleTitle>{article.title}</ArticleTitle>
         <ArticleMeta>
-          <span><FiClock size={14} /> {article.readTime || '5'} 分钟阅读</span>
-          <span><FiTag size={14} /> {article.category}</span>
+          <span>
+            <FiClock size={14} /> {article.readTime || '5'} 分钟阅读
+          </span>
+          <span>
+            <FiTag size={14} /> {article.category}
+          </span>
         </ArticleMeta>
         <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
         <ArticleFooter>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {article.tags?.slice(0, 2).map(tag => (
+            {article.tags?.slice(0, 2).map((tag) => (
               <ArticleTag key={tag}>{tag}</ArticleTag>
             ))}
           </div>
           <ReadMoreButton to={`/blog/${article.id}`}>
-            阅读更多 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            阅读更多{' '}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
           </ReadMoreButton>
         </ArticleFooter>
       </TimelineContent>
@@ -816,29 +835,49 @@ export const BlogCardComponent: React.FC<{
   return (
     <ArticleCard whileHover={{ y: -5 }}>
       <ArticleImage>
-        <img 
-          src={article.image} 
-          alt={article.title} 
+        <img
+          src={article.image}
+          alt={article.title}
           onError={(e) => {
-            e.currentTarget.src = "https://via.placeholder.com/600x400?text=Blog+Image";
+            e.currentTarget.src = 'https://via.placeholder.com/600x400?text=Blog+Image';
           }}
         />
       </ArticleImage>
       <ArticleContent>
         <ArticleTitle>{article.title}</ArticleTitle>
         <ArticleMeta>
-          <span><FiCalendar size={14} /> {article.date}</span>
-          <span><FiClock size={14} /> {article.readTime || '5'} 分钟阅读</span>
-          <span><FiTag size={14} /> {article.category}</span>
+          <span>
+            <FiCalendar size={14} /> {article.date}
+          </span>
+          <span>
+            <FiClock size={14} /> {article.readTime || '5'} 分钟阅读
+          </span>
+          <span>
+            <FiTag size={14} /> {article.category}
+          </span>
         </ArticleMeta>
         <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
         <ArticleFooter>
           <ArticleTag>{article.tags?.[0] || article.category}</ArticleTag>
           <ReadMoreButton to={`/blog/${article.id}`}>
-            阅读更多 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            阅读更多{' '}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
           </ReadMoreButton>
         </ArticleFooter>
       </ArticleContent>
     </ArticleCard>
   );
-}; 
+};

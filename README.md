@@ -58,7 +58,7 @@
 
 1. 克隆仓库
 ```bash
-git clone https://github.com/adnaan/blog.git
+git clone https://gitee.com/adnaan/blog.git
 cd blog
 ```
 
@@ -92,7 +92,6 @@ npm run build
     /Code.tsx      # 代码展示页
     /...
   /styles          # 全局样式
-  App.tsx          # 应用入口
   main.tsx         # 渲染入口
 ```
 

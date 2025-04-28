@@ -6,7 +6,7 @@ import path from 'path'
 export default defineConfig(({ mode }) => {
   // 加载环境变量
   const env = loadEnv(mode, process.cwd())
-  
+
   return {
     plugins: [
       react({
@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
     ],
     base: '/',
     server: {
-      port: 3000,
+      port: Number(env.VITE_API_PORT),
       open: true,
       host: '0.0.0.0',
       // 根据环境变量配置代理
@@ -25,8 +25,8 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: env.VITE_PROXY_TARGET || 'http://localhost:8080',
           changeOrigin: true,
-          rewrite: env.VITE_PROXY_REWRITE === 'true' 
-            ? (path) => path.replace(/^\/api/, '') 
+          rewrite: env.VITE_PROXY_REWRITE === 'true'
+            ? (path) => path.replace(/^\/api/, '')
             : undefined,
           secure: false,
         }
