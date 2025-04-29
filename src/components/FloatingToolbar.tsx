@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
+import * as mm from 'music-metadata'
+import http from '../utils/http';
 
 // 悬浮工具栏容器
 const ToolbarContainer = styled(motion.div)`
@@ -404,45 +406,204 @@ const FeatureToggleButton = styled.button`
 // 歌词气泡组件
 const LyricBubble = styled(motion.div)`
   position: fixed;
-  bottom: 2.3rem;
-  right: 5.8rem;
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-hover, #4a76e8));
-  color: white;
-  padding: 0.9rem 1.8rem;
-  border-radius: 24px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.2);
-  max-width: 300px;
-  text-align: center;
+  bottom: 5px;
+  right: 10%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 340px;
   z-index: 150;
-  pointer-events: none;
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  line-height: 1.5;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 
-  @media (max-width: 768px) {
-    bottom: 1.8rem;
-    right: 4.5rem;
-    max-width: 200px;
-    padding: 0.7rem 1.2rem;
-    font-size: 0.9rem;
-    border-radius: 18px;
+  /* 云朵容器 */
+  .cloud-wrapper {
+    position: relative;
+    width: 100%;
+    padding: 1rem 1.8rem;
+    background: #fff;
+    border-radius: 99px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 48px;
   }
 
-  &::after {
-    content: '';
+  /* 云朵的装饰部分 */
+  .cloud-decoration {
     position: absolute;
-    top: 50%;
-    right: -10px;
-    transform: translateY(-50%);
-    width: 0;
+    left: 0;
+    right: 0;
+    top: 0;
     height: 0;
-    border-top: 10px solid transparent;
-    border-bottom: 10px solid transparent;
-    border-left: 10px solid var(--accent-color-hover, #4a76e8);
-    filter: drop-shadow(2px 0 2px rgba(0, 0, 0, 0.1));
+    pointer-events: none;
+    
+    /* 上部的弧形 */
+    &::before {
+      content: '';
+      position: absolute;
+      left: 15%;
+      right: 15%;
+      height: 32px;
+      top: -16px;
+      background: #fff;
+      border-radius: 100px 100px 0 0;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    /* 左边的圆弧 */
+    .cloud-left {
+      position: absolute;
+      width: 60px;
+      height: 30px;
+      left: 20%;
+      top: -15px;
+      background: #fff;
+      border-radius: 30px 30px 0 0;
+      transform: rotate(-5deg);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    /* 右边的圆弧 */
+    .cloud-right {
+      position: absolute;
+      width: 70px;
+      height: 35px;
+      right: 18%;
+      top: -18px;
+      background: #fff;
+      border-radius: 35px 35px 0 0;
+      transform: rotate(5deg);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  /* 太阳/月亮 */
+  .celestial-body {
+    position: absolute;
+    top: -28px;
+    right: 15%;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    z-index: 2;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .lyric-text {
+    flex: 1;
+    margin: 0;
+    color: #333;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .toggle-button {
+    background: none;
+    border: none;
+    padding: 0.4rem;
+    color: #666;
+    opacity: 0.7;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-left: 0.2rem;
+    position: relative;
+    z-index: 1;
+
+    &:hover {
+      opacity: 1;
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    bottom: 4.5rem;
+    max-width: 300px;
+
+    .cloud-wrapper {
+      padding: 0.9rem 1.5rem;
+      min-height: 44px;
+    }
+
+    .cloud-decoration {
+      &::before {
+        height: 28px;
+        top: -14px;
+      }
+
+      .cloud-left {
+        width: 50px;
+        height: 25px;
+        top: -12px;
+      }
+
+      .cloud-right {
+        width: 60px;
+        height: 30px;
+        top: -15px;
+      }
+    }
+
+    .celestial-body {
+      width: 24px;
+      height: 24px;
+      top: -24px;
+    }
+
+    .lyric-text {
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .cloud-wrapper {
+      background: #2a2a2a;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .cloud-decoration {
+      &::before,
+      .cloud-left,
+      .cloud-right {
+        background: #2a2a2a;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    .celestial-body {
+      background: linear-gradient(135deg, #E6E6E6, #B0B0B0);
+      box-shadow: 
+        0 0 20px rgba(255, 255, 255, 0.2),
+        inset -3px -3px 6px rgba(0, 0, 0, 0.4);
+      transform: rotate(-45deg) scale(0.85);
+    }
+
+    .lyric-text {
+      color: #fff;
+    }
+
+    .toggle-button {
+      color: rgba(255, 255, 255, 0.7);
+
+      &:hover {
+        color: rgba(255, 255, 255, 0.95);
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+    }
   }
 `;
 
@@ -452,7 +613,7 @@ const musicList = [
     id: 1,
     title: 'Lo-Fi Chill',
     artist: 'Lofi Records',
-    url: 'https://dlink.host/musics/aHR0cHM6Ly9vbmVkcnYtbXkuc2hhcmVwb2ludC5jb20vOnU6L2cvcGVyc29uYWwvc3Rvcl9vbmVkcnZfb25taWNyb3NvZnRfY29tL0VZaVIwdy1IeUtsRGhYX3FNdHBxa1BJQl8yNVZCczdTOVJUSkRpSk1GZ0lyU2c.mp3',
+    url: '/music/韦礼安 - 如果可以.mp3',
     lyrics: [
       { time: 0, text: '【轻柔的音乐开始】' },
       { time: 10, text: '让思绪随着节奏飘扬' },
@@ -462,66 +623,6 @@ const musicList = [
       { time: 50, text: '让心灵在乐声中舒展' },
       { time: 60, text: '这是属于你的时光' },
       { time: 70, text: '在音乐的怀抱中放松' },
-    ],
-  },
-  {
-    id: 2,
-    title: 'Jazz Cafe',
-    artist: 'Music Unlimited',
-    url: 'https://cdn.pixabay.com/download/audio/2022/10/25/audio_864fc5ee02.mp3?filename=lofi-chill-medium-version-159456.mp3',
-    lyrics: [
-      { time: 0, text: '【爵士节奏开始】' },
-      { time: 12, text: '咖啡厅的午后时光' },
-      { time: 24, text: '阳光透过窗户洒落' },
-      { time: 36, text: '在爵士乐的陪伴下' },
-      { time: 48, text: '品味生活的悠闲' },
-      { time: 60, text: '让琴键带你穿越时空' },
-      { time: 72, text: '在音符间寻找宁静' },
-    ],
-  },
-  {
-    id: 3,
-    title: 'Morning Coffee',
-    artist: 'Dream Studio',
-    url: 'https://cdn.pixabay.com/download/audio/2023/01/28/audio_b39677a204.mp3?filename=chill-lofi-song-8444.mp3',
-    lyrics: [
-      { time: 0, text: '【舒缓节奏开始】' },
-      { time: 15, text: '清晨的第一缕阳光' },
-      { time: 30, text: '伴随着咖啡的香气' },
-      { time: 45, text: '开启新的一天' },
-      { time: 60, text: '在音乐中寻找灵感' },
-      { time: 75, text: '让心随着旋律舒展' },
-      { time: 90, text: '感受这美好时刻' },
-    ],
-  },
-  {
-    id: 4,
-    title: 'Sunday Mood',
-    artist: 'Calm Beats',
-    url: 'https://cdn.pixabay.com/download/audio/2022/05/16/audio_74ee2d1ca6.mp3?filename=lofi-chill-114565.mp3',
-    lyrics: [
-      { time: 0, text: '【轻松节奏开始】' },
-      { time: 13, text: '周日的慵懒时光' },
-      { time: 26, text: '没有匆忙，没有烦恼' },
-      { time: 39, text: '只有音乐与你相伴' },
-      { time: 52, text: '让心情随着鼓点起舞' },
-      { time: 65, text: '享受这难得的休闲' },
-      { time: 78, text: '在旋律中找到平静' },
-    ],
-  },
-  {
-    id: 5,
-    title: 'Study Session',
-    artist: 'Productive Beats',
-    url: 'https://cdn.pixabay.com/download/audio/2022/10/11/audio_9243be0333.mp3?filename=lofi-study-112191.mp3',
-    lyrics: [
-      { time: 0, text: '【专注节奏开始】' },
-      { time: 14, text: '集中精神，沉浸学习' },
-      { time: 28, text: '让思路在音乐中清晰' },
-      { time: 42, text: '每个音符都是灵感' },
-      { time: 56, text: '在知识的海洋里探索' },
-      { time: 70, text: '伴随着节拍前进' },
-      { time: 84, text: '让学习成为享受' },
     ],
   },
 ];
@@ -570,6 +671,44 @@ const ScrollTopButton = styled.button<{ visible: boolean }>`
   }
 `;
 
+// 获取音乐元数据
+const getMusicMetadata = async (url: string) => {
+  try {
+    console.log('开始获取音乐元数据:', url);
+    
+    // 使用 fetch 获取音乐文件
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('获取音乐文件失败');
+    }
+    
+    // 获取 Blob 并解析
+    const blob = await response.blob();
+    const metadata = await mm.parseBlob(blob);
+    console.log('解析元数据成功:', metadata);
+    
+    // 转换歌词格式
+    const formattedLyrics = metadata.common.lyrics?.map(lyric => ({
+      time: 0, // 如果没有时间信息，默认为0
+      text: typeof lyric === 'string' ? lyric : (lyric.text || '')
+    })) || [];
+    
+    const result = {
+      title: metadata.common.title || '未知标题',
+      artist: metadata.common.artist || '未知艺术家',
+      album: metadata.common.album || '未知专辑',
+      lyrics: formattedLyrics,
+      picture: metadata.common.picture?.[0]?.data,
+    };
+    
+    console.log('最终元数据结果:', result);
+    return result;
+  } catch (error) {
+    console.error('获取音乐元数据失败:', error);
+    return null;
+  }
+};
+
 export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => {
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(musicList[0]);
@@ -579,7 +718,7 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
   const [volume, setVolume] = useState(0.7);
   const [showLyrics, setShowLyrics] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [showLyricBubble, setShowLyricBubble] = useState(false);
+  const [showLyricBubble, setShowLyricBubble] = useState(true);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -598,30 +737,59 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
   };
 
   // 处理播放暂停
-  const togglePlay = () => {
+  const togglePlay = async () => {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
       } else {
-        audioRef.current.play().catch((error) => {
+        try {
+          // 获取当前曲目的元数据
+          const metadata = await getMusicMetadata(currentTrack.url);
+          
+          if (metadata) {
+            setCurrentTrack(prev => ({
+              ...prev,
+              title: metadata.title,
+              artist: metadata.artist,
+              lyrics: metadata.lyrics.length > 0 ? metadata.lyrics : prev.lyrics
+            }));
+          }
+          
+          await audioRef.current.play();
+        } catch (error) {
           console.error('播放出错:', error);
-        });
+        }
       }
       setIsPlaying(!isPlaying);
     }
   };
 
   // 播放特定曲目
-  const playTrack = (track: (typeof musicList)[0]) => {
-    setCurrentTrack(track);
-    setIsPlaying(true);
-    if (audioRef.current) {
-      audioRef.current.src = track.url;
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch((error) => {
-        console.error('播放出错:', error);
-        setIsPlaying(false);
-      });
+  const playTrack = async (track: (typeof musicList)[0]) => {
+    try {
+      // 获取音乐元数据
+      const metadata = await getMusicMetadata(track.url);
+      
+      if (metadata) {
+        setCurrentTrack({
+          ...track,
+          title: metadata.title,
+          artist: metadata.artist,
+          lyrics: metadata.lyrics.length > 0 ? metadata.lyrics : track.lyrics
+        });
+      } else {
+        setCurrentTrack(track);
+      }
+      
+      setIsPlaying(true);
+      if (audioRef.current) {
+        audioRef.current.src = track.url;
+        audioRef.current.currentTime = 0;
+        await audioRef.current.play();
+      }
+    } catch (error) {
+      console.error('播放出错:', error);
+      setIsPlaying(false);
     }
   };
 
@@ -999,9 +1167,12 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
                   <circle cx="6" cy="18" r="3"></circle>
                   <circle cx="18" cy="16" r="3"></circle>
                 </svg>
-                播放列表
+                列表
               </FeatureToggleButton>
-              <FeatureToggleButton className={showLyrics ? 'active' : ''} onClick={() => setShowLyrics(true)}>
+              <FeatureToggleButton 
+                className={showLyrics ? 'active' : ''} 
+                onClick={() => setShowLyrics(true)}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="14"
@@ -1019,14 +1190,34 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
                   <line x1="16" y1="17" x2="8" y2="17"></line>
                   <polyline points="10 9 9 9 8 9"></polyline>
                 </svg>
-                查看歌词
+                查看
+              </FeatureToggleButton>
+              <FeatureToggleButton
+                onClick={() => setShowLyricBubble(!showLyricBubble)}
+                className={showLyricBubble ? 'active' : ''}
+                style={{ marginLeft: '0.4rem' }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                </svg>
+                歌词
               </FeatureToggleButton>
             </div>
           </MusicPlayerPanel>
         )}
 
         {/* 添加歌词气泡 */}
-        {showLyricBubble && isPlaying && (
+        {showLyricBubble && currentLyric && (
           <LyricBubble
             key="lyric-bubble"
             initial={{ opacity: 0, y: 20 }}
@@ -1034,7 +1225,34 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.3 }}
           >
-            {currentLyric?.text}
+            <div className="cloud-wrapper">
+              <div className="cloud-decoration">
+                <div className="cloud-left" />
+                <div className="cloud-right" />
+              </div>
+              <div className="celestial-body" />
+              <p className="lyric-text">{currentLyric.text}</p>
+              <button 
+                className="toggle-button"
+                onClick={() => setShowLyricBubble(false)}
+                title="隐藏歌词"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
           </LyricBubble>
         )}
       </AnimatePresence>
