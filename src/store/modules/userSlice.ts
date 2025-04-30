@@ -1,15 +1,18 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import API from '@/utils/api';
 
-interface User {
+export interface User {
   id: number;
   username: string;
   email: string;
   avatar?: string;
+  role: string;
+  status: string;
 }
 
 interface UserState {
   user: User | null;
+  token: string | null;
   isLoggedIn: boolean;
   loading: boolean;
   error: string | null;
@@ -17,6 +20,7 @@ interface UserState {
 
 const initialState: UserState = {
   user: null,
+  token: null,
   isLoggedIn: false,
   loading: false,
   error: null,
@@ -26,9 +30,10 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<User | null>) => {
-      state.user = action.payload;
-      state.isLoggedIn = !!action.payload;
+    setUser: (state, action: PayloadAction<{ user: User; token: string }>) => {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isLoggedIn = true;
       state.error = null;
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
@@ -39,6 +44,7 @@ const userSlice = createSlice({
     },
     logout: (state) => {
       state.user = null;
+      state.token = null;
       state.isLoggedIn = false;
       state.error = null;
     },

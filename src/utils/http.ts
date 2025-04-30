@@ -42,9 +42,29 @@ class HttpRequest {
 
   // 配置拦截器
   private setupInterceptors(): void {
-    this.instance.interceptors.request.use(requestInterceptor, requestErrorInterceptor);
+    this.instance.interceptors.request.use(
+      (config) => {
+        // 从 localStorage 获取 token
+        const token = localStorage.getItem('token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      requestErrorInterceptor
+    );
 
-    this.instance.interceptors.response.use(responseInterceptor, responseErrorInterceptor);
+    this.instance.interceptors.response.use(
+      (response) => {
+        // 如果响应中包含 token，保存到 localStorage
+        const token = response.data?.data?.token;
+        if (token) {
+          localStorage.setItem('token', token);
+        }
+        return response;
+      },
+      responseErrorInterceptor
+    );
   }
 
   // 创建请求
