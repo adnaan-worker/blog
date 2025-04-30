@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const BubbleContainer = styled(motion.div)`
   position: fixed;
-  bottom: 100px;
-  left: 50%;
+  bottom: 20px;
+  right: 5%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 140, 255, 0.8);
   backdrop-filter: blur(8px);
   padding: 0.8rem 1.5rem;
   border-radius: 20px;

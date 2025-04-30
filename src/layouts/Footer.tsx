@@ -30,7 +30,7 @@ const FooterTop = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -55,12 +55,12 @@ const StyledLink = styled(Link)`
   align-items: center;
   gap: 0.35rem;
   width: fit-content;
-  
+
   &:hover {
     color: var(--accent-color);
     transform: translateX(3px);
   }
-  
+
   &::before {
     content: '';
     width: 4px;
@@ -80,7 +80,7 @@ const StyledLogo = styled(Link)`
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--text-primary);
-  
+
   &:hover {
     color: var(--accent-color);
   }
@@ -90,14 +90,25 @@ const StyledLogo = styled(Link)`
 interface FooterLinkProps {
   to: string;
   children: React.ReactNode;
-  variants?: any;
+  variants?: {
+    hidden?: {
+      opacity?: number;
+      y?: number;
+    };
+    visible?: {
+      opacity?: number;
+      y?: number;
+      transition?: {
+        duration?: number;
+        ease?: string;
+      };
+    };
+  };
 }
 
 const FooterLink: React.FC<FooterLinkProps> = ({ to, children, variants, ...props }) => (
   <MotionLinkContainer variants={variants} {...props}>
-    <StyledLink to={to}>
-      {children}
-    </StyledLink>
+    <StyledLink to={to}>{children}</StyledLink>
   </MotionLinkContainer>
 );
 
@@ -105,14 +116,25 @@ const FooterLink: React.FC<FooterLinkProps> = ({ to, children, variants, ...prop
 interface FooterLogoProps {
   to: string;
   children: React.ReactNode;
-  variants?: any;
+  variants?: {
+    hidden?: {
+      opacity?: number;
+      y?: number;
+    };
+    visible?: {
+      opacity?: number;
+      y?: number;
+      transition?: {
+        duration?: number;
+        ease?: string;
+      };
+    };
+  };
 }
 
 const FooterLogo: React.FC<FooterLogoProps> = ({ to, children, variants, ...props }) => (
   <LogoContainer variants={variants} {...props}>
-    <StyledLogo to={to}>
-      {children}
-    </StyledLogo>
+    <StyledLogo to={to}>{children}</StyledLogo>
   </LogoContainer>
 );
 
@@ -127,7 +149,7 @@ const FooterRight = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
-  
+
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
@@ -146,7 +168,7 @@ const FooterLinkTitle = styled(motion.h4)`
   color: var(--text-primary);
   margin-bottom: 0.5rem;
   position: relative;
-  
+
   &:after {
     content: '';
     position: absolute;
@@ -167,12 +189,12 @@ const FooterExternalLink = styled(motion.a)`
   align-items: center;
   gap: 0.35rem;
   width: fit-content;
-  
+
   &:hover {
     color: var(--accent-color);
     transform: translateX(3px);
   }
-  
+
   &::before {
     content: '';
     width: 4px;
@@ -199,7 +221,7 @@ const SocialLink = styled(motion.a)`
   background: var(--bg-secondary);
   color: var(--text-secondary);
   transition: all 0.2s ease;
-  
+
   &:hover {
     color: var(--accent-color);
     background-color: rgba(81, 131, 245, 0.1);
@@ -213,7 +235,7 @@ const FooterBottom = styled.div`
   justify-content: space-between;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-color);
-  
+
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
@@ -227,7 +249,7 @@ const Copyright = styled.div`
   gap: 0.5rem;
   font-size: 0.85rem;
   color: var(--text-secondary);
-  
+
   a {
     color: var(--text-secondary);
     transition: color 0.2s ease;
@@ -243,11 +265,11 @@ const PoweredBy = styled.div`
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  
+
   a {
     color: var(--accent-color);
     transition: color 0.2s ease;
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -260,9 +282,9 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05
-    }
-  }
+      staggerChildren: 0.05,
+    },
+  },
 };
 
 const itemVariants = {
@@ -272,9 +294,9 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: "easeOut"
-    }
-  }
+      ease: 'easeOut',
+    },
+  },
 };
 
 const Footer = () => {
@@ -289,21 +311,19 @@ const Footer = () => {
         <FooterTop>
           <FooterLeft>
             <motion.div variants={itemVariants}>
-              <FooterLogo to="/">
-                adnaan's Blog
-              </FooterLogo>
+              <FooterLogo to="/">adnaan's Blog</FooterLogo>
             </motion.div>
-            
+
             <motion.div variants={itemVariants}>
               <FooterDescription>
                 分享编程知识、设计理念与生活感悟。一个记录思考与成长的空间，希望能为你带来一些启发和帮助。
               </FooterDescription>
             </motion.div>
-            
+
             <SocialLinks>
-              <SocialLink 
-                href="https://github.com" 
-                target="_blank" 
+              <SocialLink
+                href="https://github.com"
+                target="_blank"
                 rel="noopener noreferrer"
                 variants={itemVariants}
                 whileHover={{ y: -2, scale: 1.1 }}
@@ -312,7 +332,7 @@ const Footer = () => {
               >
                 <FiGithub size={18} />
               </SocialLink>
-              <SocialLink 
+              <SocialLink
                 href="mailto:example@example.com"
                 variants={itemVariants}
                 whileHover={{ y: -2, scale: 1.1 }}
@@ -321,7 +341,7 @@ const Footer = () => {
               >
                 <FiMail size={18} />
               </SocialLink>
-              <SocialLink 
+              <SocialLink
                 href="/rss.xml"
                 variants={itemVariants}
                 whileHover={{ y: -2, scale: 1.1 }}
@@ -332,54 +352,67 @@ const Footer = () => {
               </SocialLink>
             </SocialLinks>
           </FooterLeft>
-          
+
           <FooterRight>
             <FooterLinks>
               <motion.div variants={itemVariants}>
                 <FooterLinkTitle>导航</FooterLinkTitle>
               </motion.div>
-              <FooterLink to="/" variants={itemVariants}>首页</FooterLink>
-              <FooterLink to="/blog" variants={itemVariants}>博客</FooterLink>
-              <FooterLink to="/notes" variants={itemVariants}>手记</FooterLink>
-              <FooterLink to="/projects" variants={itemVariants}>项目</FooterLink>
-              <FooterLink to="/about" variants={itemVariants}>关于我</FooterLink>
+              <FooterLink to="/" variants={itemVariants}>
+                首页
+              </FooterLink>
+              <FooterLink to="/blog" variants={itemVariants}>
+                博客
+              </FooterLink>
+              <FooterLink to="/notes" variants={itemVariants}>
+                手记
+              </FooterLink>
+              <FooterLink to="/projects" variants={itemVariants}>
+                项目
+              </FooterLink>
+              <FooterLink to="/about" variants={itemVariants}>
+                关于我
+              </FooterLink>
             </FooterLinks>
-            
+
             <FooterLinks>
               <motion.div variants={itemVariants}>
                 <FooterLinkTitle>资源</FooterLinkTitle>
               </motion.div>
-              <FooterLink to="/timeline" variants={itemVariants}>时间线</FooterLink>
-              <FooterLink to="/friends" variants={itemVariants}>友情链接</FooterLink>
-              <FooterExternalLink 
-                href="/sitemap.xml" 
-                target="_blank"
-                variants={itemVariants}
-              >
+              <FooterLink to="/timeline" variants={itemVariants}>
+                时间线
+              </FooterLink>
+              <FooterLink to="/friends" variants={itemVariants}>
+                友情链接
+              </FooterLink>
+              <FooterExternalLink href="/sitemap.xml" target="_blank" variants={itemVariants}>
                 网站地图
               </FooterExternalLink>
-              <FooterExternalLink 
-                href="/rss.xml" 
-                target="_blank"
-                variants={itemVariants}
-              >
+              <FooterExternalLink href="/rss.xml" target="_blank" variants={itemVariants}>
                 RSS订阅
               </FooterExternalLink>
             </FooterLinks>
           </FooterRight>
         </FooterTop>
-        
+
         <FooterBottom>
           <Copyright>
-            <span>© {new Date().getFullYear()} adnaan's Blog</span>
+            <span>© {new Date().getFullYear()}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              用 <FiHeart style={{ color: '#ff6b6b' }} size={12} /> 制作
+              Design by adnaan.
+              <FiHeart style={{ color: '#ff6b6b' }} size={12} />
             </span>
           </Copyright>
-          
+
           <PoweredBy>
-            由 <a href="#" target="_blank" rel="noopener noreferrer">React</a> 强力驱动 
-            | <a href="#" target="_blank" rel="noopener noreferrer">ICP备20236136号</a>
+            由{' '}
+            <a href="#" target="_blank" rel="noopener noreferrer">
+              React
+            </a>{' '}
+            强力驱动 |{' '}
+            <a href="#" target="_blank" rel="noopener noreferrer">
+              ICP备20236136号
+            </a>
           </PoweredBy>
         </FooterBottom>
       </FooterContent>
