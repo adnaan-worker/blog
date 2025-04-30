@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiUser, FiLock, FiMail, FiGithub, FiTwitter } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
-import { login } from '@/store/userSlice';
+import { login } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
 
 // 弹窗背景遮罩

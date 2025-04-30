@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import store, { AppDispatch } from './store';
-import { initializeTheme } from './store/themeSlice';
+import { initializeTheme } from './store/modules/themeSlice';
 import './styles/index.css';
 import router from './router';
 
