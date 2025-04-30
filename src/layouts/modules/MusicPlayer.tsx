@@ -339,7 +339,7 @@ const musicList = [
     id: 1,
     title: 'Lo-Fi Chill',
     artist: 'Lofi Records',
-    url: '/music/韦礼安 - 如果可以.mp3',
+    url: 'https://meting.qjqq.cn/?server=netease&type=url&id=525278976',
     lyrics: [
       { time: 0, text: '【轻柔的音乐开始】' },
       { time: 10, text: '让思绪随着节奏飘扬' },

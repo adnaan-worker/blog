@@ -18,6 +18,11 @@ const Live2DContainer = styled.div`
   height: 300px;
   pointer-events: auto;
   cursor: pointer;
+  
+  // 手机端隐藏
+  @media (max-width: var(--mobile)) {
+    display: none;
+  }
 `;
 
 export const Live2DModel = () => {
@@ -37,7 +42,7 @@ export const Live2DModel = () => {
           pointerEvents: 'auto',
         },
         mobile: {
-          show: true,
+          show: false,
           scale: 0.8,
         },
         react: {

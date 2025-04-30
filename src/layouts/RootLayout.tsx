@@ -1,13 +1,11 @@
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { useState, useEffect, useCallback, useTransition, useRef } from 'react';
 import styled from '@emotion/styled';
-import { useDispatch } from 'react-redux';
 import Header from './Header';
 import Footer from './Footer';
 import FloatingToolbar from './FloatingToolbar';
 import Live2DModel from './Live2DModel';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { AppDispatch } from '../store';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -62,7 +60,6 @@ const pageTransition = {
  * 包括页面过渡和滚动状态监听
  */
 const RootLayout = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
