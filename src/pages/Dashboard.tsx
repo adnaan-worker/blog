@@ -14,7 +14,7 @@ import {
   FiHeart,
   FiMessageSquare,
 } from 'react-icons/fi';
-import { PageContainer } from '../components/BlogComponents';
+import { PageContainer } from '../components/blog/BlogComponents';
 import { Link, useNavigate } from 'react-router-dom';
 
 // 定义样式组件

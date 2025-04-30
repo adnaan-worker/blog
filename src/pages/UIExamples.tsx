@@ -10,7 +10,7 @@ import {
   Badge,
   Tabs,
   Button,
-} from '../components/UIComponents';
+} from '../components/common/UIComponents';
 
 // 页面容器样式
 const PageContainer = styled.div`

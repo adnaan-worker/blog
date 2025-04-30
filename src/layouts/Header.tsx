@@ -131,43 +131,62 @@ const MenuButton = styled.button`
   }
 `;
 
-// 移动端菜单样式
+// 修改移动端菜单样式
 const MobileMenu = styled(motion.div)`
   position: fixed;
-  top: 0;
+  top: var(--header-height);
   left: 0;
   right: 0;
   bottom: 0;
   background: var(--bg-primary);
   z-index: 50;
-  padding: 5rem 2rem 2rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  overflow: hidden;
   
   [data-theme='dark'] & {
     background: var(--bg-primary);
   }
-   @media (max-width: 768px) {
-    background: var(--bg-primary);
-    touch-action: none;
-    overflow: auto;
+`;
+
+const MobileMenuContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  
+  &::-webkit-scrollbar {
+    display: none;
   }
 `;
 
+const MobileMenuSection = styled.div`
+  margin-bottom: 1.5rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const MobileMenuTitle = styled.div`
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  padding: 0 0.5rem;
+`;
+
 const MobileNavLink = styled(Link)<{ active: string }>`
-  width: 100%;
-  padding: 1rem;
-  margin: 0.25rem 0;
-  font-size: 1.1rem;
-  font-weight: ${(props) => (props.active === "true" ? '600' : '500')};
-  color: ${(props) => (props.active === "true" ? 'var(--text-primary)' : 'var(--text-secondary)')};
-  text-align: center;
-  border-radius: 8px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  padding: 0.75rem 0.5rem;
+  margin: 0.25rem 0;
+  font-size: 1rem;
+  font-weight: ${(props) => (props.active === "true" ? '600' : '500')};
+  color: ${(props) => (props.active === "true" ? 'var(--text-primary)' : 'var(--text-secondary)')};
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  gap: 0.75rem;
   
   &:hover {
     background: var(--bg-secondary);
@@ -175,34 +194,16 @@ const MobileNavLink = styled(Link)<{ active: string }>`
   }
   
   svg {
-    opacity: ${(props) => (props.active === "true" ? '1' : '0')};
+    font-size: 1.25rem;
+    opacity: ${(props) => (props.active === "true" ? '1' : '0.7')};
     transition: opacity 0.2s ease;
   }
-  
-  &:hover svg {
-    opacity: 0.5;
-  }
 `;
 
-const MobileDropdownContent = styled(motion.div)`
-  width: 100%;
-  margin-top: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const MobileDropdownItem = styled(Link)`
-  width: 100%;
-  padding: 0.75rem;
-  color: var(--text-secondary);
-  text-align: center;
-  font-size: 1rem;
-  
-  &:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-  }
+const MobileMenuDivider = styled.div`
+  height: 1px;
+  background: var(--border-color);
+  margin: 1rem 0;
 `;
 
 const Overlay = styled(motion.div)`
@@ -211,7 +212,7 @@ const Overlay = styled(motion.div)`
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255);
   backdrop-filter: blur(4px);
   z-index: 40;
 `;
@@ -585,15 +586,23 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
     } else {
+      const scrollY = document.body.style.top;
       document.body.style.overflow = '';
-      document.body.style.touchAction = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
     }
     
     return () => {
       document.body.style.overflow = '';
-      document.body.style.touchAction = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
     };
   }, [mobileMenuOpen]);
 
@@ -745,7 +754,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
         </div>
       </HeaderContainer>
       
-      {/* 移动导航菜单 */}
+      {/* 移动端菜单 */}
       {mobileMenuOpen && (
         <>
           <MobileMenu
@@ -754,136 +763,123 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
             exit="exit"
             variants={mobileMenuVariants}
           >
-            {/* 移动端菜单顶部显示用户信息 */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              padding: '1rem', 
-              borderBottom: '1px solid var(--border-color)',
-              marginBottom: '1rem',
-              width: '100%'
-            }}>
-              <Avatar style={{ width: '42px', height: '42px', margin: '0' }}>
-                <img src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30" alt="用户头像" />
-              </Avatar>
-              <div style={{ marginLeft: '1rem' }}>
-                <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Adnaan</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>全栈开发者</div>
-              </div>
-            </div>
-            
-            <MobileNavLink 
-              to="/" 
-              active={location.pathname === '/' ? "true" : "false"} 
-              onClick={handleLinkClick}
-            >
-              <FiHome size={18} />首页
-            </MobileNavLink>
-            
-            <MobileNavLink 
-              to="/blog" 
-              active={location.pathname.includes('/blog') ? "true" : "false"} 
-              onClick={handleLinkClick}
-            >
-              <FiBookOpen size={18} />博客
-            </MobileNavLink>
-            
-            <MobileNavLink 
-              to="/projects" 
-              active={location.pathname.includes('/projects') ? "true" : "false"} 
-              onClick={handleLinkClick}
-            >
-              <FiCode size={18} />项目
-            </MobileNavLink>
-            
-            <div ref={mobileDropdownRef} style={{ width: '100%',display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <MobileNavLink 
-                to="#" 
-                active={location.pathname.includes('/about') || location.pathname.includes('/contact') || location.pathname.includes('/code') ? "true" : "false"} 
-                onClick={toggleMobileMoreDropdown}
-              >
-                <FiInfo size={18} />更多
-              </MobileNavLink>
-              
-              {mobileMoreDropdownOpen && (
-                <MobileDropdownContent
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+            <MobileMenuContent>
+              <MobileMenuSection>
+                <MobileMenuTitle>主导航</MobileMenuTitle>
+                <MobileNavLink 
+                  to="/" 
+                  active={location.pathname === '/' ? "true" : "false"} 
+                  onClick={handleLinkClick}
                 >
-                  <MobileDropdownItem to="/about" onClick={handleLinkClick}><FiInfo size={18} style={{ opacity: location.pathname.includes('/about') ? 1 : 0 }} />关于我</MobileDropdownItem>
-                  <MobileDropdownItem to="/contact" onClick={handleLinkClick}><FiMail size={18} style={{ opacity: location.pathname.includes('/contact') ? 1 : 0 }} />联系方式</MobileDropdownItem>
-                  <MobileDropdownItem to="/code" onClick={handleLinkClick}><FiCode size={18} style={{ opacity: location.pathname.includes('/code') ? 1 : 0 }} />开发字体</MobileDropdownItem>
-                </MobileDropdownContent>
-              )}
-            </div>
-            
-            {/* 移动端个人中心入口 */}
-            <MobileNavLink 
-              to="/profile" 
-              active={location.pathname.includes('/profile') ? "true" : "false"} 
-              onClick={handleLinkClick}
-            >
-              <FiUser size={18} />个人资料
-            </MobileNavLink>
-            
-            <MobileNavLink 
-              to="/dashboard" 
-              active={location.pathname.includes('/dashboard') ? "true" : "false"} 
-              onClick={handleLinkClick}
-            >
-              <FiFileText size={18} />我的文章
-            </MobileNavLink>
-            
-            <MobileNavLink 
-              to="/favorites" 
-              active={location.pathname.includes('/favorites') ? "true" : "false"} 
-              onClick={handleLinkClick}
-            >
-              <FiHeart size={18} />我的收藏
-            </MobileNavLink>
-            
-            <MobileNavLink 
-              to="/settings" 
-              active={location.pathname.includes('/settings') ? "true" : "false"} 
-              onClick={handleLinkClick}
-            >
-              <FiSettings size={18} />设置
-            </MobileNavLink>
-            
-            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-              <ThemeToggle />
-              <div style={{ 
-                marginTop: '0.5rem', 
-                fontSize: '0.8rem', 
-                color: 'var(--text-secondary)' 
-              }}>
-                切换主题
-              </div>
-            </div>
-            
-            {/* 移动端登出按钮 */}
-            <button 
-              style={{ 
-                width: '100%', 
-                padding: '1rem', 
-                background: 'none',
-                border: 'none',
-                color: 'var(--danger-color)',
-                textAlign: 'center',
-                marginTop: '1rem',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-              onClick={handleLogout}
-            >
-              <FiLogOut size={18} />退出登录
-            </button>
+                  <FiHome />首页
+                </MobileNavLink>
+                
+                <MobileNavLink 
+                  to="/blog" 
+                  active={location.pathname.includes('/blog') ? "true" : "false"} 
+                  onClick={handleLinkClick}
+                >
+                  <FiBookOpen />博客
+                </MobileNavLink>
+                
+                <MobileNavLink 
+                  to="/projects" 
+                  active={location.pathname.includes('/projects') ? "true" : "false"} 
+                  onClick={handleLinkClick}
+                >
+                  <FiCode />项目
+                </MobileNavLink>
+              </MobileMenuSection>
+              
+              <MobileMenuDivider />
+              
+              <MobileMenuSection>
+                <MobileMenuTitle>更多</MobileMenuTitle>
+                <MobileNavLink 
+                  to="/about" 
+                  active={location.pathname.includes('/about') ? "true" : "false"} 
+                  onClick={handleLinkClick}
+                >
+                  <FiInfo />关于我
+                </MobileNavLink>
+                
+                <MobileNavLink 
+                  to="/contact" 
+                  active={location.pathname.includes('/contact') ? "true" : "false"} 
+                  onClick={handleLinkClick}
+                >
+                  <FiMail />联系方式
+                </MobileNavLink>
+                
+                <MobileNavLink 
+                  to="/code" 
+                  active={location.pathname.includes('/code') ? "true" : "false"} 
+                  onClick={handleLinkClick}
+                >
+                  <FiCode />开发字体
+                </MobileNavLink>
+              </MobileMenuSection>
+              
+              <MobileMenuDivider />
+              
+              <MobileMenuSection>
+                <MobileMenuTitle>个人中心</MobileMenuTitle>
+                <MobileNavLink 
+                  to="/profile" 
+                  active={location.pathname.includes('/profile') ? "true" : "false"} 
+                  onClick={handleLinkClick}
+                >
+                  <FiUser />个人资料
+                </MobileNavLink>
+                
+                <MobileNavLink 
+                  to="/dashboard" 
+                  active={location.pathname.includes('/dashboard') ? "true" : "false"} 
+                  onClick={handleLinkClick}
+                >
+                  <FiFileText />我的文章
+                </MobileNavLink>
+                
+                <MobileNavLink 
+                  to="/favorites" 
+                  active={location.pathname.includes('/favorites') ? "true" : "false"} 
+                  onClick={handleLinkClick}
+                >
+                  <FiHeart />我的收藏
+                </MobileNavLink>
+                
+                <MobileNavLink 
+                  to="/settings" 
+                  active={location.pathname.includes('/settings') ? "true" : "false"} 
+                  onClick={handleLinkClick}
+                >
+                  <FiSettings />设置
+                </MobileNavLink>
+              </MobileMenuSection>
+              
+              <MobileMenuDivider />
+              
+              <MobileMenuSection>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+                  <ThemeToggle />
+                  <button 
+                    style={{ 
+                      padding: '0.5rem 1rem',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--danger-color)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                    onClick={handleLogout}
+                  >
+                    <FiLogOut />退出登录
+                  </button>
+                </div>
+              </MobileMenuSection>
+            </MobileMenuContent>
           </MobileMenu>
           
           <Overlay

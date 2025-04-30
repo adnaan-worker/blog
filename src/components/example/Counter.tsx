@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { useAppDispatch, useAppSelector } from '../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { 
   increment, 
   decrement, 
@@ -8,7 +8,7 @@ import {
   selectCount,
   selectStatus,
   selectLastUpdated
-} from '../store/modules/counterSlice';
+} from '../../store/modules/counterSlice';
 
 const CounterContainer = styled.div`
   padding: 1rem;

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import ErrorImage from '@/assets/images/image-error.png';
 import {
   FiArrowRight,
   FiCalendar,
@@ -970,7 +971,7 @@ const mockArticles = [
     category: '技术',
     views: 630,
     excerpt: '探索如何利用React Native Screens和Native Navigation优化应用性能，减少启动时间。',
-    image: 'https://via.placeholder.com/600x400?text=React+Native',
+    image: '3',
   },
   {
     id: 2,
@@ -979,7 +980,7 @@ const mockArticles = [
     category: '开发',
     views: 415,
     excerpt: '详解React Native WebView组件与原生模块的集成方式，实现更流畅的用户体验。',
-    image: 'https://via.placeholder.com/600x400?text=WebView',
+    image: '2',
   },
   {
     id: 3,
@@ -988,7 +989,7 @@ const mockArticles = [
     category: '教程',
     views: 527,
     excerpt: '一步步教你如何在Expo项目中集成和使用原生模块，突破Expo的限制。',
-    image: 'https://via.placeholder.com/600x400?text=Expo',
+    image: '1',
   },
 ];
 
@@ -1309,8 +1310,7 @@ const Home = () => {
                     src={article.image}
                     alt={article.title}
                     onError={(e) => {
-                      e.currentTarget.src =
-                        'https://img0.baidu.com/it/u=2075518181,1224688219&fm=253&fmt=auto&app=138&f=JPEG?w=617&h=449';
+                      e.currentTarget.src = ErrorImage;
                     }}
                   />
                 </ArticleImage>

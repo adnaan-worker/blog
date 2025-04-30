@@ -17,8 +17,7 @@ const MainContainer = styled.div`
   background-color: var(--bg-primary);
   transition: background-color 0.3s ease;
   position: relative;
-  overflow: visible;
-  max-width: 100%;
+  overflow: hidden;
   width: 100%;
 `;
 
@@ -30,7 +29,7 @@ const Content = styled(motion.main)`
   padding: 2rem 1.5rem;
   overflow: visible;
   margin-top: var(--header-height);
-  
+
   @media (max-width: 768px) {
     padding: 1.5rem 1.25rem;
   }
@@ -51,11 +50,11 @@ const pageTransition = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: 10 },
-  transition: { 
-    duration: 0.3, 
+  transition: {
+    duration: 0.3,
     ease: [0.4, 0, 0.2, 1],
-    staggerChildren: 0.05
-  }
+    staggerChildren: 0.05,
+  },
 };
 
 /**
@@ -71,7 +70,7 @@ const RootLayout = () => {
   const location = useLocation();
   const navigationType = useNavigationType();
   const [isPending, startTransition] = useTransition();
-  
+
   // 用于控制加载指示器的完整显示
   const [showLoader, setShowLoader] = useState(false);
   const loaderAnimationCompleted = useRef(false);
@@ -88,7 +87,7 @@ const RootLayout = () => {
     if (isPending || isLoading) {
       setShowLoader(true);
       loaderAnimationCompleted.current = false;
-      
+
       // 清除之前的超时
       if (loaderTimeoutRef.current) {
         clearTimeout(loaderTimeoutRef.current);
@@ -102,7 +101,7 @@ const RootLayout = () => {
         }, 500); // 确保加载动画有足够时间完成
       }
     }
-    
+
     return () => {
       if (loaderTimeoutRef.current) {
         clearTimeout(loaderTimeoutRef.current);
@@ -114,7 +113,7 @@ const RootLayout = () => {
   useEffect(() => {
     // 页面导航开始时设置加载状态
     setIsLoading(true);
-    
+
     // 使用React 18的并发特性处理加载状态
     startTransition(() => {
       // 模拟资源加载完成
@@ -123,24 +122,24 @@ const RootLayout = () => {
           // 预加载当前路由所需的资源
           await Promise.all([
             // 这里可以添加实际需要预加载的资源，如图片、数据等
-            new Promise<void>(resolve => {
+            new Promise<void>((resolve) => {
               // 监听页面加载完成事件
               if (document.readyState === 'complete') {
                 resolve();
               } else {
                 window.addEventListener('load', () => resolve(), { once: true });
               }
-            })
+            }),
           ]);
         } finally {
           // 无论加载成功还是失败，都结束加载状态
           setIsLoading(false);
         }
       };
-      
+
       loadResources();
     });
-    
+
     // 滚动到页面顶部
     if (navigationType !== 'POP') {
       window.scrollTo(0, 0);
@@ -151,7 +150,7 @@ const RootLayout = () => {
   const handleScroll = useCallback(() => {
     const currentScrollPosition = window.scrollY;
     setScrollPosition(currentScrollPosition);
-    
+
     const newScrolledState = currentScrollPosition > 5;
     // 只有状态变化时才更新
     if (isScrolled !== newScrolledState) {
@@ -163,10 +162,10 @@ const RootLayout = () => {
   useEffect(() => {
     // 初始检查
     handleScroll();
-    
+
     // 添加事件监听，使用passive优化性能
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
+
     // 清理函数
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -183,11 +182,11 @@ const RootLayout = () => {
         {showLoader && (
           <LoadingIndicator
             initial={{ width: 0 }}
-            animate={{ width: "100%" }}
+            animate={{ width: '100%' }}
             exit={{ opacity: 0 }}
-            transition={{ 
+            transition={{
               duration: 0.5,
-              ease: "easeInOut"
+              ease: 'easeInOut',
             }}
             onAnimationComplete={() => {
               loaderAnimationCompleted.current = true;
@@ -198,26 +197,20 @@ const RootLayout = () => {
           />
         )}
       </AnimatePresence>
-      
+
       {/* 头部导航 */}
       <Header scrolled={isScrolled} />
-      
+
       {/* 主内容区域 - 带动画过渡 */}
       <AnimatePresence mode="wait">
-        <Content
-          key={location.pathname}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          variants={pageTransition}
-        >
+        <Content key={location.pathname} initial="initial" animate="animate" exit="exit" variants={pageTransition}>
           <Outlet />
         </Content>
       </AnimatePresence>
-      
+
       {/* 页脚 */}
       <Footer />
-      
+
       {/* 悬浮工具栏 */}
       <FloatingToolbar scrollPosition={scrollPosition} />
 

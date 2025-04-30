@@ -40,7 +40,7 @@ import {
   TimelineArticleComponent,
   fadeInUpVariants,
   staggerContainerVariants,
-} from '../components/BlogComponents';
+} from '../components/blog/BlogComponents';
 
 // 示例文章数据（与博客页面相同）
 const DUMMY_ARTICLES = [

@@ -494,15 +494,25 @@ code, pre, .code {
   background: rgba(81, 131, 245, 0.2);
   border-radius: 10px;
   transition: all 0.3s ease;
+  opacity: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(81, 131, 245, 0.6);
 }
 
+/* 只在滚动时显示滚动条 */
+*:hover::-webkit-scrollbar-thumb {
+  opacity: 1;
+}
+
 /* 火狐浏览器滚动条 */
 * {
   scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
   scrollbar-color: rgba(81, 131, 245, 0.2) transparent;
 }
 
@@ -515,7 +525,7 @@ code, pre, .code {
   background: rgba(81, 131, 245, 0.7);
 }
 
-[data-theme='dark'] * {
+[data-theme='dark'] *:hover {
   scrollbar-color: rgba(81, 131, 245, 0.3) transparent;
 }
 

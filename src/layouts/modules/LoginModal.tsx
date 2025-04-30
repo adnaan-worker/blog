@@ -1,63 +1,10 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiUser, FiLock, FiMail, FiGithub, FiTwitter } from 'react-icons/fi';
+import { FiUser, FiLock, FiMail, FiGithub, FiTwitter } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
-
-// 弹窗背景遮罩
-const ModalOverlay = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-// 弹窗容器
-const ModalContainer = styled(motion.div)`
-  background: var(--bg-primary);
-  border-radius: 16px;
-  padding: 2rem;
-  width: 90%;
-  max-width: 420px;
-  position: relative;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  
-  [data-theme='dark'] & {
-    background: var(--bg-secondary);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  }
-`;
-
-// 关闭按钮
-const CloseButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-  }
-`;
+import Modal from '@/components/common/Modal';
 
 // 标题
 const Title = styled.h2`
@@ -233,78 +180,58 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <ModalOverlay
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-        >
-          <ModalContainer
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <CloseButton onClick={onClose}>
-              <FiX size={20} />
-            </CloseButton>
-            
-            <Title>登录账号</Title>
-            
-            <Form onSubmit={handleSubmit}>
-              <InputGroup>
-                <InputIcon>
-                  <FiUser size={18} />
-                </InputIcon>
-                <Input
-                  type="text"
-                  name="username"
-                  placeholder="用户名"
-                  value={formData.username}
-                  onChange={handleChange}
-                  required
-                />
-              </InputGroup>
-              
-              <InputGroup>
-                <InputIcon>
-                  <FiLock size={18} />
-                </InputIcon>
-                <Input
-                  type="password"
-                  name="password"
-                  placeholder="密码"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </InputGroup>
-              
-              {error && <ErrorMessage>{error}</ErrorMessage>}
-              
-              <SubmitButton type="submit" disabled={loading}>
-                {loading ? '处理中...' : '登录'}
-              </SubmitButton>
-              
-              <ToggleForm type="button" onClick={onSwitchToRegister}>
-                没有账号？立即注册
-              </ToggleForm>
-            </Form>
-            
-            <SocialLoginGroup>
-              <SocialButton type="button">
-                <FiGithub size={20} />
-              </SocialButton>
-              <SocialButton type="button">
-                <FiTwitter size={20} />
-              </SocialButton>
-            </SocialLoginGroup>
-          </ModalContainer>
-        </ModalOverlay>
-      )}
-    </AnimatePresence>
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <Title>登录账号</Title>
+      
+      <Form onSubmit={handleSubmit}>
+        <InputGroup>
+          <InputIcon>
+            <FiUser size={18} />
+          </InputIcon>
+          <Input
+            type="text"
+            name="username"
+            placeholder="用户名"
+            value={formData.username}
+            onChange={handleChange}
+            required
+          />
+        </InputGroup>
+        
+        <InputGroup>
+          <InputIcon>
+            <FiLock size={18} />
+          </InputIcon>
+          <Input
+            type="password"
+            name="password"
+            placeholder="密码"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </InputGroup>
+        
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        
+        <SubmitButton type="submit" disabled={loading}>
+          {loading ? '处理中...' : '登录'}
+        </SubmitButton>
+        
+        <ToggleForm type="button" onClick={onSwitchToRegister}>
+          没有账号？立即注册
+        </ToggleForm>
+      </Form>
+      
+      <SocialLoginGroup>
+        <SocialButton type="button">
+          <FiGithub size={20} />
+        </SocialButton>
+        <SocialButton type="button">
+          <FiTwitter size={20} />
+        </SocialButton>
+      </SocialLoginGroup>
+    </Modal>
   );
 };
 

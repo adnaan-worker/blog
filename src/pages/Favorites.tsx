@@ -12,7 +12,7 @@ import {
   FiMessageSquare,
   FiSearch,
 } from 'react-icons/fi';
-import { PageContainer } from '../components/BlogComponents';
+import { PageContainer } from '../components/blog/BlogComponents';
 import { Link } from 'react-router-dom';
 
 // 定义样式组件

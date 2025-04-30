@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
 import { FiUser, FiMail, FiGithub, FiTwitter, FiInstagram, FiLinkedin, FiEdit } from 'react-icons/fi';
-import { PageContainer } from '../components/BlogComponents';
+import { PageContainer } from '../components/blog/BlogComponents';
 
 // 定义样式组件
 const ProfileContainer = styled.div`
