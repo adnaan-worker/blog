@@ -20,14 +20,14 @@ export const API = {
      * @param data 登录参数
      */
     login: (data: { username: string; password: string }): Promise<ApiResponse<any>> => {
-      return http.post('/user/login', data);
+      return http.post('/auth/login', data);
     },
 
     /**
      * 用户登出
      */
     logout: (): Promise<ApiResponse<any>> => {
-      return http.post('/user/logout');
+      return http.post('/auth/logout');
     },
   },
 
@@ -43,7 +43,7 @@ export const API = {
       categoryId?: number;
       tag?: string;
     }): Promise<ApiResponse<any>> => {
-      return http.get('/articles', params);
+      return http.get('/posts/page', params);
     },
 
     /**
@@ -51,7 +51,7 @@ export const API = {
      * @param id 文章ID
      */
     getArticleDetail: (id: string | number): Promise<ApiResponse<any>> => {
-      return http.get(`/articles/${id}`);
+      return http.get(`/posts/${id}`);
     },
 
     /**
@@ -59,7 +59,7 @@ export const API = {
      * @param data 文章数据
      */
     createArticle: (data: any): Promise<ApiResponse<any>> => {
-      return http.post('/articles', data);
+      return http.post('/posts', data);
     },
 
     /**
@@ -68,7 +68,7 @@ export const API = {
      * @param data 文章数据
      */
     updateArticle: (id: string | number, data: any): Promise<ApiResponse<any>> => {
-      return http.put(`/articles/${id}`, data);
+      return http.put(`/posts/${id}`, data);
     },
 
     /**
@@ -76,7 +76,7 @@ export const API = {
      * @param id 文章ID
      */
     deleteArticle: (id: string | number): Promise<ApiResponse<any>> => {
-      return http.delete(`/articles/${id}`);
+      return http.delete(`/posts/${id}`);
     },
   },
 

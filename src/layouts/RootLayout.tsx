@@ -1,12 +1,13 @@
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { useState, useEffect, useCallback, useTransition, useRef } from 'react';
 import styled from '@emotion/styled';
+import { useDispatch } from 'react-redux';
 import Header from './Header';
 import Footer from './Footer';
-import FloatingToolbar from '../components/FloatingToolbar';
-import Live2DModel from '../components/Live2DModel';
-import { ThemeProvider } from '../context/ThemeContext';
+import FloatingToolbar from './FloatingToolbar';
+import Live2DModel from './Live2DModel';
 import { AnimatePresence, motion } from 'framer-motion';
+import type { AppDispatch } from '../store';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -59,9 +60,10 @@ const pageTransition = {
 
 /**
  * 根布局组件，提供应用程序的基本结构
- * 包括主题切换、页面过渡和滚动状态监听
+ * 包括页面过渡和滚动状态监听
  */
 const RootLayout = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -175,55 +177,53 @@ const RootLayout = () => {
   if (!mounted) return null;
 
   return (
-    <ThemeProvider>
-      <MainContainer>
-        {/* 加载指示器 - 使用showLoader状态 */}
-        <AnimatePresence>
-          {showLoader && (
-            <LoadingIndicator
-              initial={{ width: 0 }}
-              animate={{ width: "100%" }}
-              exit={{ opacity: 0 }}
-              transition={{ 
-                duration: 0.5,
-                ease: "easeInOut"
-              }}
-              onAnimationComplete={() => {
-                loaderAnimationCompleted.current = true;
-                if (!isPending && !isLoading) {
-                  setShowLoader(false);
-                }
-              }}
-            />
-          )}
-        </AnimatePresence>
-        
-        {/* 头部导航 */}
-        <Header scrolled={isScrolled} />
-        
-        {/* 主内容区域 - 带动画过渡 */}
-        <AnimatePresence mode="wait">
-          <Content
-            key={location.pathname}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={pageTransition}
-          >
-            <Outlet />
-          </Content>
-        </AnimatePresence>
-        
-        {/* 页脚 */}
-        <Footer />
-        
-        {/* 悬浮工具栏 */}
-        <FloatingToolbar scrollPosition={scrollPosition} />
+    <MainContainer>
+      {/* 加载指示器 - 使用showLoader状态 */}
+      <AnimatePresence>
+        {showLoader && (
+          <LoadingIndicator
+            initial={{ width: 0 }}
+            animate={{ width: "100%" }}
+            exit={{ opacity: 0 }}
+            transition={{ 
+              duration: 0.5,
+              ease: "easeInOut"
+            }}
+            onAnimationComplete={() => {
+              loaderAnimationCompleted.current = true;
+              if (!isPending && !isLoading) {
+                setShowLoader(false);
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
+      
+      {/* 头部导航 */}
+      <Header scrolled={isScrolled} />
+      
+      {/* 主内容区域 - 带动画过渡 */}
+      <AnimatePresence mode="wait">
+        <Content
+          key={location.pathname}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={pageTransition}
+        >
+          <Outlet />
+        </Content>
+      </AnimatePresence>
+      
+      {/* 页脚 */}
+      <Footer />
+      
+      {/* 悬浮工具栏 */}
+      <FloatingToolbar scrollPosition={scrollPosition} />
 
-        {/* Live2D模型 */}
-        <Live2DModel />
-      </MainContainer>
-    </ThemeProvider>
+      {/* Live2D模型 */}
+      <Live2DModel />
+    </MainContainer>
   );
 };
 

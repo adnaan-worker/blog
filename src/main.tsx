@@ -1,6 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import store, { AppDispatch } from './store';
+import { initializeTheme } from './store/themeSlice';
 import './styles/index.css';
 import router from './router';
 
@@ -23,8 +26,15 @@ const randomTitle = titles[randomIndex];
 
 // 设置网页标题
 document.title = randomTitle;
+
+// 初始化主题
+const dispatch = store.dispatch as AppDispatch;
+dispatch(initializeTheme());
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
   </StrictMode>,
 );

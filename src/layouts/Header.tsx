@@ -3,7 +3,12 @@ import { useLocation, Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiChevronDown, FiSun, FiMoon, FiMenu, FiX, FiUser, FiSettings, FiFileText, FiHeart, FiLogOut, FiHome, FiBookOpen, FiCode, FiInfo, FiMail } from 'react-icons/fi';
-import { useTheme } from '../context/ThemeContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { toggleTheme } from '../store/themeSlice';
+import { logoutUser } from '../store/userSlice';
+import type { RootState, AppDispatch } from '../store';
+import LoginModal from './modules/LoginModal';
+import RegisterModal from './modules/RegisterModal';
 
 // 定义Header容器组件样式
 const HeaderContainer = styled.header<{ scrolled: boolean }>`
@@ -212,25 +217,33 @@ const Overlay = styled(motion.div)`
 `;
 
 // 用户头像样式
-const Avatar = styled.div`
+const Avatar = styled.div<{ hasImage?: boolean }>`
   width: 36px;
   height: 36px;
   border-radius: 50%;
   overflow: hidden;
   cursor: pointer;
-  border: 2px solid var(--accent-color-alpha);
+  border: ${props => props.hasImage ? '2px solid var(--accent-color-alpha)' : 'none'};
   transition: all 0.2s ease;
   margin-left: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   &:hover {
     transform: scale(1.05);
-    border-color: var(--accent-color);
+    border-color: ${props => props.hasImage ? 'var(--accent-color)' : 'none'};
   }
   
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  
+  svg {
+    width: 18px;
+    height: 18px;
   }
 `;
 
@@ -434,11 +447,12 @@ const ThemeToggleButton = styled(motion.button)`
 
 // 简化的ThemeToggle组件
 const ThemeToggle: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const dispatch = useDispatch();
+  const theme = useSelector((state: RootState) => state.theme.theme);
   
   return (
     <ThemeToggleButton 
-      onClick={toggleTheme} 
+      onClick={() => dispatch(toggleTheme())} 
       aria-label="切换主题"
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
@@ -456,11 +470,15 @@ interface HeaderProps {
 // Header组件
 const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+  const { user, isLoggedIn } = useSelector((state: RootState) => state.user);
   const [internalScrolled, setInternalScrolled] = useState(scrolled);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileMoreDropdownOpen, setMobileMoreDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
@@ -533,10 +551,33 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
     setUserDropdownOpen(!userDropdownOpen);
   };
 
+  // 处理登录
+  const handleLogin = () => {
+    setLoginModalOpen(true);
+    setUserDropdownOpen(false);
+  };
+
+  // 处理注册
+  const handleRegister = () => {
+    setRegisterModalOpen(true);
+    setUserDropdownOpen(false);
+  };
+
+  // 切换到注册
+  const handleSwitchToRegister = () => {
+    setLoginModalOpen(false);
+    setRegisterModalOpen(true);
+  };
+
+  // 切换到登录
+  const handleSwitchToLogin = () => {
+    setRegisterModalOpen(false);
+    setLoginModalOpen(true);
+  };
+
   // 处理登出
   const handleLogout = () => {
-    // 这里添加登出逻辑
-    alert('登出功能将在后续实现');
+    dispatch(logoutUser());
     setUserDropdownOpen(false);
   };
 
@@ -619,9 +660,19 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
           
           {/* 用户头像 */}
           <div ref={userDropdownRef} style={{ position: 'relative' }}>
+            {isLoggedIn ? (
+              <Avatar hasImage onClick={toggleUserDropdown}>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt={user.username} />
+                ) : (
+                  <FiUser color="var(--text-secondary)" />
+                )}
+              </Avatar>
+            ) : (
             <Avatar onClick={toggleUserDropdown}>
-              <img src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30" alt="用户头像" />
+                <FiUser color="var(--text-secondary)" />
             </Avatar>
+            )}
             
             {userDropdownOpen && (
               <UserDropdownContent
@@ -630,13 +681,19 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
                 exit="exit"
                 variants={dropdownVariants}
               >
+                {isLoggedIn ? (
+                  <>
                 <UserDropdownHeader>
                   <Avatar>
-                    <img src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30" alt="用户头像" />
+                        {user?.avatar ? (
+                          <img src={user.avatar} alt={user.username} />
+                        ) : (
+                          <FiUser color="var(--text-secondary)" />
+                        )}
                   </Avatar>
                   <UserInfo>
-                    <UserName>Adnaan</UserName>
-                    <UserRole>全栈开发者</UserRole>
+                        <UserName>{user?.username}</UserName>
+                        <UserRole>普通用户</UserRole>
                   </UserInfo>
                 </UserDropdownHeader>
                 
@@ -659,6 +716,18 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
                 <UserDropdownLogout onClick={handleLogout}>
                   <FiLogOut size={16} /> 退出登录
                 </UserDropdownLogout>
+                  </>
+                ) : (
+                  <>
+                    <UserDropdownItem to="#" onClick={handleLogin}>
+                      <FiUser size={16} /> 登录
+                    </UserDropdownItem>
+                    
+                    <UserDropdownItem to="#" onClick={handleRegister}>
+                      <FiUser size={16} /> 注册
+                    </UserDropdownItem>
+                  </>
+                )}
               </UserDropdownContent>
             )}
           </div>
@@ -826,6 +895,20 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
           />
         </>
       )}
+      
+      {/* 登录弹窗 */}
+      <LoginModal 
+        isOpen={loginModalOpen} 
+        onClose={() => setLoginModalOpen(false)}
+        onSwitchToRegister={handleSwitchToRegister}
+      />
+
+      {/* 注册弹窗 */}
+      <RegisterModal
+        isOpen={registerModalOpen}
+        onClose={() => setRegisterModalOpen(false)}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
     </div>
   );
 };
