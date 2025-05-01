@@ -106,15 +106,13 @@ body {
   scroll-behavior: smooth;
   letter-spacing: -0.01em;
   height: auto;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 #root {
   min-height: 100vh;
   width: 100%;
   position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -564,4 +562,27 @@ pre,
   .content-container {
     padding: 0 1rem;
   }
+}
+
+/* 添加文章标题高亮效果 */
+@keyframes highlightHeading {
+  0% {
+    background-color: rgba(81, 131, 245, 0);
+  }
+  30% {
+    background-color: rgba(81, 131, 245, 0.15);
+  }
+  70% {
+    background-color: rgba(81, 131, 245, 0.15);
+  }
+  100% {
+    background-color: rgba(81, 131, 245, 0);
+  }
+}
+
+.highlight-heading {
+  animation: highlightHeading 2s ease forwards;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  margin-left: -0.5rem;
 }

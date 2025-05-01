@@ -15,7 +15,7 @@ const MainContainer = styled.div`
   background-color: var(--bg-primary);
   transition: background-color 0.3s ease;
   position: relative;
-  overflow: hidden;
+  // overflow: hidden;
   width: 100%;
 `;
 
