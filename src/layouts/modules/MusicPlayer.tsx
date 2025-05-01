@@ -1,8 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiPlay, FiPause, FiSkipBack, FiSkipForward, FiVolume2, FiList, FiMusic, FiMessageSquare } from 'react-icons/fi';
-import * as mm from 'music-metadata';
+import {
+  FiX,
+  FiPlay,
+  FiPause,
+  FiSkipBack,
+  FiSkipForward,
+  FiVolume2,
+  FiList,
+  FiMusic,
+  FiMessageSquare,
+} from 'react-icons/fi';
 
 // 音乐播放器面板
 const PlayerPanel = styled(motion.div)`
@@ -209,6 +218,21 @@ const PlayerControls = styled.div`
       &:hover {
         background-color: var(--accent-color-hover, #4a76e8);
       }
+
+      .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
     }
   }
 `;
@@ -333,33 +357,115 @@ const LyricsContainer = styled.div`
   }
 `;
 
-// 音乐播放列表
-const musicList = [
+// 音乐播放列表初始数据
+const initialMusicList = [
   {
     id: 1,
-    title: 'Lo-Fi Chill',
-    artist: 'Lofi Records',
-    url: 'https://meting.qjqq.cn/?server=netease&type=url&id=525278976',
-    lyrics: [
-      { time: 0, text: '【轻柔的音乐开始】' },
-      { time: 10, text: '让思绪随着节奏飘扬' },
-      { time: 20, text: '在这平静的时刻' },
-      { time: 30, text: '感受音符的温度' },
-      { time: 40, text: '无需言语，只需聆听' },
-      { time: 50, text: '让心灵在乐声中舒展' },
-      { time: 60, text: '这是属于你的时光' },
-      { time: 70, text: '在音乐的怀抱中放松' },
-    ],
+    songId: '2659883777',
+    title: '光阴副本',
+    artist: '林俊杰',
+    url: 'https://meting.qjqq.cn/?server=netease&type=url&id=2659883777',
+    pic: 'https://meting.qjqq.cn/?server=netease&type=pic&id=2659883777',
+    lrc: 'https://meting.qjqq.cn/?server=netease&type=lrc&id=2659883777',
+    lyrics: [{ time: 0, text: '【点击播放加载歌词】' }],
   },
 ];
 
-interface MusicMetadata {
-  title: string;
+// 歌曲信息接口
+interface SongInfo {
+  name: string;
   artist: string;
-  album?: string;
-  lyrics: Array<{ time: number; text: string }>;
-  picture?: Uint8Array;
+  url: string;
+  pic: string;
+  lrc: string;
 }
+
+// 从API获取歌曲信息
+const fetchSongInfo = async (songId: string, abortSignal?: AbortSignal): Promise<SongInfo | null> => {
+  try {
+    // 设置请求超时
+    const controller = new AbortController();
+    const signal = abortSignal || controller.signal;
+
+    // 5秒超时
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(`https://meting.qjqq.cn/?type=song&id=${songId}`, { signal });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) throw new Error('获取歌曲信息失败');
+
+    const data = await response.json();
+    if (Array.isArray(data) && data.length > 0) {
+      return data[0];
+    }
+    return null;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('获取歌曲信息超时');
+      throw new Error('请求超时，请稍后再试');
+    }
+    console.error('获取歌曲信息失败:', error);
+    throw error;
+  }
+};
+
+// 解析LRC歌词
+const parseLrc = (lrcContent: string): Array<{ time: number; text: string }> => {
+  if (!lrcContent) return [];
+
+  const lines = lrcContent.split('\n');
+  const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
+  const result: Array<{ time: number; text: string }> = [];
+
+  lines.forEach((line) => {
+    const match = timeRegex.exec(line);
+    if (match) {
+      const minutes = parseInt(match[1], 10);
+      const seconds = parseInt(match[2], 10);
+      const milliseconds = parseInt(match[3], 10);
+      const time = minutes * 60 + seconds + milliseconds / 1000;
+      const text = line.replace(timeRegex, '').trim();
+      if (text) {
+        result.push({ time, text });
+      }
+    }
+  });
+
+  return result.sort((a, b) => a.time - b.time);
+};
+
+// 获取歌词内容
+const fetchLyrics = async (
+  lrcUrl: string,
+  abortSignal?: AbortSignal,
+): Promise<Array<{ time: number; text: string }>> => {
+  try {
+    // 设置请求超时
+    const controller = new AbortController();
+    const signal = abortSignal || controller.signal;
+
+    // 5秒超时
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(lrcUrl, { signal });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) throw new Error('获取歌词失败');
+
+    const lrcContent = await response.text();
+    return parseLrc(lrcContent);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('获取歌词超时');
+      throw new Error('歌词请求超时');
+    }
+    console.error('获取歌词失败:', error);
+    throw error;
+  }
+};
+
+const musicList = [...initialMusicList];
 
 interface MusicPlayerProps {
   isOpen: boolean;
@@ -368,14 +474,8 @@ interface MusicPlayerProps {
   onLyricBubbleToggle?: (isEnabled: boolean) => void;
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = ({ 
-  isOpen, 
-  onClose, 
-  onLyricChange,
-  onLyricBubbleToggle 
-}) => {
+const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChange, onLyricBubbleToggle }) => {
   const [currentTrack, setCurrentTrack] = useState(musicList[0]);
-  const [metadata, setMetadata] = useState<MusicMetadata | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -384,47 +484,77 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
   const [showMusicList, setShowMusicList] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isLyricBubbleEnabled, setIsLyricBubbleEnabled] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 2; // 最大重试次数
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // 获取音乐元数据
-  const getMusicMetadata = async (url: string) => {
+  // 加载歌曲信息
+  const loadSongInfo = async (track: (typeof musicList)[0]) => {
+    // 重置错误信息
+    setErrorMessage(null);
+
     try {
       setIsLoading(true);
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('获取音乐文件失败');
-      
-      const blob = await response.blob();
-      const metadata = await mm.parseBlob(blob);
-      
-      // 处理歌词
-      let formattedLyrics: Array<{ time: number; text: string }> = [];
-      if (metadata.common.lyrics && metadata.common.lyrics.length > 0) {
-        formattedLyrics = metadata.common.lyrics.map(lyric => {
-          if (typeof lyric === 'string') {
-            return { time: 0, text: lyric };
-          }
-          return {
-            time: 0,
-            text: lyric.text || ''
-          };
-        });
-      }
-      
-      const musicMetadata: MusicMetadata = {
-        title: metadata.common.title || '未知标题',
-        artist: metadata.common.artist || '未知艺术家',
-        album: metadata.common.album,
-        lyrics: formattedLyrics,
-        picture: metadata.common.picture?.[0]?.data,
-      };
 
-      console.log('获取到的音乐元数据:', musicMetadata);
-      return musicMetadata;
+      // 如果有songId，则从API获取歌曲信息
+      if (track.songId) {
+        // 创建一个可以中断的请求控制器
+        const controller = new AbortController();
+
+        try {
+          const songInfo = await fetchSongInfo(track.songId, controller.signal);
+          if (songInfo) {
+            // 获取歌词
+            const lyrics = await fetchLyrics(songInfo.lrc, controller.signal);
+
+            // 重置重试计数
+            setRetryCount(0);
+
+            // 更新当前曲目信息
+            setCurrentTrack({
+              ...track,
+              title: songInfo.name,
+              artist: songInfo.artist,
+              url: songInfo.url,
+              pic: songInfo.pic,
+              lrc: songInfo.lrc,
+              lyrics: lyrics.length > 0 ? lyrics : [{ time: 0, text: '暂无歌词' }],
+            });
+
+            return {
+              url: songInfo.url,
+              lyrics: lyrics,
+            };
+          }
+        } catch (fetchError) {
+          // 如果重试次数未超过最大值，则增加重试计数
+          if (retryCount < maxRetries) {
+            setRetryCount((prev) => prev + 1);
+            throw fetchError; // 抛出错误以便外层捕获并处理
+          } else {
+            // 超过最大重试次数，显示错误信息
+            const errorMsg = fetchError instanceof Error ? fetchError.message : '加载失败';
+            setErrorMessage('播放失败' + errorMsg);
+            console.error('加载失败，已达到最大重试次数:', errorMsg);
+          }
+        }
+      }
+
+      return {
+        url: track.url,
+        lyrics: track.lyrics,
+      };
     } catch (error) {
-      console.error('获取音乐元数据失败:', error);
-      return null;
+      console.error('加载歌曲信息失败:', error);
+      const errorMsg = error instanceof Error ? error.message : '加载失败';
+      setErrorMessage('播放失败' + errorMsg);
+      return {
+        url: track.url,
+        lyrics: [{ time: 0, text: '加载失败，请重试' }],
+      };
     } finally {
       setIsLoading(false);
     }
@@ -435,17 +565,25 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
     if (!audioRef.current) return;
 
     try {
-      setIsLoading(true);
+      // 如果是暂停操作，不需要设置加载状态
       if (isPlaying) {
         audioRef.current.pause();
         setIsPlaying(false);
-      } else {
-        if (audioRef.current.src !== currentTrack.url) {
-          audioRef.current.src = currentTrack.url;
-        }
-        await audioRef.current.play();
-        setIsPlaying(true);
+        return;
       }
+
+      // 只有在播放时才设置加载状态
+      setIsLoading(true);
+
+      // 确保URL是最新的
+      const songInfo = await loadSongInfo(currentTrack);
+      if (audioRef.current.src !== songInfo.url) {
+        audioRef.current.src = songInfo.url;
+      }
+
+      // 播放前确保加载状态仍然为true
+      await audioRef.current.play();
+      setIsPlaying(true);
     } catch (error) {
       console.error('播放出错:', error);
       setIsPlaying(false);
@@ -455,28 +593,27 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
   };
 
   // 播放特定曲目
-  const playTrack = async (track: typeof musicList[0]) => {
+  const playTrack = async (track: (typeof musicList)[0]) => {
     if (!audioRef.current) return;
 
+    // 如果正在加载中，不要重复触发
+    if (isLoading) return;
+
     try {
+      // 设置加载状态
       setIsLoading(true);
-      const musicMetadata = await getMusicMetadata(track.url);
-      if (musicMetadata) {
-        setMetadata(musicMetadata);
-        setCurrentTrack({
-          ...track,
-          title: musicMetadata.title,
-          artist: musicMetadata.artist,
-          lyrics: musicMetadata.lyrics.length > 0 ? musicMetadata.lyrics : track.lyrics
-        });
-      } else {
-        setCurrentTrack(track);
+
+      // 使用loadSongInfo加载歌曲信息，避免重复代码
+      const songInfo = await loadSongInfo(track);
+
+      // 更新音频源
+      if (audioRef.current.src !== songInfo.url) {
+        audioRef.current.src = songInfo.url;
       }
-      
-      if (audioRef.current.src !== track.url) {
-        audioRef.current.src = track.url;
-      }
+
       audioRef.current.currentTime = 0;
+
+      // 播放前确保加载状态仍然为true
       await audioRef.current.play();
       setIsPlaying(true);
     } catch (error) {
@@ -510,52 +647,53 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
   };
 
   // 更新播放时间
-  const updateTime = () => {
+  const updateTime = useCallback(() => {
     if (audioRef.current && isPlaying) {
       setCurrentTime(audioRef.current.currentTime);
       animationFrameRef.current = requestAnimationFrame(updateTime);
     }
-  };
+  }, [isPlaying]);
 
   // 初始化音频元素和事件
   useEffect(() => {
     const audio = new Audio();
-    audio.src = currentTrack.url;
     audio.volume = volume;
     audioRef.current = audio;
 
-    const handleLoadedMetadata = async () => {
+    const handleLoadedMetadata = () => {
       setDuration(audio.duration);
-      // 获取音乐元数据
-      const musicMetadata = await getMusicMetadata(currentTrack.url);
-      if (musicMetadata) {
-        setMetadata(musicMetadata);
-        // 更新当前曲目信息
-        setCurrentTrack(prev => ({
-          ...prev,
-          title: musicMetadata.title,
-          artist: musicMetadata.artist,
-          lyrics: musicMetadata.lyrics.length > 0 ? musicMetadata.lyrics : prev.lyrics
-        }));
-      }
     };
 
     const handleEnded = () => {
       playNext();
     };
 
+    const handleError = (e: Event) => {
+      console.error('音频加载错误:', e);
+      setIsLoading(false);
+      setErrorMessage('音频加载失败，请重试');
+      setIsPlaying(false);
+    };
+
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+
+    // 不再自动初始化加载歌曲信息，而是等待用户交互
+    // 只预设置默认URL，但不主动加载
+    audio.src = musicList[0].url;
+    audio.preload = 'none'; // 设置为不预加载
 
     return () => {
       audio.pause();
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, []);
+  }, [playNext, volume]);
 
   // 更新播放状态时启动时间更新
   useEffect(() => {
@@ -570,7 +708,10 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isPlaying]);
+  }, [isPlaying, updateTime]);
+
+  // 当组件打开时，不再自动加载歌曲信息
+  // 移除自动加载逻辑，改为用户交互时加载
 
   // 获取当前播放的歌词
   const getCurrentLyric = () => {
@@ -596,7 +737,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
         onLyricBubbleToggle(false);
       }
     }
-  }, [isPlaying, onLyricBubbleToggle]);
+  }, [isPlaying, onLyricBubbleToggle, isLyricBubbleEnabled]);
 
   // 监听歌词变化
   useEffect(() => {
@@ -608,7 +749,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
   // 切换歌词气泡显示
   const toggleLyricBubble = () => {
     if (!isPlaying) return; // 暂停状态下不允许开启歌词气泡
-    
+
     const newState = !isLyricBubbleEnabled;
     setIsLyricBubbleEnabled(newState);
     if (onLyricBubbleToggle) {
@@ -634,27 +775,27 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
         >
           <PlayerHeader>
             <h4>
-              {metadata?.title || currentTrack.title}
-              {metadata?.artist && ` - ${metadata.artist}`}
+              {currentTrack.title}
+              {currentTrack.artist && ` - ${currentTrack.artist}`}
             </h4>
             <div className="header-controls">
-              <button 
-                onClick={() => setShowMusicList(!showMusicList)} 
+              <button
+                onClick={() => setShowMusicList(!showMusicList)}
                 title="切换歌曲列表"
                 className={showMusicList ? 'active' : ''}
               >
                 <FiList />
               </button>
-              <button 
-                onClick={() => setShowLyrics(!showLyrics)} 
+              <button
+                onClick={() => setShowLyrics(!showLyrics)}
                 title="切换歌词显示"
                 className={showLyrics ? 'active' : ''}
               >
                 <FiMusic />
               </button>
-              <button 
+              <button
                 onClick={toggleLyricBubble}
-                title={isLyricBubbleEnabled ? "关闭歌词气泡" : "开启歌词气泡"}
+                title={isLyricBubbleEnabled ? '关闭歌词气泡' : '开启歌词气泡'}
                 className={isLyricBubbleEnabled ? 'active' : ''}
                 disabled={!isPlaying}
                 style={{ opacity: !isPlaying ? 0.5 : 1 }}
@@ -677,16 +818,8 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
                   disabled={isLoading}
                 >
                   <div className="music-info">
-                    <div className="title">
-                      {track.id === currentTrack.id && metadata?.title 
-                        ? metadata.title 
-                        : track.title}
-                    </div>
-                    <div className="artist">
-                      {track.id === currentTrack.id && metadata?.artist 
-                        ? metadata.artist 
-                        : track.artist}
-                    </div>
+                    <div className="title">{track.title}</div>
+                    <div className="artist">{track.artist}</div>
                   </div>
                   <div className="music-status">
                     {track.id === currentTrack.id && isPlaying ? <FiPause /> : <FiPlay />}
@@ -715,22 +848,33 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({
             <span>{formatTime(duration)}</span>
           </TimeDisplay>
 
+          {errorMessage && (
+            <div
+              style={{
+                textAlign: 'center',
+                color: 'var(--error-color, #e53935)',
+                margin: '0.5rem 0',
+                fontSize: '0.9rem',
+                padding: '0.5rem',
+                backgroundColor: 'rgba(229, 57, 53, 0.05)',
+                borderRadius: '4px',
+              }}
+            >
+              {errorMessage}
+            </div>
+          )}
+
           <PlayerControls>
             <button onClick={playPrev} disabled={isLoading}>
               <FiSkipBack />
             </button>
-            <button 
-              className="play-pause" 
+            <button
+              className="play-pause"
               onClick={togglePlay}
               disabled={isLoading}
+              title={errorMessage ? '重试' : isPlaying ? '暂停' : '播放'}
             >
-              {isLoading ? (
-                <div className="loading-spinner" />
-              ) : isPlaying ? (
-                <FiPause />
-              ) : (
-                <FiPlay />
-              )}
+              {isLoading ? <div className="loading-spinner" /> : isPlaying ? <FiPause /> : <FiPlay />}
             </button>
             <button onClick={playNext} disabled={isLoading}>
               <FiSkipForward />

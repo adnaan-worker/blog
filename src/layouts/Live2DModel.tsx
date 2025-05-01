@@ -2,13 +2,6 @@ import { useEffect } from 'react';
 import styled from '@emotion/styled';
 import { L2Dwidget } from 'live2d-widget';
 
-// 声明全局类型
-declare global {
-  interface Window {
-    L2Dwidget: any;
-  }
-}
-
 const Live2DContainer = styled.div`
   position: fixed;
   left: 0;
@@ -62,7 +55,7 @@ export const Live2DModel = () => {
           ],
         },
         dialog: {
-          enable: true,
+          enable: false,
           hitokoto: false,
           messages: ['你好呀~', '今天也要加油哦！', '欢迎来到我的博客~', '有什么我可以帮你的吗？', '要记得多喝水哦~'],
           delay: 0,

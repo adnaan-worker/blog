@@ -1183,7 +1183,7 @@ const Home = () => {
                     />
                   </ProfileImage>
                   <ProfileName>adnaan</ProfileName>
-                  <ProfileTitle>NodeJS 全栈开发者 & 设计爱好者</ProfileTitle>
+                  <ProfileTitle>Web 全栈开发者 & 设计爱好者</ProfileTitle>
 
                   <ProfileInfoList>
                     <ProfileInfoItem>

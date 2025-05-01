@@ -102,6 +102,7 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMusicPlayerOpen, setIsMusicPlayerOpen] = useState(false);
   const [currentLyric, setCurrentLyric] = useState<string | null>(null);
+  const [isLyricBubbleEnabled, setIsLyricBubbleEnabled] = useState(true);
 
   useEffect(() => {
     setShowScrollTop(scrollPosition > 300);
@@ -119,11 +120,20 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
   };
 
   const handleLyricChange = (lyric: string) => {
-    setCurrentLyric(lyric);
+    if (isLyricBubbleEnabled) {
+      setCurrentLyric(lyric);
+    }
   };
 
   const handleLyricComplete = () => {
     setCurrentLyric(null);
+  };
+  
+  const handleLyricBubbleToggle = (isEnabled: boolean) => {
+    setIsLyricBubbleEnabled(isEnabled);
+    if (!isEnabled) {
+      setCurrentLyric(null);
+    }
   };
 
   return (
@@ -158,6 +168,7 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
         isOpen={isMusicPlayerOpen} 
         onClose={() => setIsMusicPlayerOpen(false)}
         onLyricChange={handleLyricChange}
+        onLyricBubbleToggle={handleLyricBubbleToggle}
       />
 
       {currentLyric && (
