@@ -29,7 +29,7 @@ export const PageContainer = styled.div`
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding-top: 50px;
 `;
 
 // 页面标题组件

@@ -1,16 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  FiCalendar,
-  FiClock,
-  FiTag,
-  FiUser,
-  FiShare2,
-  FiHeart,
-  FiBookmark,
-  FiArrowLeft,
-} from 'react-icons/fi';
+import { FiCalendar, FiClock, FiTag, FiUser, FiShare2, FiHeart, FiBookmark, FiArrowLeft } from 'react-icons/fi';
 import {
   PageContainer,
   ArticleDetailContainer,
@@ -48,7 +39,8 @@ const DUMMY_ARTICLES = [
     views: 842,
     readTime: 8,
     excerpt: '深入探讨Vue3与TypeScript结合的最佳实践，包括组件设计、状态管理优化、性能调优以及常见陷阱的规避方法。',
-    image: 'https://via.placeholder.com/800x450?text=Vue+TypeScript',
+    image:
+      'https://innei.in/_next/image?url=https%3A%2F%2Fobject.innei.in%2Fbed%2F2025%2F0415_1744729783357.png&w=3840&q=75',
     author: 'Adnaan',
     content: `
       <h2>Vue3与TypeScript结合的优势</h2>
@@ -131,7 +123,8 @@ const DUMMY_ARTICLES = [
     views: 756,
     readTime: 6,
     excerpt: '详细解读React 18中的并发渲染机制，以及Suspense组件如何简化异步数据加载和提升用户体验。',
-    image: 'https://via.placeholder.com/800x450?text=React+18',
+    image:
+      'https://innei.in/_next/image?url=https%3A%2F%2Fobject.innei.in%2Fbed%2F2025%2F0415_1744729783357.png&w=3840&q=75',
     author: 'Adnaan',
     content: `
       <h2>React 18的并发特性</h2>
@@ -175,10 +168,11 @@ const TocContainer = styled.div`
   overflow-y: auto;
   padding-right: 12px;
   transition: all 0.3s ease;
+  position: relative;
   scrollbar-width: thin;
-  
+
   &::-webkit-scrollbar {
-    width: 3px;
+    width: 4px;
   }
 
   &::-webkit-scrollbar-track {
@@ -214,104 +208,112 @@ const ProgressContainer = styled.div`
 // 进度条基础线
 const ProgressTrack = styled.div`
   position: absolute;
-  left: 8px;
+  left: 2px;
   top: 0;
   height: 100%;
-  width: 2px;
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 2px;
-  
+  width: 1px;
+  background-color: var(--border-color);
+  border-radius: 1px;
+
   [data-theme='dark'] & {
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.1);
   }
 `;
 
 // 进度指示器
 const ProgressIndicator = styled.div<{ progress: number }>`
   position: absolute;
-  left: 8px;
+  left: 2px;
   top: 0;
-  width: 2px;
-  height: ${props => props.progress}%;
+  width: 1px;
+  height: ${(props) => props.progress}%;
   background: linear-gradient(to bottom, var(--accent-color), var(--accent-color-hover));
-  border-radius: 2px;
+  border-radius: 1px;
   transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 8px rgba(81, 131, 245, 0.3);
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--accent-color);
+    box-shadow: 0 0 4px var(--accent-color);
+  }
 `;
 
 // 现代化的文章目录项
 const TocItem = styled.div<{ active: boolean }>`
   position: relative;
-  padding: 8px 0 8px 25px;
-  margin-bottom: 10px;
+  padding: 4px 0 4px 22px;
+  margin-bottom: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:before {
     content: '';
     position: absolute;
-    left: 7px;
-    top: 14px;
-    width: 4px;
-    height: 4px;
+    left: 0px;
+    top: 12px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
-    background-color: ${props => props.active ? 'var(--accent-color)' : 'rgba(0, 0, 0, 0.15)'};
-    transform: ${props => props.active ? 'scale(1.75)' : 'scale(1)'};
+    background-color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-tertiary)')};
+    transform: ${(props) => (props.active ? 'scale(1.2)' : 'scale(1)')};
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 2;
-    box-shadow: ${props => props.active ? '0 0 6px rgba(81, 131, 245, 0.6)' : 'none'};
-    
-    [data-theme='dark'] & {
-      background-color: ${props => props.active ? 'var(--accent-color)' : 'rgba(255, 255, 255, 0.15)'};
-    }
+    opacity: ${(props) => (props.active ? 1 : 0.6)};
+    box-shadow: ${(props) => (props.active ? '0 0 4px rgba(81, 131, 245, 0.5)' : 'none')};
   }
-  
+
   &:hover:before {
-    transform: scale(1.75);
+    transform: scale(1.2);
     background-color: var(--accent-color);
-    box-shadow: 0 0 6px rgba(81, 131, 245, 0.6);
+    opacity: 1;
   }
-  
+
   span {
-    font-size: 0.9rem;
-    color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-secondary)'};
-    font-weight: ${props => props.active ? '500' : 'normal'};
+    font-size: 0.85rem;
+    color: ${(props) => (props.active ? 'var(--text-primary)' : 'var(--text-secondary)')};
+    font-weight: ${(props) => (props.active ? '500' : 'normal')};
     transition: all 0.2s ease;
     display: block;
     line-height: 1.4;
     position: relative;
     z-index: 1;
   }
-  
+
   &:hover span {
-    color: var(--accent-color);
+    color: var(--text-primary);
     transform: translateX(2px);
   }
-  
+
   /* 活跃项的背景效果 */
   &:after {
     content: '';
     position: absolute;
     left: 0;
     top: 0;
-    width: ${props => props.active ? '100%' : '0%'};
+    width: ${(props) => (props.active ? '100%' : '0%')};
     height: 100%;
-    background-color: ${props => props.active ? 'rgba(81, 131, 245, 0.06)' : 'transparent'};
+    background-color: ${(props) => (props.active ? 'rgba(81, 131, 245, 0.04)' : 'transparent')};
     border-radius: 4px;
     z-index: 0;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   &:hover:after {
     width: 100%;
-    background-color: rgba(81, 131, 245, 0.06);
+    background-color: rgba(81, 131, 245, 0.04);
   }
 `;
 
 // 文章布局容器 - 调整结构确保侧边栏有足够空间
 const ArticleLayout = styled.div`
   display: flex;
-  gap: 2rem;
+  gap: 2.5rem;
   position: relative;
 
   @media (max-width: 860px) {
@@ -323,7 +325,7 @@ const ArticleLayout = styled.div`
 const ArticleMain = styled.div`
   flex: 1;
   min-width: 0;
-  
+
   @media (max-width: 860px) {
     margin-right: 0;
   }
@@ -333,14 +335,14 @@ const ArticleMain = styled.div`
 const ArticleSidebar = styled.div`
   position: sticky;
   position: -webkit-sticky;
-  top: 80px; /* 吸顶位置 */
+  top: 150px; /* 吸顶位置 */
   width: 280px;
   height: fit-content; /* 确保侧边栏高度适应内容 */
   align-self: flex-start; /* 保证侧边栏从顶部开始 */
-  
+  margin-top: 40px;
+
   @media (max-width: 860px) {
-    width: 100%;
-    order: -1;
+    display: none;
   }
 `;
 
@@ -352,7 +354,7 @@ const SocialActionContainer = styled.div`
   padding: 1rem 0 0.5rem;
   border-top: 1px solid var(--border-color);
   justify-content: space-between;
-  
+
   @media (max-width: 860px) {
     justify-content: space-around;
   }
@@ -373,7 +375,7 @@ const ActionButton = styled.button<{ active?: boolean }>`
   position: relative;
   overflow: hidden;
   flex: 1;
-  
+
   .icon-wrapper {
     position: relative;
     width: 32px;
@@ -382,74 +384,103 @@ const ActionButton = styled.button<{ active?: boolean }>`
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background-color: ${props => props.active ? 'rgba(81, 131, 245, 0.1)' : 'transparent'};
+    background-color: ${(props) => (props.active ? 'rgba(81, 131, 245, 0.1)' : 'transparent')};
     transition: all 0.2s ease;
   }
-  
+
   svg {
-    color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-secondary)'};
+    color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
     transition: all 0.2s ease;
   }
-  
+
   span {
     font-size: 0.75rem;
-    color: ${props => props.active ? 'var(--accent-color)' : 'var(--text-secondary)'};
-    font-weight: ${props => props.active ? '500' : 'normal'};
+    color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
+    font-weight: ${(props) => (props.active ? '500' : 'normal')};
     transition: all 0.2s ease;
   }
-  
+
   &:hover {
     background-color: rgba(81, 131, 245, 0.05);
-    
+
     .icon-wrapper {
       background-color: rgba(81, 131, 245, 0.12);
       transform: scale(1.1);
     }
-    
+
     svg {
       color: var(--accent-color);
     }
-    
+
     span {
       color: var(--accent-color);
     }
   }
-  
+
   &:active .icon-wrapper {
     transform: scale(0.95);
   }
 `;
 
-// 修改SidebarCard样式，更美观
-const StyledSidebarCard = styled(SidebarCard)`
-  background: var(--bg-primary);
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  
-  h3 {
-    font-size: 1.1rem;
-    margin-bottom: 1.5rem;
+// 添加CSS样式以确保正确渲染
+const ArticleContent2WithStyles = styled(ArticleContent2)`
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     position: relative;
-    padding-bottom: 0.75rem;
-    color: var(--text-primary);
+    margin-top: 2em;
+    margin-bottom: 1em;
+    padding-top: 10px;
+    scroll-margin-top: 100px;
 
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 40px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--accent-color), transparent);
-      border-radius: 2px;
+    &:target {
+      background-color: rgba(81, 131, 245, 0.1);
+      padding: 10px;
+      border-radius: 4px;
     }
   }
-  
-  [data-theme='dark'] & {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border-color: rgba(255, 255, 255, 0.05);
+
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  /* 添加更多样式以增强内容的可读性 */
+  p,
+  ul,
+  ol {
+    margin-bottom: 1.5em;
+    line-height: 1.75;
+  }
+
+  pre {
+    margin: 1.5em 0;
+    background-color: var(--bg-secondary);
+    padding: 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+
+  code {
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+
+  blockquote {
+    margin: 1.5em 0;
+    padding: 1em 1.5em;
+    border-left: 4px solid var(--accent-color);
+    background-color: var(--bg-secondary);
+    border-radius: 0 4px 4px 0;
   }
 `;
 
@@ -463,7 +494,7 @@ const BlogDetail: React.FC = () => {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [activeHeading, setActiveHeading] = useState<string>('');
-  const [headings, setHeadings] = useState<{id: string, text: string}[]>([]);
+  const [headings, setHeadings] = useState<{ id: string; text: string }[]>([]);
   const [readingProgress, setReadingProgress] = useState<number>(0);
   const articleRef = useRef<HTMLDivElement>(null);
   const headingRefs = useRef<Map<string, HTMLElement>>(new Map());
@@ -495,25 +526,89 @@ const BlogDetail: React.FC = () => {
   // 提取文章中的标题
   useEffect(() => {
     if (article?.content) {
-      setTimeout(() => {
+      // 修改代码检测URL哈希部分，确保article和content存在
+      const checkHash = () => {
+        if (window.location.hash && article?.content) {
+          const hash = window.location.hash.substring(1);
+          console.log(`URL包含hash: ${hash}`);
+
+          // 等待DOM渲染完成后滚动
+          setTimeout(() => {
+            const element = document.getElementById(hash);
+            if (element) {
+              console.log(`找到ID为 ${hash} 的元素，即将滚动`);
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              window.scrollBy(0, -100); // 额外偏移
+
+              // 添加高亮效果
+              element.classList.add('target-highlight');
+              setTimeout(() => {
+                element.classList.remove('target-highlight');
+              }, 2000);
+            }
+          }, 500);
+        }
+      };
+
+      // 创建一个包含内容的临时div，以便解析HTML - 使用可选链安全访问
+      const tempDiv = document.createElement('div');
+      if (article?.content) {
+        tempDiv.innerHTML = article.content;
+      }
+
+      // 使用宏任务确保DOM完全渲染
+      const timer = setTimeout(() => {
         const articleElement = articleRef.current;
         if (articleElement) {
-          const headingElements = articleElement.querySelectorAll('h2, h3');
-          const extractedHeadings: {id: string, text: string}[] = [];
+          console.log('查找文章中的标题元素...');
+
+          // 直接查询所有标题元素
+          const headingElements = articleElement.querySelectorAll('h2, h3, h4, h5, h6');
+          console.log(`找到 ${headingElements.length} 个标题元素`);
+
+          // 使用可选链和空值合并操作符，确保安全访问
+          if (headingElements.length === 0 && article?.content) {
+            // 查看是否解析了内容
+            console.log('内容可能未正确解析，检查内容：', article.content.substring(0, 100));
+          }
+
+          const extractedHeadings: { id: string; text: string }[] = [];
           const newHeadingRefs = new Map();
-          
+
           headingElements.forEach((heading, index) => {
+            // 为标题创建一个唯一ID
+            const headingText = heading.textContent || '';
+            // 简化ID生成，使用固定前缀和索引确保唯一性
             const id = `heading-${index}`;
-            const text = heading.textContent || '';
-            heading.id = id;
-            extractedHeadings.push({ id, text });
+
+            console.log(`标题 ${index}: "${headingText}", ID: ${id}`);
+
+            // 设置heading元素的ID属性
+            heading.setAttribute('id', id);
+
+            // 添加额外的类方便样式和调试
+            heading.classList.add('article-heading');
+
+            extractedHeadings.push({ id, text: headingText });
             newHeadingRefs.set(id, heading as HTMLElement);
           });
-          
+
+          console.log('设置标题数据和引用...');
           setHeadings(extractedHeadings);
           headingRefs.current = newHeadingRefs;
+
+          // 检查URL中是否有hash
+          checkHash();
         }
-      }, 100);
+      }, 500); // 延长等待时间，确保DOM完全渲染
+
+      // 添加hash变化监听
+      window.addEventListener('hashchange', checkHash);
+
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('hashchange', checkHash);
+      };
     }
   }, [article]);
 
@@ -521,75 +616,72 @@ const BlogDetail: React.FC = () => {
   useEffect(() => {
     // 估计的导航栏高度
     const headerHeight = 80;
-    
+
     // 函数：计算阅读进度
     const calculateReadingProgress = () => {
       if (articleRef.current) {
         const { top, height } = articleRef.current.getBoundingClientRect();
         const windowHeight = window.innerHeight;
-        
+
         // 如果文章顶部在视窗之上
         if (top <= 0) {
           // 计算真实阅读进度，考虑滚动位置
           const scrollTop = Math.abs(top);
           const totalScrollableHeight = height - windowHeight;
-          
+
           if (totalScrollableHeight <= 0) {
             // 如果文章完全可见，进度为100%
             return 100;
           }
-          
+
           const scrollProgress = Math.min(scrollTop / totalScrollableHeight, 1);
           return Math.round(scrollProgress * 100);
         }
-        
+
         // 文章顶部在视窗内，但还没开始滚动
         return 0;
       }
-      
+
       return 0;
     };
-    
+
     // 函数：查找当前活跃标题
     const findActiveHeading = () => {
       // 如果没有标题，直接返回
       if (headings.length === 0 || !articleRef.current) return;
-      
+
       // 获取所有标题的位置信息和可见度
-      const headingVisibility = headings.map(heading => {
+      const headingVisibility = headings.map((heading) => {
         const element = headingRefs.current.get(heading.id);
         if (!element) return { id: heading.id, top: 0, visible: false, distance: Infinity };
-        
+
         const rect = element.getBoundingClientRect();
         const top = rect.top;
         // 判断标题是否在可视区域(考虑顶部导航)
         const visible = top >= headerHeight && top <= window.innerHeight * 0.6; // 只考虑上半部分为可见
         // 计算标题距离视窗顶部的距离(考虑headerHeight)
         const distance = Math.abs(top - headerHeight);
-        
+
         return { id: heading.id, top, visible, distance };
       });
-      
+
       // 尝试找到可见的标题，选择最靠近顶部的
-      const visibleHeadings = headingVisibility.filter(h => h.visible);
-      
+      const visibleHeadings = headingVisibility.filter((h) => h.visible);
+
       if (visibleHeadings.length > 0) {
         // 找到距离顶部最近的可见标题
-        const closestHeading = visibleHeadings.reduce((prev, curr) => 
-          prev.distance < curr.distance ? prev : curr);
-        
+        const closestHeading = visibleHeadings.reduce((prev, curr) => (prev.distance < curr.distance ? prev : curr));
+
         if (closestHeading.id !== activeHeading) {
           setActiveHeading(closestHeading.id);
           return;
         }
       }
-      
+
       // 如果没有可见标题，找到最后一个已经滚过的标题
       // 即top < headerHeight的标题中最后一个
-      const passedHeadings = headingVisibility
-        .filter(h => h.top < headerHeight)
-        .sort((a, b) => b.top - a.top); // 按照top从大到小排序
-      
+      const passedHeadings = headingVisibility.filter((h) => h.top < headerHeight).sort((a, b) => b.top - a.top); // 按照top从大到小排序
+
       if (passedHeadings.length > 0) {
         const lastPassedHeading = passedHeadings[0];
         if (lastPassedHeading.id !== activeHeading) {
@@ -597,17 +689,17 @@ const BlogDetail: React.FC = () => {
           return;
         }
       }
-      
+
       // 如果没有已滚过的标题，选择第一个
       if (headings.length > 0 && activeHeading !== headings[0].id) {
         setActiveHeading(headings[0].id);
       }
     };
-    
+
     // 节流函数，防止过于频繁的更新
     const throttle = (func: Function, delay: number) => {
       let lastCall = 0;
-      return function(...args: any[]) {
+      return function (...args: any[]) {
         const now = Date.now();
         if (now - lastCall >= delay) {
           lastCall = now;
@@ -615,25 +707,25 @@ const BlogDetail: React.FC = () => {
         }
       };
     };
-    
+
     // 主滚动处理函数
     const handleScroll = throttle(() => {
       requestAnimationFrame(() => {
         // 计算阅读进度
         const progress = calculateReadingProgress();
         setReadingProgress(progress);
-        
+
         // 查找当前活跃标题
         findActiveHeading();
       });
     }, 30); // 30ms节流
-    
+
     // 添加滚动监听
     window.addEventListener('scroll', handleScroll);
-    
+
     // 初始调用一次以设置初始状态
     handleScroll();
-    
+
     // 当组件卸载时移除监听
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -641,45 +733,75 @@ const BlogDetail: React.FC = () => {
   }, [headings, activeHeading]);
 
   // 改进的滚动到指定标题函数
+  // 改进的滚动到指定标题函数
   const scrollToHeading = (id: string) => {
     const element = headingRefs.current.get(id);
-    if (!element) return;
-    
+    if (!element) {
+      console.error(`找不到ID为 ${id} 的元素`);
+      return;
+    }
+
     try {
-      // 计算元素的绝对位置
+      // 获取元素在页面中的绝对位置
       const rect = element.getBoundingClientRect();
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const absoluteTop = rect.top + scrollTop;
-      
-      // 获取header高度进行调整
-      const header = document.querySelector('header');
-      const headerHeight = header ? header.clientHeight : 80;
-      
-      // 滚动到目标位置，减去header高度和额外间距
-      window.scrollTo({
-        top: absoluteTop - headerHeight - 16,
-        behavior: 'smooth'
-      });
-      
+
+      // 计算需要滚动到的位置，减去顶部空间
+      const targetPosition = absoluteTop - 100;
+
+      // 使用简单方式直接滚动，不使用平滑滚动
+      window.scrollTo(0, targetPosition);
+
       // 视觉反馈：高亮效果
       element.classList.add('highlight-heading');
+      element.style.backgroundColor = 'rgba(81, 131, 245, 0.1)';
+      element.style.padding = '10px';
+      element.style.transition = 'all 0.3s ease';
+
       setTimeout(() => {
         element.classList.remove('highlight-heading');
-      }, 2000);
-      
-      // 延迟更新活跃标题，等待滚动完成
-      const scrollTimeout = setTimeout(() => {
-        setActiveHeading(id);
-        // 在滚动完成后，再次运行查找标题函数以确保同步
-        setTimeout(() => {
-          const findActiveHeadingEvent = new Event('scroll');
-          window.dispatchEvent(findActiveHeadingEvent);
-        }, 100);
-      }, 500);
-      
-      return () => clearTimeout(scrollTimeout);
+        element.style.backgroundColor = '';
+        element.style.padding = '';
+      }, 1500);
+
+      // 立即更新活跃标题
+      setActiveHeading(id);
     } catch (error) {
-      console.error("Error scrolling to heading:", error);
+      console.error('滚动到标题时出错:', error);
+    }
+  };
+
+  // 提取公共滚动逻辑到单独的函数
+  const scrollToElement = (element: HTMLElement) => {
+    try {
+      console.log(`滚动到元素:`, element);
+
+      // 直接使用scrollIntoView API
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // 额外滚动以考虑顶部偏移
+      setTimeout(() => {
+        window.scrollBy({ top: -100, behavior: 'smooth' });
+      }, 100);
+
+      // 视觉反馈：高亮效果
+      element.classList.add('highlight-heading');
+      element.style.backgroundColor = 'rgba(81, 131, 245, 0.1)';
+      element.style.padding = '10px';
+      element.style.transition = 'all 0.3s ease';
+
+      setTimeout(() => {
+        element.classList.remove('highlight-heading');
+        element.style.backgroundColor = '';
+        element.style.padding = '';
+      }, 2000);
+
+      // 获取元素的id并更新活跃标题
+      const id = element.getAttribute('id');
+      if (id) setActiveHeading(id);
+    } catch (error) {
+      console.error('滚动到标题时出错:', error);
     }
   };
 
@@ -749,22 +871,6 @@ const BlogDetail: React.FC = () => {
   return (
     <PageContainer>
       <motion.div variants={pageVariants} initial="initial" animate="animate">
-        {/* 顶部导航 - 只保留返回按钮 */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <Link
-            to="/blog"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              color: 'var(--text-secondary)',
-              fontSize: '0.9rem',
-              gap: '0.3rem',
-            }}
-          >
-            <FiArrowLeft size={14} /> 返回博客列表
-          </Link>
-        </div>
-
         {/* 文章主体区域 */}
         <ArticleLayout>
           {/* 左侧：文章内容 */}
@@ -773,9 +879,15 @@ const BlogDetail: React.FC = () => {
               <ArticleDetailHeader>
                 <ArticleDetailTitle>{article?.title}</ArticleDetailTitle>
                 <ArticleDetailMeta>
-                  <span><FiCalendar size={16} /> {article?.date}</span>
-                  <span><FiClock size={16} /> {article?.readTime} 分钟阅读</span>
-                  <span><FiTag size={16} /> {article?.category}</span>
+                  <span>
+                    <FiCalendar size={16} /> {article?.date}
+                  </span>
+                  <span>
+                    <FiClock size={16} /> {article?.readTime} 分钟阅读
+                  </span>
+                  <span>
+                    <FiTag size={16} /> {article?.category}
+                  </span>
                 </ArticleDetailMeta>
               </ArticleDetailHeader>
 
@@ -783,7 +895,7 @@ const BlogDetail: React.FC = () => {
                 <img src={article?.image} alt={article?.title} />
               </ArticleCover>
 
-              <ArticleContent2 dangerouslySetInnerHTML={{ __html: article?.content || '' }} />
+              <ArticleContent2WithStyles dangerouslySetInnerHTML={{ __html: article?.content || '' }} />
 
               <ArticleTags>
                 {article?.tags?.map((tag: string) => (
@@ -835,15 +947,13 @@ const BlogDetail: React.FC = () => {
           {/* 右侧：文章目录 */}
           <ArticleSidebar>
             <TocContainer>
-              <StyledSidebarCard>
-                <h3>文章目录</h3>
                 <ProgressContainer>
                   <ProgressTrack />
                   <ProgressIndicator progress={readingProgress} />
-                  
+
                   {headings.length > 0 ? (
                     headings.map((heading) => (
-                      <TocItem 
+                      <TocItem
                         key={heading.id}
                         active={activeHeading === heading.id}
                         onClick={() => scrollToHeading(heading.id)}
@@ -852,36 +962,32 @@ const BlogDetail: React.FC = () => {
                       </TocItem>
                     ))
                   ) : (
-                    <div style={{ padding: '15px 0 5px 28px', color: 'var(--text-secondary)' }}>
+                    <div style={{ padding: '4px 0 4px 22px', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
                       文章暂无目录
                     </div>
                   )}
                 </ProgressContainer>
-                
+
                 {/* 社交分享按钮 */}
                 <SocialActionContainer>
                   <ActionButton active={liked} onClick={handleLike}>
                     <div className="icon-wrapper">
                       <FiHeart size={18} />
                     </div>
-                    <span>{liked ? '已点赞' : '点赞'}</span>
                   </ActionButton>
-                  
+
                   <ActionButton active={bookmarked} onClick={handleBookmark}>
                     <div className="icon-wrapper">
                       <FiBookmark size={18} />
                     </div>
-                    <span>{bookmarked ? '已收藏' : '收藏'}</span>
                   </ActionButton>
-                  
+
                   <ActionButton onClick={handleShare}>
                     <div className="icon-wrapper">
                       <FiShare2 size={18} />
                     </div>
-                    <span>分享</span>
                   </ActionButton>
                 </SocialActionContainer>
-              </StyledSidebarCard>
             </TocContainer>
           </ArticleSidebar>
         </ArticleLayout>
