@@ -2,7 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiCalendar, FiClock, FiTag, FiUser, FiShare2, FiMessageCircle, FiHeart, FiBookmark } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiTag } from 'react-icons/fi';
 
 // 动画变体定义
 export const fadeInUpVariants = {
@@ -27,7 +27,7 @@ export const staggerContainerVariants = {
 // 页面容器
 export const PageContainer = styled.div`
   width: 100%;
-  // max-width: 1100px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 0 1rem;
 `;
