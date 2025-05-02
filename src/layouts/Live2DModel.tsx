@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import styled from '@emotion/styled';
-import L2Dwidget from 'live2d-widget';
+import { L2Dwidget } from 'live2d-widget';
 
 const Live2DContainer = styled.div`
   position: fixed;
@@ -11,7 +11,7 @@ const Live2DContainer = styled.div`
   height: 300px;
   pointer-events: auto;
   cursor: pointer;
-  
+
   // 手机端隐藏
   @media (max-width: var(--mobile)) {
     display: none;
@@ -23,7 +23,7 @@ export const Live2DModel = () => {
     if (typeof window !== 'undefined' && L2Dwidget) {
       try {
         // 使用可选链确保安全访问
-        L2Dwidget?.init?.({
+        L2Dwidget.init({
           model: {
             jsonPath: 'https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json',
             scale: 1,
@@ -53,7 +53,7 @@ export const Live2DModel = () => {
               { message: '再戳我就生气了！', weight: 1 },
               { message: '好痒啊~', weight: 1 },
               { message: '别闹了~', weight: 1 },
-              { message: '再戳我就咬你哦！', weight: 1 }
+              { message: '再戳我就咬你哦！', weight: 1 },
             ],
           },
           dialog: {

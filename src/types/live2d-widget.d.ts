@@ -78,9 +78,12 @@ declare module 'live2d-widget' {
     [key: string]: any; // 允许其他属性
   }
 
-  const L2Dwidget: {
+  interface L2DWidgetInterface {
     init: (config: Live2DConfig) => void;
-  };
+  }
 
+  // 同时支持两种导出方式
+  const L2Dwidget: L2DWidgetInterface;
+  export { L2Dwidget };
   export default L2Dwidget;
 } 
