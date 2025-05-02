@@ -1,3 +1,4 @@
+import { storage } from '@/utils';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type Theme = 'light' | 'dark';
@@ -19,7 +20,7 @@ const getSystemTheme = (): Theme => {
 // 获取保存的主题
 const getSavedTheme = (): Theme | null => {
   if (typeof window === 'undefined') return null;
-  const savedTheme = localStorage.getItem('theme') as Theme;
+  const savedTheme = storage.local.get('theme') as Theme;
   return savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : null;
 };
 
@@ -27,7 +28,7 @@ const getSavedTheme = (): Theme | null => {
 const applyTheme = (theme: Theme) => {
   if (typeof document === 'undefined') return;
   document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('theme', theme);
+  storage.local.set('theme', theme);
 };
 
 const themeSlice = createSlice({

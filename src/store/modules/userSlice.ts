@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import API from '@/utils/api';
 import { toast } from '@/ui';
+import { storage } from '@/utils';
 
 export interface User {
   id: number;
@@ -19,13 +20,28 @@ interface UserState {
   error: string | null;
 }
 
-const initialState: UserState = {
-  user: null,
-  token: null,
-  isLoggedIn: false,
-  loading: false,
-  error: null,
+// 从本地存储获取用户信息初始化状态
+const getUserFromStorage = () => {
+  const userData = storage.local.get('user');
+  if (userData && userData.user && userData.token) {
+    return {
+      user: userData.user,
+      token: userData.token,
+      isLoggedIn: true,
+      loading: false,
+      error: null,
+    };
+  }
+  return {
+    user: null,
+    token: null,
+    isLoggedIn: false,
+    loading: false,
+    error: null,
+  };
 };
+
+const initialState: UserState = getUserFromStorage();
 
 const userSlice = createSlice({
   name: 'user',
@@ -54,18 +70,6 @@ const userSlice = createSlice({
 
 export const { setUser, setLoading, setError, logout } = userSlice.actions;
 
-// 异步 action creators
-export const checkLoginStatus = () => async (dispatch: any) => {
-  try {
-    const response = await API.user.getUserInfo();
-    if (response.code === 200) {
-      dispatch(setUser(response.data));
-    }
-  } catch (error) {
-    console.error('Failed to check login status:', error);
-  }
-};
-
 export const login = (username: string, password: string) => async (dispatch: any) => {
   try {
     dispatch(setLoading(true));
@@ -74,7 +78,7 @@ export const login = (username: string, password: string) => async (dispatch: an
     const response = await API.user.login({ username, password });
     if (response.code === 200) {
       dispatch(setUser(response.data));
-      // 使用全局Toast显示登录成功
+      storage.local.set('user', response.data);
       toast.success('登录成功', '欢迎回来');
     } else {
       dispatch(setError(response.message || '登录失败'));
@@ -94,6 +98,8 @@ export const login = (username: string, password: string) => async (dispatch: an
 export const logoutUser = () => async (dispatch: any) => {
   try {
     await API.user.logout();
+    // 清除本地存储中的用户信息
+    storage.local.remove('user');
     dispatch(logout());
     // 使用全局Toast显示登出成功
     toast.info('您已成功退出登录', '再见');

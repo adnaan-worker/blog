@@ -1,8 +1,6 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import {
-  requestInterceptor,
   requestErrorInterceptor,
-  responseInterceptor,
   responseErrorInterceptor,
 } from './interceptors';
 import { HttpMethod, RequestConfig, ApiResponse } from './types';
@@ -68,13 +66,13 @@ class HttpRequest {
   }
 
   // 创建请求
-  public request<T = any>(config: RequestConfig): Promise<ApiResponse<T>> {
-    return this.instance
+  public async request<T = any>(config: RequestConfig): Promise<ApiResponse<T>> {
+    const response = await this.instance
       .request({
         ...config,
         method: config.method,
-      })
-      .then((response: AxiosResponse<ApiResponse<T>>) => response.data);
+      });
+    return response.data;
   }
 
   // GET请求
