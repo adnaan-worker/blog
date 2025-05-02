@@ -831,7 +831,6 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
   };
 
   const currentLyric = getCurrentLyric();
-  const progressPercentage = duration ? (currentTime / duration) * 100 : 0;
 
   // 监听播放状态变化
   useEffect(() => {

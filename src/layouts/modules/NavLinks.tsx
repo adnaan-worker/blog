@@ -70,11 +70,7 @@ const DropdownItem = styled(Link)`
   }
 
   svg {
-    opacity: 0;
-  }
-
-  &:hover svg {
-    opacity: 0.5;
+    opacity: 1;
   }
 `;
 
@@ -136,7 +132,8 @@ const NavLinks: React.FC<NavLinksProps> = ({ onLinkClick, moreDropdownOpen, togg
           active={
             location.pathname.includes('/about') ||
             location.pathname.includes('/contact') ||
-            location.pathname.includes('/code')
+            location.pathname.includes('/code') ||
+            location.pathname.includes('/ui-examples')
           }
           onClick={toggleMoreDropdown}
           icon={<FiInfo size={16} />}
