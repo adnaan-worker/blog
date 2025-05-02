@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import styled from '@emotion/styled';
 import { L2Dwidget } from 'live2d-widget';
+import { motion } from 'framer-motion';
 
-const Live2DContainer = styled.div`
+const Live2DContainer = styled(motion.div)`
   position: fixed;
   left: 0;
   bottom: 0;
@@ -11,11 +12,6 @@ const Live2DContainer = styled.div`
   height: 300px;
   pointer-events: auto;
   cursor: pointer;
-
-  // 手机端隐藏
-  @media (max-width: var(--mobile)) {
-    display: none;
-  }
 `;
 
 export const Live2DModel = () => {
@@ -108,7 +104,7 @@ export const Live2DModel = () => {
     };
   }, []);
 
-  return <Live2DContainer />;
+  return <Live2DContainer className="hide-on-mobile" />;
 };
 
 export default Live2DModel;

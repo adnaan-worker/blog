@@ -205,15 +205,11 @@ pre,
 }
 
 .hide-on-mobile {
-  @media (max-width: var(--mobile)) {
-    display: none;
-  }
+  display: none;
 }
 
 .hide-on-tablet {
-  @media (max-width: var(--tablet)) {
-    display: none;
-  }
+  display: none;
 }
 
 /**

@@ -288,7 +288,7 @@ const mainNavItems: MenuItem[] = [
   },
   {
     path: "/blog",
-    title: "博客",
+    title: "文稿",
     icon: <FiBookOpen size={16} />
   },
   {
