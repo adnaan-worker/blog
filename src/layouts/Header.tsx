@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { FiMenu, FiX, FiCode, FiFeather } from 'react-icons/fi';
+import { FiMenu, FiX, FiFeather } from 'react-icons/fi';
 import { keyframes } from '@emotion/react';
 import LoginModal from './modules/LoginModal';
 import RegisterModal from './modules/RegisterModal';

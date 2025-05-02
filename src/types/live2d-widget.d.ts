@@ -10,6 +10,7 @@ declare module 'live2d-widget' {
     height: number;
     hOffset: number;
     vOffset: number;
+    pointerEvents?: string;
   }
 
   interface Live2DMobileConfig {
@@ -20,6 +21,50 @@ declare module 'live2d-widget' {
   interface Live2DReactConfig {
     opacityDefault: number;
     opacityOnHover: number;
+    hover?: boolean;
+    click?: boolean;
+    tap?: boolean;
+    tapRandom?: boolean;
+    tapRandomInterval?: number;
+    tapRandomMessages?: Array<{ message: string; weight: number }>;
+  }
+
+  interface Live2DDialogConfig {
+    enable: boolean;
+    hitokoto: boolean;
+    messages: string[];
+    delay: number;
+    duration: number;
+    width: number;
+    height: number;
+    opacity: number;
+    fontSize: number;
+    fontColor: string;
+    backgroundColor: string;
+    borderColor: string;
+    borderWidth: number;
+    borderRadius: number;
+    padding: number;
+    margin: number;
+    position: string;
+    offset: number;
+    style: {
+      display: string;
+      visibility: string;
+      opacity: number;
+      zIndex: number;
+    };
+  }
+
+  interface Live2DDevConfig {
+    border: boolean;
+    log: boolean;
+  }
+
+  interface Live2DToolConfig {
+    enable: boolean;
+    position: string;
+    size: number;
   }
 
   interface Live2DConfig {
@@ -27,6 +72,10 @@ declare module 'live2d-widget' {
     display: Live2DDisplayConfig;
     mobile: Live2DMobileConfig;
     react: Live2DReactConfig;
+    dialog?: Live2DDialogConfig;
+    dev?: Live2DDevConfig;
+    tool?: Live2DToolConfig;
+    [key: string]: any; // 允许其他属性
   }
 
   const L2Dwidget: {

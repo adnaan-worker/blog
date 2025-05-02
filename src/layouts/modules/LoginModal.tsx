@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { FiUser, FiLock, FiMail, FiGithub, FiTwitter } from 'react-icons/fi';
+import { FiUser, FiLock, FiGithub, FiTwitter } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';

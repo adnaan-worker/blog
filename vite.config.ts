@@ -23,10 +23,18 @@ export default defineConfig(({ mode }) => {
       isProduction && compression({
         algorithm: 'gzip',
         ext: '.gz',
+        deleteOriginFile: false,
+        threshold: 10240, // 只压缩大于10kb的文件
+        verbose: true,
+        disable: false,
       }),
       isProduction && compression({
         algorithm: 'brotliCompress',
         ext: '.br',
+        deleteOriginFile: false,
+        threshold: 10240, // 只压缩大于10kb的文件
+        verbose: true,
+        disable: false,
       }),
       // 生产环境启用包大小分析
       isProduction && visualizer({
@@ -78,11 +86,15 @@ export default defineConfig(({ mode }) => {
         'react-redux'
       ],
       // 强制预构建这些依赖
-      force: true
+      force: true,
+      // 处理ESM兼容性
+      esbuildOptions: {
+        target: 'es2020'
+      }
     },
     // 构建选项
     build: {
-      target: 'es2015',
+      target: 'es2020',
       outDir: 'dist',
       assetsDir: 'assets',
       // 启用源码映射（仅在开发环境）
@@ -93,32 +105,78 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: true,
       // 禁用CSS内联到JavaScript
       cssInlineLimit: 0,
+      // 提高构建性能
+      reportCompressedSize: false, // 禁用压缩大小报告以提高性能
+      chunkSizeWarningLimit: 1000, // 调整警告阈值
       // 压缩选项
       minify: isProduction ? 'terser' : false,
       terserOptions: {
         compress: {
           drop_console: isProduction,
           drop_debugger: isProduction,
+          pure_funcs: isProduction ? ['console.log', 'console.info'] : [],
+        },
+        format: {
+          comments: false // 移除注释
         },
       },
       // 分块策略
       rollupOptions: {
         output: {
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'ui-vendor': ['@emotion/styled', '@emotion/react', 'framer-motion'],
-            'icons': ['react-icons/fi'],
-            'router': ['react-router-dom'],
-            'redux': ['@reduxjs/toolkit', 'react-redux']
+          // 使用函数式分割策略，更稳定
+          manualChunks: (id) => {
+            // 处理React相关依赖
+            if (id.includes('node_modules/react') || 
+                id.includes('node_modules/scheduler')) {
+              return 'react-vendor';
+            }
+            
+            // UI组件库
+            if (id.includes('node_modules/@emotion') || 
+                id.includes('node_modules/framer-motion')) {
+              return 'ui-vendor';
+            }
+            
+            // 图标
+            if (id.includes('node_modules/react-icons')) {
+              return 'icons';
+            }
+            
+            // 路由
+            if (id.includes('node_modules/react-router')) {
+              return 'router';
+            }
+            
+            // 状态管理
+            if (id.includes('node_modules/@reduxjs') || 
+                id.includes('node_modules/react-redux')) {
+              return 'redux';
+            }
+            
+            // 其他node_modules依赖
+            if (id.includes('node_modules/')) {
+              return 'vendor';
+            }
           },
-          // 调整入口和块名称
+          // 优化文件名和路径
           entryFileNames: 'assets/[name].[hash].js',
           chunkFileNames: 'assets/[name].[hash].js',
-          assetFileNames: 'assets/[name].[hash].[ext]'
+          assetFileNames: (assetInfo) => {
+            // 根据文件类型分类资源
+            const extType = assetInfo.name?.split('.').at(-1);
+            if (/\.(png|jpe?g|gif|svg|webp|ico)$/.test(assetInfo.name || '')) {
+              return 'assets/images/[name].[hash][extname]';
+            }
+            if (/\.(woff2?|eot|ttf|otf)$/.test(assetInfo.name || '')) {
+              return 'assets/fonts/[name].[hash][extname]';
+            }
+            if (extType === 'css') {
+              return 'assets/css/[name].[hash][extname]';
+            }
+            return 'assets/[name].[hash][extname]';
+          }
         }
-      },
-      // 启用代码分割
-      chunkSizeWarningLimit: 600
+      }
     },
     // CSS 处理配置
     css: {

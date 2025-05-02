@@ -6,7 +6,6 @@ import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
-import { PageContainer } from './BlogComponents';
 import {
   FiBold,
   FiItalic,

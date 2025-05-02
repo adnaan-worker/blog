@@ -66,7 +66,7 @@ interface ModalProps {
   title?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
   // 处理滚动锁定
   useEffect(() => {
     if (isOpen) {
