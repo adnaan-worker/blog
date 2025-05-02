@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { API, http, debounce, storage } from '../utils';
+import { API, http, debounce, storage } from '@/utils';
 
 // 文章列表项类型
 interface Article {

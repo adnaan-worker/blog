@@ -19,7 +19,7 @@ import {
   CategoryItem,
   TagCloud,
   TagItem,
-} from '../components/blog/BlogComponents';
+} from '@/components/blog/BlogComponents';
 
 // 示例博客文章数据
 const DUMMY_ARTICLES = [

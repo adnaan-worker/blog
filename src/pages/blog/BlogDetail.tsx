@@ -25,7 +25,7 @@ import {
   TimelineArticleComponent,
   fadeInUpVariants,
   staggerContainerVariants,
-} from '../components/blog/BlogComponents';
+} from '@/components/blog/BlogComponents';
 import styled from '@emotion/styled';
 
 // 示例文章数据（与博客页面相同）

@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
 import { FiImage, FiX, FiTag, FiCalendar, FiClock, FiUser, FiArrowLeft, FiSave, FiEye } from 'react-icons/fi';
-import { PageContainer } from '../components/blog/BlogComponents';
-import TextEditor from '../components/TextEditor';
+import { PageContainer } from '@/components/blog/BlogComponents';
+import TextEditor from '@/components/common/TextEditor';
 
 // 样式组件
 const EditorContainer = styled.div`

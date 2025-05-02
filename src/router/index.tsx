@@ -1,22 +1,24 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import RootLayout from '../layouts/RootLayout';
+import RootLayout from '@/layouts/RootLayout';
 import pageLoadingGif from '@/assets/images/page-loading.gif';
 
 // 使用 React.lazy 懒加载组件
-const Home = lazy(() => import('../pages/Home'));
-const NotFound = lazy(() => import('../pages/NotFound'));
-const Code = lazy(() => import('../pages/Code'));
-const Blog = lazy(() => import('../pages/Blog'));
-const BlogDetail = lazy(() => import('../pages/BlogDetail'));
+const Home = lazy(() => import('@/pages/index/Home'));
+const NotFound = lazy(() => import('@/pages/not-fund/NotFound'));
+const Code = lazy(() => import('@/pages/examples/Code'));
+const Blog = lazy(() => import('@/pages/blog/Blog'));
+const BlogDetail = lazy(() => import('@/pages/blog/BlogDetail'));
 
 // 个人中心相关页面
-const Profile = lazy(() => import('../pages/Profile'));
-const Dashboard = lazy(() => import('../pages/Dashboard'));
-const Favorites = lazy(() => import('../pages/Favorites'));
-const Settings = lazy(() => import('../pages/Settings'));
-const CreateArticle = lazy(() => import('../pages/CreateArticle'));
-const UIExamples = lazy(() => import('../pages/UIExamples'));
+const Profile = lazy(() => import('@/pages/user/Profile'));
+const Dashboard = lazy(() => import('@/pages/user/Dashboard'));
+const Favorites = lazy(() => import('@/pages/user/Favorites'));
+const Settings = lazy(() => import('@/pages/user/Settings'));
+const CreateArticle = lazy(() => import('@/pages/user/CreateArticle'));
+const UIExamples = lazy(() => import('@/pages/examples/UIExamples'));
+const TestToast = lazy(() => import('@/pages/examples/TestToast'));
+const TestUI = lazy(() => import('@/pages/examples/TestUI'));
 
 // 页面加载组件
 const PageLoading = () => (
@@ -140,6 +142,22 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoading />}>
             <UIExamples />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'test-toast',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <TestToast />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'test-ui',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <TestUI />
           </Suspense>
         ),
       },

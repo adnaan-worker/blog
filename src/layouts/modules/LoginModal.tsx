@@ -147,14 +147,6 @@ const SocialButton = styled.button`
   }
 `;
 
-// 错误消息
-const ErrorMessage = styled.div`
-  color: var(--danger-color);
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-  text-align: center;
-`;
-
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -163,11 +155,18 @@ interface LoginModalProps {
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegister }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useSelector((state: RootState) => state.user);
+  const { loading, isLoggedIn } = useSelector((state: RootState) => state.user);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
+
+  // 在登录状态变化时处理模态框关闭
+  React.useEffect(() => {
+    if (isLoggedIn) {
+      onClose();
+    }
+  }, [isLoggedIn, onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,8 +210,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
             required
           />
         </InputGroup>
-        
-        {error && <ErrorMessage>{error}</ErrorMessage>}
         
         <SubmitButton type="submit" disabled={loading}>
           {loading ? '处理中...' : '登录'}

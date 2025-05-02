@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { FiInfo, FiAlertCircle, FiEdit, FiTrash, FiRefreshCw } from 'react-icons/fi';
 import {
   Alert,
-  ConfirmDialog,
+  Toast,
   ToastProvider,
   useToast,
+  Confirm,
+  ConfirmDialog,
   Tooltip,
   Badge,
   Tabs,
   Button,
-} from '../components/common/UIComponents';
+} from '@/components/ui';
+import { tooltip } from '@/ui';
 
 // 页面容器样式
 const PageContainer = styled.div`
@@ -202,19 +205,19 @@ const UIExamples: React.FC = () => {
             <ExampleTitle>基础提示</ExampleTitle>
             <ButtonGroup>
               <Tooltip content="编辑此项目" placement="top">
-                <Button variant="secondary">
+                <Button variant="secondary" className="tooltip-test">
                   <FiEdit size={18} />
                 </Button>
               </Tooltip>
 
               <Tooltip content="删除此项目" placement="bottom">
-                <Button variant="danger">
+                <Button variant="danger" className="tooltip-test">
                   <FiTrash size={18} />
                 </Button>
               </Tooltip>
 
               <Tooltip content="刷新数据" placement="right">
-                <Button variant="secondary">
+                <Button variant="secondary" className="tooltip-test">
                   <FiRefreshCw size={18} />
                 </Button>
               </Tooltip>
@@ -224,7 +227,7 @@ const UIExamples: React.FC = () => {
           <ExampleCard>
             <ExampleTitle>延迟显示</ExampleTitle>
             <Tooltip content="这个提示会延迟500毫秒显示" placement="top" delay={500}>
-              <Button variant="primary">延迟提示</Button>
+              <Button variant="primary" className="tooltip-test">延迟提示</Button>
             </Tooltip>
           </ExampleCard>
         </Grid>

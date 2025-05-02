@@ -6,6 +6,8 @@ import Footer from './Footer';
 import FloatingToolbar from './FloatingToolbar';
 import Live2DModel from './Live2DModel';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ToastProvider } from '@/components/ui/Toast';
+import ToastListener from '@/components/ui/ToastListener';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -173,47 +175,50 @@ const RootLayout = () => {
   if (!mounted) return null;
 
   return (
-    <MainContainer>
-      {/* 加载指示器 - 使用showLoader状态 */}
-      <AnimatePresence>
-        {showLoader && (
-          <LoadingIndicator
-            initial={{ width: 0 }}
-            animate={{ width: '100%' }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: 0.5,
-              ease: 'easeInOut',
-            }}
-            onAnimationComplete={() => {
-              loaderAnimationCompleted.current = true;
-              if (!isPending && !isLoading) {
-                setShowLoader(false);
-              }
-            }}
-          />
-        )}
-      </AnimatePresence>
+    <ToastProvider>
+      <ToastListener />
+      <MainContainer>
+        {/* 加载指示器 - 使用showLoader状态 */}
+        <AnimatePresence>
+          {showLoader && (
+            <LoadingIndicator
+              initial={{ width: 0 }}
+              animate={{ width: '100%' }}
+              exit={{ opacity: 0 }}
+              transition={{
+                duration: 0.5,
+                ease: 'easeInOut',
+              }}
+              onAnimationComplete={() => {
+                loaderAnimationCompleted.current = true;
+                if (!isPending && !isLoading) {
+                  setShowLoader(false);
+                }
+              }}
+            />
+          )}
+        </AnimatePresence>
 
-      {/* 头部导航 */}
-      <Header scrolled={isScrolled} />
+        {/* 头部导航 */}
+        <Header scrolled={isScrolled} />
 
-      {/* 主内容区域 - 带动画过渡 */}
-      <AnimatePresence mode="wait">
-        <Content key={location.pathname} initial="initial" animate="animate" exit="exit" variants={pageTransition}>
-          <Outlet />
-        </Content>
-      </AnimatePresence>
+        {/* 主内容区域 - 带动画过渡 */}
+        <AnimatePresence mode="wait">
+          <Content key={location.pathname} initial="initial" animate="animate" exit="exit" variants={pageTransition}>
+            <Outlet />
+          </Content>
+        </AnimatePresence>
 
-      {/* 页脚 */}
-      <Footer />
+        {/* 页脚 */}
+        <Footer />
 
-      {/* 悬浮工具栏 */}
-      <FloatingToolbar scrollPosition={scrollPosition} />
+        {/* 悬浮工具栏 */}
+        <FloatingToolbar scrollPosition={scrollPosition} />
 
-      {/* Live2D模型 */}
-      <Live2DModel />
-    </MainContainer>
+        {/* Live2D模型 */}
+        <Live2DModel />
+      </MainContainer>
+    </ToastProvider>
   );
 };
 

@@ -4,7 +4,7 @@ import { RouterProvider } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import store, { AppDispatch } from './store';
 import { initializeTheme } from './store/modules/themeSlice';
-import './styles/index.css';
+import '@/styles/index.css';
 import router from './router';
 
 // 定义标题数组

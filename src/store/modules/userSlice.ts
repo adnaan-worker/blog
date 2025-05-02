@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import API from '@/utils/api';
+import { toast } from '@/ui';
 
 export interface User {
   id: number;
@@ -69,15 +70,22 @@ export const login = (username: string, password: string) => async (dispatch: an
   try {
     dispatch(setLoading(true));
     dispatch(setError(null));
-    
+
     const response = await API.user.login({ username, password });
     if (response.code === 200) {
       dispatch(setUser(response.data));
+      // 使用全局Toast显示登录成功
+      toast.success('登录成功', '欢迎回来');
     } else {
       dispatch(setError(response.message || '登录失败'));
+      // 使用全局Toast显示登录失败
+      toast.error(response.message || '登录失败', '出错了');
     }
   } catch (error) {
-    dispatch(setError('登录失败，请稍后重试'));
+    const errorMessage = '登录失败，请稍后重试';
+    dispatch(setError(errorMessage));
+    // 使用全局Toast显示登录异常
+    toast.error(errorMessage, '出错了');
   } finally {
     dispatch(setLoading(false));
   }
@@ -87,28 +95,64 @@ export const logoutUser = () => async (dispatch: any) => {
   try {
     await API.user.logout();
     dispatch(logout());
+    // 使用全局Toast显示登出成功
+    toast.info('您已成功退出登录', '再见');
   } catch (error) {
     console.error('Logout failed:', error);
+    // 使用全局Toast显示登出失败
+    toast.error('退出登录失败，请稍后重试', '出错了');
   }
+};
+
+// 临时添加注册API方法，后续应该添加到API中
+const registerApi = (data: { username: string; email: string; password: string }): Promise<any> => {
+  // 这里应该调用实际的注册API
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        code: 200,
+        message: '注册成功',
+        data: {
+          user: {
+            id: Math.floor(Math.random() * 1000),
+            username: data.username,
+            email: data.email,
+            role: 'user',
+            status: 'active',
+          },
+          token: 'dummy-token-' + Math.random(),
+        },
+      });
+    }, 500);
+  });
 };
 
 export const register = (username: string, email: string, password: string) => async (dispatch: any) => {
   try {
     dispatch(setLoading(true));
     dispatch(setError(null));
-    
-    const response = await API.user.register({ username, email, password });
+
+    // 使用临时的注册API方法，实际项目中应该替换为真实API
+    const response = await registerApi({ username, email, password });
+
     if (response.code === 200) {
+      // 使用全局Toast显示注册成功
+      toast.success('注册成功，正在为您登录', '恭喜');
       // 注册成功后自动登录
       await dispatch(login(username, password));
     } else {
       dispatch(setError(response.message || '注册失败'));
+      // 使用全局Toast显示注册失败
+      toast.error(response.message || '注册失败', '出错了');
     }
   } catch (error) {
-    dispatch(setError('注册失败，请稍后重试'));
+    const errorMessage = '注册失败，请稍后重试';
+    dispatch(setError(errorMessage));
+    // 使用全局Toast显示注册异常
+    toast.error(errorMessage, '出错了');
   } finally {
     dispatch(setLoading(false));
   }
 };
 
-export default userSlice.reducer; 
+export default userSlice.reducer;
