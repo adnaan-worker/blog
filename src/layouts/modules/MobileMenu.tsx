@@ -2,7 +2,6 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiHome, FiBookOpen, FiCode, FiInfo, FiMail, FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 
@@ -145,110 +144,123 @@ const MobileAuthButton = styled.button`
   }
 `;
 
+// 定义菜单项接口
+interface MenuItem {
+  path: string;
+  title: string;
+  icon: React.ReactNode;
+  isExternal?: boolean;
+  isDropdown?: boolean;
+  children?: MenuItem[];
+}
+
+interface MenuGroup {
+  title: string;
+  items: MenuItem[];
+}
+
 interface MobileMenuProps {
   isOpen: boolean;
+  menuGroups: MenuGroup[];
+  accountItems?: MenuItem[];
   onLinkClick: () => void;
   handleLogin?: () => void;
   handleRegister?: () => void;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onLinkClick, handleLogin, handleRegister }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, menuGroups, accountItems, onLinkClick, handleLogin, handleRegister }) => {
   const location = useLocation();
   const { isLoggedIn } = useSelector((state: RootState) => state.user);
 
   if (!isOpen) return null;
 
+  // 处理特殊路径的点击（如登录和注册）
+  const handleSpecialPathClick = (path: string) => {
+    if (path === '#login' && handleLogin) {
+      handleLogin();
+      onLinkClick();
+    } else if (path === '#register' && handleRegister) {
+      handleRegister();
+      onLinkClick();
+    } else {
+      onLinkClick();
+    }
+  };
+
   return (
     <>
       <MobileMenuContainer initial="hidden" animate="visible" exit="exit" variants={mobileMenuVariants}>
         <MobileMenuContent>
-          <MobileMenuSection>
-            <MobileMenuTitle>主导航</MobileMenuTitle>
-            <MobileNavLink to="/" active={location.pathname === '/' ? 'true' : 'false'} onClick={onLinkClick}>
-              <FiHome />
-              首页
-            </MobileNavLink>
+          {/* 渲染菜单组 */}
+          {menuGroups.map((group, groupIndex) => ( 
+            <React.Fragment key={group.title}>
+              {groupIndex > 0 && <MobileMenuDivider />}
+              <MobileMenuSection>
+                <MobileMenuTitle>{group.title}</MobileMenuTitle>
+                {group.items.map((item) => {
+                  // 如果是下拉菜单项且有子菜单
+                  if (item.isDropdown && item.children && item.children.length > 0) {
+                    return (
+                      <React.Fragment key={item.path}>
+                        <MobileNavLink
+                          to="#"
+                          active="false"
+                          onClick={() => {}}
+                        >
+                          {item.icon}
+                          {item.title}
+                        </MobileNavLink>
+                        
+                        {/* 渲染子菜单项，稍微缩进 */}
+                        <div style={{ paddingLeft: '1.5rem' }}>
+                          {item.children.map((childItem) => (
+                            <MobileNavLink
+                              key={childItem.path}
+                              to={childItem.path}
+                              active={(location.pathname === childItem.path || (childItem.path !== '/' && location.pathname.includes(childItem.path))).toString()}
+                              onClick={() => handleSpecialPathClick(childItem.path)}
+                            >
+                              {childItem.icon}
+                              {childItem.title}
+                            </MobileNavLink>
+                          ))}
+                        </div>
+                      </React.Fragment>
+                    );
+                  }
+                  
+                  // 普通菜单项
+                  return (
+                    <MobileNavLink
+                      key={item.path}
+                    to={item.isExternal || item.path.startsWith('#') ? '#' : item.path}
+                    active={location.pathname === item.path || (item.path !== '/' && location.pathname.includes(item.path)) ? 'true' : 'false'}
+                    onClick={() => item.isExternal || item.path.startsWith('#') ? handleSpecialPathClick(item.path) : onLinkClick()}
+                  >
+                    {item.icon}
+                    {item.title}
+                  </MobileNavLink>
+                  )
+                })}
+              </MobileMenuSection>
+            </React.Fragment>
+          ))}
 
-            <MobileNavLink
-              to="/blog"
-              active={location.pathname.includes('/blog') ? 'true' : 'false'}
-              onClick={onLinkClick}
-            >
-              <FiBookOpen />
-              博客
-            </MobileNavLink>
-
-            <MobileNavLink
-              to="/projects"
-              active={location.pathname.includes('/projects') ? 'true' : 'false'}
-              onClick={onLinkClick}
-            >
-              <FiCode />
-              项目
-            </MobileNavLink>
-          </MobileMenuSection>
-
-          <MobileMenuDivider />
-
-          <MobileMenuSection>
-            <MobileMenuTitle>更多</MobileMenuTitle>
-            <MobileNavLink
-              to="/ui-examples"
-              active={location.pathname.includes('/ui-examples') ? 'true' : 'false'}
-              onClick={onLinkClick}
-            >
-              <FiInfo />
-              组件使用示例
-            </MobileNavLink>
-            <MobileNavLink
-              to="/about"
-              active={location.pathname.includes('/about') ? 'true' : 'false'}
-              onClick={onLinkClick}
-            >
-              <FiInfo />
-              关于我
-            </MobileNavLink>
-            <MobileNavLink
-              to="/contact"
-              active={location.pathname.includes('/contact') ? 'true' : 'false'}
-              onClick={onLinkClick}
-            >
-              <FiMail />
-              联系方式
-            </MobileNavLink>
-            <MobileNavLink
-              to="/code"
-              active={location.pathname.includes('/code') ? 'true' : 'false'}
-              onClick={onLinkClick}
-            >
-              <FiCode />
-              开发字体
-            </MobileNavLink>
-          </MobileMenuSection>
-
-          {!isLoggedIn && (
+          {/* 渲染账户菜单项（如果用户未登录且有账户菜单项） */}
+          {!isLoggedIn && accountItems && accountItems.length > 0 && (
             <>
               <MobileMenuDivider />
               <MobileMenuSection>
                 <MobileMenuTitle>账户</MobileMenuTitle>
-                <MobileAuthButton onClick={() => {
-                  if (handleLogin) {
-                    handleLogin();
-                    onLinkClick();
-                  }
-                }}>
-                  <FiLogIn />
-                  登录
-                </MobileAuthButton>
-                <MobileAuthButton onClick={() => {
-                  if (handleRegister) {
-                    handleRegister();
-                    onLinkClick();
-                  }
-                }}>
-                  <FiUserPlus />
-                  注册
-                </MobileAuthButton>
+                {accountItems.map((item) => (
+                  <MobileAuthButton 
+                    key={item.path}
+                    onClick={() => handleSpecialPathClick(item.path)}
+                  >
+                    {item.icon}
+                    {item.title}
+                  </MobileAuthButton>
+                ))}
               </MobileMenuSection>
             </>
           )}

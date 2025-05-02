@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { FiMenu, FiX, FiFeather } from 'react-icons/fi';
+import { FiMenu, FiX, FiFeather, FiHome, FiBookOpen, FiCode, FiInfo, FiMail, FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { keyframes } from '@emotion/react';
 import LoginModal from './modules/LoginModal';
 import RegisterModal from './modules/RegisterModal';
@@ -9,6 +9,21 @@ import NavLinks from './modules/NavLinks';
 import UserMenu, { MobileAvatar } from './modules/UserMenu';
 import ThemeToggle from './modules/ThemeToggle';
 import MobileMenu from './modules/MobileMenu';
+
+// 定义菜单数据类型
+interface MenuItem {
+  path: string;
+  title: string;
+  icon: React.ReactNode;
+  isExternal?: boolean;
+  isDropdown?: boolean;
+  children?: MenuItem[];
+}
+
+interface MenuGroup {
+  title: string;
+  items: MenuItem[];
+}
 
 // 定义Header容器组件样式
 const HeaderContainer = styled.header<{ scrolled: boolean }>`
@@ -264,6 +279,75 @@ const logoMessages = [
   "编程创造未来 🚀"
 ];
 
+// 定义主导航菜单数据
+const mainNavItems: MenuItem[] = [
+  {
+    path: "/",
+    title: "首页",
+    icon: <FiHome size={16} />
+  },
+  {
+    path: "/blog",
+    title: "博客",
+    icon: <FiBookOpen size={16} />
+  },
+  {
+    path: "/projects",
+    title: "项目",
+    icon: <FiCode size={16} />
+  },
+  {
+    path: "#",
+    title: "更多",
+    icon: <FiInfo size={16} />,
+    isDropdown: true,
+    children: [
+      {
+        path: "/ui-examples",
+        title: "组件使用示例",
+        icon: <FiInfo size={16} />
+      },
+      {
+        path: "/about",
+        title: "关于我",
+        icon: <FiInfo size={16} />
+      },
+      {
+        path: "/contact",
+        title: "联系方式",
+        icon: <FiMail size={16} />
+      },
+      {
+        path: "/code",
+        title: "开发字体",
+        icon: <FiCode size={16} />
+      }
+    ]
+  }
+];
+
+// 定义移动端菜单分组数据
+const mobileMenuGroups: MenuGroup[] = [
+  {
+    title: "主导航",
+    items: mainNavItems
+  }
+];
+
+// 定义账户菜单项
+const accountMenuItems: MenuItem[] = [
+  {
+    path: "#login",
+    title: "登录",
+    icon: <FiLogIn size={16} />
+  },
+  {
+    path: "#register",
+    title: "注册",
+    icon: <FiUserPlus size={16} />
+  }
+];
+
 // Header组件
 const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   const [internalScrolled, setInternalScrolled] = useState(scrolled);
@@ -410,6 +494,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
         {/* 桌面导航 */}
         <div className="nav-card">
           <NavLinks
+            mainNavItems={mainNavItems}
             onLinkClick={handleLinkClick}
             moreDropdownOpen={moreDropdownOpen}
             toggleMoreDropdown={toggleMoreDropdown}
@@ -450,6 +535,8 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
       {/* 移动端菜单 */}
       <MobileMenu 
         isOpen={mobileMenuOpen} 
+        menuGroups={mobileMenuGroups}
+        accountItems={accountMenuItems}
         onLinkClick={handleLinkClick} 
         handleLogin={handleLogin}
         handleRegister={handleRegister}

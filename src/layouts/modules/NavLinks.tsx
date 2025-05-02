@@ -1,7 +1,16 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { FiHome, FiBookOpen, FiCode, FiInfo, FiMail } from 'react-icons/fi';
+
+// 定义菜单项接口
+interface MenuItem {
+  path: string;
+  title: string;
+  icon: React.ReactNode;
+  isExternal?: boolean;
+  isDropdown?: boolean;
+  children?: MenuItem[];
+}
 
 // 定义导航链接样式
 const NavLink = styled(Link)<{ active: string }>`
@@ -93,77 +102,80 @@ export const NavLinkWithHover: React.FC<{
 };
 
 interface NavLinksProps {
+  mainNavItems: MenuItem[];
   onLinkClick: () => void;
   moreDropdownOpen: boolean;
   toggleMoreDropdown: (e: React.MouseEvent<Element, MouseEvent>) => void;
   dropdownRef: React.RefObject<HTMLDivElement>;
 }
 
-const NavLinks: React.FC<NavLinksProps> = ({ onLinkClick, moreDropdownOpen, toggleMoreDropdown, dropdownRef }) => {
+const NavLinks: React.FC<NavLinksProps> = ({ mainNavItems, onLinkClick, moreDropdownOpen, toggleMoreDropdown, dropdownRef }) => {
   const location = useLocation();
+
+  // 检查菜单项是否激活
+  const isItemActive = (item: MenuItem) => {
+    if (item.path === '/') {
+      return location.pathname === '/';
+    }
+    
+    if (item.isDropdown && item.children) {
+      return item.children.some(child => location.pathname.includes(child.path));
+    }
+    
+    return location.pathname.includes(item.path);
+  };
 
   return (
     <>
-      <NavLinkWithHover to="/" active={location.pathname === '/'} onClick={onLinkClick} icon={<FiHome size={16} />}>
-        首页
-      </NavLinkWithHover>
+      {/* 渲染所有导航菜单项 */}
+      {mainNavItems.map((item) => {
+        if (item.isDropdown && item.children) {
+          // 渲染下拉菜单
+          return (
+            <div key={item.path} ref={dropdownRef} style={{ position: 'relative' }}>
+              <NavLinkWithHover
+                to="#"
+                active={isItemActive(item)}
+                onClick={toggleMoreDropdown}
+                icon={item.icon}
+              >
+                {item.title}
+              </NavLinkWithHover>
 
-      <NavLinkWithHover
-        to="/blog"
-        active={location.pathname.includes('/blog')}
-        onClick={onLinkClick}
-        icon={<FiBookOpen size={16} />}
-      >
-        博客
-      </NavLinkWithHover>
-
-      <NavLinkWithHover
-        to="/projects"
-        active={location.pathname.includes('/projects')}
-        onClick={onLinkClick}
-        icon={<FiCode size={16} />}
-      >
-        项目
-      </NavLinkWithHover>
-
-      <div ref={dropdownRef} style={{ position: 'relative' }}>
-        <NavLinkWithHover
-          to="#"
-          active={
-            location.pathname.includes('/about') ||
-            location.pathname.includes('/contact') ||
-            location.pathname.includes('/code') ||
-            location.pathname.includes('/ui-examples')
-          }
-          onClick={toggleMoreDropdown}
-          icon={<FiInfo size={16} />}
-        >
-          更多
-        </NavLinkWithHover>
-
-        {moreDropdownOpen && (
-          <DropdownContent>
-            <DropdownItem to="/ui-examples" onClick={onLinkClick}>
-              <FiInfo size={16} />
-              组件使用示例
-            </DropdownItem>
-            <DropdownItem to="/about" onClick={onLinkClick}>
-              <FiInfo size={16} />
-              关于我
-            </DropdownItem>
-            <DropdownItem to="/contact" onClick={onLinkClick}>
-              <FiMail size={16} />
-              联系方式
-            </DropdownItem>
-            <DropdownItem to="/code" onClick={onLinkClick}>
-              <FiCode size={16} />
-              开发字体
-            </DropdownItem>
-          </DropdownContent>
-        )}
-      </div>
+              {moreDropdownOpen && (
+                <DropdownContent>
+                  {item.children.map((childItem) => (
+                    <DropdownItem 
+                      key={childItem.path} 
+                      to={childItem.path} 
+                      onClick={onLinkClick}
+                    >
+                      {childItem.icon}
+                      {childItem.title}
+                    </DropdownItem>
+                  ))}
+                </DropdownContent>
+              )}
+            </div>
+          );
+        } else {
+          // 渲染普通菜单项
+          return (
+            <NavLinkWithHover 
+              key={item.path}
+              to={item.path} 
+              active={isItemActive(item)} 
+              onClick={onLinkClick} 
+              icon={item.icon}
+            >
+              {item.title}
+            </NavLinkWithHover>
+          );
+        }
+      })}
     </>
   );
 };
+
 
 export default NavLinks;
