@@ -6,6 +6,8 @@ import { FiX } from 'react-icons/fi';
 // 弹窗背景遮罩
 const ModalOverlay = styled(motion.div)`
   position: fixed;
+  width: 100vw;
+  height: 100vh;
   top: 0;
   left: 0;
   right: 0;
@@ -18,6 +20,8 @@ const ModalOverlay = styled(motion.div)`
   justify-content: center;
   overflow-y: auto;
   padding: 1rem;
+  /* 允许内容滚动但保持背景固定 */
+  overscroll-behavior: contain;
 `;
 
 // 弹窗容器
@@ -67,37 +71,30 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
-  // 处理滚动锁定
+  // 不再需要存储滚动位置，因为我们不再移动页面
+  
+  // 处理滚动锁定 - 优化版本，避免页面跳动和卡屏
   useEffect(() => {
+    // 计算滚动条宽度
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
     if (isOpen) {
-      // 计算滚动条宽度
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      // 记录当前滚动位置
-      const scrollY = window.scrollY;
-      // 添加 padding-right 来补偿滚动条消失的空间
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      // 只添加overflow: hidden来阻止滚动，而不改变页面位置
       document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
+      // 添加padding-right来补偿滚动条消失的空间，防止页面内容位移
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
     } else {
-      // 恢复滚动位置和样式
-      const scrollY = document.body.style.top;
-      document.body.style.paddingRight = '';
+      // 恢复滚动
       document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      document.body.style.paddingRight = '';
     }
 
     return () => {
-      // 清理样式
-      document.body.style.paddingRight = '';
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
+      // 如果组件卸载时模态框是打开的，需要恢复滚动
+      if (isOpen) {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      }
     };
   }, [isOpen]);
 
@@ -127,4 +124,4 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
   );
 };
 
-export default Modal; 
+export default Modal;
