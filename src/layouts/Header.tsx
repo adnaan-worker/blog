@@ -32,7 +32,7 @@ const HeaderContainer = styled.header<{ scrolled: boolean }>`
   justify-content: space-between;
   width: 100%;
   height: var(--header-height);
-  padding: 0 1.5rem;
+  padding: 0 5rem;
 
   @media (max-width: 768px) {
     padding: 0 1rem;

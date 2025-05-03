@@ -8,6 +8,7 @@ import Live2DModel from './live2d-model';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ToastProvider } from '@/components/ui/Toast';
 import ToastListener from '@/components/ui/ToastListener';
+import PageLoading from './page-loading';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -198,7 +199,9 @@ const RootLayout = () => {
             />
           )}
         </AnimatePresence>
-
+        {showLoader && (
+          <PageLoading></PageLoading>
+        )}
         {/* 头部导航 */}
         <Header scrolled={isScrolled} />
 

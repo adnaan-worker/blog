@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiCalendar, FiClock, FiTag, FiUser, FiShare2, FiHeart, FiBookmark, FiArrowLeft } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiTag, FiShare2, FiHeart, FiBookmark, FiArrowLeft } from 'react-icons/fi';
 import {
   PageContainer,
   ArticleDetailContainer,
@@ -10,7 +10,6 @@ import {
   ArticleDetailMeta,
   ArticleCover,
   ArticleContent2,
-  ArticleActionButton,
   ArticleTags,
   ArticleTag,
   RelatedArticles,
@@ -20,8 +19,6 @@ import {
   CommentForm,
   CommentInput,
   SubmitButton,
-  BlogSidebar,
-  SidebarCard,
   TimelineArticleComponent,
   fadeInUpVariants,
   staggerContainerVariants,
@@ -488,7 +485,6 @@ const ArticleContent2WithStyles = styled(ArticleContent2)`
 const BlogDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState<Article | null>(null);
-  const [loading, setLoading] = useState(true);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
   const [commentText, setCommentText] = useState('');
   const [liked, setLiked] = useState(false);
@@ -502,12 +498,8 @@ const BlogDetail: React.FC = () => {
   // 提取文章数据
   useEffect(() => {
     const fetchArticle = async () => {
-      setLoading(true);
-      // 模拟API请求延迟
-      await new Promise((resolve) => setTimeout(resolve, 300));
       const foundArticle = DUMMY_ARTICLES.find((article) => article.id === Number(id));
       setArticle(foundArticle || null);
-      setLoading(false);
 
       // 加载相关文章
       if (foundArticle) {
@@ -772,39 +764,6 @@ const BlogDetail: React.FC = () => {
     }
   };
 
-  // 提取公共滚动逻辑到单独的函数
-  const scrollToElement = (element: HTMLElement) => {
-    try {
-      console.log(`滚动到元素:`, element);
-
-      // 直接使用scrollIntoView API
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-      // 额外滚动以考虑顶部偏移
-      setTimeout(() => {
-        window.scrollBy({ top: -100, behavior: 'smooth' });
-      }, 100);
-
-      // 视觉反馈：高亮效果
-      element.classList.add('highlight-heading');
-      element.style.backgroundColor = 'rgba(81, 131, 245, 0.1)';
-      element.style.padding = '10px';
-      element.style.transition = 'all 0.3s ease';
-
-      setTimeout(() => {
-        element.classList.remove('highlight-heading');
-        element.style.backgroundColor = '';
-        element.style.padding = '';
-      }, 2000);
-
-      // 获取元素的id并更新活跃标题
-      const id = element.getAttribute('id');
-      if (id) setActiveHeading(id);
-    } catch (error) {
-      console.error('滚动到标题时出错:', error);
-    }
-  };
-
   // 处理评论提交
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -836,16 +795,6 @@ const BlogDetail: React.FC = () => {
         .catch((error) => console.error('复制失败', error));
     }
   };
-
-  // 加载状态显示
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-        <div className="loading-spinner"></div>
-      </div>
-    );
-  }
-
   // 文章未找到状态
   if (!article) {
     return (
