@@ -5,6 +5,7 @@ import {
 } from './interceptors';
 import { HttpMethod, RequestConfig, ApiResponse } from './types';
 import config from './config';
+import { storage } from './index';
 
 class HttpRequest {
   private instance: AxiosInstance;
@@ -43,7 +44,7 @@ class HttpRequest {
     this.instance.interceptors.request.use(
       (config) => {
         // 从 localStorage 获取 token
-        const token = localStorage.getItem('token');
+        const token = storage.local.get('token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -54,11 +55,6 @@ class HttpRequest {
 
     this.instance.interceptors.response.use(
       (response) => {
-        // 如果响应中包含 token，保存到 localStorage
-        const token = response.data?.data?.token;
-        if (token) {
-          localStorage.setItem('token', token);
-        }
         return response;
       },
       responseErrorInterceptor

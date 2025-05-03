@@ -1,11 +1,12 @@
-import axios, { AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { ApiResponse } from './types';
+import { AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import config from './config';
+import { storage } from './index';
 
 // 请求拦截器
 export const requestInterceptor = (reqConfig: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
   // 可以在这里添加token到请求头
-  const token = localStorage.getItem('token');
+  const userInfo = storage.local.remove('user');
+  const token = userInfo?.token;
   if (token) {
     reqConfig.headers.set('Authorization', `Bearer ${token}`);
   }
@@ -69,8 +70,8 @@ export const responseErrorInterceptor = (error: AxiosError): Promise<AxiosError>
     switch (status) {
       case 401:
         // 未授权，清除token并跳转到登录页
-        localStorage.removeItem('token');
-        // 可以在这里添加路由跳转逻辑，例如 window.location.href = '/login';
+        storage.local.remove('user');
+        window.location.href = '/';
         break;
       case 403:
         // 禁止访问
