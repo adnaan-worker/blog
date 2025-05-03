@@ -1,10 +1,10 @@
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { useState, useEffect, useCallback, useTransition, useRef } from 'react';
 import styled from '@emotion/styled';
-import Header from './Header';
-import Footer from './Footer';
-import FloatingToolbar from './FloatingToolbar';
-import Live2DModel from './Live2DModel';
+import Header from './header';
+import Footer from './footer';
+import FloatingToolbar from './floating-toolbar';
+import Live2DModel from './live2d-model';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ToastProvider } from '@/components/ui/Toast';
 import ToastListener from '@/components/ui/ToastListener';

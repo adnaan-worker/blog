@@ -190,29 +190,6 @@ pre,
 }
 
 /**
- * 5. 通用工具类
- */
-.container {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.content-container {
-  max-width: var(--content-width);
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.hide-on-mobile {
-  display: none;
-}
-
-.hide-on-tablet {
-  display: none;
-}
-
-/**
  * 导航和Header样式
  */
 .header {

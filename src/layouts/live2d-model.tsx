@@ -12,6 +12,9 @@ const Live2DContainer = styled(motion.div)`
   height: 300px;
   pointer-events: auto;
   cursor: pointer;
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 export const Live2DModel = () => {

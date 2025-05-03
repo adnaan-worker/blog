@@ -7,9 +7,7 @@ import {
   FiClock,
   FiTag,
   FiTrash2,
-  FiEye,
   FiUser,
-  FiMessageSquare,
   FiSearch,
 } from 'react-icons/fi';
 import { PageContainer } from '@/components/blog/BlogComponents';

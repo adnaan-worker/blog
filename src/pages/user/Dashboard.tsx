@@ -15,7 +15,7 @@ import {
   FiMessageSquare,
 } from 'react-icons/fi';
 import { PageContainer } from '@/components/blog/BlogComponents';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 // 定义样式组件
 const DashboardContainer = styled.div`
@@ -360,7 +360,6 @@ const pageVariants = {
 const Dashboard: React.FC = () => {
   const [articles] = useState(DUMMY_ARTICLES);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage] = useState(1);
   const navigate = useNavigate();
 
   // 处理搜索输入变化

@@ -1,57 +1,24 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import RootLayout from '@/layouts/RootLayout';
-import pageLoadingGif from '@/assets/images/page-loading.gif';
+import RootLayout from '@/layouts';
+import PageLoading from '@/layouts/page-loading';
 
 // 使用 React.lazy 懒加载组件
-const Home = lazy(() => import('@/pages/index/Home'));
-const NotFound = lazy(() => import('@/pages/not-fund/NotFound'));
-const Code = lazy(() => import('@/pages/examples/Code'));
-const Blog = lazy(() => import('@/pages/blog/Blog'));
-const BlogDetail = lazy(() => import('@/pages/blog/BlogDetail'));
+const Home = lazy(() => import('@/pages/index/home'));
+const NotFound = lazy(() => import('@/pages/not-fund/not-fund'));
+const Code = lazy(() => import('@/pages/examples/code'));
+const Blog = lazy(() => import('@/pages/blog'));
+const BlogDetail = lazy(() => import('@/pages/blog/detail'));
 
 // 个人中心相关页面
-const Profile = lazy(() => import('@/pages/user/Profile'));
-const Dashboard = lazy(() => import('@/pages/user/Dashboard'));
-const Favorites = lazy(() => import('@/pages/user/Favorites'));
-const Settings = lazy(() => import('@/pages/user/Settings'));
-const CreateArticle = lazy(() => import('@/pages/user/CreateArticle'));
-const UIExamples = lazy(() => import('@/pages/examples/UIExamples'));
-const TestToast = lazy(() => import('@/pages/examples/TestToast'));
-const TestUI = lazy(() => import('@/pages/examples/TestUI'));
-
-// 页面加载组件
-const PageLoading = () => (
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'column',
-      height: '100vh',
-    }}
-  >
-    <img
-      src={pageLoadingGif}
-      alt="加载中..."
-      style={{
-        width: '200px',
-        objectFit: 'contain',
-        borderRadius: '10px',
-        boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.1)',
-        marginBottom: '20px',
-      }}
-    />
-    <p
-      style={{
-        color: 'var(--text-secondary)',
-        fontSize: '0.9rem',
-      }}
-    >
-      加载中...
-    </p>
-  </div>
-);
+const Profile = lazy(() => import('@/pages/user/profile'));
+const Dashboard = lazy(() => import('@/pages/user/dashboard'));
+const Favorites = lazy(() => import('@/pages/user/favorites'));
+const Settings = lazy(() => import('@/pages/user/settings'));
+const CreateArticle = lazy(() => import('@/pages/user/create-article'));
+const UIExamples = lazy(() => import('@/pages/examples/example-ui'));
+const TestToast = lazy(() => import('@/pages/examples/toast'));
+const TestUI = lazy(() => import('@/pages/examples/ui'));
 
 // 创建路由配置
 const router = createBrowserRouter([
