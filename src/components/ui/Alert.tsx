@@ -6,6 +6,7 @@ import { MessageType } from '@/ui/common-types';
 
 // 样式定义
 const AlertContainer = styled(motion.div)<{ type: string }>`
+  width: 100%;
   position: relative;
   display: flex;
   align-items: flex-start;

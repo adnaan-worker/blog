@@ -1,4 +1,4 @@
-import { MessageType, ToastOptions } from './common-types';
+import { ToastOptions } from './common-types';
 
 // 事件发布订阅系统
 type ToastEventListener = (payload: ToastOptions) => void;

@@ -1,9 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import {
-  requestErrorInterceptor,
-  responseErrorInterceptor,
-} from './interceptors';
-import { HttpMethod, RequestConfig, ApiResponse } from './types';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { HttpMethod, RequestConfig, ApiResponse, ErrorResponse } from './types';
 import config from './config';
 import { storage } from './index';
 
@@ -41,34 +37,118 @@ class HttpRequest {
 
   // 配置拦截器
   private setupInterceptors(): void {
+    // 请求拦截器
     this.instance.interceptors.request.use(
-      (config) => {
-        // 从 localStorage 获取 token
-        const token = storage.local.get('token');
+      (reqConfig: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+        // 从 localStorage 获取用户信息和token
+        const userInfo = storage.local.get('user');
+        const token = userInfo?.token;
         if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+          reqConfig.headers.set('Authorization', `Bearer ${token}`);
         }
-        return config;
+
+        // 根据全局配置判断环境，添加环境标识
+        if (config.isDev) {
+          reqConfig.headers.set('X-Environment', 'development');
+        }
+
+        return reqConfig;
       },
-      requestErrorInterceptor
+      (error: AxiosError): Promise<AxiosError> => {
+        console.error('请求错误:', error);
+        return Promise.reject(error);
+      },
     );
 
+    // 响应拦截器
     this.instance.interceptors.response.use(
-      (response) => {
+      (response: AxiosResponse): AxiosResponse => {
+        // 统一处理响应数据
+        const { data } = response;
+
+        // 如果后端接口规范，统一处理响应状态
+        if (data.code !== 200 && data.code !== 0) {
+          // 开发环境输出详细错误信息
+          if (config.isDev) {
+            console.error('API错误响应:', {
+              url: response.config.url,
+              status: response.status,
+              data,
+            });
+          }
+
+          return Promise.reject({
+            code: data.code,
+            message: data.message || '服务器响应异常',
+          } as ErrorResponse) as any;
+        }
+
         return response;
       },
-      responseErrorInterceptor
+      (error: AxiosError): Promise<AxiosError> => {
+        const { response } = error;
+
+        // 开发环境输出详细错误日志
+        if (config.isDev) {
+          console.group('API请求错误');
+          console.error('错误信息:', error.message);
+          console.error('请求配置:', error.config);
+          console.error('响应详情:', response);
+          console.groupEnd();
+        }
+
+        // 根据状态码处理不同的错误
+        if (response) {
+          const status = response.status;
+
+          switch (status) {
+            case 401:
+              // 未授权，清除token并跳转到登录页
+              storage.local.remove('user');
+              window.location.href = '/';
+              break;
+            case 403:
+              // 禁止访问
+              console.error('访问被禁止');
+              break;
+            case 404:
+              // 资源不存在
+              console.error('请求的资源不存在');
+              break;
+            case 500:
+              // 服务器错误
+              console.error('服务器错误');
+              break;
+            default:
+              console.error(`未预期的错误: ${status}`);
+          }
+        } else {
+          // 网络错误或请求被取消
+          console.error('网络错误或请求被取消');
+        }
+
+        return Promise.reject(error);
+      },
     );
   }
 
-  // 创建请求
+  /**
+   * 创建请求
+   * @param config 请求配置
+   * @returns Promise<ApiResponse<T>>
+   */
   public async request<T = any>(config: RequestConfig): Promise<ApiResponse<T>> {
-    const response = await this.instance
-      .request({
+    try {
+      const response = await this.instance.request({
         ...config,
         method: config.method,
       });
-    return response.data;
+      return response.data;
+    } catch (error) {
+      // 统一处理错误，确保返回标准的错误格式
+      const err = error as ErrorResponse;
+      throw err;
+    }
   }
 
   // GET请求
