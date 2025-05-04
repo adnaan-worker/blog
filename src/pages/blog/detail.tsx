@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiCalendar, FiClock, FiTag, FiShare2, FiHeart, FiBookmark, FiArrowLeft } from 'react-icons/fi';
+import { RiRobot2Line } from 'react-icons/ri';
 import {
   PageContainer,
   ArticleDetailContainer,
@@ -481,6 +482,49 @@ const ArticleContent2WithStyles = styled(ArticleContent2)`
   }
 `;
 
+// AI摘要组件样式
+const AISummaryContainer = styled.div`
+  margin: 1.5rem 0 2rem;
+  padding: 1.25rem;
+  background: rgba(81, 131, 245, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(81, 131, 245, 0.1);
+  position: relative;
+`;
+
+const AISummaryHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+`;
+
+const AIIconWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  color: white;
+  box-shadow: 0 2px 8px rgba(81, 131, 245, 0.25);
+`;
+
+const AISummaryTitle = styled.h4`
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  margin: 0;
+`;
+
+const AISummaryContent = styled.p`
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+`;
+
 // 博客详情页组件实现
 const BlogDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -839,6 +883,18 @@ const BlogDetail: React.FC = () => {
                   </span>
                 </ArticleDetailMeta>
               </ArticleDetailHeader>
+              
+              <AISummaryContainer>
+                <AISummaryHeader>
+                  <AIIconWrapper>
+                    <RiRobot2Line size={16} />
+                  </AIIconWrapper>
+                  <AISummaryTitle>AI 摘要</AISummaryTitle>
+                </AISummaryHeader>
+                <AISummaryContent>
+                  {article?.excerpt || '本文探讨了Vue3与TypeScript结合的最佳实践，包括组件设计、状态管理优化和性能调优技巧。文章详细介绍了Composition API如何更好地支持TypeScript类型系统，以及如何避免常见的类型定义陷阱，帮助开发者提高代码质量和开发效率。'}
+                </AISummaryContent>
+              </AISummaryContainer>
 
               <ArticleCover>
                 <img src={article?.image} alt={article?.title} />

@@ -1188,7 +1188,7 @@ const Home = () => {
                   <ProfileInfoList>
                     <ProfileInfoItem>
                       <span>MBTI</span>
-                      <span>INFJ</span>
+                      <span>INFJ-T</span>
                     </ProfileInfoItem>
                     <ProfileInfoItem>
                       <span>地点</span>
