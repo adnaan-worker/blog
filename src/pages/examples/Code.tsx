@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
-import CodeBlock from '@/components/blog/CodeBlock';
+import CodeBlock from '@/components/blog/code-block';
 
 const PageContainer = styled.div`
   padding: 2rem 0;

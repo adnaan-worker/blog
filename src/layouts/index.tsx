@@ -6,8 +6,8 @@ import Footer from './footer';
 import FloatingToolbar from './floating-toolbar';
 import Live2DModel from './live2d-model';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ToastProvider } from '@/components/ui/Toast';
-import ToastListener from '@/components/ui/ToastListener';
+import { ToastProvider } from '@/components/ui/toast';
+import ToastListener from '@/components/ui/toast-listener';
 import PageLoading from './page-loading';
 
 // 定义页面主体样式

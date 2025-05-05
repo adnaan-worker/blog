@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useToast } from '@/components/ui/Toast';
+import { useToast } from '@/components/ui/toast';
 import { toastEventBus } from '@/ui/toast';
 
 /**

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { FiUser, FiLock, FiGithub, FiTwitter } from 'react-icons/fi';
+import { FiUser, FiLock, FiMail, FiGithub, FiTwitter } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
-import { login } from '@/store/modules/userSlice';
+import { register } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
-import Modal from '@/components/common/Modal';
+import Modal from '@/components/common/modal';
 
 // 标题
 const Title = styled.h2`
@@ -120,15 +120,15 @@ const ToggleForm = styled.button`
   }
 `;
 
-// 社交登录按钮组
-const SocialLoginGroup = styled.div`
+// 社交注册按钮组
+const SocialRegisterGroup = styled.div`
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
   justify-content: center;
 `;
 
-// 社交登录按钮
+// 社交注册按钮
 const SocialButton = styled.button`
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -147,30 +147,37 @@ const SocialButton = styled.button`
   }
 `;
 
-interface LoginModalProps {
+// 错误消息
+const ErrorMessage = styled.div`
+  color: var(--danger-color);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  text-align: center;
+`;
+
+interface RegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToRegister: () => void;
+  onSwitchToLogin: () => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegister }) => {
+const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitchToLogin }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, isLoggedIn } = useSelector((state: RootState) => state.user);
+  const { loading, error } = useSelector((state: RootState) => state.user);
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: '',
+    confirmPassword: '',
   });
-
-  // 在登录状态变化时处理模态框关闭
-  React.useEffect(() => {
-    if (isLoggedIn) {
-      onClose();
-    }
-  }, [isLoggedIn, onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await dispatch(login(formData.username, formData.password));
+    if (formData.password !== formData.confirmPassword) {
+      // 处理密码不匹配的情况
+      return;
+    }
+    await dispatch(register(formData.username, formData.email, formData.password));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,7 +187,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <Title>登录账号</Title>
+      <Title>注册账号</Title>
       
       <Form onSubmit={handleSubmit}>
         <InputGroup>
@@ -199,6 +206,20 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
         
         <InputGroup>
           <InputIcon>
+            <FiMail size={18} />
+          </InputIcon>
+          <Input
+            type="email"
+            name="email"
+            placeholder="邮箱"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </InputGroup>
+        
+        <InputGroup>
+          <InputIcon>
             <FiLock size={18} />
           </InputIcon>
           <Input
@@ -210,26 +231,42 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
             required
           />
         </InputGroup>
+
+        <InputGroup>
+          <InputIcon>
+            <FiLock size={18} />
+          </InputIcon>
+          <Input
+            type="password"
+            name="confirmPassword"
+            placeholder="确认密码"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            required
+          />
+        </InputGroup>
+        
+        {error && <ErrorMessage>{error}</ErrorMessage>}
         
         <SubmitButton type="submit" disabled={loading}>
-          {loading ? '处理中...' : '登录'}
+          {loading ? '处理中...' : '注册'}
         </SubmitButton>
         
-        <ToggleForm type="button" onClick={onSwitchToRegister}>
-          没有账号？立即注册
+        <ToggleForm type="button" onClick={onSwitchToLogin}>
+          已有账号？立即登录
         </ToggleForm>
       </Form>
       
-      <SocialLoginGroup>
+      <SocialRegisterGroup>
         <SocialButton type="button">
           <FiGithub size={20} />
         </SocialButton>
         <SocialButton type="button">
           <FiTwitter size={20} />
         </SocialButton>
-      </SocialLoginGroup>
+      </SocialRegisterGroup>
     </Modal>
   );
 };
 
-export default LoginModal; 
+export default RegisterModal; 

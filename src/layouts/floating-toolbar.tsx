@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMusic, FiArrowUp } from 'react-icons/fi';
-import MusicPlayer from './modules/MusicPlayer';
-import LyricBubble from './modules/LyricBubble';
+import MusicPlayer from './modules/music-player';
+import LyricBubble from './modules/lyric-bubble';
 
 const ToolbarContainer = styled(motion.div)`
   position: fixed;

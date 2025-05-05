@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import styled from '@emotion/styled';
-import ArticleList, { Article } from '@/components/blog/ArticleList';
-import BlogSidebar from '@/components/blog/BlogSidebar';
+import ArticleList, { Article } from '@/components/blog/article-list';
+import BlogSidebar from '@/components/blog/blog-sidebar';
 
 // 页面容器
 const PageContainer = styled.div`

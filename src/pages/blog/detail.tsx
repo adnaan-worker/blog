@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef, RefObject, useCallback, useLayoutEf
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiArrowLeft } from 'react-icons/fi';
-import ArticleContent from '@/components/blog/ArticleContent';
-import ArticleToc from '@/components/blog/ArticleToc';
-import CommentSection from '@/components/blog/CommentSection';
-import { Article } from '@/components/blog/ArticleList';
+import ArticleContent from '@/components/blog/article-content';
+import ArticleToc from '@/components/blog/article-toc';
+import CommentSection from '@/components/blog/comment-section';
+import { Article } from '@/components/blog/article-list';
 import styled from '@emotion/styled';
 
 // 页面容器

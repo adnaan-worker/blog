@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { FiMenu, FiX, FiFeather, FiHome, FiBookOpen, FiCode, FiInfo, FiMail, FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { keyframes } from '@emotion/react';
-import LoginModal from './modules/LoginModal';
-import RegisterModal from './modules/RegisterModal';
-import NavLinks from './modules/NavLinks';
-import UserMenu, { MobileAvatar } from './modules/UserMenu';
-import ThemeToggle from './modules/ThemeToggle';
-import MobileMenu from './modules/MobileMenu';
+import LoginModal from './modules/login-model';
+import RegisterModal from './modules/register-modal';
+import NavLinks from './modules/nav-links';
+import UserMenu, { MobileAvatar } from './modules/user-menu';
+import ThemeToggle from './modules/theme-toggle';
+import MobileMenu from './modules/mobile-menu';
 
 // 定义菜单数据类型
 interface MenuItem {
