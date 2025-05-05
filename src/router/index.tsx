@@ -9,6 +9,8 @@ const NotFound = lazy(() => import('@/pages/not-fund/not-fund'));
 const Code = lazy(() => import('@/pages/examples/code'));
 const Blog = lazy(() => import('@/pages/blog'));
 const BlogDetail = lazy(() => import('@/pages/blog/detail'));
+const Projects = lazy(() => import('@/pages/projects'));
+const ProjectDetail = lazy(() => import('@/pages/projects/detail'));
 
 // 个人中心相关页面
 const Profile = lazy(() => import('@/pages/user/profile'));
@@ -60,6 +62,23 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoading />}>
             <BlogDetail />
+          </Suspense>
+        ),
+      },
+      // 项目页面路由
+      {
+        path: '/projects',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <Projects />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/projects/:id',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <ProjectDetail />
           </Suspense>
         ),
       },

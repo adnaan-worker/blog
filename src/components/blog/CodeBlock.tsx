@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { FiCopy, FiCheck, FiCode } from 'react-icons/fi';
 import { motion } from 'framer-motion';
@@ -6,24 +6,24 @@ import { motion } from 'framer-motion';
 const Container = styled(motion.div)`
   position: relative;
   margin: 32px 0;
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   
   &:hover {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
   }
 
   pre {
     margin: 0;
     padding: 20px 24px;
     overflow-x: auto;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.6;
     color: var(--text-primary);
     scrollbar-width: thin;
@@ -59,12 +59,12 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: rgba(0, 0, 0, 0.05);
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.03);
   border-bottom: 1px solid var(--border-color);
 
   [data-theme='dark'] & {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
   }
 `;
 
@@ -72,7 +72,7 @@ const Language = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
   font-weight: 500;
   
@@ -95,7 +95,7 @@ const CopyButton = styled.button`
   align-items: center;
   justify-content: center;
   padding: 6px;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
@@ -107,28 +107,6 @@ const CopyButton = styled.button`
   
   &:active {
     transform: scale(0.95);
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    background-image: radial-gradient(circle, rgba(81, 131, 245, 0.2) 10%, transparent 10.01%);
-    background-repeat: no-repeat;
-    background-position: 50%;
-    transform: scale(10, 10);
-    opacity: 0;
-    transition: transform 0.4s, opacity 0.8s;
-  }
-  
-  &:active::after {
-    transform: scale(0, 0);
-    opacity: 0.3;
-    transition: 0s;
   }
 `;
 
@@ -142,8 +120,8 @@ const LineNumbers = styled.div`
   min-width: 40px;
   background: var(--bg-secondary);
   color: var(--text-tertiary);
-  opacity: 0.6;
-  font-size: 14px;
+  opacity: 0.5;
+  font-size: 13px;
   user-select: none;
   counter-reset: line;
   border-right: 1px solid var(--border-color);
@@ -169,10 +147,10 @@ const CopiedToast = styled(motion.div)`
   position: absolute;
   top: 6px;
   right: 6px;
-  padding: 6px 12px;
+  padding: 4px 10px;
   background: var(--accent-color);
   color: white;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
   pointer-events: none;
@@ -188,7 +166,7 @@ const languageDisplayNames: Record<string, string> = {
   css: 'CSS',
   scss: 'SCSS',
   json: 'JSON',
-  bash: 'Bash',
+  bash: '命令行',
   sh: 'Shell',
   python: 'Python',
   java: 'Java',
@@ -238,18 +216,18 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
 
   return (
     <Container
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.3 }}
     >
       <Header>
         <Language>
-          <FiCode className="icon" size={16} />
+          <FiCode className="icon" size={14} />
           {displayLanguage}
         </Language>
         <Actions>
           <CopyButton onClick={handleCopy} title="复制代码">
-            {copied ? <FiCheck size={18} color="var(--accent-color)" /> : <FiCopy size={18} />}
+            {copied ? <FiCheck size={16} color="var(--accent-color)" /> : <FiCopy size={16} />}
           </CopyButton>
         </Actions>
       </Header>
@@ -268,9 +246,9 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
       
       {showCopiedMessage && (
         <CopiedToast
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
+          exit={{ opacity: 0, y: -5 }}
         >
           已复制到剪贴板
         </CopiedToast>

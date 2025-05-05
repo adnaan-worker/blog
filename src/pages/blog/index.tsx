@@ -1,25 +1,69 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { FiSearch, FiBarChart2 } from 'react-icons/fi';
-import {
-  PageContainer,
-  SearchInput,
-  Pagination,
-  PageNumber,
-  fadeInUpVariants,
-  staggerContainerVariants,
-  // 新组件
-  BlogLayoutContainer,
-  BlogMainContent,
-  BlogSidebar,
-  TimelineContainer,
-  TimelineArticleComponent,
-  SidebarCard,
-  CategoryList,
-  CategoryItem,
-  TagCloud,
-  TagItem,
-} from '@/components/blog/BlogComponents';
+import styled from '@emotion/styled';
+import ArticleList, { Article } from '@/components/blog/ArticleList';
+import BlogSidebar from '@/components/blog/BlogSidebar';
+
+// 页面容器
+const PageContainer = styled.div`
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-top: 50px;
+`;
+
+// 博客页面左右布局容器
+const BlogLayoutContainer = styled.div`
+  display: flex;
+  gap: 2rem;
+
+  @media (max-width: 860px) {
+    flex-direction: column;
+  }
+`;
+
+// 博客主内容
+const BlogMainContent = styled.div`
+  flex: 1;
+`;
+
+// 分页控件
+const Pagination = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+  gap: 0.5rem;
+`;
+
+const PageButton = styled.button<{ active?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid ${(props) => (props.active ? 'var(--accent-color)' : 'var(--border-color)')};
+  background: ${(props) => (props.active ? 'var(--accent-color-alpha)' : 'var(--bg-primary)')};
+  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--accent-color-alpha);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+
+    &:hover {
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      border-color: var(--border-color);
+    }
+  }
+`;
 
 // 示例博客文章数据
 const DUMMY_ARTICLES = [
@@ -124,22 +168,6 @@ const DUMMY_ARTICLES = [
   },
 ];
 
-// 文章类型定义
-interface Article {
-  id: number;
-  title: string;
-  date: string;
-  category: string;
-  tags?: string[];
-  views: number;
-  readTime: number;
-  excerpt: string;
-  image: string;
-}
-
-// 所有可用分类
-const ALL_CATEGORIES = ['全部', '前端开发', '后端开发', '编程语言', '性能优化', 'API设计', '工具'];
-
 // 排序选项
 const SORT_OPTIONS = ['最新发布', '最多浏览', '阅读时间'];
 
@@ -152,8 +180,8 @@ const extractAllTags = (articles: Article[]): string[] => {
   return Array.from(tagSet);
 };
 
-// 统计每个分类的文章数量
-const countCategoryArticles = (articles: Article[]): Record<string, number> => {
+// 统计每个分类的文章数量并格式化为侧边栏需要的格式
+const formatCategories = (articles: Article[]): { name: string; count: number }[] => {
   const counts: Record<string, number> = {
     全部: articles.length,
   };
@@ -162,7 +190,7 @@ const countCategoryArticles = (articles: Article[]): Record<string, number> => {
     counts[article.category] = (counts[article.category] || 0) + 1;
   });
 
-  return counts;
+  return Object.entries(counts).map(([name, count]) => ({ name, count }));
 };
 
 const Blog: React.FC = () => {
@@ -174,11 +202,12 @@ const Blog: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('最新发布');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [viewMode, setViewMode] = useState<'timeline' | 'card'>('timeline');
   const articlesPerPage = 5;
 
-  // 计算所有标签和分类统计
+  // 计算所有标签和分类
   const allTags = useMemo(() => extractAllTags(articles), [articles]);
-  const categoryCounts = useMemo(() => countCategoryArticles(articles), [articles]);
+  const categories = useMemo(() => formatCategories(articles), [articles]);
 
   // 当筛选条件变化时更新文章列表
   useEffect(() => {
@@ -234,12 +263,13 @@ const Blog: React.FC = () => {
 
   // 页码变化处理
   const handlePageChange = (pageNumber: number) => {
+    if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // 搜索处理
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
@@ -259,126 +289,65 @@ const Blog: React.FC = () => {
     setSortBy(sort);
   };
 
-  // 渲染页码
-  const renderPagination = () => {
-    const pageNumbers = [];
-
-    for (let i = 1; i <= totalPages; i++) {
-      pageNumbers.push(
-        <PageNumber key={i} active={i === currentPage} onClick={() => handlePageChange(i)} disabled={i === currentPage}>
-          {i}
-        </PageNumber>,
-      );
-    }
-
-    return (
-      <Pagination>
-        <PageNumber onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
-          &lt;
-        </PageNumber>
-
-        {pageNumbers}
-
-        <PageNumber onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-          &gt;
-        </PageNumber>
-      </Pagination>
-    );
+  // 视图模式切换
+  const handleViewModeChange = (mode: 'timeline' | 'card') => {
+    setViewMode(mode);
   };
 
   return (
     <PageContainer>
       <BlogLayoutContainer>
-        {/* 右侧栏 - 在移动端会显示在顶部 */}
-        <BlogSidebar>
-          <SidebarCard>
-            <h3>搜索文章</h3>
-            <div style={{ position: 'relative' }}>
-              <SearchInput type="text" placeholder="搜索文章..." value={searchQuery} onChange={handleSearch} />
-              <FiSearch
-                style={{
-                  position: 'absolute',
-                  right: '1rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--text-secondary)',
-                  opacity: 0.6,
-                }}
-              />
-            </div>
-          </SidebarCard>
+        {/* 侧边栏 */}
+        <BlogSidebar
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          selectedCategory={selectedCategory}
+          onCategoryClick={handleCategoryClick}
+          categories={categories}
+          selectedTag={selectedTag}
+          onTagClick={handleTagClick}
+          tags={allTags}
+          sortBy={sortBy}
+          onSortClick={handleSortClick}
+          sortOptions={SORT_OPTIONS}
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
+        />
 
-          <SidebarCard>
-            <h3>文章分类</h3>
-            <CategoryList>
-              {ALL_CATEGORIES.map((category) => (
-                <CategoryItem
-                  key={category}
-                  active={selectedCategory === category}
-                  onClick={() => handleCategoryClick(category)}
-                >
-                  <span>{category}</span>
-                  <span>{categoryCounts[category] || 0}</span>
-                </CategoryItem>
-              ))}
-            </CategoryList>
-          </SidebarCard>
-
-          <SidebarCard>
-            <h3>热门标签</h3>
-            <TagCloud>
-              {allTags.map((tag) => (
-                <TagItem key={tag} active={selectedTag === tag} onClick={() => handleTagClick(tag)}>
-                  {tag}
-                </TagItem>
-              ))}
-            </TagCloud>
-          </SidebarCard>
-
-          <SidebarCard>
-            <h3>排序方式</h3>
-            <CategoryList>
-              {SORT_OPTIONS.map((option) => (
-                <CategoryItem key={option} active={sortBy === option} onClick={() => handleSortClick(option)}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <FiBarChart2 size={14} /> {option}
-                  </span>
-                </CategoryItem>
-              ))}
-            </CategoryList>
-          </SidebarCard>
-        </BlogSidebar>
-
-        {/* 左侧主内容区域 */}
+        {/* 主内容区域 */}
         <BlogMainContent>
-          {filteredArticles.length > 0 ? (
-            <>
-              <TimelineContainer variants={staggerContainerVariants} initial="hidden" animate="visible">
-                {currentArticles.map((article, index) => (
-                  <motion.div key={article.id} variants={fadeInUpVariants} custom={index}>
-                    <TimelineArticleComponent article={article} />
-                  </motion.div>
-                ))}
-              </TimelineContainer>
+          <ArticleList 
+            articles={currentArticles} 
+            viewMode={viewMode} 
+          />
+          
+          {/* 分页控件 */}
+          {totalPages > 1 && (
+            <Pagination>
+              <PageButton 
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                &lt;
+              </PageButton>
 
-              {/* 分页 */}
-              {totalPages > 1 && renderPagination()}
-            </>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              style={{
-                textAlign: 'center',
-                padding: '3rem 0',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>😕</div>
-              <h3>没有找到匹配的文章</h3>
-              <p>尝试修改搜索条件或查看其他分类</p>
-            </motion.div>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <PageButton
+                  key={page}
+                  active={currentPage === page}
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </PageButton>
+              ))}
+
+              <PageButton 
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                &gt;
+              </PageButton>
+            </Pagination>
           )}
         </BlogMainContent>
       </BlogLayoutContainer>
