@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import React from 'react';
-import { ConfirmDialog } from '@/components/ui/vonfirm';
+import { ConfirmDialog } from '@/components/ui/confirm';
 import { ConfirmOptions } from './common-types';
 
 // 确认对话框函数
