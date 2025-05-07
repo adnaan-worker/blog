@@ -1,11 +1,11 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { RouterProvider } from 'react-router-dom';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
+import { RouterProvider } from 'react-router-dom';
+import router from './router';
 import store, { AppDispatch } from './store';
 import { initializeTheme } from './store/modules/themeSlice';
-import '@/styles/index.css';
-import router from './router';
+import './styles/index.css';
 
 // 定义标题数组
 const titles = [
@@ -27,14 +27,31 @@ const randomTitle = titles[randomIndex];
 // 设置网页标题
 document.title = randomTitle;
 
-// 初始化主题
-const dispatch = store.dispatch as AppDispatch;
-dispatch(initializeTheme());
+// 初始化过程
+const init = async () => {
+  // 初始化主题
+  const dispatch = store.dispatch as AppDispatch;
+  dispatch(initializeTheme());
+  
+  // 动态加载colorjs.io库，确保其在服务器端渲染时不会引起问题
+  if (typeof window !== 'undefined') {
+    try {
+      await import('colorjs.io');
+      console.log('Color.js库初始化成功');
+    } catch (error) {
+      console.warn('Color.js库加载失败，将使用替代方案', error);
+    }
+  }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Provider store={store}>
-      <RouterProvider router={router} />
-    </Provider>
-  </StrictMode>,
-);
+  // 挂载应用
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <Provider store={store}>
+        <RouterProvider router={router} />
+      </Provider>
+    </React.StrictMode>,
+  );
+};
+
+// 启动应用
+init();

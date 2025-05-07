@@ -17,15 +17,21 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f7f9fb;
   --bg-tertiary: #efefef;
-  --accent-color: #5183f5;
-  --accent-color-dark: #4b71bd;
-  --accent-color-hover: #3a6fd8;
-  --accent-color-alpha: rgba(81, 131, 245, 0.1);
-  --accent-color-alpha-hover: rgba(81, 131, 245, 0.2);
+  --accent-color: var(--accent-color-light);
+  --accent-color-dark: var(--accent-color-dark);
+  --accent-color-hover: var(--accent-color-light-hover);
+  --accent-color-alpha: var(--accent-color-light-alpha);
+  --accent-color-alpha-hover: var(--accent-color-light-alpha-hover);
+  --tw-gradient-from-position: ;
+  --tw-gradient-to-position: ;
+  --tw-gradient-via-position: ;
+  --tw-gradient-from: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-from-position);
+  --tw-gradient-to: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-to-position);
+  --underline-bg: var(--tw-gradient-from),var(--fallback-a,oklch(var(--a)/0.7)) var(--tw-gradient-via-position),var(--tw-gradient-to);
+  --underline-light-bg: oklch(0.7199667500623633 0.1716558060197229 348.70673662059994 / 0), oklch(0.58 0.19 267.23 / 0.7), oklch(0.7199667500623633 0.1716558060197229 348.70673662059994 / 0);
   --error-color: #e53935;
   --success-color: #43a047;
   --border-color: rgba(0, 0, 0, 0.06);
-  --underline-bg: oklch(0.7199667500623633 0.1716558060197229 348.70673662059994 / 0), oklch(0.58 0.19 267.23 / 0.7), oklch(0.7199667500623633 0.1716558060197229 348.70673662059994 / 0);
 
   /* 尺寸和间距 */
   --header-height: 60px;
@@ -73,6 +79,10 @@
   --bg-tertiary: #333;
   --border-color: rgba(255, 255, 255, 0.08);
   --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  --accent-color: var(--accent-color-dark);
+  --accent-color-hover: var(--accent-color-dark-hover);
+  --accent-color-alpha: var(--accent-color-dark-alpha, rgba(81, 131, 245, 0.1));
+  --accent-color-alpha-hover: var(--accent-color-dark-alpha-hover, rgba(81, 131, 245, 0.2));
 }
 
 /**
@@ -96,7 +106,7 @@
 html,
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-primary);
+  /* background-color: var(--bg-primary); */
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
@@ -216,7 +226,7 @@ pre,
   transform: translateX(-50%);
   width: 70px;
   height: 2px;
-  background: linear-gradient(to right, var(--underline-bg));
+  background: linear-gradient(to right,var(--underline-bg));
   opacity: 1;
   transition: all 0.2s ease;
 }
