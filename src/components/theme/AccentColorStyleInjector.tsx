@@ -67,12 +67,12 @@ const AccentColorStyleInjector: React.FC = () => {
       // 生成亮色模式相关颜色
       const lightColorAssistant = colorUtils.generateAssistantColor(currentLightColor, '#ffffff', 0.3);
       const lightColorHover = colorUtils.generateAssistantColor(currentLightColor, '#000000', 0.15);
-      const lightColorAlpha = colorUtils.generateAlphaColor(currentLightColor, '#ffffff', 0.85, 0.1);
+      const lightColorAlpha = colorUtils.generateAlphaColor(currentLightColor, '#ffffff', 0.45, 0.1);
 
       // 生成暗色模式相关颜色
       const darkColorAssistant = colorUtils.generateAssistantColor(currentDarkColor, '#000000', 0.2);
       const darkColorHover = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.15);
-      const darkColorAlpha = colorUtils.generateAlphaColor(currentDarkColor, '#000000', 0.85, 0.1);
+      const darkColorAlpha = colorUtils.generateAlphaColor(currentDarkColor, '#000000', 0.45, 0.1);
 
       // 生成OKLCH值
       const [hl, sl, ll] = colorUtils.hexToOklchString(currentLightColor);
