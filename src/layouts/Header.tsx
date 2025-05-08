@@ -479,7 +479,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
           onMouseLeave={handleLogoMouseLeave}
         >
           <LogoIconContainer className="logo-icon">
-            <img src="logo.png" alt="" />
+            <img src="/logo.png" alt="" />
           </LogoIconContainer>
           <LogoText className="logo-text">
             <LogoHighlight className="logo-highlight">a</LogoHighlight>dnaan's 

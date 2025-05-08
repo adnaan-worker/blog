@@ -31,11 +31,6 @@ const ThemeToggleButton = styled(motion.button)`
   transition: all 0.2s ease;
   position: relative;
   z-index: 2;
-
-  &:hover {
-    background-color: var(--accent-color-alpha);
-    color: var(--accent-color);
-  }
 `;
 
 // 图标容器
@@ -49,6 +44,10 @@ const IconContainer = styled(motion.div)`
   svg {
     color: var(--text-secondary);
     min-width: 20px;
+    &:hover {
+      // background-color: var(--accent-color-alpha);
+      color: var(--accent-color);
+    }
   }
 `;
 

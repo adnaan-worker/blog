@@ -8,6 +8,10 @@ export { default as API } from './api';
 // 导出类型定义
 export * from './types';
 
+// 导出调试工具
+export { useDebugTool, DebugTool, initialViewportInfo } from './debug';
+export type { ViewportInfo, HeadingInfo } from './debug';
+
 // 导出一些常用的工具函数
 export const formatDate = (date: Date | string | number, format: string = 'YYYY-MM-DD HH:mm:ss'): string => {
   const d = new Date(date);

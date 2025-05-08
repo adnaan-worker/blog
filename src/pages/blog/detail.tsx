@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef, RefObject, useCallback, useLayoutEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiArrowLeft } from 'react-icons/fi';
+import React, { useState, useEffect, useRef, RefObject, useCallback, useMemo } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiArrowLeft, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import ArticleContent from '@/components/blog/article-content';
 import ArticleToc from '@/components/blog/article-toc';
 import CommentSection from '@/components/blog/comment-section';
 import { Article } from '@/components/blog/article-list';
 import styled from '@emotion/styled';
+import { useDebugTool, DebugTool } from '@/utils';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -141,14 +142,134 @@ const DUMMY_COMMENTS = [
   },
 ];
 
-// 通用页面渐入动画
+// 页面过渡动画
 const pageVariants = {
-  initial: { opacity: 0 },
+  initial: { opacity: 0, y: 20 },
   animate: {
     opacity: 1,
-    transition: { duration: 0.5 },
+    y: 0,
+    transition: { duration: 0.3, ease: 'easeOut' },
+  },
+  exit: {
+    opacity: 0,
+    y: -20,
+    transition: { duration: 0.2 },
   },
 };
+
+// 添加全屏加载指示器
+const LoadingOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+
+  [data-theme='dark'] & {
+    background: rgba(20, 20, 30, 0.8);
+  }
+`;
+
+// 加载动画
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--bg-secondary);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+// 文章导航按钮
+const ArticleNavigation = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin: 2rem 0;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1rem;
+  }
+`;
+
+// 导航按钮
+const NavButton = styled(Link)`
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  max-width: 300px;
+
+  &:hover {
+    background: var(--accent-color-hover);
+    color: var(--accent-color);
+    transform: translateY(-2px);
+  }
+
+  &.prev {
+    padding-left: 1rem;
+  }
+
+  &.next {
+    padding-right: 1rem;
+    text-align: right;
+    margin-left: auto;
+  }
+
+  .nav-text {
+    display: flex;
+    flex-direction: column;
+
+    .title {
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 250px;
+    }
+
+    .label {
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+  }
+
+  svg {
+    min-width: 20px;
+  }
+
+  &.prev svg {
+    margin-right: 0.5rem;
+  }
+
+  &.next svg {
+    margin-left: 0.5rem;
+  }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    width: 100%;
+
+    &.next {
+      margin-left: 0;
+    }
+  }
+`;
 
 // 文章布局容器
 const ArticleLayout = styled.div`
@@ -244,222 +365,361 @@ interface DetailPageHeading {
 
 const BlogDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [article, setArticle] = useState<Article | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
-  const [comments, setComments] = useState<any[]>(DUMMY_COMMENTS);
+  const [comments, setComments] = useState<any[]>([]);
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
-  
+  const [loading, setLoading] = useState(true);
+  const [prevArticle, setPrevArticle] = useState<Article | null>(null);
+  const [nextArticle, setNextArticle] = useState<Article | null>(null);
+
   // 目录状态
   const [headings, setHeadings] = useState<DetailPageHeading[]>([]);
   const [activeHeading, setActiveHeading] = useState<string>('');
   const [readingProgress, setReadingProgress] = useState<number>(0);
-  
+
   // 引用
   const articleRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
-  
-  // 获取文章数据
-  useEffect(() => {
-    const fetchArticle = async () => {
-      const foundArticle = DUMMY_ARTICLES.find((article) => article.id === Number(id));
-      setArticle(foundArticle || null);
 
-      // 加载相关文章
+  // 防抖滚动处理器引用
+  const scrollHandlerRef = useRef<number | null>(null);
+
+  // 使用封装后的调试工具钩子
+  const { showDebugInfo, setViewportInfo, toggleDebugInfo } = useDebugTool();
+
+  // 获取文章数据 - 使用useCallback
+  const fetchArticle = useCallback(async (articleId: string) => {
+    setLoading(true);
+
+    try {
+      // 模拟API请求延迟
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const articleIndex = DUMMY_ARTICLES.findIndex((article) => article.id === Number(articleId));
+      const foundArticle = DUMMY_ARTICLES[articleIndex];
+
       if (foundArticle) {
+        setArticle(foundArticle);
+
+        // 获取上一篇和下一篇文章
+        setPrevArticle(articleIndex > 0 ? DUMMY_ARTICLES[articleIndex - 1] : null);
+        setNextArticle(articleIndex < DUMMY_ARTICLES.length - 1 ? DUMMY_ARTICLES[articleIndex + 1] : null);
+
+        // 加载相关文章
         const related = DUMMY_ARTICLES.filter(
           (a) =>
             a.id !== foundArticle.id &&
             (a.category === foundArticle.category || a.tags?.some((tag) => foundArticle.tags?.includes(tag))),
         ).slice(0, 2);
         setRelatedArticles(related);
-      }
-    };
 
-    // 重置滚动位置到顶部
-    window.scrollTo(0, 0);
-    
+        // 加载评论
+        setComments(DUMMY_COMMENTS);
+
+        // 从本地存储中读取点赞和收藏状态
+        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+        const bookmarkedArticles = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]');
+
+        setLiked(likedArticles.includes(Number(articleId)));
+        setBookmarked(bookmarkedArticles.includes(Number(articleId)));
+      } else {
+        setArticle(null);
+        setPrevArticle(null);
+        setNextArticle(null);
+        setRelatedArticles([]);
+        setComments([]);
+      }
+    } catch (error) {
+      console.error('获取文章失败', error);
+      setArticle(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 在ID变化时获取文章
+  useEffect(() => {
     // 重置状态
     setHeadings([]);
     setActiveHeading('');
     setReadingProgress(0);
-    
+
     // 清理之前的observer
     if (observerRef.current) {
       observerRef.current.disconnect();
       observerRef.current = null;
     }
-    
-    fetchArticle();
-  }, [id]);
-  
-  // 强制初始渲染后滚动到顶部
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [article]);
 
-  // 提取文章中的标题并设置导航
-  useEffect(() => {
+    // 清理滚动事件处理器
+    if (scrollHandlerRef.current) {
+      window.cancelAnimationFrame(scrollHandlerRef.current);
+      scrollHandlerRef.current = null;
+    }
+
+    if (id) {
+      fetchArticle(id);
+    }
+
+    // 滚动到顶部
+    window.scrollTo(0, 0);
+  }, [id, fetchArticle]);
+
+  // 提取文章中的标题并设置导航 - 使用useCallback优化
+  const setupHeadingsAndObserver = useCallback(() => {
     if (!article?.content || !articleRef.current) return;
-    
-    // 清理函数
+
+    const articleElement = articleRef.current;
+
+    // 查找所有h2标题
+    const headingElements = Array.from(articleElement.querySelectorAll('h2.article-heading'));
+
+    if (headingElements.length === 0) return;
+
+    // 处理找到的标题
+    const extractedHeadings: DetailPageHeading[] = [];
+
+    headingElements.forEach((element) => {
+      const headingId = element.id || '';
+      const headingText = element.textContent || '';
+
+      extractedHeadings.push({
+        id: headingId,
+        text: headingText,
+        element: element as HTMLElement,
+      });
+    });
+
+    // 更新标题数据
+    setHeadings(extractedHeadings);
+
+    // 创建 IntersectionObserver 配置
+    const observerOptions = {
+      root: null,
+      rootMargin: '-120px 0px -60% 0px',
+      threshold: [0, 0.25, 0.5, 0.75, 1], // 使用多个阈值点，提高检测精度
+    };
+
+    // 创建交叉观察器
+    const observer = new IntersectionObserver((entries) => {
+      // 筛选可见度较高的标题
+      const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+
+      if (visibleEntries.length > 0) {
+        // 如果有多个可见标题，选择可见比例最高的
+        visibleEntries.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        setActiveHeading(visibleEntries[0].target.id);
+      }
+    }, observerOptions);
+
+    // 观察所有标题元素
+    headingElements.forEach((heading) => {
+      observer.observe(heading);
+    });
+
+    // 保存观察器以便后续清理
+    observerRef.current = observer;
+
+    // 使用requestAnimationFrame优化滚动事件
+    const handleScroll = () => {
+      scrollHandlerRef.current = window.requestAnimationFrame(() => {
+        const scrollTop = window.scrollY;
+        if (!articleElement) return;
+
+        // 获取内容区域实际高度及位置
+        const contentHeight = articleElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        const contentRect = articleElement.getBoundingClientRect();
+        const contentTop = contentRect.top + window.scrollY;
+        const contentBottom = contentTop + contentHeight;
+
+        // 计算相对于内容区域的滚动位置
+        const relativeScrollTop = Math.max(0, scrollTop - contentTop);
+        const scrollableDistance = contentHeight - Math.min(clientHeight, contentHeight);
+
+        // 计算正确的阅读进度
+        const progress = Math.min(100, Math.max(0, (relativeScrollTop / Math.max(1, scrollableDistance)) * 100));
+        setReadingProgress(Math.round(progress));
+
+        // 如果调试开启，收集调试信息
+        if (showDebugInfo) {
+          const headingInfo = headingElements.map((el) => {
+            const rect = el.getBoundingClientRect();
+            const viewportTop = 150; // 与滚动检测保持一致
+            const isVisible = rect.top < viewportTop && rect.bottom > 0;
+            return {
+              id: el.id,
+              text: el.textContent || '',
+              top: rect.top,
+              isVisible,
+            };
+          });
+
+          setViewportInfo({
+            scrollY: window.scrollY,
+            viewportTop: 150, // 与观察器设置一致
+            viewportBottom: window.innerHeight,
+            headings: headingInfo,
+            activeEl: activeHeading,
+          });
+        }
+
+        // 如果没有可见的标题，手动查找当前应该激活的标题
+        if (headingElements.length === 0) return;
+
+        const scrollPosition = window.scrollY + 150; // 添加偏移量
+        const currentHeading = headingElements.find((heading, index) => {
+          const nextHeading = headingElements[index + 1];
+          const headingTop = heading.getBoundingClientRect().top + window.scrollY;
+          const nextHeadingTop = nextHeading ? nextHeading.getBoundingClientRect().top + window.scrollY : contentBottom; // 使用内容底部而不是无限
+
+          return scrollPosition >= headingTop && scrollPosition < nextHeadingTop;
+        });
+
+        if (currentHeading) {
+          setActiveHeading(currentHeading.id);
+        }
+      });
+    };
+
+    // 使用passive事件减少性能影响
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // 初始计算
+    handleScroll();
+
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
+      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollHandlerRef.current) {
+        window.cancelAnimationFrame(scrollHandlerRef.current);
       }
     };
-  }, [article]);
-  
-  // 在DOM加载完成后提取标题和设置观察器
-  useEffect(() => {
-    if (!article?.content || !articleRef.current) return;
-    
-    // 等待DOM完全加载
-    const timer = setTimeout(() => {
-      const articleElement = articleRef.current;
-      if (!articleElement) return;
-      
-      // 查找所有标题
-      const headingElements = Array.from(articleElement.querySelectorAll('h2, h3'));
-      if (headingElements.length === 0) return;
-      
-      console.log('找到标题元素:', headingElements.length);
-      
-      // 处理找到的标题
-      const extractedHeadings: DetailPageHeading[] = [];
-      
-      headingElements.forEach((element, index) => {
-        const headingId = `heading-${index}`;
-        const headingText = element.textContent || '';
-        
-        // 设置标题ID
-        element.setAttribute('id', headingId);
-        
-        // 收集标题信息
-        extractedHeadings.push({
-          id: headingId,
-          text: headingText,
-          element: element as HTMLElement
-        });
-        
-        console.log(`标题 ${index}: id=${headingId}, text=${headingText}`);
-      });
-      
-      // 更新标题数据
-      setHeadings(extractedHeadings);
-      
-      // 如果有标题，默认选择第一个
-      if (extractedHeadings.length > 0) {
-        setActiveHeading(extractedHeadings[0].id);
-        console.log('初始活动标题:', extractedHeadings[0].id);
-      }
-      
-      // 创建一个IntersectionObserver来监视标题元素
-      const options = {
-        rootMargin: '-100px 0px -80% 0px', // 调整这些值以控制何时标记一个标题为"可见"
-        threshold: 0.1
-      };
-      
-      // 创建交叉观察器
-      const observer = new IntersectionObserver((entries) => {
-        // 找到所有进入视口的标题
-        const visibleHeadings = entries
-          .filter(entry => entry.isIntersecting)
-          .map(entry => entry.target.id);
-          
-        if (visibleHeadings.length > 0) {
-          // 使用第一个可见标题作为当前活动标题
-          setActiveHeading(visibleHeadings[0]);
-          console.log('可见标题:', visibleHeadings[0]);
-        }
-      }, options);
-      
-      // 观察所有标题元素
-      headingElements.forEach(heading => {
-        observer.observe(heading);
-      });
-      
-      // 保存观察器以便后续清理
-      observerRef.current = observer;
-      
-      // 设置滚动监听以计算阅读进度
-      const handleScroll = () => {
-        if (!articleElement) return;
-        
-        const scrollTop = window.scrollY;
-        const scrollHeight = articleElement.scrollHeight;
-        const clientHeight = document.documentElement.clientHeight;
-        
-        // 计算阅读进度
-        const progress = Math.min(100, Math.max(0, (scrollTop / (scrollHeight - clientHeight)) * 100));
-        setReadingProgress(progress);
-      };
-      
-      // 添加滚动监听
-      window.addEventListener('scroll', handleScroll);
-      
-      // 初始计算
-      handleScroll();
-      
-      return () => {
-        // 清理函数
-        if (observer) {
-          observer.disconnect();
-        }
-        window.removeEventListener('scroll', handleScroll);
-      };
-    }, 500); // 延迟确保DOM已完全渲染
-    
-    return () => clearTimeout(timer);
-  }, [article]);
-  
-  // 处理目录点击
-  const handleTocClick = (headingId: string) => {
-    console.log('点击目录项:', headingId);
-    
-    // 找到对应的标题
-    const heading = headings.find(h => h.id === headingId);
-    if (!heading) {
-      console.error('找不到标题元素:', headingId);
-      return;
-    }
-    
-    // 设置活动标题
-    setActiveHeading(headingId);
-    
-    // 滚动到标题位置
-    heading.element.scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'start'
-    });
-    
-    // 添加视觉反馈
-    heading.element.classList.add('target-highlight');
-    setTimeout(() => {
-      heading.element.classList.remove('target-highlight');
-    }, 1000);
-  };
+  }, [article, showDebugInfo, activeHeading, setViewportInfo]);
 
-  // 点赞、收藏和分享功能
-  const handleLike = () => setLiked(!liked);
-  const handleBookmark = () => setBookmarked(!bookmarked);
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: article?.title,
-        text: article?.excerpt,
-        url: window.location.href,
-      }).catch(error => console.log('分享失败', error));
+  // 设置标题和观察器
+  useEffect(() => {
+    // 延迟执行，确保DOM已完全加载
+    const timer = setTimeout(() => {
+      setupHeadingsAndObserver();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [setupHeadingsAndObserver]);
+
+  // 处理目录点击 - 使用useCallback
+  const handleTocClick = useCallback(
+    (headingId: string) => {
+      const heading = headings.find((h) => h.id === headingId);
+      if (!heading) return;
+
+      // 设置活动标题
+      setActiveHeading(headingId);
+
+      // 获取目标元素的位置信息
+      const rect = heading.element.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+      // 计算目标位置（考虑固定头部的高度）
+      const headerOffset = 100; // 增加偏移量，确保标题不会被遮挡
+      const targetPosition = rect.top + scrollTop - headerOffset;
+
+      // 平滑滚动到目标位置
+      window.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth',
+      });
+
+      // 添加视觉反馈
+      heading.element.classList.add('target-highlight');
+      setTimeout(() => {
+        heading.element.classList.remove('target-highlight');
+      }, 1000);
+    },
+    [headings],
+  );
+
+  // 点赞、收藏和分享功能 - 使用useCallback优化
+  const handleLike = useCallback(() => {
+    const newLikedState = !liked;
+    setLiked(newLikedState);
+
+    // 持久化到本地存储
+    const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
+    const articleId = Number(id);
+
+    if (newLikedState) {
+      localStorage.setItem('likedArticles', JSON.stringify([...likedArticles, articleId]));
     } else {
-      navigator.clipboard.writeText(window.location.href)
-        .then(() => alert('链接已复制到剪贴板'))
-        .catch(error => console.error('复制失败', error));
+      localStorage.setItem('likedArticles', JSON.stringify(likedArticles.filter((id: number) => id !== articleId)));
     }
-  };
+  }, [liked, id]);
+
+  const handleBookmark = useCallback(() => {
+    const newBookmarkState = !bookmarked;
+    setBookmarked(newBookmarkState);
+
+    // 持久化到本地存储
+    const bookmarkedArticles = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]');
+    const articleId = Number(id);
+
+    if (newBookmarkState) {
+      localStorage.setItem('bookmarkedArticles', JSON.stringify([...bookmarkedArticles, articleId]));
+    } else {
+      localStorage.setItem(
+        'bookmarkedArticles',
+        JSON.stringify(bookmarkedArticles.filter((id: number) => id !== articleId)),
+      );
+    }
+  }, [bookmarked, id]);
+
+  const handleShare = useCallback(() => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: article?.title,
+          text: article?.excerpt,
+          url: window.location.href,
+        })
+        .catch((error) => console.log('分享失败', error));
+    } else {
+      navigator.clipboard
+        .writeText(window.location.href)
+        .then(() => alert('链接已复制到剪贴板'))
+        .catch((error) => console.error('复制失败', error));
+    }
+  }, [article]);
+
+  // 使用useMemo缓存TocProps
+  const tocProps = useMemo(
+    () => ({
+      headings: headings.map((h) => ({ id: h.id, text: h.text })),
+      activeHeading,
+      readingProgress,
+      onHeadingClick: handleTocClick,
+      liked,
+      bookmarked,
+      onLike: handleLike,
+      onBookmark: handleBookmark,
+      onShare: handleShare,
+    }),
+    [
+      headings,
+      activeHeading,
+      readingProgress,
+      handleTocClick,
+      liked,
+      bookmarked,
+      handleLike,
+      handleBookmark,
+      handleShare,
+    ],
+  );
 
   // 文章未找到
-  if (!article) {
+  if (!loading && !article) {
     return (
       <NotFoundContainer>
         <h2>文章未找到</h2>
@@ -473,57 +733,100 @@ const BlogDetail: React.FC = () => {
 
   return (
     <PageContainer>
-      <motion.div variants={pageVariants} initial="initial" animate="animate">
-        <BackLink to="/blog">
-          <FiArrowLeft /> 返回博客列表
-        </BackLink>
-        
-        <ArticleLayout>
-          {/* 左侧：文章内容 */}
-          <ArticleMain>
-            <ArticleContent 
-              article={{
-                ...article,
-                content: article?.content || '' // 确保content不为undefined
-              }}
-              contentRef={articleRef as RefObject<HTMLDivElement>} // 类型断言
-            />
-            
-            {/* 相关文章 */}
-            {relatedArticles.length > 0 && (
-              <RelatedArticles>
-                <RelatedTitle>相关文章</RelatedTitle>
-                {/* 这里可以使用ArticleList组件显示相关文章 */}
-                <div>
-                  {relatedArticles.map(related => (
-                    <div key={related.id} style={{ marginBottom: '1rem' }}>
-                      <h4><Link to={`/blog/${related.id}`}>{related.title}</Link></h4>
-                      <p>{related.excerpt}</p>
-                    </div>
-                  ))}
-                </div>
-              </RelatedArticles>
-            )}
-            
-            {/* 评论区 */}
-            <CommentSection comments={comments} />
-          </ArticleMain>
+      {/* 加载指示器 */}
+      <AnimatePresence>
+        {loading && (
+          <LoadingOverlay initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <LoadingSpinner />
+          </LoadingOverlay>
+        )}
+      </AnimatePresence>
 
-          {/* 右侧：文章目录 */}
-          <ArticleSidebar>
-            <ArticleToc
-              headings={headings.map(h => ({ id: h.id, text: h.text }))}
-              activeHeading={activeHeading}
-              readingProgress={readingProgress}
-              onHeadingClick={handleTocClick}
-              liked={liked}
-              bookmarked={bookmarked}
-              onLike={handleLike}
-              onBookmark={handleBookmark}
-              onShare={handleShare}
-            />
-          </ArticleSidebar>
-        </ArticleLayout>
+      <motion.div variants={pageVariants} initial="initial" animate="animate">
+        {/* 调试工具组件 */}
+        {showDebugInfo && (
+          <DebugTool
+            viewportInfo={{
+              scrollY: window.scrollY,
+              viewportTop: 150,
+              viewportBottom: window.innerHeight,
+              headings: headings.map((h) => ({
+                id: h.id,
+                text: h.text,
+                top: h.element.getBoundingClientRect().top,
+                isVisible: h.element.getBoundingClientRect().top < 150,
+              })),
+              activeEl: activeHeading,
+            }}
+            readingProgress={readingProgress}
+            toggleDebugInfo={toggleDebugInfo}
+          />
+        )}
+
+        {!loading && article && (
+          <>
+            <ArticleLayout>
+              {/* 左侧：文章内容 */}
+              <ArticleMain>
+                <ArticleContent
+                  article={{
+                    ...article,
+                    content: article?.content || '', // 确保content不为undefined
+                  }}
+                  contentRef={articleRef as RefObject<HTMLDivElement>} // 类型断言
+                />
+
+                {/* 上一篇/下一篇文章导航 */}
+                <ArticleNavigation>
+                  {prevArticle && (
+                    <NavButton to={`/blog/${prevArticle.id}`} className="prev">
+                      <FiChevronLeft size={20} />
+                      <div className="nav-text">
+                        <span className="label">上一篇</span>
+                        <span className="title">{prevArticle.title}</span>
+                      </div>
+                    </NavButton>
+                  )}
+
+                  {nextArticle && (
+                    <NavButton to={`/blog/${nextArticle.id}`} className="next">
+                      <div className="nav-text">
+                        <span className="label">下一篇</span>
+                        <span className="title">{nextArticle.title}</span>
+                      </div>
+                      <FiChevronRight size={20} />
+                    </NavButton>
+                  )}
+                </ArticleNavigation>
+
+                {/* 相关文章 */}
+                {relatedArticles.length > 0 && (
+                  <RelatedArticles>
+                    <RelatedTitle>相关文章</RelatedTitle>
+                    <div>
+                      {relatedArticles.map((related) => (
+                        <div key={related.id} style={{ marginBottom: '1rem' }}>
+                          <h4>
+                            <Link to={`/blog/${related.id}`}>{related.title}</Link>
+                          </h4>
+                          <p>{related.excerpt}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </RelatedArticles>
+                )}
+
+                {/* 评论区 */}
+                <CommentSection comments={comments} />
+              </ArticleMain>
+
+              {/* 右侧：文章目录 */}
+              <ArticleSidebar>
+                <ArticleToc {...tocProps} />
+              </ArticleSidebar>
+            </ArticleLayout>
+          </>
+        )}
       </motion.div>
     </PageContainer>
   );

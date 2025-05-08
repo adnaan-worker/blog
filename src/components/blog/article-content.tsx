@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useEffect, useRef, memo, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiCalendar, FiClock, FiTag } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiTag, FiUser } from 'react-icons/fi';
 import { RiRobot2Line } from 'react-icons/ri';
+
+// 为window添加hljs类型定义
+declare global {
+  interface Window {
+    hljs?: {
+      highlightElement: (element: HTMLElement) => void;
+    };
+  }
+}
 
 // 文章详情页容器
 const ArticleDetailContainer = styled.div`
@@ -90,8 +99,8 @@ const AIIconWrapper = styled.div`
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-dark));
+  border-radius: 25%;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-assistant));
   color: white;
   box-shadow: 0 2px 8px rgba(81, 131, 245, 0.25);
 `;
@@ -117,6 +126,9 @@ const ArticleContentWrapper = styled.div`
   font-size: 1.05rem;
   line-height: 1.8;
   color: var(--text-primary);
+  min-height: 300px;
+  height: auto;
+  position: relative;
 
   p {
     margin-bottom: 1.5rem;
@@ -149,7 +161,9 @@ const ArticleContentWrapper = styled.div`
     scroll-margin-top: 100px;
   }
 
-  h4, h5, h6 {
+  h4,
+  h5,
+  h6 {
     scroll-margin-top: 100px;
   }
 
@@ -248,6 +262,29 @@ const ArticleTag = styled.span`
   }
 `;
 
+// 添加作者信息显示
+const AuthorInfo = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+`;
+
+// 图片容器增加懒加载支持
+const ArticleImage = styled.img`
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+`;
+
 interface ArticleContentProps {
   article: {
     id: number;
@@ -265,12 +302,79 @@ interface ArticleContentProps {
   contentRef: React.RefObject<HTMLDivElement>;
 }
 
-const ArticleContent: React.FC<ArticleContentProps> = ({ article, contentRef }) => {
+// 使用memo包装组件，避免不必要的重渲染
+const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRef }) => {
+  // 创建内部内容引用
+  const innerContentRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+
+  // 使用useMemo缓存标签展示
+  const articleTags = useMemo(() => {
+    return article.tags?.map((tag: string) => <ArticleTag key={tag}>{tag}</ArticleTag>);
+  }, [article.tags]);
+
+  // 处理内容DOM解析和标题ID设置
+  useEffect(() => {
+    if (!innerContentRef.current) return;
+
+    // 将HTML内容插入DOM
+    innerContentRef.current.innerHTML = article.content || '';
+
+    // 处理标题元素
+    const headings = innerContentRef.current.querySelectorAll('h2');
+    headings.forEach((heading, index) => {
+      const headingId = `heading-${index}`;
+      heading.setAttribute('id', headingId);
+
+      // 添加类以便于样式调整
+      heading.classList.add('article-heading');
+    });
+
+    // 为代码块添加语法高亮
+    const codeBlocks = innerContentRef.current.querySelectorAll('pre code');
+    if (codeBlocks.length > 0 && window.hljs) {
+      codeBlocks.forEach((block) => {
+        window.hljs?.highlightElement(block as HTMLElement);
+      });
+    }
+
+    // 处理文章中的图片 - 添加加载动画和错误处理
+    const images = innerContentRef.current.querySelectorAll('img');
+    images.forEach((img) => {
+      img.style.opacity = '0';
+      img.style.transition = 'opacity 0.3s ease';
+
+      img.onload = () => {
+        img.style.opacity = '1';
+      };
+
+      img.onerror = () => {
+        img.style.opacity = '0.5';
+        img.style.filter = 'grayscale(100%)';
+        img.setAttribute('alt', '图片加载失败');
+      };
+
+      // 添加懒加载
+      img.setAttribute('loading', 'lazy');
+    });
+
+    // 将内部ref设置的DOM元素传递给外部ref
+    if (contentRef && typeof contentRef === 'object') {
+      contentRef.current = innerContentRef.current;
+    }
+  }, [article.content, contentRef]);
+
+  // 图片加载状态
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+
   return (
-    <ArticleDetailContainer ref={contentRef}>
+    <ArticleDetailContainer>
       <ArticleDetailHeader>
         <ArticleDetailTitle>{article.title}</ArticleDetailTitle>
         <ArticleDetailMeta>
+          <span>
+            <FiUser size={16} /> {article.author}
+          </span>
           <span>
             <FiCalendar size={16} /> {article.date}
           </span>
@@ -282,7 +386,7 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article, contentRef }) 
           </span>
         </ArticleDetailMeta>
       </ArticleDetailHeader>
-      
+
       <AISummaryContainer>
         <AISummaryHeader>
           <AIIconWrapper>
@@ -290,24 +394,32 @@ const ArticleContent: React.FC<ArticleContentProps> = ({ article, contentRef }) 
           </AIIconWrapper>
           <AISummaryTitle>AI 摘要</AISummaryTitle>
         </AISummaryHeader>
-        <AISummaryContent>
-          {article.excerpt || '本文为您提供了详细的内容和指南。'}
-        </AISummaryContent>
+        <AISummaryContent>{article.excerpt || '本文为您提供了详细的内容和指南。'}</AISummaryContent>
       </AISummaryContainer>
 
       <ArticleCover>
-        <img src={article.image} alt={article.title} />
+        <ArticleImage
+          ref={imageRef}
+          src={article.image}
+          alt={article.title}
+          loading="lazy"
+          onLoad={() => setImageLoaded(true)}
+          style={{
+            opacity: imageLoaded ? 1 : 0,
+            filter: imageLoaded ? 'none' : 'blur(10px)',
+          }}
+        />
       </ArticleCover>
 
-      <ArticleContentWrapper dangerouslySetInnerHTML={{ __html: article.content || '' }} />
+      {/* 使用内部ref代替dangerouslySetInnerHTML */}
+      <ArticleContentWrapper ref={innerContentRef} />
 
-      <ArticleTags>
-        {article.tags?.map((tag: string) => (
-          <ArticleTag key={tag}>{tag}</ArticleTag>
-        ))}
-      </ArticleTags>
+      <ArticleTags>{articleTags}</ArticleTags>
     </ArticleDetailContainer>
   );
-};
+});
 
-export default ArticleContent; 
+// 添加显示名称以便于调试
+ArticleContent.displayName = 'ArticleContent';
+
+export default ArticleContent;
