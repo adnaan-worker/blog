@@ -1,7 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { FiMenu, FiX, FiFeather, FiHome, FiBookOpen, FiCode, FiInfo, FiMail, FiLogIn, FiUserPlus } from 'react-icons/fi';
+import {
+  FiMenu,
+  FiX,
+  FiFeather,
+  FiHome,
+  FiBookOpen,
+  FiCode,
+  FiInfo,
+  FiMail,
+  FiLogIn,
+  FiUserPlus,
+} from 'react-icons/fi';
 import { keyframes } from '@emotion/react';
 import LoginModal from './modules/login-model';
 import RegisterModal from './modules/register-modal';
@@ -106,26 +117,26 @@ const LogoContainer = styled(Link)`
   transition: all 0.3s ease;
   position: relative;
   text-decoration: none;
-  
+
   &:hover {
     transform: translateY(-1px);
     color: var(--accent-color);
-    
+
     .logo-icon {
       animation: ${rotate} 5s linear infinite;
       color: var(--accent-color);
       box-shadow: 0 0 15px var(--accent-color-hover);
     }
-    
+
     .logo-text {
       animation: ${glowAnimation} 2s ease-in-out infinite;
     }
-    
+
     .logo-highlight {
       animation: ${bounce} 0.6s ease infinite;
     }
   }
-  
+
   @media (max-width: 480px) {
     font-size: 1.2rem;
     gap: 0.4rem;
@@ -147,14 +158,14 @@ const LogoTooltip = styled.div<{ visible: boolean }>`
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   width: max-content;
   max-width: 200px;
-  opacity: ${props => props.visible ? 1 : 0};
-  pointer-events: ${props => props.visible ? 'auto' : 'none'};
+  opacity: ${(props) => (props.visible ? 1 : 0)};
+  pointer-events: ${(props) => (props.visible ? 'auto' : 'none')};
   z-index: 100;
   transition: opacity 0.3s ease, transform 0.3s ease;
-  transform: translateY(${props => props.visible ? '0' : '10px'});
-  animation: ${props => props.visible ? fadeIn : 'none'} 0.3s ease forwards;
+  transform: translateY(${(props) => (props.visible ? '0' : '10px')});
+  animation: ${(props) => (props.visible ? fadeIn : 'none')} 0.3s ease forwards;
   border: 1px solid var(--border-color);
-  
+
   &:before {
     content: '';
     position: absolute;
@@ -182,16 +193,16 @@ const LogoIconContainer = styled.div`
   transition: all 0.3s ease;
   box-shadow: 0 0 10px rgba(81, 131, 245, 0.2);
   animation: ${pulse} 3s ease-in-out infinite;
-  
+
   [data-theme='dark'] & {
     box-shadow: 0 0 15px rgba(81, 131, 245, 0.3);
   }
-  
+
   @media (max-width: 480px) {
     width: 30px;
     height: 30px;
     border-radius: 8px;
-    
+
     img {
       width: 16px;
       height: 16px;
@@ -204,11 +215,11 @@ const LogoText = styled.span`
   position: relative;
   transition: all 0.3s ease;
   color: var(--text-primary);
-  
+
   &:hover {
     color: var(--accent-color);
   }
-  
+
   @media (max-width: 480px) {
     font-size: 1.2rem;
   }
@@ -223,7 +234,7 @@ const LogoHighlight = styled.span`
   text-shadow: 0 0 1px var(--accent-color-hover);
   display: inline-block;
   padding: 0 2px;
-  
+
   &:after {
     content: '';
     position: absolute;
@@ -237,7 +248,7 @@ const LogoHighlight = styled.span`
     transition: transform 0.3s ease;
     opacity: 0.7;
   }
-  
+
   ${LogoContainer}:hover &:after {
     transform: scaleX(1);
     transform-origin: bottom left;
@@ -270,81 +281,81 @@ interface HeaderProps {
 
 // 有趣的Logo提示消息数组
 const logoMessages = [
-  "欢迎来到adnaan的博客! ✨",
-  "今天有什么好消息吗? 🎉",
-  "知识是无穷的宝藏 📚",
-  "每天学习一点点 💡",
-  "技术改变世界 🌍",
-  "编程创造未来 🚀"
+  '欢迎来到adnaan的博客! ✨',
+  '今天有什么好消息吗? 🎉',
+  '知识是无穷的宝藏 📚',
+  '每天学习一点点 💡',
+  '技术改变世界 🌍',
+  '编程创造未来 🚀',
 ];
 
 // 定义主导航菜单数据
 const mainNavItems: MenuItem[] = [
   {
-    path: "/",
-    title: "首页",
-    icon: <FiHome size={16} />
+    path: '/',
+    title: '首页',
+    icon: <FiHome size={16} />,
   },
   {
-    path: "/blog",
-    title: "文稿",
-    icon: <FiBookOpen size={16} />
+    path: '/blog',
+    title: '文稿',
+    icon: <FiBookOpen size={16} />,
   },
   {
-    path: "/projects",
-    title: "项目",
-    icon: <FiCode size={16} />
+    path: '/projects',
+    title: '项目',
+    icon: <FiCode size={16} />,
   },
   {
-    path: "#",
-    title: "更多",
+    path: '#',
+    title: '更多',
     icon: <FiInfo size={16} />,
     isDropdown: true,
     children: [
       {
-        path: "/ui-examples",
-        title: "组件使用示例",
-        icon: <FiInfo size={16} />
+        path: '/ui-examples',
+        title: '组件使用示例',
+        icon: <FiInfo size={16} />,
       },
       {
-        path: "/about",
-        title: "关于我",
-        icon: <FiInfo size={16} />
+        path: '/about',
+        title: '关于我',
+        icon: <FiInfo size={16} />,
       },
       {
-        path: "/contact",
-        title: "联系方式",
-        icon: <FiMail size={16} />
+        path: '/contact',
+        title: '联系方式',
+        icon: <FiMail size={16} />,
       },
       {
-        path: "/code",
-        title: "开发字体",
-        icon: <FiCode size={16} />
-      }
-    ]
-  }
+        path: '/code',
+        title: '开发字体',
+        icon: <FiCode size={16} />,
+      },
+    ],
+  },
 ];
 
 // 定义移动端菜单分组数据
 const mobileMenuGroups: MenuGroup[] = [
   {
-    title: "主导航",
-    items: mainNavItems
-  }
+    title: '主导航',
+    items: mainNavItems,
+  },
 ];
 
 // 定义账户菜单项
 const accountMenuItems: MenuItem[] = [
   {
-    path: "#login",
-    title: "登录",
-    icon: <FiLogIn size={16} />
+    path: '#login',
+    title: '登录',
+    icon: <FiLogIn size={16} />,
   },
   {
-    path: "#register",
-    title: "注册",
-    icon: <FiUserPlus size={16} />
-  }
+    path: '#register',
+    title: '注册',
+    icon: <FiUserPlus size={16} />,
+  },
 ];
 
 // Header组件
@@ -356,7 +367,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [showLogoTooltip, setShowLogoTooltip] = useState(false);
-  const [tooltipMessage, setTooltipMessage] = useState("");
+  const [tooltipMessage, setTooltipMessage] = useState('');
   const logoTooltipTimer = useRef<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
@@ -409,20 +420,20 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
     // 随机选择一条消息
     const randomMessage = logoMessages[Math.floor(Math.random() * logoMessages.length)];
     setTooltipMessage(randomMessage);
-    
+
     // 设置定时器，延迟显示提示
     logoTooltipTimer.current = setTimeout(() => {
       setShowLogoTooltip(true);
     }, 500); // 500ms后显示提示
   };
-  
+
   const handleLogoMouseLeave = () => {
     // 清除定时器
     if (logoTooltipTimer.current) {
       clearTimeout(logoTooltipTimer.current);
       logoTooltipTimer.current = null;
     }
-    
+
     // 立即隐藏提示
     setShowLogoTooltip(false);
   };
@@ -473,21 +484,15 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   return (
     <div className={`header ${internalScrolled ? 'scrolled' : ''}`}>
       <HeaderContainer scrolled={internalScrolled}>
-        <LogoContainer 
-          to="/" 
-          onMouseEnter={handleLogoMouseEnter}
-          onMouseLeave={handleLogoMouseLeave}
-        >
+        <LogoContainer to="/" onMouseEnter={handleLogoMouseEnter} onMouseLeave={handleLogoMouseLeave}>
           <LogoIconContainer className="logo-icon">
             <img src="/logo.png" alt="" />
           </LogoIconContainer>
           <LogoText className="logo-text">
-            <LogoHighlight className="logo-highlight">a</LogoHighlight>dnaan's 
+            <LogoHighlight className="logo-highlight">a</LogoHighlight>dnaan's
             <LogoHighlight className="logo-highlight"> blog</LogoHighlight>
           </LogoText>
-          <LogoTooltip visible={showLogoTooltip}>
-            {tooltipMessage}
-          </LogoTooltip>
+          <LogoTooltip visible={showLogoTooltip}>{tooltipMessage}</LogoTooltip>
         </LogoContainer>
 
         {/* 桌面导航 */}
@@ -532,11 +537,11 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
       </HeaderContainer>
 
       {/* 移动端菜单 */}
-      <MobileMenu 
-        isOpen={mobileMenuOpen} 
+      <MobileMenu
+        isOpen={mobileMenuOpen}
         menuGroups={mobileMenuGroups}
         accountItems={accountMenuItems}
-        onLinkClick={handleLinkClick} 
+        onLinkClick={handleLinkClick}
         handleLogin={handleLogin}
         handleRegister={handleRegister}
       />
