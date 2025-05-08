@@ -176,15 +176,14 @@ const LogoIconContainer = styled.div`
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--accent-color-hover) 0%, var(--accent-color) 100%);
   border-radius: 10px;
+  overflow: hidden;
   color: white;
   transition: all 0.3s ease;
   box-shadow: 0 0 10px rgba(81, 131, 245, 0.2);
   animation: ${pulse} 3s ease-in-out infinite;
   
   [data-theme='dark'] & {
-    background: linear-gradient(135deg, var(--accent-color) 0%, #5183f5 100%);
     box-shadow: 0 0 15px rgba(81, 131, 245, 0.3);
   }
   
@@ -193,7 +192,7 @@ const LogoIconContainer = styled.div`
     height: 30px;
     border-radius: 8px;
     
-    svg {
+    img {
       width: 16px;
       height: 16px;
     }
@@ -480,7 +479,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
           onMouseLeave={handleLogoMouseLeave}
         >
           <LogoIconContainer className="logo-icon">
-            <FiFeather size={20} />
+            <img src="logo.png" alt="" />
           </LogoIconContainer>
           <LogoText className="logo-text">
             <LogoHighlight className="logo-highlight">a</LogoHighlight>dnaan's 

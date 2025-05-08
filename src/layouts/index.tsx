@@ -243,7 +243,6 @@ const RootLayout = () => {
   return (
     <ToastProvider>
       <ToastListener />
-      <AccentColorStyleInjector />
       <MainContainer>
         {/* 加载指示器 - 使用showLoader状态 */}
         <AnimatePresence>

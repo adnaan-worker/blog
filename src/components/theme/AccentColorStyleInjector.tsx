@@ -11,6 +11,7 @@ interface AccentColorConfig {
 const hexToOklchString = (hex: string) => {
   return new Color(hex).oklch
 }
+
 // 预设颜色方案
 const accentColorLight = [
   // 浅葱 (淡蓝绿色)
@@ -55,6 +56,14 @@ export const AccentColorStyleInjector: React.FC<AccentColorStyleInjectorProps> =
   const [styleContent, setStyleContent] = useState<string>('');
   const [lightColor, setLightColor] = useState<string>('');
   const [darkColor, setDarkColor] = useState<string>('');
+  const [lightColorAssistant, setLightColorAssistant] = useState<string>('');
+  const [darkColorAssistant, setDarkColorAssistant] = useState<string>('');
+
+  const [lightColorHover, setLightColorHover] = useState<string>('');
+  const [darkColorHover, setDarkColorHover] = useState<string>('');
+
+  const [lightColorAlpha, setLightColorAlpha] = useState<string>('');
+  const [darkColorAlpha, setDarkColorAlpha] = useState<string>('');
 
   useEffect(() => {
     const generateStyles = async () => {
@@ -72,6 +81,27 @@ export const AccentColorStyleInjector: React.FC<AccentColorStyleInjectorProps> =
         setLightColor(currentLightColor);
         setDarkColor(currentDarkColor);
 
+        // 通过currentLightColor和currentDarkColor生成lightColorAssistant和darkColorAssistant
+        const lightColorAssistant = new Color(currentLightColor).mix(new Color('#000000'), 0.5);
+        const darkColorAssistant = new Color(currentDarkColor).mix(new Color('#ffffff'), 0.5);
+
+        setLightColorAssistant(lightColorAssistant.toString());
+        setDarkColorAssistant(darkColorAssistant.toString());
+
+        // 通过currentLightColor和currentDarkColor生成lightColorHover和darkColorHover
+        const lightColorHover = new Color(currentLightColor).mix(new Color('#000000'), 0.2);
+        const darkColorHover = new Color(currentDarkColor).mix(new Color('#ffffff'), 0.2);
+
+        setLightColorHover(lightColorHover.toString());
+        setDarkColorHover(darkColorHover.toString());
+
+        // 通过currentLightColor和currentDarkColor生成lightColorAlpha和darkColorAlpha
+        const lightColorAlpha = new Color(currentLightColor).mix(new Color('#000000'), 0.1);
+        const darkColorAlpha = new Color(currentDarkColor).mix(new Color('#ffffff'), 0.1);
+
+        setLightColorAlpha(lightColorAlpha.toString());
+        setDarkColorAlpha(darkColorAlpha.toString());
+
         const lightOklch = hexToOklchString(currentLightColor);
         const darkOklch = hexToOklchString(currentDarkColor);
 
@@ -80,9 +110,18 @@ export const AccentColorStyleInjector: React.FC<AccentColorStyleInjectorProps> =
 
         // 生成CSS变量
         const css = `
-          :root {
-            --accent-color-light: ${currentLightColor};
+          [data-theme='dark'] {
             --accent-color-dark: ${currentDarkColor};
+            --accent-color-dark-assistant: ${darkColorAssistant};
+            --accent-color-dark-hover: ${darkColorHover};
+            --accent-color-dark-alpha: ${darkColorAlpha};
+            --a: ${`${hd} ${sd} ${ld}`};
+          }
+          [data-theme='light'] {
+            --accent-color-light: ${currentLightColor};
+            --accent-color-light-assistant: ${lightColorAssistant};
+            --accent-color-light-hover: ${lightColorHover};
+            --accent-color-light-alpha: ${lightColorAlpha};
             --a: ${`${hl} ${sl} ${ll}`};
           }
         `;

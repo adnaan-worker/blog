@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
 import { FiUser, FiLock, FiMail, FiBell, FiGlobe, FiCheck, FiEye, FiEyeOff } from 'react-icons/fi';
-import { PageContainer } from '@/components/blog/BlogComponents';
 
 // 定义样式组件
 const SettingsContainer = styled.div`
@@ -529,7 +528,7 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <PageContainer>
+    <>
       <motion.div variants={pageVariants} initial="initial" animate="animate">
         <SettingsContainer>
           <Sidebar>
@@ -552,7 +551,7 @@ const Settings: React.FC = () => {
           <Content>{renderSettingsContent()}</Content>
         </SettingsContainer>
       </motion.div>
-    </PageContainer>
+    </>
   );
 };
 

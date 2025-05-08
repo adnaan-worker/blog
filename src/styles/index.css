@@ -18,10 +18,9 @@
   --bg-secondary: #f7f9fb;
   --bg-tertiary: #efefef;
   --accent-color: var(--accent-color-light);
-  --accent-color-dark: var(--accent-color-dark);
+  --accent-color-assistant: var(--accent-color-light-assistant);
   --accent-color-hover: var(--accent-color-light-hover);
   --accent-color-alpha: var(--accent-color-light-alpha);
-  --accent-color-alpha-hover: var(--accent-color-light-alpha-hover);
   --tw-gradient-from-position: ;
   --tw-gradient-to-position: ;
   --tw-gradient-via-position: ;
@@ -80,9 +79,9 @@
   --border-color: rgba(255, 255, 255, 0.08);
   --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   --accent-color: var(--accent-color-dark);
-  --accent-color-hover: var(--accent-color-dark-hover);
+  --accent-color-assistant: var(--accent-color-dark-assistant);
+  --accent-color-hover: var(--accent-color-dark-hover,rgba(81, 131, 245, 0.2));
   --accent-color-alpha: var(--accent-color-dark-alpha, rgba(81, 131, 245, 0.1));
-  --accent-color-alpha-hover: var(--accent-color-dark-alpha-hover, rgba(81, 131, 245, 0.2));
 }
 
 /**

@@ -6,6 +6,7 @@ import router from './router';
 import store, { AppDispatch } from './store';
 import { initializeTheme } from './store/modules/themeSlice';
 import './styles/index.css';
+import AccentColorStyleInjector from './components/theme/AccentColorStyleInjector';
 
 // 定义标题数组
 const titles = [
@@ -32,20 +33,11 @@ const init = async () => {
   // 初始化主题
   const dispatch = store.dispatch as AppDispatch;
   dispatch(initializeTheme());
-  
-  // 动态加载colorjs.io库，确保其在服务器端渲染时不会引起问题
-  if (typeof window !== 'undefined') {
-    try {
-      await import('colorjs.io');
-      console.log('Color.js库初始化成功');
-    } catch (error) {
-      console.warn('Color.js库加载失败，将使用替代方案', error);
-    }
-  }
 
   // 挂载应用
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
+      <AccentColorStyleInjector />
       <Provider store={store}>
         <RouterProvider router={router} />
       </Provider>

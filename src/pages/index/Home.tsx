@@ -126,12 +126,12 @@ const ProfileCard = styled.div`
   transform-style: preserve-3d;
   transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(81, 131, 245, 0.2);
+  box-shadow: 0 10px 30px var(--accent-color-alpha);
   cursor: pointer;
 
   &:hover {
     transform: translateY(-10px);
-    box-shadow: 0 15px 35px rgba(81, 131, 245, 0.3);
+    box-shadow: 0 15px 35px var(--accent-color-alpha);
   }
 
   &.flipped {
@@ -200,7 +200,7 @@ const ProfileName = styled.h3`
   font-size: 1.3rem;
   font-weight: 600;
   margin-bottom: 0.4rem;
-  background: linear-gradient(90deg, #5183f5, #8bb2f7);
+  background: linear-gradient(90deg, var(--accent-color), var(--accent-color-assistant));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-align: center;
@@ -255,7 +255,7 @@ const CardTitle = styled.h4`
     left: 0;
     width: 40px;
     height: 3px;
-    background: linear-gradient(90deg, #5183f5, transparent);
+    background: linear-gradient(90deg, var(--accent-color), transparent);
     border-radius: 3px;
   }
 `;
