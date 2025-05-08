@@ -1,148 +1,118 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Color from 'colorjs.io';
 
-// 颜色定义接口
+// 类型定义
 interface AccentColorConfig {
   light: string[];
   dark: string[];
 }
 
-// 将十六进制颜色转换为OKLCH
-const hexToOklchString = (hex: string) => {
-  return new Color(hex).oklch
-}
-
 // 预设颜色方案
-const accentColorLight = [
-  // 浅葱 (淡蓝绿色)
-  '#33A6B8',
-  // 暖红
-  '#FF6666',
-  // 薄荷绿
-  '#26A69A',
-  // 粉红
-  '#fb7287',
-  // 天蓝
-  '#69a6cc',
-];
-
-const accentColorDark = [
-  // 桃色
-  '#F596AA',
-  // 淡紫
-  '#A0A7D4',
-  // 亮红
-  '#ff7b7b',
-  // 淡绿
-  '#99D8CF',
-  // 淡蓝紫
-  '#838BC6',
-];
-
-// 默认颜色配置
-const defaultAccentColor: AccentColorConfig = {
-  light: accentColorLight,
-  dark: accentColorDark,
+const ACCENT_COLORS: AccentColorConfig = {
+  light: [
+    '#33A6B8', // 浅葱 (淡蓝绿色)
+    '#FF6666', // 暖红
+    '#26A69A', // 薄荷绿
+    '#fb7287', // 粉红
+    '#69a6cc', // 天蓝
+  ],
+  dark: [
+    '#F596AA', // 桃色
+    '#A0A7D4', // 淡紫
+    '#ff7b7b', // 亮红
+    '#99D8CF', // 淡绿
+    '#838BC6', // 淡蓝紫
+  ],
 };
 
-interface AccentColorStyleInjectorProps {
-  color?: AccentColorConfig;
-}
+// 颜色生成工具函数
+const colorUtils = {
+  // 将十六进制颜色转换为OKLCH
+  hexToOklchString: (hex: string) => new Color(hex).oklch,
+
+  // 生成辅助颜色
+  generateAssistantColor: (baseColor: string, mixColor: string, mixRatio: number) => {
+    return new Color(baseColor).mix(new Color(mixColor), mixRatio);
+  },
+
+  // 生成带透明度的颜色
+  generateAlphaColor: (baseColor: string, mixColor: string, mixRatio: number, alpha: number) => {
+    return new Color(baseColor)
+      .mix(new Color(mixColor), mixRatio)
+      .toString({ format: 'rgba', alpha });
+  },
+};
 
 /**
- * 根据主题色创建噪点背景并注入样式
+ * 主题色样式注入器组件
+ * 用于生成和注入随机主题色及其相关样式
  */
-export const AccentColorStyleInjector: React.FC<AccentColorStyleInjectorProps> = ({ color }) => {
-  const [styleContent, setStyleContent] = useState<string>('');
-  const [lightColor, setLightColor] = useState<string>('');
-  const [darkColor, setDarkColor] = useState<string>('');
-  const [lightColorAssistant, setLightColorAssistant] = useState<string>('');
-  const [darkColorAssistant, setDarkColorAssistant] = useState<string>('');
-
-  const [lightColorHover, setLightColorHover] = useState<string>('');
-  const [darkColorHover, setDarkColorHover] = useState<string>('');
-
-  const [lightColorAlpha, setLightColorAlpha] = useState<string>('');
-  const [darkColorAlpha, setDarkColorAlpha] = useState<string>('');
-
-  useEffect(() => {
-    const generateStyles = async () => {
-      try {
-        // 使用传入的颜色配置或默认配置
-        const colorConfig = color || defaultAccentColor;
-
-        // 随机选择亮色和暗色主题色
-        const randomLightIndex = Math.floor(Math.random() * colorConfig.light.length);
-        const randomDarkIndex = Math.floor(Math.random() * colorConfig.dark.length);
-
-        const currentLightColor = colorConfig.light[randomLightIndex];
-        const currentDarkColor = colorConfig.dark[randomDarkIndex];
-
-        setLightColor(currentLightColor);
-        setDarkColor(currentDarkColor);
-
-        // 通过currentLightColor和currentDarkColor生成lightColorAssistant和darkColorAssistant
-        const lightColorAssistant = new Color(currentLightColor).mix(new Color('#000000'), 0.5);
-        const darkColorAssistant = new Color(currentDarkColor).mix(new Color('#ffffff'), 0.5);
-
-        setLightColorAssistant(lightColorAssistant.toString());
-        setDarkColorAssistant(darkColorAssistant.toString());
-
-        // 通过currentLightColor和currentDarkColor生成lightColorHover和darkColorHover
-        const lightColorHover = new Color(currentLightColor).mix(new Color('#000000'), 0.2);
-        const darkColorHover = new Color(currentDarkColor).mix(new Color('#ffffff'), 0.2);
-
-        setLightColorHover(lightColorHover.toString());
-        setDarkColorHover(darkColorHover.toString());
-
-        // 通过currentLightColor和currentDarkColor生成lightColorAlpha和darkColorAlpha
-        const lightColorAlpha = new Color(currentLightColor).mix(new Color('#000000'), 0.1);
-        const darkColorAlpha = new Color(currentDarkColor).mix(new Color('#ffffff'), 0.1);
-
-        setLightColorAlpha(lightColorAlpha.toString());
-        setDarkColorAlpha(darkColorAlpha.toString());
-
-        const lightOklch = hexToOklchString(currentLightColor);
-        const darkOklch = hexToOklchString(currentDarkColor);
-
-        const [hl, sl, ll] = lightOklch;
-        const [hd, sd, ld] = darkOklch;
-
-        // 生成CSS变量
-        const css = `
-          [data-theme='dark'] {
-            --accent-color-dark: ${currentDarkColor};
-            --accent-color-dark-assistant: ${darkColorAssistant};
-            --accent-color-dark-hover: ${darkColorHover};
-            --accent-color-dark-alpha: ${darkColorAlpha};
-            --a: ${`${hd} ${sd} ${ld}`};
-          }
-          [data-theme='light'] {
-            --accent-color-light: ${currentLightColor};
-            --accent-color-light-assistant: ${lightColorAssistant};
-            --accent-color-light-hover: ${lightColorHover};
-            --accent-color-light-alpha: ${lightColorAlpha};
-            --a: ${`${hl} ${sl} ${ll}`};
-          }
-        `;
-
-        setStyleContent(css);
-      } catch (error) {
-        console.error('生成主题样式失败:', error);
-      }
+const AccentColorStyleInjector: React.FC = () => {
+  // 使用useMemo缓存随机选择的颜色，避免重复计算
+  const selectedColors = useMemo(() => {
+    const randomLightIndex = Math.floor(Math.random() * ACCENT_COLORS.light.length);
+    const randomDarkIndex = Math.floor(Math.random() * ACCENT_COLORS.dark.length);
+    
+    return {
+      light: ACCENT_COLORS.light[randomLightIndex],
+      dark: ACCENT_COLORS.dark[randomDarkIndex],
     };
+  }, []); // 空依赖数组确保只在组件挂载时执行一次
 
-    generateStyles();
-  }, [color]);
+  // 生成CSS样式
+  const generateStyles = () => {
+    try {
+      const { light: currentLightColor, dark: currentDarkColor } = selectedColors;
 
-  return (
-    <style
-      id="accent-color-style"
-      data-light={lightColor}
-      data-dark={darkColor}
-      dangerouslySetInnerHTML={{ __html: styleContent }}
-    />
-  );
+      // 生成亮色模式相关颜色
+      const lightColorAssistant = colorUtils.generateAssistantColor(currentLightColor, '#ffffff', 0.3);
+      const lightColorHover = colorUtils.generateAssistantColor(currentLightColor, '#000000', 0.15);
+      const lightColorAlpha = colorUtils.generateAlphaColor(currentLightColor, '#ffffff', 0.85, 0.1);
+
+      // 生成暗色模式相关颜色
+      const darkColorAssistant = colorUtils.generateAssistantColor(currentDarkColor, '#000000', 0.2);
+      const darkColorHover = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.15);
+      const darkColorAlpha = colorUtils.generateAlphaColor(currentDarkColor, '#000000', 0.85, 0.1);
+
+      // 生成OKLCH值
+      const [hl, sl, ll] = colorUtils.hexToOklchString(currentLightColor);
+      const [hd, sd, ld] = colorUtils.hexToOklchString(currentDarkColor);
+
+      // 返回生成的CSS
+      return `
+        [data-theme='dark'] {
+          --accent-color-dark: ${currentDarkColor};
+          --accent-color-dark-assistant: ${darkColorAssistant};
+          --accent-color-dark-hover: ${darkColorHover};
+          --accent-color-dark-alpha: ${darkColorAlpha};
+          --a: ${`${hd} ${sd} ${ld}`};
+        }
+        [data-theme='light'] {
+          --accent-color-light: ${currentLightColor};
+          --accent-color-light-assistant: ${lightColorAssistant};
+          --accent-color-light-hover: ${lightColorHover};
+          --accent-color-light-alpha: ${lightColorAlpha};
+          --a: ${`${hl} ${sl} ${ll}`};
+        }
+      `;
+    } catch (error) {
+      console.error('生成主题样式失败:', error);
+      return '';
+    }
+  };
+
+  // 注入样式
+  useEffect(() => {
+    const styleElement = document.getElementById('accent-color-style') || document.createElement('style');
+    styleElement.id = 'accent-color-style';
+    styleElement.innerHTML = generateStyles();
+    
+    if (!document.getElementById('accent-color-style')) {
+      document.head.appendChild(styleElement);
+    }
+  }, [selectedColors]);
+
+  return null; // 这是一个纯样式注入组件，不需要渲染任何内容
 };
 
 export default AccentColorStyleInjector;

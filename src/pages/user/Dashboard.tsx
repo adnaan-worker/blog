@@ -14,7 +14,6 @@ import {
   FiHeart,
   FiMessageSquare,
 } from 'react-icons/fi';
-import { PageContainer } from '@/components/blog/BlogComponents';
 import { useNavigate } from 'react-router-dom';
 
 // 定义样式组件
@@ -381,7 +380,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <PageContainer>
+    <>
       <motion.div variants={pageVariants} initial="initial" animate="animate">
         <DashboardContainer>
           <div>
@@ -484,7 +483,7 @@ const Dashboard: React.FC = () => {
           </Pagination>
         </DashboardContainer>
       </motion.div>
-    </PageContainer>
+    </>
   );
 };
 

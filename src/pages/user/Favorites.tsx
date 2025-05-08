@@ -10,7 +10,6 @@ import {
   FiUser,
   FiSearch,
 } from 'react-icons/fi';
-import { PageContainer } from '@/components/blog/BlogComponents';
 import { Link } from 'react-router-dom';
 
 // 定义样式组件
@@ -394,7 +393,7 @@ const Favorites: React.FC = () => {
   });
 
   return (
-    <PageContainer>
+    <>
       <motion.div variants={pageVariants} initial="initial" animate="animate">
         <FavoritesContainer>
           <div>
@@ -488,7 +487,7 @@ const Favorites: React.FC = () => {
           )}
         </FavoritesContainer>
       </motion.div>
-    </PageContainer>
+    </>
   );
 };
 
