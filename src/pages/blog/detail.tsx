@@ -350,6 +350,19 @@ const RelatedTitle = styled.h3`
   }
 `;
 
+const PageHeadGradient = styled.div`
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 500px;
+  width: 100%;
+  background: linear-gradient(to right, rgb(var(--gradient-from) / 0.3) 0, rgb(var(--gradient-to) / 0.3) 100%);
+  mask-image: linear-gradient(#000, #ffffff00 70%);
+  animation: fade-in 1s ease 0.2s both;
+`;
+
 // 未找到文章提示
 const NotFoundContainer = styled.div`
   text-align: center;
@@ -828,6 +841,14 @@ const BlogDetail: React.FC = () => {
           </>
         )}
       </motion.div>
+      <PageHeadGradient
+        style={
+          {
+            '--gradient-from': '98 178 170',
+            '--gradient-to': '166 211 207',
+          } as React.CSSProperties
+        }
+      ></PageHeadGradient>
     </PageContainer>
   );
 };

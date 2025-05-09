@@ -26,8 +26,8 @@
   --tw-gradient-via-position: ;
   --tw-gradient-from: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-from-position);
   --tw-gradient-to: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-to-position);
+  --spotlight-color: oklch(var(--a)/0.12);
   --underline-bg: var(--tw-gradient-from),var(--fallback-a,oklch(var(--a)/0.7)) var(--tw-gradient-via-position),var(--tw-gradient-to);
-  --underline-light-bg: oklch(0.7199667500623633 0.1716558060197229 348.70673662059994 / 0), oklch(0.58 0.19 267.23 / 0.7), oklch(0.7199667500623633 0.1716558060197229 348.70673662059994 / 0);
   --error-color: #e53935;
   --success-color: #43a047;
   --border-color: rgba(0, 0, 0, 0.06);
@@ -294,10 +294,9 @@ pre,
   height: 100%;
   background: radial-gradient(
     ellipse 70% 100% at 50% 50%,
-    rgba(81, 131, 245, 0.25) 0%,
-    rgba(81, 131, 245, 0.16) 30%,
-    rgba(81, 131, 245, 0.08) 60%,
-    rgba(81, 131, 245, 0) 100%
+    transparent 0%,
+    var(--spotlight-color) 20%,
+    transparent 100%
   );
   z-index: -1;
   border-radius: 10px;

@@ -76,7 +76,7 @@ const RootLayout = () => {
   const [showLoader, setShowLoader] = useState(false);
   const loaderAnimationCompleted = useRef(false);
   const loaderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // 创建一个ref来存储上一次的路径
   const previousPathRef = useRef(location.pathname);
 
@@ -85,20 +85,20 @@ const RootLayout = () => {
     setMounted(true);
     // 初始化上一次路径
     previousPathRef.current = location.pathname;
-    
+
     // 初始化时强制触发一次加载指示器，无论当前路径
     setIsLoading(true);
     setTimeout(() => setIsLoading(false), 500);
   }, [location.pathname]);
-  
+
   // 添加调试输出，帮助排查问题
   useEffect(() => {
-    console.log('路由状态:', { 
-      pathname: location.pathname, 
-      isLoading, 
-      showLoader, 
+    console.log('路由状态:', {
+      pathname: location.pathname,
+      isLoading,
+      showLoader,
       isPending,
-      animationCompleted: loaderAnimationCompleted.current 
+      animationCompleted: loaderAnimationCompleted.current,
     });
   }, [location.pathname, isLoading, showLoader, isPending]);
 
@@ -115,7 +115,7 @@ const RootLayout = () => {
         clearTimeout(loaderTimeoutRef.current);
         loaderTimeoutRef.current = null;
       }
-      
+
       // 添加调试日志
       console.log('加载状态激活:', { isPending, isLoading, pathname: location.pathname });
     } else {
@@ -134,13 +134,13 @@ const RootLayout = () => {
       }
     };
   }, [isPending, isLoading, location.pathname]);
-  
+
   // 确保路由变化时总是触发加载指示器
   useEffect(() => {
     // 直接设置加载状态，不依赖于isPathChanged
     setShowLoader(true);
     loaderAnimationCompleted.current = false;
-    
+
     // 设置一个最小显示时间
     const minDisplayTimer = setTimeout(() => {
       if (!isLoading && !isPending) {
@@ -148,26 +148,26 @@ const RootLayout = () => {
         setShowLoader(false);
       }
     }, 500);
-    
+
     return () => clearTimeout(minDisplayTimer);
   }, [isLoading, isPending, location.pathname]);
-  
+
   // 路由切换时处理加载状态 - 简化逻辑，确保可靠触发
   useEffect(() => {
     // 检查路径是否变化
     const isPathChanged = previousPathRef.current !== location.pathname;
-    
+
     // 只在路径真正变化时触发加载状态
     if (isPathChanged) {
       console.log('路径变化，触发加载指示器:', { from: previousPathRef.current, to: location.pathname });
-      
+
       // 直接设置加载状态，确保指示器显示
       setIsLoading(true);
-      
+
       // 确保加载状态持续足够长的时间
       const minLoadingTime = 800; // 毫秒
       const loadingStartTime = Date.now();
-      
+
       // 使用React 18的并发特性处理加载状态
       startTransition(() => {
         // 模拟资源加载完成
@@ -189,7 +189,7 @@ const RootLayout = () => {
             const elapsedTime = Date.now() - loadingStartTime;
             // 如果加载时间不够最小加载时间，则等待剩余时间
             const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
-            
+
             // 延迟结束加载状态，确保加载指示器有足够的显示时间
             setTimeout(() => {
               setIsLoading(false);
@@ -206,7 +206,7 @@ const RootLayout = () => {
         window.scrollTo(0, 0);
       }
     }
-    
+
     // 更新上一次的路径
     previousPathRef.current = location.pathname;
   }, [location.pathname, navigationType]);
@@ -265,9 +265,7 @@ const RootLayout = () => {
             />
           )}
         </AnimatePresence>
-        {showLoader && (
-          <PageLoading></PageLoading>
-        )}
+        {showLoader && <PageLoading></PageLoading>}
         {/* 头部导航 */}
         <Header scrolled={isScrolled} />
 
