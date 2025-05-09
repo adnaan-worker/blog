@@ -123,4 +123,4 @@ Hannotate SC, monospace, -apple-system
 
 ## 许可
 
-MIT
+MPL
