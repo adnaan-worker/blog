@@ -157,40 +157,6 @@ const pageVariants = {
   },
 };
 
-// 添加全屏加载指示器
-const LoadingOverlay = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-
-  [data-theme='dark'] & {
-    background: rgba(20, 20, 30, 0.8);
-  }
-`;
-
-// 加载动画
-const LoadingSpinner = styled.div`
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--bg-secondary);
-  border-top-color: var(--accent-color);
-  border-radius: 50%;
-  animation: spin 1s infinite linear;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
 // 文章导航按钮
 const ArticleNavigation = styled.div`
   display: flex;
@@ -361,6 +327,14 @@ const PageHeadGradient = styled.div`
   background: linear-gradient(to right, rgb(var(--gradient-from) / 0.3) 0, rgb(var(--gradient-to) / 0.3) 100%);
   mask-image: linear-gradient(#000, #ffffff00 70%);
   animation: fade-in 1s ease 0.2s both;
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
 `;
 
 // 未找到文章提示
@@ -384,7 +358,6 @@ const BlogDetail: React.FC = () => {
   const [comments, setComments] = useState<any[]>([]);
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [prevArticle, setPrevArticle] = useState<Article | null>(null);
   const [nextArticle, setNextArticle] = useState<Article | null>(null);
 
@@ -405,8 +378,6 @@ const BlogDetail: React.FC = () => {
 
   // 获取文章数据 - 使用useCallback
   const fetchArticle = useCallback(async (articleId: string) => {
-    setLoading(true);
-
     try {
       // 模拟API请求延迟
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -448,8 +419,6 @@ const BlogDetail: React.FC = () => {
     } catch (error) {
       console.error('获取文章失败', error);
       setArticle(null);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -732,7 +701,7 @@ const BlogDetail: React.FC = () => {
   );
 
   // 文章未找到
-  if (!loading && !article) {
+  if (!article) {
     return (
       <NotFoundContainer>
         <h2>文章未找到</h2>
@@ -746,15 +715,6 @@ const BlogDetail: React.FC = () => {
 
   return (
     <PageContainer>
-      {/* 加载指示器 */}
-      <AnimatePresence>
-        {loading && (
-          <LoadingOverlay initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <LoadingSpinner />
-          </LoadingOverlay>
-        )}
-      </AnimatePresence>
-
       <motion.div variants={pageVariants} initial="initial" animate="animate">
         {/* 调试工具组件 */}
         {showDebugInfo && (
@@ -776,7 +736,7 @@ const BlogDetail: React.FC = () => {
           />
         )}
 
-        {!loading && article && (
+        {article && (
           <>
             <ArticleLayout>
               {/* 左侧：文章内容 */}
@@ -841,14 +801,7 @@ const BlogDetail: React.FC = () => {
           </>
         )}
       </motion.div>
-      <PageHeadGradient
-        style={
-          {
-            '--gradient-from': '98 178 170',
-            '--gradient-to': '166 211 207',
-          } as React.CSSProperties
-        }
-      ></PageHeadGradient>
+      <PageHeadGradient></PageHeadGradient>
     </PageContainer>
   );
 };

@@ -24,7 +24,6 @@ const ACCENT_COLORS: AccentColorConfig = {
     '#838BC6', // 淡蓝紫
   ],
 };
-
 // 颜色生成工具函数
 const colorUtils = {
   // 将十六进制颜色转换为OKLCH
@@ -37,9 +36,30 @@ const colorUtils = {
 
   // 生成带透明度的颜色
   generateAlphaColor: (baseColor: string, mixColor: string, mixRatio: number, alpha: number) => {
-    return new Color(baseColor)
-      .mix(new Color(mixColor), mixRatio)
-      .toString({ format: 'rgba', alpha });
+    return new Color(baseColor).mix(new Color(mixColor), mixRatio).toString({ format: 'rgba', alpha });
+  },
+
+  // 将十六进制颜色转换为RGB字符串，例如: "255 0 0"
+  hexToRgbString: (hex: string) => {
+    const color = new Color(hex);
+    const { r, g, b } = color.srgb;
+    return `${Math.round(r * 255)} ${Math.round(g * 255)} ${Math.round(b * 255)}`;
+  },
+
+  // 生成渐变色
+  generateGradientColors: (hex: string) => {
+    // 否则根据颜色生成渐变
+    const color = new Color(hex);
+
+    // 创建一个更轻一点的颜色作为渐变起点
+    const fromColor = new Color(color).mix('white', 0.2);
+    // 创建一个更亮更淡的颜色作为渐变终点
+    const toColor = new Color(color).mix('white', 0.5);
+
+    return {
+      from: colorUtils.hexToRgbString(fromColor.toString()),
+      to: colorUtils.hexToRgbString(toColor.toString()),
+    };
   },
 };
 
@@ -52,7 +72,7 @@ const AccentColorStyleInjector: React.FC = () => {
   const selectedColors = useMemo(() => {
     const randomLightIndex = Math.floor(Math.random() * ACCENT_COLORS.light.length);
     const randomDarkIndex = Math.floor(Math.random() * ACCENT_COLORS.dark.length);
-    
+
     return {
       light: ACCENT_COLORS.light[randomLightIndex],
       dark: ACCENT_COLORS.dark[randomDarkIndex],
@@ -68,11 +88,13 @@ const AccentColorStyleInjector: React.FC = () => {
       const lightColorAssistant = colorUtils.generateAssistantColor(currentLightColor, '#ffffff', 0.3);
       const lightColorHover = colorUtils.generateAssistantColor(currentLightColor, '#000000', 0.15);
       const lightColorAlpha = colorUtils.generateAlphaColor(currentLightColor, '#ffffff', 0.45, 0.1);
+      const lightGradient = colorUtils.generateGradientColors(currentLightColor);
 
       // 生成暗色模式相关颜色
       const darkColorAssistant = colorUtils.generateAssistantColor(currentDarkColor, '#000000', 0.2);
       const darkColorHover = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.15);
       const darkColorAlpha = colorUtils.generateAlphaColor(currentDarkColor, '#000000', 0.45, 0.1);
+      const darkGradient = colorUtils.generateGradientColors(currentDarkColor);
 
       // 生成OKLCH值
       const [hl, sl, ll] = colorUtils.hexToOklchString(currentLightColor);
@@ -86,6 +108,8 @@ const AccentColorStyleInjector: React.FC = () => {
           --accent-color-dark-hover: ${darkColorHover};
           --accent-color-dark-alpha: ${darkColorAlpha};
           --a: ${`${hd} ${sd} ${ld}`};
+          --gradient-from: ${darkGradient.from};
+          --gradient-to: ${darkGradient.to};
         }
         [data-theme='light'] {
           --accent-color-light: ${currentLightColor};
@@ -93,6 +117,8 @@ const AccentColorStyleInjector: React.FC = () => {
           --accent-color-light-hover: ${lightColorHover};
           --accent-color-light-alpha: ${lightColorAlpha};
           --a: ${`${hl} ${sl} ${ll}`};
+          --gradient-from: ${lightGradient.from};
+          --gradient-to: ${lightGradient.to};
         }
       `;
     } catch (error) {
@@ -106,7 +132,7 @@ const AccentColorStyleInjector: React.FC = () => {
     const styleElement = document.getElementById('accent-color-style') || document.createElement('style');
     styleElement.id = 'accent-color-style';
     styleElement.innerHTML = generateStyles();
-    
+
     if (!document.getElementById('accent-color-style')) {
       document.head.appendChild(styleElement);
     }

@@ -214,10 +214,6 @@ pre,
   background: transparent;
 }
 
-[data-theme='dark'] .header {
-  background: rgba(18, 18, 18, 0.85);
-}
-
 .underline {
   position: absolute;
   bottom: -5px;
