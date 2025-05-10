@@ -64,7 +64,7 @@ const TimelineItem = styled(motion.div)`
   &::before {
     content: '';
     position: absolute;
-    left: -1.5rem;
+    left: -1.6875rem;
     top: 0.5rem;
     width: 10px;
     height: 10px;
@@ -75,7 +75,7 @@ const TimelineItem = styled(motion.div)`
   }
 
   &:last-child {
-    margin-bottom: 0;
+    /* margin-bottom: 0; */
   }
 `;
 
