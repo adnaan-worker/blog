@@ -11,15 +11,11 @@ interface AccentColorConfig {
 const ACCENT_COLORS: AccentColorConfig = {
   light: [
     '#33A6B8', // 浅葱 (淡蓝绿色)
-    '#FF6666', // 暖红
     '#26A69A', // 薄荷绿
-    '#fb7287', // 粉红
     '#69a6cc', // 天蓝
   ],
   dark: [
-    '#F596AA', // 桃色
     '#A0A7D4', // 淡紫
-    '#ff7b7b', // 亮红
     '#99D8CF', // 淡绿
     '#838BC6', // 淡蓝紫
   ],
