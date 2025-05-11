@@ -8,6 +8,8 @@ import type { RootState } from '@/store';
 // 修改移动端菜单样式
 const MobileMenuContainer = styled(motion.div)`
   position: fixed;
+  width: 100vw;
+  height: calc(100vh - var(--header-height));
   top: var(--header-height);
   left: 0;
   right: 0;
@@ -168,7 +170,14 @@ interface MobileMenuProps {
   handleRegister?: () => void;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, menuGroups, accountItems, onLinkClick, handleLogin, handleRegister }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({
+  isOpen,
+  menuGroups,
+  accountItems,
+  onLinkClick,
+  handleLogin,
+  handleRegister,
+}) => {
   const location = useLocation();
   const { isLoggedIn } = useSelector((state: RootState) => state.user);
 
@@ -192,7 +201,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, menuGroups, accountItem
       <MobileMenuContainer initial="hidden" animate="visible" exit="exit" variants={mobileMenuVariants}>
         <MobileMenuContent>
           {/* 渲染菜单组 */}
-          {menuGroups.map((group, groupIndex) => ( 
+          {menuGroups.map((group, groupIndex) => (
             <React.Fragment key={group.title}>
               {groupIndex > 0 && <MobileMenuDivider />}
               <MobileMenuSection>
@@ -202,22 +211,21 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, menuGroups, accountItem
                   if (item.isDropdown && item.children && item.children.length > 0) {
                     return (
                       <React.Fragment key={item.path}>
-                        <MobileNavLink
-                          to="#"
-                          active="false"
-                          onClick={() => {}}
-                        >
+                        <MobileNavLink to="#" active="false" onClick={() => {}}>
                           {item.icon}
                           {item.title}
                         </MobileNavLink>
-                        
+
                         {/* 渲染子菜单项，稍微缩进 */}
                         <div style={{ paddingLeft: '1.5rem' }}>
                           {item.children.map((childItem) => (
                             <MobileNavLink
                               key={childItem.path}
                               to={childItem.path}
-                              active={(location.pathname === childItem.path || (childItem.path !== '/' && location.pathname.includes(childItem.path))).toString()}
+                              active={(
+                                location.pathname === childItem.path ||
+                                (childItem.path !== '/' && location.pathname.includes(childItem.path))
+                              ).toString()}
                               onClick={() => handleSpecialPathClick(childItem.path)}
                             >
                               {childItem.icon}
@@ -228,19 +236,25 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, menuGroups, accountItem
                       </React.Fragment>
                     );
                   }
-                  
+
                   // 普通菜单项
                   return (
                     <MobileNavLink
                       key={item.path}
-                    to={item.isExternal || item.path.startsWith('#') ? '#' : item.path}
-                    active={location.pathname === item.path || (item.path !== '/' && location.pathname.includes(item.path)) ? 'true' : 'false'}
-                    onClick={() => item.isExternal || item.path.startsWith('#') ? handleSpecialPathClick(item.path) : onLinkClick()}
-                  >
-                    {item.icon}
-                    {item.title}
-                  </MobileNavLink>
-                  )
+                      to={item.isExternal || item.path.startsWith('#') ? '#' : item.path}
+                      active={
+                        location.pathname === item.path || (item.path !== '/' && location.pathname.includes(item.path))
+                          ? 'true'
+                          : 'false'
+                      }
+                      onClick={() =>
+                        item.isExternal || item.path.startsWith('#') ? handleSpecialPathClick(item.path) : onLinkClick()
+                      }
+                    >
+                      {item.icon}
+                      {item.title}
+                    </MobileNavLink>
+                  );
                 })}
               </MobileMenuSection>
             </React.Fragment>
@@ -253,10 +267,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, menuGroups, accountItem
               <MobileMenuSection>
                 <MobileMenuTitle>账户</MobileMenuTitle>
                 {accountItems.map((item) => (
-                  <MobileAuthButton 
-                    key={item.path}
-                    onClick={() => handleSpecialPathClick(item.path)}
-                  >
+                  <MobileAuthButton key={item.path} onClick={() => handleSpecialPathClick(item.path)}>
                     {item.icon}
                     {item.title}
                   </MobileAuthButton>

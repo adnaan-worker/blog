@@ -404,7 +404,7 @@ const Title = styled(MotionH1)`
   }
 
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 1rem;
     justify-content: center;
   }
 `;
