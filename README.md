@@ -24,13 +24,10 @@
 ## 页面结构
 
 - **首页** - 展示最新内容和博客概览
-- **分类** - 按主题分类的文章集合
-- **笔记** - 简短的学习笔记和心得
-- **时光** - 按时间线展示的内容记录
-- **思考** - 深度思考和观点分享
+- **文章** - 按主题分类的文章集合
+- **手记** - 简短的学习笔记和心得
 - **关于** - 个人介绍和联系方式
 - **项目** - 技术项目展示
-- **设计交互学** - 设计和交互相关内容
 - **开发者字体** - 专为开发者优化的代码字体展示
 
 ## 组件特色
@@ -80,19 +77,35 @@ npm run build
 ## 项目结构
 
 ```
-/src
-  /components       # 可复用组件
-    /Header.tsx     # 导航头部组件
-    /CodeBlock.tsx  # 代码块组件
-    /...
-  /context         # React上下文
-    /ThemeContext.tsx  # 主题上下文
-  /pages           # 页面组件
-    /Home.tsx      # 首页
-    /Code.tsx      # 代码展示页
-    /...
-  /styles          # 全局样式
-  main.tsx         # 渲染入口
+src                 
+│
+├─assets                  #静态资源文件
+│  ├─images                   #图片
+│  ├─font                     #字体
+│  ├─icon                     #图标
+│  ├─script                   #脚本
+│  ├─model                    #模型
+│  └─video                    #音频
+│
+├─components             #可复用组件
+│  ├─BlogComponents.tsx       #文章列表及详情所需组件
+│  ├─CodeBlock.tsx            #代码块组件
+│  ├─FloatingToolbar.tsx      #音乐播放器及返回顶部工具栏组件
+│  ├─Live2DModel.tsx          #live2D组件
+│  ├─TextEditor.tsx           #富文本编辑器组件
+│  └─UIComponents.tsx         #UI组件
+│
+├─layouts                #布局组件
+│  ├─Header.tsx               #页面头部组件
+│  ├─Footer.tsx               #页面底部组件
+│  └─RootLayout.tsx           #页面主体结构
+│
+├─context                #React上下文
+│  └─ThemeContext.tsx         #主题上下文配置
+│
+├─pages                  #页面模块
+
+#注：当前目录结构会经过优化，优化后补齐全部
 ```
 
 ## 自定义配置
