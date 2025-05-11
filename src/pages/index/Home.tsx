@@ -96,11 +96,55 @@ const HeroContent = styled(MotionDiv)`
   max-width: 800px;
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -30px;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, var(--accent-color-alpha) 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0.6;
+    z-index: -1;
+    filter: blur(10px);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 10%;
+    right: -60px;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(var(--gradient-to), 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    filter: blur(20px);
+  }
 
   @media (max-width: 768px) {
     max-width: 100%;
     text-align: center;
     order: 2;
+    padding: 0;
+
+    &::before {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    &::after {
+      right: 50%;
+      transform: translateX(50%);
+      width: 120px;
+      height: 120px;
+    }
   }
 `;
 
@@ -298,12 +342,33 @@ const CardFlipHint = styled.div`
 `;
 
 const Title = styled(MotionH1)`
-  font-size: 2.4rem;
-  font-weight: 700;
-  margin-bottom: 0.8rem;
+  font-size: 2.6rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 10px;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+
+  &:after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 40px;
+    height: 4px;
+    background: var(--accent-color);
+    border-radius: 2px;
+    transform: translateY(20px);
+    opacity: 0;
+
+    @media (max-width: 768px) {
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+    }
+  }
 
   .wave {
     display: inline-block;
@@ -339,36 +404,82 @@ const Title = styled(MotionH1)`
   }
 
   @media (max-width: 768px) {
-    font-size: 1.8rem;
+    font-size: 2rem;
     justify-content: center;
   }
 `;
 
 const Subtitle = styled(MotionH2)`
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: 0.8rem;
+  margin-bottom: 1.2rem;
+  line-height: 1.3;
+  position: relative;
 
   code {
     font-family: var(--font-code);
+    background: rgba(81, 131, 245, 0.08);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.85em;
+    margin-left: 0.5em;
+    border: 1px solid rgba(81, 131, 245, 0.1);
   }
 
   @media (max-width: 768px) {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
   }
 `;
 
 const Description = styled(MotionP)`
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  max-width: 90%;
+
+  span {
+    position: relative;
+    display: inline-block;
+    padding: 0.2em 0;
+
+    &:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-color), transparent);
+      opacity: 0.3;
+    }
+  }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
 `;
 
 const SocialLinks = styled(MotionDiv)`
   display: flex;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
+  gap: 0.85rem;
+  margin-top: 2rem;
+  position: relative;
+
+  &:before {
+    content: '';
+    position: absolute;
+    top: -1rem;
+    left: 0;
+    width: 3rem;
+    height: 1px;
+    background: var(--border-color);
+
+    @media (max-width: 768px) {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
 
   @media (max-width: 768px) {
     justify-content: center;
@@ -1058,6 +1169,27 @@ const ArticleLink: React.FC<ArticleLinkProps> = ({ to, children, ...props }) => 
   </Link>
 );
 
+const SkillTags = styled(motion.div)`
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 0.8rem;
+  opacity: 0.85;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+`;
+
 // 组件
 const Home = () => {
   // 卡片翻转状态
@@ -1074,18 +1206,113 @@ const Home = () => {
           <Hero>
             <HeroContent variants={staggerContainerVariants} initial="hidden" animate="visible">
               <Title variants={fadeInUpVariants}>
-                Hi, I'm adnaan{' '}
-                <motion.span className="wave" variants={iconVariants} initial="hidden" animate="visible">
-                  👋
+                欢迎来到<span style={{ color: 'var(--accent-color)' }}>我的博客</span>
+                <motion.span
+                  className="wave"
+                  variants={iconVariants}
+                  initial="hidden"
+                  animate="visible"
+                  style={{
+                    display: 'inline-block',
+                    fontSize: '1.3em',
+                  }}
+                >
+                  📝
                 </motion.span>
               </Title>
 
               <Subtitle variants={fadeInUpVariants}>
-                A developer who loves full stack web{' '}
-                <code style={{ color: 'var(--accent-color)' }}>&lt;Developer /&gt;</code>
+                <span
+                  style={{
+                    background: 'linear-gradient(90deg, rgb(var(--gradient-from)), rgb(var(--gradient-to)))',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    position: 'relative',
+                  }}
+                >
+                  在代码与设计的交界，创造数字诗篇
+                </span>{' '}
+                <code style={{ color: 'var(--accent-color)' }}>@adnaan</code>
               </Subtitle>
 
-              <Description variants={fadeInUpVariants}>This is my blog, documenting life and learning.</Description>
+              <Description variants={fadeInUpVariants}>
+                我是<strong style={{ color: 'var(--accent-color)' }}>全栈工程师</strong>与
+                <strong style={{ color: 'var(--accent-color)' }}>UI/UX爱好者</strong>，专注于构建美观且高性能的Web体验。
+                <br />
+                <span style={{ fontSize: '0.9em', opacity: 0.9 }}>「每一行代码都有诗意，每一个像素都有故事」</span>
+              </Description>
+
+              <SkillTags variants={fadeInUpVariants}>
+                <span>
+                  <FiCode size={14} /> 开发者
+                </span>
+                <span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12 17H12.01"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>{' '}
+                  设计爱好者
+                </span>
+                <span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M18 8C19.6569 8 21 6.65685 21 5C21 3.34315 19.6569 2 18 2C16.3431 2 15 3.34315 15 5C15 6.65685 16.3431 8 18 8Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M6 15C7.65685 15 9 13.6569 9 12C9 10.3431 7.65685 9 6 9C4.34315 9 3 10.3431 3 12C3 13.6569 4.34315 15 6 15Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M18 22C19.6569 22 21 20.6569 21 19C21 17.3431 19.6569 16 18 16C16.3431 16 15 17.3431 15 19C15 20.6569 16.3431 22 18 22Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M8.59 13.51L15.42 17.49"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M15.41 6.51L8.59 10.49"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>{' '}
+                  终身学习者
+                </span>
+              </SkillTags>
 
               <SocialLinks variants={staggerContainerVariants}>
                 <SocialLink
@@ -1116,6 +1343,10 @@ const Home = () => {
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
+                  style={{
+                    background:
+                      'linear-gradient(135deg, rgba(var(--gradient-from), 0.08), rgba(var(--gradient-to), 0.08))',
+                  }}
                 >
                   <svg
                     width="18"
