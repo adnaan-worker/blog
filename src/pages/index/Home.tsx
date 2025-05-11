@@ -342,7 +342,7 @@ const CardFlipHint = styled.div`
 `;
 
 const Title = styled(MotionH1)`
-  font-size: 2.6rem;
+  font-size: 2.4rem;
   font-weight: 800;
   margin-bottom: 1rem;
   display: flex;
@@ -463,7 +463,7 @@ const Description = styled(MotionP)`
 const SocialLinks = styled(MotionDiv)`
   display: flex;
   gap: 0.85rem;
-  margin-top: 2rem;
+  margin-top: 5rem;
   position: relative;
 
   &:before {
@@ -1206,7 +1206,7 @@ const Home = () => {
           <Hero>
             <HeroContent variants={staggerContainerVariants} initial="hidden" animate="visible">
               <Title variants={fadeInUpVariants}>
-                欢迎来到<span style={{ color: 'var(--accent-color)' }}>我的博客</span>
+                欢迎踏入代码与创意交织的<span style={{ color: 'var(--accent-color)' }}>奇幻宇宙</span>
                 <motion.span
                   className="wave"
                   variants={iconVariants}
@@ -1214,10 +1214,10 @@ const Home = () => {
                   animate="visible"
                   style={{
                     display: 'inline-block',
-                    fontSize: '1.3em',
+                    fontSize: '0.8em',
                   }}
                 >
-                  📝
+                  🌌
                 </motion.span>
               </Title>
 
