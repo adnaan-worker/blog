@@ -253,7 +253,7 @@ export const Live2DModel = () => {
 
         L2Dwidget.init({
           model: {
-            jsonPath: 'https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json',
+            jsonPath: 'https://summerscar.me/live2dDemo/assets/penchan/penchan.model.json',
             scale: 1,
           },
           display: {
