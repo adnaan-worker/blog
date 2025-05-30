@@ -2,7 +2,7 @@
 
 一个现代化、响应式的个人博客网站，具有优雅的设计和流畅的用户体验。
 
-## 感谢各位帮忙点点Star
+## 运行效果
 
 ![输入图片说明](public/image1.png)
 ![输入图片说明](public/image2.png)
@@ -80,40 +80,6 @@ npm run dev
 npm run build
 ```
 
-## 项目结构
-
-```
-src                 
-│
-├─assets                  #静态资源文件
-│  ├─images                   #图片
-│  ├─font                     #字体
-│  ├─icon                     #图标
-│  ├─script                   #脚本
-│  ├─model                    #模型
-│  └─video                    #音频
-│
-├─components             #可复用组件
-│  ├─BlogComponents.tsx       #文章列表及详情所需组件
-│  ├─CodeBlock.tsx            #代码块组件
-│  ├─FloatingToolbar.tsx      #音乐播放器及返回顶部工具栏组件
-│  ├─Live2DModel.tsx          #live2D组件
-│  ├─TextEditor.tsx           #富文本编辑器组件
-│  └─UIComponents.tsx         #UI组件
-│
-├─layouts                #布局组件
-│  ├─Header.tsx               #页面头部组件
-│  ├─Footer.tsx               #页面底部组件
-│  └─RootLayout.tsx           #页面主体结构
-│
-├─context                #React上下文
-│  └─ThemeContext.tsx         #主题上下文配置
-│
-├─pages                  #页面模块
-
-#注：当前目录结构会经过优化，优化后补齐全部
-```
-
 ## 自定义配置
 
 ### 主题配置
@@ -138,7 +104,7 @@ Hannotate SC, monospace, -apple-system
 
 ## 贡献
 
-欢迎提交问题和拉取请求来改进这个项目。
+欢迎提交问题和拉取请求来改进这个项目，创作不易，感谢大家点点Star支持。
 
 ## 许可
 
