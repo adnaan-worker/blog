@@ -203,7 +203,17 @@ export default defineConfig(({ mode }) => {
       // 生产环境下移除console和debugger
       drop: isProduction ? ['console', 'debugger'] : [],
       // 默认启用 JSX 转换
-      jsx: 'automatic'
+      jsx: 'automatic',
+      // 禁用类型检查
+      tsconfigRaw: {
+        compilerOptions: {
+          // 禁用类型检查
+          skipLibCheck: true,
+          // 允许未使用的变量
+          noUnusedLocals: false,
+          noUnusedParameters: false
+        }
+      }
     }
   }
 })

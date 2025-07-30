@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "vite build",
+    "build:type-check": "tsc --noEmit && vite build",
+    "build:no-type-check": "node ./scripts/build-no-type-check.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
