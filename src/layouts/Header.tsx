@@ -4,7 +4,6 @@ import styled from '@emotion/styled';
 import {
   FiMenu,
   FiX,
-  FiFeather,
   FiHome,
   FiBookOpen,
   FiCode,

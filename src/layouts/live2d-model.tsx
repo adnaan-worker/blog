@@ -64,7 +64,7 @@ const PawEffect = styled(motion.div)`
   position: absolute;
   width: 20px;
   height: 15px;
-  background-color: #ffd1dc;
+  background: var(--accent-color);
   border-radius: 50% 50% 30% 30%;
   bottom: -5px;
   left: 20px;
@@ -76,7 +76,8 @@ const PawEffect = styled(motion.div)`
     position: absolute;
     width: 5px;
     height: 5px;
-    background-color: #f7c8d4;
+    background-color: var(--accent-color-hover);
+
     border-radius: 50%;
     top: 4px;
   }
@@ -400,8 +401,8 @@ export const Live2DModel = () => {
         }
 
         // 清理全局变量
-        if (window.hasOwnProperty('live2dLoadMonitor')) {
-          clearInterval((window as any).live2dLoadMonitor.checkInterval);
+        if (Object.prototype.hasOwnProperty.call(window, 'live2dLoadMonitor')) {
+          clearInterval((window as any).live2dLoadMonitor?.checkInterval);
           delete (window as any).live2dLoadMonitor;
         }
 

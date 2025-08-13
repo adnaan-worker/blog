@@ -9,7 +9,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ToastProvider } from '@/components/ui/toast';
 import ToastListener from '@/components/ui/toast-listener';
 import PageLoading from './page-loading';
-import AccentColorStyleInjector from '@/components/theme/AccentColorStyleInjector';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
