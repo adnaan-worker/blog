@@ -29,19 +29,29 @@ export interface RequestConfig {
  * @template T 响应数据类型
  */
 export interface ApiResponse<T = any> {
-  code: number; // 业务状态码
-  data: T; // 响应数据
-  message: string; // 响应消息
   success: boolean; // 请求是否成功
+  code: number; // 业务状态码
+  message: string; // 响应消息
+  data: T; // 响应数据
+  meta?: {
+    timestamp: string; // 时间戳
+    [key: string]: any; // 其他元数据
+  };
 }
 
 /**
  * 错误响应接口
  */
 export interface ErrorResponse {
+  success: false; // 请求失败
   code: number; // 错误码
   message: string; // 错误信息
-  data?: any; // 可能的错误详情数据
+  data: null; // 错误响应数据为null
+  errors?: any[]; // 可能的错误详情数据
+  meta?: {
+    timestamp: string;
+    [key: string]: any;
+  };
 }
 
 /**
@@ -58,9 +68,32 @@ export interface PaginationParams {
  * @template T 列表项数据类型
  */
 export interface PaginationResult<T = any> {
-  list: T[]; // 数据列表
+  list?: T[]; // 数据列表 (前端格式)
+  rows?: T[]; // 数据列表 (后端格式)
   total: number; // 总条数
   page: number; // 当前页码
-  pageSize: number; // 每页条数
+  pageSize?: number; // 每页条数 (前端格式)
+  limit?: number; // 每页条数 (后端格式)
   totalPages: number; // 总页数
+  hasNext?: boolean; // 是否有下一页
+  hasPrev?: boolean; // 是否有上一页
+}
+
+/**
+ * 后端分页响应格式
+ * @template T 列表项数据类型
+ */
+export interface PaginatedApiResponse<T = any> extends ApiResponse<T[]> {
+  meta: {
+    timestamp: string;
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+    [key: string]: any;
+  };
 }

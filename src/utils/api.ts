@@ -65,6 +65,35 @@ export interface Tag {
 }
 
 /**
+ * 评论相关接口类型定义
+ */
+export interface Comment {
+  id: string | number;
+  content: string;
+  postId: string | number;
+  parentId?: string | number;
+  userId?: string | number;
+  author?: string | UserInfo;
+  status?: 'approved' | 'pending' | 'spam';
+  createTime?: string;
+  updateTime?: string;
+  replies?: Comment[];
+  [key: string]: any;
+}
+
+export interface CommentParams extends PaginationParams {
+  postId?: string | number;
+  status?: 'approved' | 'pending' | 'spam';
+  parentId?: string | number;
+}
+
+export interface CreateCommentData {
+  content: string;
+  postId: string | number;
+  parentId?: string | number;
+}
+
+/**
  * API封装层
  * 所有的API请求都应该在这里定义
  */
@@ -165,6 +194,62 @@ export const API = {
      */
     getTags: (): Promise<ApiResponse<Tag[]>> => {
       return http.get('/tags');
+    },
+  },
+
+  // 评论相关
+  comment: {
+    /**
+     * 获取文章的所有评论
+     * @param postId 文章ID
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<Comment>>>
+     */
+    getCommentsByPost: (
+      postId: string | number,
+      params?: CommentParams,
+    ): Promise<ApiResponse<PaginationResult<Comment>>> => {
+      return http.get(`/posts/${postId}/comments`, params);
+    },
+
+    /**
+     * 获取评论详情
+     * @param id 评论ID
+     * @returns Promise<ApiResponse<Comment>>
+     */
+    getCommentDetail: (id: string | number): Promise<ApiResponse<Comment>> => {
+      return http.get(`/comments/${id}`);
+    },
+
+    /**
+     * 创建评论
+     * @param data 评论数据
+     * @returns Promise<ApiResponse<Comment>>
+     */
+    createComment: (data: CreateCommentData): Promise<ApiResponse<Comment>> => {
+      return http.post('/comments', data);
+    },
+
+    /**
+     * 删除评论
+     * @param id 评论ID
+     * @returns Promise<ApiResponse<null>>
+     */
+    deleteComment: (id: string | number): Promise<ApiResponse<null>> => {
+      return http.delete(`/comments/${id}`);
+    },
+
+    /**
+     * 更新评论状态（管理员）
+     * @param id 评论ID
+     * @param status 评论状态
+     * @returns Promise<ApiResponse<Comment>>
+     */
+    updateCommentStatus: (
+      id: string | number,
+      status: 'approved' | 'pending' | 'spam',
+    ): Promise<ApiResponse<Comment>> => {
+      return http.patch(`/comments/${id}/status`, { status });
     },
   },
 };

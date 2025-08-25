@@ -41,7 +41,7 @@ class HttpRequest {
     this.instance.interceptors.request.use(
       (reqConfig: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
         // 从 localStorage 获取用户信息和token
-        const userInfo = storage.local.get('user');
+        const userInfo = storage.local.get('user') as any;
         const token = userInfo?.token;
         if (token) {
           reqConfig.headers.set('Authorization', `Bearer ${token}`);
@@ -50,6 +50,18 @@ class HttpRequest {
         // 根据全局配置判断环境，添加环境标识
         if (config.isDev) {
           reqConfig.headers.set('X-Environment', 'development');
+        }
+
+        // 统一分页参数：将前端的pageSize转换为后端的limit
+        if (reqConfig.params && reqConfig.params.pageSize) {
+          reqConfig.params.limit = reqConfig.params.pageSize;
+          delete reqConfig.params.pageSize;
+        }
+
+        // 处理GET请求的查询参数
+        if (reqConfig.method === 'get' && reqConfig.data && reqConfig.data.pageSize) {
+          reqConfig.data.limit = reqConfig.data.pageSize;
+          delete reqConfig.data.pageSize;
         }
 
         return reqConfig;
@@ -67,7 +79,9 @@ class HttpRequest {
         const { data } = response;
 
         // 如果后端接口规范，统一处理响应状态
-        if (data.code !== 200 && data.code !== 0) {
+        // 后端成功响应：success: true, code: 200/201 等
+        // 后端失败响应：success: false, code: 400/401/500 等
+        if (data.success === false || (data.code && data.code >= 400)) {
           // 开发环境输出详细错误信息
           if (config.isDev) {
             console.error('API错误响应:', {
@@ -78,9 +92,32 @@ class HttpRequest {
           }
 
           return Promise.reject({
+            success: false,
             code: data.code,
             message: data.message || '服务器响应异常',
+            data: null,
+            errors: data.errors,
+            meta: data.meta,
           } as ErrorResponse) as any;
+        }
+
+        // 转换分页参数：将后端的limit转换回前端的pageSize
+        if (data.data && typeof data.data === 'object') {
+          const convertPaginationParams = (obj: any) => {
+            if (obj && typeof obj === 'object') {
+              if (obj.limit !== undefined) {
+                obj.pageSize = obj.limit;
+                delete obj.limit;
+              }
+              // 递归处理嵌套对象
+              Object.keys(obj).forEach((key) => {
+                if (obj[key] && typeof obj[key] === 'object') {
+                  convertPaginationParams(obj[key]);
+                }
+              });
+            }
+          };
+          convertPaginationParams(data.data);
         }
 
         return response;
