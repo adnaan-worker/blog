@@ -18,9 +18,7 @@ const Dashboard = lazy(() => import('@/pages/user/dashboard'));
 const Favorites = lazy(() => import('@/pages/user/favorites'));
 const Settings = lazy(() => import('@/pages/user/settings'));
 const CreateArticle = lazy(() => import('@/pages/user/create-article'));
-const UIExamples = lazy(() => import('@/pages/examples/example-ui'));
-const TestToast = lazy(() => import('@/pages/examples/toast'));
-const TestUI = lazy(() => import('@/pages/examples/ui'));
+const UILibraryDemo = lazy(() => import('@/pages/examples/ui-library-demo'));
 
 // 创建路由配置
 const router = createBrowserRouter([
@@ -124,26 +122,10 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'ui-examples',
+        path: 'ui-library-demo',
         element: (
           <Suspense fallback={<PageLoading />}>
-            <UIExamples />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'test-toast',
-        element: (
-          <Suspense fallback={<PageLoading />}>
-            <TestToast />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'test-ui',
-        element: (
-          <Suspense fallback={<PageLoading />}>
-            <TestUI />
+            <UILibraryDemo />
           </Suspense>
         ),
       },

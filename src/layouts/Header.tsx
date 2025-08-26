@@ -11,6 +11,11 @@ import {
   FiMail,
   FiLogIn,
   FiUserPlus,
+  FiSettings,
+  FiHeart,
+  FiEdit,
+  FiUser,
+  FiMonitor,
 } from 'react-icons/fi';
 import { keyframes } from '@emotion/react';
 import LoginModal from './modules/login-model';
@@ -312,9 +317,14 @@ const mainNavItems: MenuItem[] = [
     isDropdown: true,
     children: [
       {
-        path: '/ui-examples',
-        title: '组件使用示例',
-        icon: <FiInfo size={16} />,
+        path: '/ui-library-demo',
+        title: 'UI组件库演示',
+        icon: <FiMonitor size={16} />,
+      },
+      {
+        path: '/code',
+        title: '开发字体',
+        icon: <FiCode size={16} />,
       },
       {
         path: '/about',
@@ -326,11 +336,6 @@ const mainNavItems: MenuItem[] = [
         title: '联系方式',
         icon: <FiMail size={16} />,
       },
-      {
-        path: '/code',
-        title: '开发字体',
-        icon: <FiCode size={16} />,
-      },
     ],
   },
 ];
@@ -340,6 +345,36 @@ const mobileMenuGroups: MenuGroup[] = [
   {
     title: '主导航',
     items: mainNavItems,
+  },
+  {
+    title: '用户中心',
+    items: [
+      {
+        path: '/profile',
+        title: '个人资料',
+        icon: <FiUser size={16} />,
+      },
+      {
+        path: '/dashboard',
+        title: '仪表板',
+        icon: <FiMonitor size={16} />,
+      },
+      {
+        path: '/create-article',
+        title: '创建文章',
+        icon: <FiEdit size={16} />,
+      },
+      {
+        path: '/favorites',
+        title: '收藏夹',
+        icon: <FiHeart size={16} />,
+      },
+      {
+        path: '/settings',
+        title: '设置',
+        icon: <FiSettings size={16} />,
+      },
+    ],
   },
 ];
 

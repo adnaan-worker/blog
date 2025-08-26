@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiUser, FiSettings, FiFileText, FiHeart, FiLogOut } from 'react-icons/fi';
+import { FiUser, FiSettings, FiFileText, FiHeart, FiLogOut, FiEdit, FiMonitor } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
@@ -195,11 +195,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
     <div ref={userDropdownRef} style={{ position: 'relative' }}>
       {isLoggedIn ? (
         <Avatar hasImage onClick={toggleUserDropdown}>
-          {user?.avatar ? (
-            <img src={user.avatar} alt={user.username} />
-          ) : (
-            <FiUser color="var(--text-secondary)" />
-          )}
+          {user?.avatar ? <img src={user.avatar} alt={user.username} /> : <FiUser color="var(--text-secondary)" />}
         </Avatar>
       ) : (
         <Avatar onClick={toggleUserDropdown}>
@@ -230,7 +226,11 @@ const UserMenu: React.FC<UserMenuProps> = ({
               </UserDropdownItem>
 
               <UserDropdownItem to="/dashboard" onClick={handleLinkClick}>
-                <FiFileText size={16} /> 我的文章
+                <FiMonitor size={16} /> 仪表板
+              </UserDropdownItem>
+
+              <UserDropdownItem to="/create-article" onClick={handleLinkClick}>
+                <FiEdit size={16} /> 创建文章
               </UserDropdownItem>
 
               <UserDropdownItem to="/favorites" onClick={handleLinkClick}>
