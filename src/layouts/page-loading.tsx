@@ -42,29 +42,25 @@ const loadingMessages = [
 const ContentLoading = () => {
   // 随机选择一条加载文案
   const [message, setMessage] = useState('');
-  
+
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * loadingMessages.length);
     setMessage(loadingMessages[randomIndex]);
   }, []);
 
   return (
-    <LoadingContainer
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
+    <LoadingContainer initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
       <img
-      src={pageLoadingGif}
-      alt="加载中..."
-      style={{
-        width: '200px',
-        objectFit: 'contain',
-        borderRadius: '10px',
-        boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.1)',
-        marginBottom: '20px',
-      }}
-    />
+        src={pageLoadingGif}
+        alt="加载中..."
+        style={{
+          width: '100px',
+          objectFit: 'contain',
+          // borderRadius: '10px',
+          // boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.1)',
+          marginBottom: '20px',
+        }}
+      />
       <LoadingText
         initial={{ opacity: 0.5, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
