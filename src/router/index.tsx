@@ -13,10 +13,10 @@ const Projects = lazy(() => import('@/pages/projects'));
 const ProjectDetail = lazy(() => import('@/pages/projects/detail'));
 
 // 个人中心相关页面
-const Profile = lazy(() => import('@/pages/user/profile'));
-const Dashboard = lazy(() => import('@/pages/user/dashboard'));
-const Favorites = lazy(() => import('@/pages/user/favorites'));
-const Settings = lazy(() => import('@/pages/user/settings'));
+const Profile = lazy(() => import('@/pages/user/Profile'));
+const Dashboard = lazy(() => import('@/pages/user/Dashboard'));
+const Favorites = lazy(() => import('@/pages/user/Favorites'));
+const Settings = lazy(() => import('@/pages/user/Settings'));
 const CreateArticle = lazy(() => import('@/pages/user/create-article'));
 const UILibraryDemo = lazy(() => import('@/pages/examples/ui-library-demo'));
 

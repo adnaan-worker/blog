@@ -27,7 +27,7 @@ const config: Config = {
   // 是否为开发环境
   isDev,
   // API基础URL
-  apiBaseUrl: env.VITE_API_BASE_URL || (isDev ? '/api' : 'https://api.example.com'),
+  apiBaseUrl: env.VITE_API_BASE_URL || '/api',
   // 请求超时时间
   timeout: Number(env.VITE_REQUEST_TIMEOUT) || (isDev ? 30000 : 10000),
   // 应用标题
