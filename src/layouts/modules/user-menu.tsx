@@ -222,23 +222,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
               </UserDropdownHeader>
 
               <UserDropdownItem to="/profile" onClick={handleLinkClick}>
-                <FiUser size={16} /> 个人资料
-              </UserDropdownItem>
-
-              <UserDropdownItem to="/dashboard" onClick={handleLinkClick}>
-                <FiMonitor size={16} /> 仪表板
-              </UserDropdownItem>
-
-              <UserDropdownItem to="/create-article" onClick={handleLinkClick}>
-                <FiEdit size={16} /> 创建文章
-              </UserDropdownItem>
-
-              <UserDropdownItem to="/favorites" onClick={handleLinkClick}>
-                <FiHeart size={16} /> 我的收藏
-              </UserDropdownItem>
-
-              <UserDropdownItem to="/settings" onClick={handleLinkClick}>
-                <FiSettings size={16} /> 设置
+                <FiUser size={16} /> 个人中心
               </UserDropdownItem>
 
               <UserDropdownLogout onClick={handleLogout}>

@@ -1,348 +1,447 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiUser, FiGithub, FiTwitter, FiInstagram, FiLinkedin, FiEdit } from 'react-icons/fi';
+import { FiFileText, FiHeart, FiEye, FiMessageSquare, FiUsers, FiBookmark, FiEdit, FiTrendingUp } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { toast } from '@/ui';
+import {
+  UserInfoCard,
+  DataStatsGrid,
+  ActivityFeed,
+  QuickActions,
+  AchievementBadges,
+  EditProfileModal,
+} from '@/components/profile';
+import type { UserProfile, UserStats, Activity, Achievement, EditProfileForm } from '@/components/profile/types';
 
-// 定义样式组件
+// 主容器 - 参考Shiro的布局模式
 const ProfileContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
+`;
+
+// 页面标题区域
+const PageHeader = styled.div`
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 1.875rem;
+    font-weight: 300;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+`;
+
+// 网格布局容器
+const GridLayout = styled.div`
+  display: grid;
+  gap: 1.5rem;
+
+  /* 移动端：单列 */
+  grid-template-columns: 1fr;
+
+  /* 平板及以上：两列 */
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 2fr;
+  }
+
+  /* 大屏：三列 */
+  @media (min-width: 1024px) {
+    grid-template-columns: 1fr 2fr 1fr;
+  }
+`;
+
+// 侧边栏区域
+const Sidebar = styled.div`
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  gap: 2rem;
-  padding: 1rem 0;
+  gap: 1.5rem;
 `;
 
-const ProfileHeader = styled.div`
+// 主内容区域
+const MainContent = styled.div`
   display: flex;
-  align-items: center;
-  gap: 2rem;
-  padding: 1.5rem;
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    text-align: center;
-    padding: 1.5rem 1rem;
-  }
+  flex-direction: column;
+  gap: 1.5rem;
 `;
 
-const AvatarContainer = styled.div`
-  position: relative;
-`;
-
-const Avatar = styled.div`
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid var(--accent-color-alpha);
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  @media (max-width: 768px) {
-    width: 120px;
-    height: 120px;
-  }
-`;
-
-const EditAvatarButton = styled.button`
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--accent-color);
-  color: white;
-  border: none;
+// 右侧边栏
+const RightSidebar = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  flex-direction: column;
+  gap: 1.5rem;
 
-  &:hover {
-    transform: scale(1.1);
-    background: var(--accent-color-dark);
+  @media (max-width: 1023px) {
+    display: none;
   }
 `;
-
-const ProfileInfo = styled.div`
-  flex: 1;
-`;
-
-const UserName = styled.h1`
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-`;
-
-const UserBio = styled.p`
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-  line-height: 1.6;
-`;
-
-const SocialLinks = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-
-  @media (max-width: 768px) {
-    justify-content: center;
-  }
-`;
-
-const SocialLink = styled.a`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--accent-color);
-    color: white;
-    transform: translateY(-3px);
-  }
-`;
-
-const ProfileSection = styled.div`
-  padding: 1.5rem;
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  svg {
-    color: var(--accent-color);
-  }
-`;
-
-const InfoItem = styled.div`
-  display: flex;
-  margin-bottom: 1rem;
-`;
-
-const InfoLabel = styled.div`
-  min-width: 150px;
-  font-weight: 600;
-  color: var(--text-primary);
-`;
-
-const InfoValue = styled.div`
-  flex: 1;
-  color: var(--text-secondary);
-`;
-
-const EditButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-left: auto;
-  padding: 0.5rem 1rem;
-  background: var(--accent-color-alpha);
-  color: var(--accent-color);
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--accent-color);
-    color: white;
-  }
-`;
-
-const StatsContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StatCard = styled.div`
-  padding: 1.5rem;
-  background: var(--bg-primary);
-  border-radius: 8px;
-  text-align: center;
-  transition: all 0.2s ease;
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const StatNumber = styled.div`
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--accent-color);
-  margin-bottom: 0.5rem;
-`;
-
-const StatLabel = styled.div`
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-`;
-
-// 页面动画
-const pageVariants = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: { duration: 0.5 },
-  },
-};
 
 const Profile: React.FC = () => {
+  const navigate = useNavigate();
+
+  // 状态管理
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUserLoading, setIsUserLoading] = useState(false);
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
+  const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // 模拟用户数据
+  const [user, setUser] = useState<UserProfile>({
+    id: 'user-1',
+    username: '张三',
+    email: 'zhangsan@example.com',
+    avatar: '/api/placeholder/120/120',
+    bio: '热爱技术分享的前端开发者，专注于React生态系统',
+    location: '北京市',
+    website: 'https://zhangsan.dev',
+    joinDate: '2022-03-15',
+    socialLinks: {
+      github: 'https://github.com/zhangsan',
+      twitter: 'https://twitter.com/zhangsan',
+      linkedin: 'https://linkedin.com/in/zhangsan',
+      instagram: '',
+    },
+  });
+
+  // 统计数据
+  const [userStats, setUserStats] = useState<UserStats[]>([
+    {
+      label: '发布文章',
+      value: 24,
+      icon: <FiFileText />,
+      highlight: true,
+      trend: { direction: 'up', percentage: 12 },
+    },
+    {
+      label: '总阅读量',
+      value: '3.2K',
+      icon: <FiEye />,
+      trend: { direction: 'up', percentage: 8 },
+    },
+    {
+      label: '获得点赞',
+      value: 128,
+      icon: <FiHeart />,
+      trend: { direction: 'up', percentage: 15 },
+    },
+    {
+      label: '评论回复',
+      value: 89,
+      icon: <FiMessageSquare />,
+      trend: { direction: 'down', percentage: 3 },
+    },
+    {
+      label: '关注者',
+      value: 67,
+      icon: <FiUsers />,
+      trend: { direction: 'up', percentage: 5 },
+    },
+    {
+      label: '收藏数',
+      value: 45,
+      icon: <FiBookmark />,
+    },
+  ]);
+
+  // 活动数据
+  const [activities, setActivities] = useState<Activity[]>([
+    {
+      id: 'activity-1',
+      type: 'article_published',
+      title: '发布了新文章《React 18 新特性详解》',
+      description: '深入探讨React 18引入的并发渲染机制',
+      timestamp: '2024-01-15T10:30:00Z',
+      icon: <FiEdit />,
+      link: '/blog/detail/1',
+    },
+    {
+      id: 'activity-2',
+      type: 'like_received',
+      title: '收到了来自用户的点赞',
+      description: '文章《TypeScript 高级类型》获得了新的点赞',
+      timestamp: '2024-01-15T08:15:00Z',
+      icon: <FiHeart />,
+    },
+    {
+      id: 'activity-3',
+      type: 'comment_received',
+      title: '回复了文章评论',
+      description: '在《Vue3 实践指南》下回复了用户提问',
+      timestamp: '2024-01-14T16:45:00Z',
+      icon: <FiMessageSquare />,
+    },
+    {
+      id: 'activity-4',
+      type: 'article_trending',
+      title: '文章《Next.js 最佳实践》进入热门',
+      description: '获得了大量阅读和讨论',
+      timestamp: '2024-01-13T14:20:00Z',
+      icon: <FiTrendingUp />,
+    },
+  ]);
+
+  // 成就数据
+  const [achievements, setAchievements] = useState<Achievement[]>([
+    {
+      id: 'achievement-1',
+      name: '作者',
+      description: '发布第一篇文章',
+      icon: '📝',
+      unlocked: true,
+      unlockedAt: '2022-03-20',
+    },
+    {
+      id: 'achievement-2',
+      name: '热门',
+      description: '文章获得100+点赞',
+      icon: '⭐',
+      unlocked: true,
+      unlockedAt: '2022-05-15',
+    },
+    {
+      id: 'achievement-3',
+      name: '高产',
+      description: '发布50篇文章',
+      icon: '🚀',
+      unlocked: false,
+      progress: { current: 24, target: 50 },
+    },
+    {
+      id: 'achievement-4',
+      name: '影响力',
+      description: '获得1000+关注者',
+      icon: '🏆',
+      unlocked: false,
+      progress: { current: 67, target: 1000 },
+    },
+    {
+      id: 'achievement-5',
+      name: '活跃',
+      description: '连续7天发布内容',
+      icon: '🔥',
+      unlocked: false,
+      progress: { current: 3, target: 7 },
+    },
+    {
+      id: 'achievement-6',
+      name: '社交达人',
+      description: '回复100条评论',
+      icon: '💬',
+      unlocked: false,
+      progress: { current: 89, target: 100 },
+    },
+  ]);
+
+  // 处理函数
+  const handleEditProfile = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleSaveProfile = async (formData: EditProfileForm, avatarFile?: File) => {
+    setIsUserLoading(true);
+    try {
+      // 模拟API调用
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // 更新用户数据
+      setUser((prev) => ({
+        ...prev,
+        username: formData.username,
+        email: formData.email,
+        bio: formData.bio,
+        location: formData.location,
+        website: formData.website,
+        socialLinks: formData.socialLinks,
+        // 如果有新头像，这里应该是上传后的URL
+        avatar: avatarFile ? URL.createObjectURL(avatarFile) : prev.avatar,
+      }));
+
+      toast.success('个人资料更新成功！');
+      setIsEditModalOpen(false);
+    } catch (error) {
+      toast.error('更新失败，请重试');
+    } finally {
+      setIsUserLoading(false);
+    }
+  };
+
+  const handleAvatarChange = async (file: File) => {
+    setIsUserLoading(true);
+    try {
+      // 模拟头像上传
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // 更新头像
+      setUser((prev) => ({
+        ...prev,
+        avatar: URL.createObjectURL(file),
+      }));
+
+      toast.success('头像更新成功！');
+    } catch (error) {
+      toast.error('头像上传失败，请重试');
+    } finally {
+      setIsUserLoading(false);
+    }
+  };
+
+  const handleStatClick = (stat: UserStats) => {
+    // 根据统计项跳转到对应页面
+    switch (stat.label) {
+      case '发布文章':
+        navigate('/user/dashboard');
+        break;
+      case '关注者':
+        navigate('/user/followers');
+        break;
+      default:
+        console.log('查看详细统计:', stat.label);
+    }
+  };
+
+  const handleActivityClick = (activity: Activity) => {
+    if (activity.link) {
+      navigate(activity.link);
+    }
+  };
+
+  const handleRefreshActivities = async () => {
+    setIsRefreshing(true);
+    try {
+      // 模拟刷新数据
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 可以在这里重新获取活动数据
+      toast.success('活动数据已更新');
+    } catch (error) {
+      toast.error('刷新失败');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleLoadMoreActivities = async () => {
+    setIsActivitiesLoading(true);
+    try {
+      // 模拟加载更多数据
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 这里可以添加更多活动数据
+      console.log('加载更多活动');
+    } catch (error) {
+      toast.error('加载失败');
+    } finally {
+      setIsActivitiesLoading(false);
+    }
+  };
+
+  // 快捷操作处理
+  const handleCreateArticle = () => {
+    navigate('/user/create-article');
+  };
+
+  const handleViewAnalytics = () => {
+    navigate('/user/analytics');
+  };
+
+  const handleSettings = () => {
+    navigate('/user/settings');
+  };
+
+  const handleExportData = () => {
+    // 模拟数据导出
+    toast.success('数据导出已开始，完成后将发送到您的邮箱');
+  };
+
+  const handleHelp = () => {
+    window.open('/help', '_blank');
+  };
+
+  const handleLogout = () => {
+    // 处理退出登录
+    if (confirm('确定要退出登录吗？')) {
+      navigate('/login');
+    }
+  };
+
+  const handleBadgeClick = (achievement: Achievement) => {
+    toast.info(`${achievement.name}: ${achievement.description}`);
+  };
+
   return (
-    <>
-      <motion.div variants={pageVariants} initial="initial" animate="animate">
         <ProfileContainer>
-          <ProfileHeader>
-            <AvatarContainer>
-              <Avatar>
-                <img
-                  src="https://foruda.gitee.com/avatar/1715931924378943527/5352827_adnaan_1715931924.png!avatar200"
-                  alt="用户头像"
-                />
-              </Avatar>
-              <EditAvatarButton>
-                <FiEdit size={16} />
-              </EditAvatarButton>
-            </AvatarContainer>
+      <PageHeader>
+        <h1>个人中心</h1>
+        <p>管理你的个人信息和内容数据</p>
+      </PageHeader>
 
-            <ProfileInfo>
-              <UserName>Adnaan</UserName>
-              <UserBio>
-                全栈开发者，热爱编程和技术分享。专注于React、Vue和Node.js生态系统，喜欢探索新技术并分享学习心得。
-              </UserBio>
+      <GridLayout>
+        {/* 左侧边栏 - 用户信息 */}
+        <Sidebar>
+          <UserInfoCard
+            user={user}
+            onEditProfile={handleEditProfile}
+            onAvatarChange={handleAvatarChange}
+            isLoading={isUserLoading}
+          />
+        </Sidebar>
 
-              <SocialLinks>
-                <SocialLink href="https://github.com" target="_blank" rel="noopener noreferrer">
-                  <FiGithub size={18} />
-                </SocialLink>
-                <SocialLink href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-                  <FiTwitter size={18} />
-                </SocialLink>
-                <SocialLink href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
-                  <FiLinkedin size={18} />
-                </SocialLink>
-                <SocialLink href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-                  <FiInstagram size={18} />
-                </SocialLink>
-              </SocialLinks>
-            </ProfileInfo>
-          </ProfileHeader>
+        {/* 主内容区域 */}
+        <MainContent>
+          {/* 数据统计 */}
+          <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
 
-          <ProfileSection>
-            <div
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}
-            >
-              <SectionTitle>
-                <FiUser size={20} /> 个人信息
-              </SectionTitle>
-              <EditButton>
-                <FiEdit size={16} /> 编辑资料
-              </EditButton>
-            </div>
+          {/* 最近活动 */}
+          <ActivityFeed
+            activities={activities}
+            onActivityClick={handleActivityClick}
+            onRefresh={handleRefreshActivities}
+            onLoadMore={handleLoadMoreActivities}
+            hasMore={true}
+            isLoading={isActivitiesLoading}
+            isRefreshing={isRefreshing}
+          />
+        </MainContent>
 
-            <InfoItem>
-              <InfoLabel>用户名</InfoLabel>
-              <InfoValue>adnaan</InfoValue>
-            </InfoItem>
+        {/* 右侧边栏 - 快捷操作和成就 */}
+        <RightSidebar>
+          <QuickActions
+            onCreateArticle={handleCreateArticle}
+            onEditProfile={handleEditProfile}
+            onSettings={handleSettings}
+            onExportData={handleExportData}
+            onViewAnalytics={handleViewAnalytics}
+            onHelp={handleHelp}
+            onLogout={handleLogout}
+          />
 
-            <InfoItem>
-              <InfoLabel>真实姓名</InfoLabel>
-              <InfoValue>张三</InfoValue>
-            </InfoItem>
+          <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+        </RightSidebar>
+      </GridLayout>
 
-            <InfoItem>
-              <InfoLabel>邮箱</InfoLabel>
-              <InfoValue>example@example.com</InfoValue>
-            </InfoItem>
-
-            <InfoItem>
-              <InfoLabel>职业</InfoLabel>
-              <InfoValue>全栈开发工程师</InfoValue>
-            </InfoItem>
-
-            <InfoItem>
-              <InfoLabel>所在地</InfoLabel>
-              <InfoValue>北京, 中国</InfoValue>
-            </InfoItem>
-
-            <InfoItem>
-              <InfoLabel>个人网站</InfoLabel>
-              <InfoValue>https://adnaan.dev</InfoValue>
-            </InfoItem>
-
-            <InfoItem>
-              <InfoLabel>加入时间</InfoLabel>
-              <InfoValue>2024年5月15日</InfoValue>
-            </InfoItem>
-          </ProfileSection>
-
-          <ProfileSection>
-            <SectionTitle>
-              <FiUser size={20} /> 统计数据
-            </SectionTitle>
-
-            <StatsContainer>
-              <StatCard>
-                <StatNumber>42</StatNumber>
-                <StatLabel>发布的文章</StatLabel>
-              </StatCard>
-
-              <StatCard>
-                <StatNumber>158</StatNumber>
-                <StatLabel>收到的点赞</StatLabel>
-              </StatCard>
-
-              <StatCard>
-                <StatNumber>36</StatNumber>
-                <StatLabel>收藏的文章</StatLabel>
-              </StatCard>
-
-              <StatCard>
-                <StatNumber>89</StatNumber>
-                <StatLabel>评论数</StatLabel>
-              </StatCard>
-            </StatsContainer>
-          </ProfileSection>
+      {/* 编辑资料模态框 */}
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        user={user}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveProfile}
+        isLoading={isUserLoading}
+      />
         </ProfileContainer>
-      </motion.div>
-    </>
   );
 };
 
