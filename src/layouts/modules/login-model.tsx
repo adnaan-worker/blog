@@ -4,7 +4,12 @@ import { FiUser, FiLock, FiGithub, FiTwitter } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
-import Modal from '@/components/common/modal';
+import { Modal } from '@/components/ui';
+
+// 模态框内容容器
+const ModalContent = styled.div`
+  padding: 1.5rem 0;
+`;
 
 // 标题
 const Title = styled.h2`
@@ -37,13 +42,13 @@ const Input = styled.input`
   color: var(--text-primary);
   font-size: 0.95rem;
   transition: all 0.2s ease;
-  
+
   &:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px var(--accent-color-alpha);
   }
-  
+
   &::placeholder {
     color: var(--text-tertiary);
   }
@@ -73,7 +78,7 @@ const SubmitButton = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   margin-top: 0.5rem;
-  
+
   &:hover {
     background: var(--accent-color);
     color: white;
@@ -81,13 +86,13 @@ const SubmitButton = styled.button`
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     filter: brightness(1.1);
   }
-  
+
   &:active {
     transform: translateY(0);
     box-shadow: none;
     filter: brightness(0.95);
   }
-  
+
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
@@ -107,13 +112,13 @@ const ToggleForm = styled.button`
   padding: 0.5rem;
   margin-top: 1rem;
   transition: all 0.2s ease;
-  
+
   &:hover {
     color: var(--accent-color);
     text-decoration: underline;
     filter: brightness(1.2);
   }
-  
+
   &:active {
     transform: translateY(1px);
     filter: brightness(0.9);
@@ -140,7 +145,7 @@ const SocialButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   &:hover {
     background: var(--bg-tertiary);
     transform: translateY(-2px);
@@ -175,61 +180,63 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <Title>登录账号</Title>
-      
-      <Form onSubmit={handleSubmit}>
-        <InputGroup>
-          <InputIcon>
-            <FiUser size={18} />
-          </InputIcon>
-          <Input
-            type="text"
-            name="username"
-            placeholder="用户名"
-            value={formData.username}
-            onChange={handleChange}
-            required
-          />
-        </InputGroup>
-        
-        <InputGroup>
-          <InputIcon>
-            <FiLock size={18} />
-          </InputIcon>
-          <Input
-            type="password"
-            name="password"
-            placeholder="密码"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </InputGroup>
-        
-        <SubmitButton type="submit" disabled={loading}>
-          {loading ? '处理中...' : '登录'}
-        </SubmitButton>
-        
-        <ToggleForm type="button" onClick={onSwitchToRegister}>
-          没有账号？立即注册
-        </ToggleForm>
-      </Form>
-      
-      <SocialLoginGroup>
-        <SocialButton type="button">
-          <FiGithub size={20} />
-        </SocialButton>
-        <SocialButton type="button">
-          <FiTwitter size={20} />
-        </SocialButton>
-      </SocialLoginGroup>
+      <ModalContent>
+        <Title>登录账号</Title>
+
+        <Form onSubmit={handleSubmit}>
+          <InputGroup>
+            <InputIcon>
+              <FiUser size={18} />
+            </InputIcon>
+            <Input
+              type="text"
+              name="username"
+              placeholder="用户名"
+              value={formData.username}
+              onChange={handleChange}
+              required
+            />
+          </InputGroup>
+
+          <InputGroup>
+            <InputIcon>
+              <FiLock size={18} />
+            </InputIcon>
+            <Input
+              type="password"
+              name="password"
+              placeholder="密码"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </InputGroup>
+
+          <SubmitButton type="submit" disabled={loading}>
+            {loading ? '处理中...' : '登录'}
+          </SubmitButton>
+
+          <ToggleForm type="button" onClick={onSwitchToRegister}>
+            没有账号？立即注册
+          </ToggleForm>
+        </Form>
+
+        <SocialLoginGroup>
+          <SocialButton type="button">
+            <FiGithub size={20} />
+          </SocialButton>
+          <SocialButton type="button">
+            <FiTwitter size={20} />
+          </SocialButton>
+        </SocialLoginGroup>
+      </ModalContent>
     </Modal>
   );
 };
 
-export default LoginModal; 
+export default LoginModal;

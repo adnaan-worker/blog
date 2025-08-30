@@ -2,6 +2,20 @@ import toast from './toast';
 import alert from './alert';
 import confirmDialog, { confirm } from './confirm';
 import tooltip from './tooltip';
+import modal from './modal';
+
+// 声明全局类型
+declare global {
+  interface Window {
+    UI: {
+      toast: typeof toast;
+      alert: typeof alert;
+      confirm: typeof confirm;
+      tooltip: typeof tooltip;
+      modal: typeof modal;
+    };
+  }
+}
 
 /**
  * 全局UI初始化器
@@ -31,6 +45,14 @@ export const initGlobalUI = () => {
         show: tooltip.show,
         hide: tooltip.hide,
       },
+      modal: {
+        show: modal.show,
+        confirm: modal.confirm,
+        info: modal.info,
+        success: modal.success,
+        warning: modal.warning,
+        error: modal.error,
+      },
     };
 
     // 同时挂载到全局命名空间（可选）
@@ -38,6 +60,7 @@ export const initGlobalUI = () => {
     (window as any).Alert = window.UI.alert;
     (window as any).Confirm = window.UI.confirm;
     (window as any).Tooltip = window.UI.tooltip;
+    (window as any).Modal = window.UI.modal;
   }
 };
 
@@ -51,6 +74,7 @@ export const UI = {
   confirm: confirmDialog,
   confirmDialog,
   tooltip,
+  modal,
 
   // 初始化方法
   init: initGlobalUI,
@@ -60,4 +84,4 @@ export const UI = {
 export default UI;
 
 // 单独导出各组件（保持向后兼容）
-export { toast, alert, confirm, confirmDialog, tooltip };
+export { toast, alert, confirm, confirmDialog, tooltip, modal };

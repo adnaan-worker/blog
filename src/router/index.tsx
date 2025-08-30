@@ -14,10 +14,6 @@ const ProjectDetail = lazy(() => import('@/pages/projects/detail'));
 
 // 个人中心相关页面
 const Profile = lazy(() => import('@/pages/user/Profile'));
-const Dashboard = lazy(() => import('@/pages/user/Dashboard'));
-const Favorites = lazy(() => import('@/pages/user/Favorites'));
-const Settings = lazy(() => import('@/pages/user/Settings'));
-const CreateArticle = lazy(() => import('@/pages/user/create-article'));
 const UILibraryDemo = lazy(() => import('@/pages/examples/ui-library-demo'));
 
 // 创建路由配置
@@ -86,38 +82,6 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoading />}>
             <Profile />
-          </Suspense>
-        ),
-      },
-      {
-        path: '/dashboard',
-        element: (
-          <Suspense fallback={<PageLoading />}>
-            <Dashboard />
-          </Suspense>
-        ),
-      },
-      {
-        path: '/create-article',
-        element: (
-          <Suspense fallback={<PageLoading />}>
-            <CreateArticle />
-          </Suspense>
-        ),
-      },
-      {
-        path: '/favorites',
-        element: (
-          <Suspense fallback={<PageLoading />}>
-            <Favorites />
-          </Suspense>
-        ),
-      },
-      {
-        path: '/settings',
-        element: (
-          <Suspense fallback={<PageLoading />}>
-            <Settings />
           </Suspense>
         ),
       },
