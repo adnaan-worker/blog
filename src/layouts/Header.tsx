@@ -306,6 +306,11 @@ const mainNavItems: MenuItem[] = [
     icon: <FiBookOpen size={16} />,
   },
   {
+    path: '/notes',
+    title: '手记',
+    icon: <FiEdit size={16} />,
+  },
+  {
     path: '/projects',
     title: '项目',
     icon: <FiCode size={16} />,

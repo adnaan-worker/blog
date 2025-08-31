@@ -9,6 +9,7 @@ const NotFound = lazy(() => import('@/pages/not-fund/not-fund'));
 const Code = lazy(() => import('@/pages/examples/code'));
 const Blog = lazy(() => import('@/pages/blog'));
 const BlogDetail = lazy(() => import('@/pages/blog/detail'));
+const Notes = lazy(() => import('@/pages/notes'));
 const Projects = lazy(() => import('@/pages/projects'));
 const ProjectDetail = lazy(() => import('@/pages/projects/detail'));
 
@@ -56,6 +57,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoading />}>
             <BlogDetail />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/notes',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <Notes />
           </Suspense>
         ),
       },

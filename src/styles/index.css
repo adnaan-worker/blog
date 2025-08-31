@@ -541,3 +541,106 @@ pre,
   padding: 0.2rem 0.5rem;
   margin-left: -0.5rem;
 }
+
+/* 手记页面专用样式 */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+/* 手记时间线专用样式 */
+.notes-timeline {
+  /* 时间线渐变效果 */
+  .timeline-gradient::before {
+    background: linear-gradient(180deg, 
+      transparent 0%, 
+      var(--accent-color) 10%, 
+      var(--accent-color) 90%, 
+      transparent 100%
+    );
+  }
+  
+  /* 手记卡片悬浮效果 */
+  .note-card {
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .note-card:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+  
+  /* 标签悬浮效果 */
+  .note-tag {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .note-tag::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+  }
+  
+  .note-tag:hover::before {
+    left: 100%;
+  }
+  
+  /* 元信息图标动画 */
+  .meta-icon {
+    transition: transform 0.2s ease;
+  }
+  
+  .meta-icon:hover {
+    transform: scale(1.2) rotate(5deg);
+  }
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .notes-timeline .timeline-item {
+    padding-left: 50px;
+  }
+  
+  .notes-timeline .timeline-dot {
+    left: 10px;
+    width: 8px;
+    height: 8px;
+  }
+}
+
+/* 深色模式优化 */
+[data-theme="dark"] {
+  .notes-timeline .note-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    border-color: #404040;
+  }
+  
+  .notes-timeline .note-card:hover {
+    background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+  }
+}
