@@ -13,7 +13,6 @@ import {
 } from '@/components/profile';
 import type { UserProfile, UserStats, Activity, Achievement, EditProfileForm } from '@/components/profile/types';
 
-// 主容器 - 参考Shiro的布局模式
 const ProfileContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
@@ -383,12 +382,7 @@ const Profile: React.FC = () => {
   };
 
   return (
-        <ProfileContainer>
-      <PageHeader>
-        <h1>个人中心</h1>
-        <p>管理你的个人信息和内容数据</p>
-      </PageHeader>
-
+    <ProfileContainer>
       <GridLayout>
         {/* 左侧边栏 - 用户信息 */}
         <Sidebar>
@@ -441,7 +435,7 @@ const Profile: React.FC = () => {
         onSave={handleSaveProfile}
         isLoading={isUserLoading}
       />
-        </ProfileContainer>
+    </ProfileContainer>
   );
 };
 

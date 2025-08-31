@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
-import TimelineMasonry, { TimelineItem } from '@/components/common/TimelineMasonry';
+import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 
 // 手记数据类型

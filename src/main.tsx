@@ -6,7 +6,7 @@ import router from './router';
 import store, { AppDispatch } from './store';
 import { initializeTheme } from './store/modules/themeSlice';
 import './styles/index.css';
-import AccentColorStyleInjector from './components/theme/AccentColorStyleInjector';
+import AccentColorStyleInjector from './components/theme/accent-color-style-injector';
 // 导入UI组件库并初始化
 import UI from './ui';
 
