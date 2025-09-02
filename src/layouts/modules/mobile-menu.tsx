@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
+import { FiLogOut, FiX } from 'react-icons/fi';
 import type { RootState } from '@/store';
 
 // 修改移动端菜单样式
 const MobileMenuContainer = styled(motion.div)`
   position: fixed;
   width: 100vw;
-  height: calc(100vh - var(--header-height));
-  top: var(--header-height);
+  height: 100vh;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
@@ -19,6 +20,7 @@ const MobileMenuContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  touch-action: none; /* 禁用触摸滚动 */
 
   [data-theme='dark'] & {
     background: var(--bg-primary);
@@ -29,11 +31,50 @@ const MobileMenuContent = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
+  padding-top: calc(var(--header-height) + 1rem);
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 
   &::-webkit-scrollbar {
     display: none;
+  }
+`;
+
+const MobileMenuHeader = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 1;
+
+  [data-theme='dark'] & {
+    background: var(--bg-primary);
+  }
+`;
+
+const MobileMenuCloseButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--bg-secondary);
   }
 `;
 
@@ -168,6 +209,7 @@ interface MobileMenuProps {
   onLinkClick: () => void;
   handleLogin?: () => void;
   handleRegister?: () => void;
+  handleLogout?: () => void;
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -177,9 +219,31 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   onLinkClick,
   handleLogin,
   handleRegister,
+  handleLogout,
 }) => {
   const location = useLocation();
-  const { isLoggedIn } = useSelector((state: RootState) => state.user);
+  const { isLoggedIn, user } = useSelector((state: RootState) => state.user);
+
+  // 当菜单打开时锁定背景滚动
+  useEffect(() => {
+    if (isOpen) {
+      // 保存原始滚动位置
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+
+      return () => {
+        // 恢复滚动
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -260,21 +324,84 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             </React.Fragment>
           ))}
 
-          {/* 渲染账户菜单项（如果用户未登录且有账户菜单项） */}
-          {!isLoggedIn && accountItems && accountItems.length > 0 && (
-            <>
-              <MobileMenuDivider />
-              <MobileMenuSection>
-                <MobileMenuTitle>账户</MobileMenuTitle>
-                {accountItems.map((item) => (
-                  <MobileAuthButton key={item.path} onClick={() => handleSpecialPathClick(item.path)}>
-                    {item.icon}
-                    {item.title}
-                  </MobileAuthButton>
-                ))}
-              </MobileMenuSection>
-            </>
-          )}
+          {/* 渲染账户菜单项 */}
+          <MobileMenuDivider />
+          <MobileMenuSection>
+            <MobileMenuTitle>账户</MobileMenuTitle>
+            {isLoggedIn ? (
+              // 已登录用户显示用户信息和退出登录
+              <>
+                <div
+                  style={{
+                    padding: '0.75rem 0.5rem',
+                    margin: '0.25rem 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      border: '2px solid var(--accent-color-alpha)',
+                    }}
+                  >
+                    <img
+                      src={
+                        user?.avatar ||
+                        'https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30'
+                      }
+                      alt="用户头像"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      {user?.username || 'adnaan'}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.8rem',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      普通用户
+                    </div>
+                  </div>
+                </div>
+
+                <MobileAuthButton
+                  onClick={() => {
+                    if (handleLogout) {
+                      handleLogout();
+                    }
+                    onLinkClick();
+                  }}
+                >
+                  <FiLogOut size={16} />
+                  退出登录
+                </MobileAuthButton>
+              </>
+            ) : (
+              // 未登录用户显示登录和注册
+              accountItems &&
+              accountItems.map((item) => (
+                <MobileAuthButton key={item.path} onClick={() => handleSpecialPathClick(item.path)}>
+                  {item.icon}
+                  {item.title}
+                </MobileAuthButton>
+              ))
+            )}
+          </MobileMenuSection>
         </MobileMenuContent>
       </MobileMenuContainer>
     </>

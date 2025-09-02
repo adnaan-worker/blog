@@ -18,6 +18,9 @@ import {
   FiMonitor,
 } from 'react-icons/fi';
 import { keyframes } from '@emotion/react';
+import { useDispatch } from 'react-redux';
+import { logoutUser } from '@/store/modules/userSlice';
+import type { AppDispatch } from '@/store';
 import LoginModal from './modules/login-model';
 import RegisterModal from './modules/register-modal';
 import NavLinks from './modules/nav-links';
@@ -356,28 +359,8 @@ const mobileMenuGroups: MenuGroup[] = [
     items: [
       {
         path: '/profile',
-        title: '个人资料',
+        title: '个人中心',
         icon: <FiUser size={16} />,
-      },
-      {
-        path: '/dashboard',
-        title: '仪表板',
-        icon: <FiMonitor size={16} />,
-      },
-      {
-        path: '/create-article',
-        title: '创建文章',
-        icon: <FiEdit size={16} />,
-      },
-      {
-        path: '/favorites',
-        title: '收藏夹',
-        icon: <FiHeart size={16} />,
-      },
-      {
-        path: '/settings',
-        title: '设置',
-        icon: <FiSettings size={16} />,
       },
     ],
   },
@@ -399,6 +382,7 @@ const accountMenuItems: MenuItem[] = [
 
 // Header组件
 const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
+  const dispatch = useDispatch<AppDispatch>();
   const [internalScrolled, setInternalScrolled] = useState(scrolled);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -583,6 +567,10 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
         onLinkClick={handleLinkClick}
         handleLogin={handleLogin}
         handleRegister={handleRegister}
+        handleLogout={() => {
+          dispatch(logoutUser());
+          handleLinkClick();
+        }}
       />
 
       {/* 登录和注册模态框 */}
