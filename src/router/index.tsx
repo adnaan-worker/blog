@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createHashRouter } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import RootLayout from '@/layouts';
 import PageLoading from '@/layouts/page-loading';
@@ -18,7 +18,7 @@ const Profile = lazy(() => import('@/pages/user/Profile'));
 const UILibraryDemo = lazy(() => import('@/pages/examples/ui-library-demo'));
 
 // 创建路由配置
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '/',
     element: <RootLayout />,
