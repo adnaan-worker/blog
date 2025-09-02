@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiFileText, FiHeart, FiEye, FiMessageSquare, FiUsers, FiBookmark, FiEdit, FiTrendingUp } from 'react-icons/fi';
+import {
+  FiFileText,
+  FiHeart,
+  FiEye,
+  FiMessageSquare,
+  FiUsers,
+  FiBookmark,
+  FiEdit,
+  FiTrendingUp,
+  FiSettings,
+} from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/ui';
+import { API, UserProfile, UserStats, UserActivity, UserAchievement } from '@/utils/api';
 import {
   UserInfoCard,
   DataStatsGrid,
@@ -11,7 +22,8 @@ import {
   AchievementBadges,
   EditProfileModal,
 } from '@/components/profile';
-import type { UserProfile, UserStats, Activity, Achievement, EditProfileForm } from '@/components/profile/types';
+import SettingsPanel from '@/components/profile/settings-panel';
+import type { EditProfileForm } from '@/components/profile/types';
 
 const ProfileContainer = styled.div`
   max-width: 1200px;
@@ -84,162 +96,185 @@ const RightSidebar = styled.div`
   }
 `;
 
+// 标签页导航
+const TabNavigation = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+`;
+
+const TabButton = styled.button<{ active: boolean }>`
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  color: ${({ active }) => (active ? 'var(--accent-color)' : 'var(--text-secondary)')};
+  font-weight: ${({ active }) => (active ? '600' : '500')};
+  cursor: pointer;
+  border-bottom: 2px solid ${({ active }) => (active ? 'var(--accent-color)' : 'transparent')};
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--accent-color);
+  }
+`;
+
+// 标签页内容
+const TabContent = styled.div`
+  min-height: 400px;
+`;
+
+// 加载状态容器
+const LoadingContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+`;
+
 const Profile: React.FC = () => {
   const navigate = useNavigate();
 
   // 状态管理
+  const [activeTab, setActiveTab] = useState<'overview' | 'settings'>('overview');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 模拟用户数据
-  const [user, setUser] = useState<UserProfile>({
-    id: 'user-1',
-    username: '张三',
-    email: 'zhangsan@example.com',
-    avatar: '/api/placeholder/120/120',
-    bio: '热爱技术分享的前端开发者，专注于React生态系统',
-    location: '北京市',
-    website: 'https://zhangsan.dev',
-    joinDate: '2022-03-15',
-    socialLinks: {
-      github: 'https://github.com/zhangsan',
-      twitter: 'https://twitter.com/zhangsan',
-      linkedin: 'https://linkedin.com/in/zhangsan',
-      instagram: '',
-    },
-  });
+  // 用户数据
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [userStats, setUserStats] = useState<UserStats[]>([]);
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [achievements, setAchievements] = useState<UserAchievement[]>([]);
 
-  // 统计数据
-  const [userStats, setUserStats] = useState<UserStats[]>([
-    {
-      label: '发布文章',
-      value: 24,
-      icon: <FiFileText />,
-      highlight: true,
-      trend: { direction: 'up', percentage: 12 },
-    },
-    {
-      label: '总阅读量',
-      value: '3.2K',
-      icon: <FiEye />,
-      trend: { direction: 'up', percentage: 8 },
-    },
-    {
-      label: '获得点赞',
-      value: 128,
-      icon: <FiHeart />,
-      trend: { direction: 'up', percentage: 15 },
-    },
-    {
-      label: '评论回复',
-      value: 89,
-      icon: <FiMessageSquare />,
-      trend: { direction: 'down', percentage: 3 },
-    },
-    {
-      label: '关注者',
-      value: 67,
-      icon: <FiUsers />,
-      trend: { direction: 'up', percentage: 5 },
-    },
-    {
-      label: '收藏数',
-      value: 45,
-      icon: <FiBookmark />,
-    },
-  ]);
+  // 分页状态
+  const [activitiesPage, setActivitiesPage] = useState(1);
+  const [hasMoreActivities, setHasMoreActivities] = useState(true);
 
-  // 活动数据
-  const [activities, setActivities] = useState<Activity[]>([
-    {
-      id: 'activity-1',
-      type: 'article_published',
-      title: '发布了新文章《React 18 新特性详解》',
-      description: '深入探讨React 18引入的并发渲染机制',
-      timestamp: '2024-01-15T10:30:00Z',
-      icon: <FiEdit />,
-      link: '/blog/detail/1',
-    },
-    {
-      id: 'activity-2',
-      type: 'like_received',
-      title: '收到了来自用户的点赞',
-      description: '文章《TypeScript 高级类型》获得了新的点赞',
-      timestamp: '2024-01-15T08:15:00Z',
-      icon: <FiHeart />,
-    },
-    {
-      id: 'activity-3',
-      type: 'comment_received',
-      title: '回复了文章评论',
-      description: '在《Vue3 实践指南》下回复了用户提问',
-      timestamp: '2024-01-14T16:45:00Z',
-      icon: <FiMessageSquare />,
-    },
-    {
-      id: 'activity-4',
-      type: 'article_trending',
-      title: '文章《Next.js 最佳实践》进入热门',
-      description: '获得了大量阅读和讨论',
-      timestamp: '2024-01-13T14:20:00Z',
-      icon: <FiTrendingUp />,
-    },
-  ]);
+  // 初始化数据
+  useEffect(() => {
+    loadUserProfile();
+    loadUserStats();
+    loadUserActivities();
+    loadUserAchievements();
+  }, []);
 
-  // 成就数据
-  const [achievements, setAchievements] = useState<Achievement[]>([
-    {
-      id: 'achievement-1',
-      name: '作者',
-      description: '发布第一篇文章',
-      icon: '📝',
-      unlocked: true,
-      unlockedAt: '2022-03-20',
-    },
-    {
-      id: 'achievement-2',
-      name: '热门',
-      description: '文章获得100+点赞',
-      icon: '⭐',
-      unlocked: true,
-      unlockedAt: '2022-05-15',
-    },
-    {
-      id: 'achievement-3',
-      name: '高产',
-      description: '发布50篇文章',
-      icon: '🚀',
-      unlocked: false,
-      progress: { current: 24, target: 50 },
-    },
-    {
-      id: 'achievement-4',
-      name: '影响力',
-      description: '获得1000+关注者',
-      icon: '🏆',
-      unlocked: false,
-      progress: { current: 67, target: 1000 },
-    },
-    {
-      id: 'achievement-5',
-      name: '活跃',
-      description: '连续7天发布内容',
-      icon: '🔥',
-      unlocked: false,
-      progress: { current: 3, target: 7 },
-    },
-    {
-      id: 'achievement-6',
-      name: '社交达人',
-      description: '回复100条评论',
-      icon: '💬',
-      unlocked: false,
-      progress: { current: 89, target: 100 },
-    },
-  ]);
+  // 加载用户资料
+  const loadUserProfile = async () => {
+    setIsUserLoading(true);
+    try {
+      const response = await API.user.getProfile();
+      setUser(response.data);
+    } catch (error: any) {
+      toast.error(error.message || '加载用户资料失败');
+    } finally {
+      setIsUserLoading(false);
+    }
+  };
+
+  // 加载用户统计
+  const loadUserStats = async () => {
+    setIsStatsLoading(true);
+    try {
+      const response = await API.user.getStats();
+      // 转换统计数据，添加图标
+      const statsWithIcons = response.data.map((stat: UserStats) => ({
+        ...stat,
+        icon: getStatIcon(stat.label),
+      }));
+      setUserStats(statsWithIcons);
+    } catch (error: any) {
+      toast.error(error.message || '加载统计数据失败');
+    } finally {
+      setIsStatsLoading(false);
+    }
+  };
+
+  // 加载用户活动
+  const loadUserActivities = async (page = 1, append = false) => {
+    if (page === 1) {
+      setIsActivitiesLoading(true);
+    }
+
+    try {
+      const response = await API.user.getActivities({
+        page,
+        pageSize: 10,
+      });
+
+      // 转换活动数据，添加图标
+      const activitiesWithIcons = response.data.data.map((activity: UserActivity) => ({
+        ...activity,
+        icon: getActivityIcon(activity.type),
+      }));
+
+      if (append) {
+        setActivities((prev) => [...prev, ...activitiesWithIcons]);
+      } else {
+        setActivities(activitiesWithIcons);
+      }
+
+      setHasMoreActivities(response.data.data.length === 10);
+      setActivitiesPage(page);
+    } catch (error: any) {
+      toast.error(error.message || '加载活动记录失败');
+    } finally {
+      setIsActivitiesLoading(false);
+    }
+  };
+
+  // 加载用户成就
+  const loadUserAchievements = async () => {
+    try {
+      const response = await API.user.getAchievements();
+      setAchievements(response.data);
+    } catch (error: any) {
+      toast.error(error.message || '加载成就数据失败');
+    }
+  };
+
+  // 获取统计图标
+  const getStatIcon = (label: string) => {
+    switch (label) {
+      case '发布文章':
+        return <FiFileText />;
+      case '总阅读量':
+        return <FiEye />;
+      case '获得点赞':
+        return <FiHeart />;
+      case '评论回复':
+        return <FiMessageSquare />;
+      case '关注者':
+        return <FiUsers />;
+      case '收藏数':
+        return <FiBookmark />;
+      default:
+        return <FiEdit />;
+    }
+  };
+
+  // 获取活动图标
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'article_published':
+        return <FiEdit />;
+      case 'like_received':
+        return <FiHeart />;
+      case 'comment_received':
+        return <FiMessageSquare />;
+      case 'article_trending':
+        return <FiTrendingUp />;
+      case 'follow_received':
+        return <FiUsers />;
+      case 'achievement_unlocked':
+        return <FiBookmark />;
+      default:
+        return <FiEdit />;
+    }
+  };
 
   // 处理函数
   const handleEditProfile = () => {
@@ -251,68 +286,93 @@ const Profile: React.FC = () => {
   };
 
   const handleSaveProfile = async (formData: EditProfileForm, avatarFile?: File) => {
+    if (!user) return;
+
     setIsUserLoading(true);
     try {
-      // 模拟API调用
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // 如果有新头像，先上传
+      let avatarUrl = user.avatar;
+      if (avatarFile) {
+        const avatarResponse = await API.user.uploadAvatar(avatarFile);
+        avatarUrl = avatarResponse.data.avatar;
+      }
 
-      // 更新用户数据
-      setUser((prev) => ({
-        ...prev,
-        username: formData.username,
+      // 更新用户资料
+      const updateData = {
+        nickname: formData.username,
         email: formData.email,
         bio: formData.bio,
         location: formData.location,
         website: formData.website,
         socialLinks: formData.socialLinks,
-        // 如果有新头像，这里应该是上传后的URL
-        avatar: avatarFile ? URL.createObjectURL(avatarFile) : prev.avatar,
-      }));
+      };
+
+      const response = await API.user.updateProfile(updateData);
+
+      // 更新本地状态
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...response.data,
+              avatar: avatarUrl,
+            }
+          : null,
+      );
 
       toast.success('个人资料更新成功！');
       setIsEditModalOpen(false);
-    } catch (error) {
-      toast.error('更新失败，请重试');
+    } catch (error: any) {
+      toast.error(error.message || '更新失败，请重试');
     } finally {
       setIsUserLoading(false);
     }
   };
 
   const handleAvatarChange = async (file: File) => {
+    if (!user) return;
+
     setIsUserLoading(true);
     try {
-      // 模拟头像上传
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await API.user.uploadAvatar(file);
 
       // 更新头像
-      setUser((prev) => ({
-        ...prev,
-        avatar: URL.createObjectURL(file),
-      }));
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              avatar: response.data.avatar,
+            }
+          : null,
+      );
 
       toast.success('头像更新成功！');
-    } catch (error) {
-      toast.error('头像上传失败，请重试');
+    } catch (error: any) {
+      toast.error(error.message || '头像上传失败，请重试');
     } finally {
       setIsUserLoading(false);
     }
   };
 
   const handleStatClick = (stat: UserStats) => {
-    // 根据统计项跳转到对应页面
-    switch (stat.label) {
-      case '发布文章':
-        navigate('/user/dashboard');
-        break;
-      case '关注者':
-        navigate('/user/followers');
-        break;
-      default:
-        console.log('查看详细统计:', stat.label);
+    if (stat.link) {
+      navigate(stat.link);
+    } else {
+      // 根据统计项跳转到对应页面
+      switch (stat.label) {
+        case '发布文章':
+          navigate('/user/articles');
+          break;
+        case '关注者':
+          navigate('/user/followers');
+          break;
+        default:
+          console.log('查看详细统计:', stat.label);
+      }
     }
   };
 
-  const handleActivityClick = (activity: Activity) => {
+  const handleActivityClick = (activity: UserActivity) => {
     if (activity.link) {
       navigate(activity.link);
     }
@@ -321,10 +381,7 @@ const Profile: React.FC = () => {
   const handleRefreshActivities = async () => {
     setIsRefreshing(true);
     try {
-      // 模拟刷新数据
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // 可以在这里重新获取活动数据
+      await loadUserActivities(1, false);
       toast.success('活动数据已更新');
     } catch (error) {
       toast.error('刷新失败');
@@ -334,17 +391,8 @@ const Profile: React.FC = () => {
   };
 
   const handleLoadMoreActivities = async () => {
-    setIsActivitiesLoading(true);
-    try {
-      // 模拟加载更多数据
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // 这里可以添加更多活动数据
-      console.log('加载更多活动');
-    } catch (error) {
-      toast.error('加载失败');
-    } finally {
-      setIsActivitiesLoading(false);
+    if (hasMoreActivities && !isActivitiesLoading) {
+      await loadUserActivities(activitiesPage + 1, true);
     }
   };
 
@@ -358,12 +406,23 @@ const Profile: React.FC = () => {
   };
 
   const handleSettings = () => {
-    navigate('/user/settings');
+    setActiveTab('settings');
   };
 
-  const handleExportData = () => {
-    // 模拟数据导出
-    toast.success('数据导出已开始，完成后将发送到您的邮箱');
+  const handleExportData = async () => {
+    try {
+      const response = await API.user.exportData();
+      // 创建下载链接
+      const link = document.createElement('a');
+      link.href = response.data.downloadUrl;
+      link.download = `user-data-${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('数据导出已开始');
+    } catch (error: any) {
+      toast.error(error.message || '导出失败，请重试');
+    }
   };
 
   const handleHelp = () => {
@@ -371,61 +430,105 @@ const Profile: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // 处理退出登录
     if (confirm('确定要退出登录吗？')) {
-      navigate('/login');
+      API.user
+        .logout()
+        .then(() => {
+          navigate('/');
+        })
+        .catch(() => {
+          navigate('/');
+        });
     }
   };
 
-  const handleBadgeClick = (achievement: Achievement) => {
+  const handleBadgeClick = (achievement: UserAchievement) => {
     toast.info(`${achievement.name}: ${achievement.description}`);
   };
 
+  const handleUpdateProfile = (profile: UserProfile) => {
+    setUser(profile);
+  };
+
+  // 如果没有用户数据，显示加载状态
+  if (!user) {
+    return (
+      <ProfileContainer>
+        <LoadingContainer>
+          <div>加载中...</div>
+        </LoadingContainer>
+      </ProfileContainer>
+    );
+  }
+
   return (
     <ProfileContainer>
-      <GridLayout>
-        {/* 左侧边栏 - 用户信息 */}
-        <Sidebar>
-          <UserInfoCard
-            user={user}
-            onEditProfile={handleEditProfile}
-            onAvatarChange={handleAvatarChange}
-            isLoading={isUserLoading}
-          />
-        </Sidebar>
+      <PageHeader>
+        <h1>个人中心</h1>
+        <p>管理您的个人信息、设置和偏好</p>
+      </PageHeader>
 
-        {/* 主内容区域 */}
-        <MainContent>
-          {/* 数据统计 */}
-          <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
+      {/* 标签页导航 */}
+      <TabNavigation>
+        <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
+          概览
+        </TabButton>
+        <TabButton active={activeTab === 'settings'} onClick={() => setActiveTab('settings')}>
+          <FiSettings size={16} style={{ marginRight: '0.5rem' }} />
+          设置
+        </TabButton>
+      </TabNavigation>
 
-          {/* 最近活动 */}
-          <ActivityFeed
-            activities={activities}
-            onActivityClick={handleActivityClick}
-            onRefresh={handleRefreshActivities}
-            onLoadMore={handleLoadMoreActivities}
-            hasMore={true}
-            isLoading={isActivitiesLoading}
-            isRefreshing={isRefreshing}
-          />
-        </MainContent>
+      {/* 标签页内容 */}
+      <TabContent>
+        {activeTab === 'overview' ? (
+          <GridLayout>
+            {/* 左侧边栏 - 用户信息 */}
+            <Sidebar>
+              <UserInfoCard
+                user={user}
+                onEditProfile={handleEditProfile}
+                onAvatarChange={handleAvatarChange}
+                isLoading={isUserLoading}
+              />
+            </Sidebar>
 
-        {/* 右侧边栏 - 快捷操作和成就 */}
-        <RightSidebar>
-          <QuickActions
-            onCreateArticle={handleCreateArticle}
-            onEditProfile={handleEditProfile}
-            onSettings={handleSettings}
-            onExportData={handleExportData}
-            onViewAnalytics={handleViewAnalytics}
-            onHelp={handleHelp}
-            onLogout={handleLogout}
-          />
+            {/* 主内容区域 */}
+            <MainContent>
+              {/* 数据统计 */}
+              <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
 
-          <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
-        </RightSidebar>
-      </GridLayout>
+              {/* 最近活动 */}
+              <ActivityFeed
+                activities={activities}
+                onActivityClick={handleActivityClick}
+                onRefresh={handleRefreshActivities}
+                onLoadMore={handleLoadMoreActivities}
+                hasMore={hasMoreActivities}
+                isLoading={isActivitiesLoading}
+                isRefreshing={isRefreshing}
+              />
+            </MainContent>
+
+            {/* 右侧边栏 - 快捷操作和成就 */}
+            <RightSidebar>
+              <QuickActions
+                onCreateArticle={handleCreateArticle}
+                onEditProfile={handleEditProfile}
+                onSettings={handleSettings}
+                onExportData={handleExportData}
+                onViewAnalytics={handleViewAnalytics}
+                onHelp={handleHelp}
+                onLogout={handleLogout}
+              />
+
+              <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+            </RightSidebar>
+          </GridLayout>
+        ) : (
+          <SettingsPanel user={user} onUpdateProfile={handleUpdateProfile} />
+        )}
+      </TabContent>
 
       {/* 编辑资料模态框 */}
       <EditProfileModal

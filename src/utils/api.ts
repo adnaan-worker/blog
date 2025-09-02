@@ -20,6 +20,120 @@ export interface LoginParams {
   remember?: boolean;
 }
 
+export interface LoginResponse {
+  token: string;
+  userInfo: UserInfo;
+}
+
+export interface RegisterParams {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  user: UserInfo;
+}
+
+/**
+ * 个人中心相关接口类型定义
+ */
+export interface UserProfile {
+  id: string | number;
+  username: string;
+  nickname?: string;
+  email: string;
+  avatar?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  joinDate: string;
+  lastLoginTime?: string;
+  socialLinks?: {
+    github?: string;
+    twitter?: string;
+    linkedin?: string;
+    instagram?: string;
+    weibo?: string;
+    zhihu?: string;
+  };
+  preferences?: {
+    theme?: 'light' | 'dark' | 'auto';
+    language?: 'zh-CN' | 'en-US';
+    emailNotifications?: boolean;
+    pushNotifications?: boolean;
+  };
+  stats?: {
+    articleCount: number;
+    viewCount: number;
+    likeCount: number;
+    commentCount: number;
+    followerCount: number;
+    followingCount: number;
+    bookmarkCount: number;
+  };
+}
+
+export interface UpdateProfileParams {
+  nickname?: string;
+  email?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  socialLinks?: {
+    github?: string;
+    twitter?: string;
+    linkedin?: string;
+    instagram?: string;
+    weibo?: string;
+    zhihu?: string;
+  };
+}
+
+export interface ChangePasswordParams {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface UserActivity {
+  id: string | number;
+  type: 'article_published' | 'like_received' | 'comment_received' | 'follow_received' | 'achievement_unlocked';
+  title: string;
+  description?: string;
+  timestamp: string;
+  link?: string;
+  metadata?: any;
+}
+
+export interface UserAchievement {
+  id: string | number;
+  name: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
+  unlockedAt?: string;
+  progress?: {
+    current: number;
+    target: number;
+  };
+  category: 'content' | 'social' | 'engagement' | 'milestone';
+}
+
+export interface UserStats {
+  label: string;
+  value: string | number;
+  icon?: React.ReactNode;
+  highlight?: boolean;
+  trend?: {
+    direction: 'up' | 'down' | 'stable';
+    percentage: number;
+  };
+  link?: string;
+}
+
 /**
  * 文章相关接口类型定义
  */
@@ -98,32 +212,49 @@ export interface CreateCommentData {
  * 所有的API请求都应该在这里定义
  */
 export const API = {
-  // 用户相关
+  // 用户相关API
   user: {
-    /**
-     * 获取用户信息
-     * @returns Promise<ApiResponse<UserInfo>>
-     */
-    getUserInfo: (): Promise<ApiResponse<UserInfo>> => {
-      return http.get('/user/info');
+    // 认证相关
+    login: (data: LoginParams) => http.post<LoginResponse>('/users/login', data),
+    register: (data: RegisterParams) => http.post<RegisterResponse>('/users/register', data),
+    logout: () => http.post('/users/logout'),
+
+    // 用户中心相关
+    getProfile: () => http.get<UserProfile>('/users/profile'),
+    updateProfile: (data: UpdateProfileParams) => http.put<UserProfile>('/users/profile', data),
+    changePassword: (data: ChangePasswordParams) => http.put('/users/password', data),
+    uploadAvatar: (file: File) => {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      return http.upload('/users/avatar', formData);
     },
 
-    /**
-     * 用户登录
-     * @param data 登录参数
-     * @returns Promise<ApiResponse<{token: string; userInfo: UserInfo}>>
-     */
-    login: (data: LoginParams): Promise<ApiResponse<{ token: string; userInfo: UserInfo }>> => {
-      return http.post('/auth/login', data);
-    },
+    // 用户活动、成就、统计
+    getActivities: (params?: { page?: number; pageSize?: number }) =>
+      http.get<UserActivity[]>('/users/activities', params),
+    getAchievements: () => http.get<UserAchievement[]>('/users/achievements'),
+    getStats: () => http.get<UserStats>('/users/stats'),
 
-    /**
-     * 用户登出
-     * @returns Promise<ApiResponse<null>>
-     */
-    logout: (): Promise<ApiResponse<null>> => {
-      return http.post('/auth/logout');
+    // 用户偏好设置
+    updatePreferences: (data: Partial<UserProfile['preferences']>) => http.put('/users/preferences', data),
+
+    // 数据管理
+    exportData: () => http.post('/users/export'),
+    deleteAccount: (data: { password: string }) => http.delete('/users/account', { data }),
+
+    // 文件上传
+    batchUpload: (files: File[], type?: string, maxCount?: number) => {
+      const formData = new FormData();
+      files.forEach((file) => formData.append('files', file));
+      return http.upload('/users/upload', formData, {
+        params: { type, maxCount },
+      });
     },
+    deleteFile: (filePath: string) =>
+      http.delete('/users/file', {
+        data: { filePath },
+      }),
+    getUploadStats: (uploadDir?: string) => http.get('/users/upload-stats', { uploadDir }),
   },
 
   // 博客文章相关

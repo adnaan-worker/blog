@@ -1,48 +1,51 @@
-import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
-import { visualizer } from 'rollup-plugin-visualizer'
-import compression from 'vite-plugin-compression'
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { visualizer } from 'rollup-plugin-visualizer';
+import compression from 'vite-plugin-compression';
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   // 加载环境变量
-  const env = loadEnv(mode, process.cwd())
-  const isProduction = mode === 'production'
+  const env = loadEnv(mode, process.cwd());
+  const isProduction = mode === 'production';
 
   return {
     plugins: [
       react({
         babel: {
-          plugins: ['@emotion/babel-plugin']
+          plugins: ['@emotion/babel-plugin'],
         },
         // 开发模式启用热刷新
         jsxImportSource: '@emotion/react',
       }),
       // 生产环境启用Gzip/Brotli压缩
-      isProduction && compression({
-        algorithm: 'gzip',
-        ext: '.gz',
-        deleteOriginFile: false,
-        threshold: 10240, // 只压缩大于10kb的文件
-        verbose: true,
-        disable: false,
-      }),
-      isProduction && compression({
-        algorithm: 'brotliCompress',
-        ext: '.br',
-        deleteOriginFile: false,
-        threshold: 10240, // 只压缩大于10kb的文件
-        verbose: true,
-        disable: false,
-      }),
+      isProduction &&
+        compression({
+          algorithm: 'gzip',
+          ext: '.gz',
+          deleteOriginFile: false,
+          threshold: 10240, // 只压缩大于10kb的文件
+          verbose: true,
+          disable: false,
+        }),
+      isProduction &&
+        compression({
+          algorithm: 'brotliCompress',
+          ext: '.br',
+          deleteOriginFile: false,
+          threshold: 10240, // 只压缩大于10kb的文件
+          verbose: true,
+          disable: false,
+        }),
       // 生产环境启用包大小分析
-      isProduction && visualizer({
-        open: false,
-        gzipSize: true,
-        brotliSize: true,
-        filename: 'dist/stats.html',
-      }),
+      isProduction &&
+        visualizer({
+          open: false,
+          gzipSize: true,
+          brotliSize: true,
+          filename: 'dist/stats.html',
+        }),
     ].filter(Boolean),
     base: '/',
     server: {
@@ -52,13 +55,17 @@ export default defineConfig(({ mode }) => {
       // 根据环境变量配置代理
       proxy: {
         '/api': {
-          target: env.VITE_PROXY_TARGET || 'http://localhost:8080',
+          target: env.VITE_PROXY_TARGET,
           changeOrigin: true,
-          rewrite: env.VITE_PROXY_REWRITE === 'true'
-            ? (path) => path.replace(/^\/api/, '')
-            : undefined,
+          rewrite: env.VITE_PROXY_REWRITE === 'true' ? (path) => path.replace(/^\/api/, '') : undefined,
           secure: false,
-        }
+        },
+        '/uploads': {
+          // 去掉env.VITE_PROXY_TARGET后面的/api
+          target: env.VITE_PROXY_TARGET.replace('/api', ''),
+          changeOrigin: true,
+          secure: false,
+        },
       },
       // 启用HMR
       hmr: {
@@ -67,10 +74,10 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src')
+        '@': path.resolve(__dirname, './src'),
       },
       // 导入时忽略文件扩展名
-      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },
     // 优化依赖预构建
     optimizeDeps: {
@@ -83,14 +90,14 @@ export default defineConfig(({ mode }) => {
         'react-icons/fi',
         'react-router-dom',
         '@reduxjs/toolkit',
-        'react-redux'
+        'react-redux',
       ],
       // 强制预构建这些依赖
       force: true,
       // 处理ESM兼容性
       esbuildOptions: {
-        target: 'es2020'
-      }
+        target: 'es2020',
+      },
     },
     // 构建选项
     build: {
@@ -117,7 +124,7 @@ export default defineConfig(({ mode }) => {
           pure_funcs: isProduction ? ['console.log', 'console.info'] : [],
         },
         format: {
-          comments: false // 移除注释
+          comments: false, // 移除注释
         },
       },
       // 分块策略
@@ -126,33 +133,30 @@ export default defineConfig(({ mode }) => {
           // 使用函数式分割策略，更稳定
           manualChunks: (id) => {
             // 处理React相关依赖
-            if (id.includes('node_modules/react') || 
-                id.includes('node_modules/scheduler')) {
+            if (id.includes('node_modules/react') || id.includes('node_modules/scheduler')) {
               return 'react-vendor';
             }
-            
+
             // UI组件库
-            if (id.includes('node_modules/@emotion') || 
-                id.includes('node_modules/framer-motion')) {
+            if (id.includes('node_modules/@emotion') || id.includes('node_modules/framer-motion')) {
               return 'ui-vendor';
             }
-            
+
             // 图标
             if (id.includes('node_modules/react-icons')) {
               return 'icons';
             }
-            
+
             // 路由
             if (id.includes('node_modules/react-router')) {
               return 'router';
             }
-            
+
             // 状态管理
-            if (id.includes('node_modules/@reduxjs') || 
-                id.includes('node_modules/react-redux')) {
+            if (id.includes('node_modules/@reduxjs') || id.includes('node_modules/react-redux')) {
               return 'redux';
             }
-            
+
             // 其他node_modules依赖
             if (id.includes('node_modules/')) {
               return 'vendor';
@@ -174,27 +178,27 @@ export default defineConfig(({ mode }) => {
               return 'assets/css/[name].[hash][extname]';
             }
             return 'assets/[name].[hash][extname]';
-          }
-        }
-      }
+          },
+        },
+      },
     },
     // CSS 处理配置
     css: {
       // 启用 CSS 模块化
       modules: {
-        localsConvention: 'camelCaseOnly'
+        localsConvention: 'camelCaseOnly',
       },
       // 预处理器选项
       preprocessorOptions: {
         less: {
-          javascriptEnabled: true
+          javascriptEnabled: true,
         },
         scss: {
-          additionalData: `@import "@/styles/variables.scss";`
-        }
+          additionalData: `@import "@/styles/variables.scss";`,
+        },
       },
       // 开发工具
-      devSourcemap: true
+      devSourcemap: true,
     },
     // 性能优化
     esbuild: {
@@ -211,9 +215,9 @@ export default defineConfig(({ mode }) => {
           skipLibCheck: true,
           // 允许未使用的变量
           noUnusedLocals: false,
-          noUnusedParameters: false
-        }
-      }
-    }
-  }
-})
+          noUnusedParameters: false,
+        },
+      },
+    },
+  };
+});

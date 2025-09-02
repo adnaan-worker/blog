@@ -188,6 +188,36 @@ class HttpRequest {
     }
   }
 
+  /**
+   * 文件上传请求
+   * @param url - 请求URL
+   * @param formData - FormData对象
+   * @param config - 请求配置
+   * @returns Promise<AxiosResponse>
+   */
+  upload<T = any>(url: string, formData: FormData, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.post(url, formData, {
+      ...config,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        ...config?.headers,
+      },
+    });
+  }
+
+  /**
+   * 下载文件
+   * @param url - 请求URL
+   * @param config - 请求配置
+   * @returns Promise<AxiosResponse>
+   */
+  download<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.get(url, {
+      ...config,
+      responseType: 'blob',
+    });
+  }
+
   // GET请求
   public get<T = any>(
     url: string,
