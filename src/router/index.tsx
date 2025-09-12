@@ -22,11 +22,6 @@ const router = createHashRouter([
   {
     path: '/',
     element: <RootLayout />,
-    errorElement: (
-      <Suspense fallback={<PageLoading />}>
-        <NotFound />
-      </Suspense>
-    ),
     children: [
       {
         index: true,
@@ -102,15 +97,16 @@ const router = createHashRouter([
           </Suspense>
         ),
       },
-      {
-        path: '*',
-        element: (
-          <Suspense fallback={<PageLoading />}>
-            <NotFound />
-          </Suspense>
-        ),
-      },
     ],
+  },
+  // 404页面作为独立路由，不继承主布局
+  {
+    path: '*',
+    element: (
+      <Suspense fallback={<PageLoading />}>
+        <NotFound />
+      </Suspense>
+    ),
   },
 ]);
 
