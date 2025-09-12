@@ -4,6 +4,45 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX } from 'react-icons/fi';
 
+// 滚动锁定 Hook
+const useScrollLock = (isLocked: boolean) => {
+  React.useEffect(() => {
+    if (isLocked) {
+      // 保存当前滚动位置
+      const scrollY = window.scrollY;
+      const scrollX = window.scrollX;
+      
+      // 计算滚动条宽度
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      
+      // 应用样式锁定滚动
+      const originalStyle = {
+        position: document.body.style.position,
+        top: document.body.style.top,
+        left: document.body.style.left,
+        width: document.body.style.width,
+        paddingRight: document.body.style.paddingRight,
+        overflow: document.body.style.overflow,
+      };
+      
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = `-${scrollX}px`;
+      document.body.style.width = '100%';
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // 恢复原始样式
+        Object.assign(document.body.style, originalStyle);
+        
+        // 恢复滚动位置
+        window.scrollTo(scrollX, scrollY);
+      };
+    }
+  }, [isLocked]);
+};
+
 // 模态框尺寸类型
 type ModalSize = 'small' | 'medium' | 'large' | 'full';
 
@@ -288,32 +327,24 @@ const ModalComponent: React.FC<ModalComponentProps> = ({
     }
   }, []);
 
-  // 处理滚动锁定和键盘事件
+  // 使用滚动锁定 hook
+  useScrollLock(isOpen);
+
+  // 处理键盘事件和焦点
   React.useEffect(() => {
     if (isOpen) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.addEventListener('keydown', handleKeyDown);
       document.addEventListener('keydown', handleFocusTrap);
 
       setTimeout(() => {
         modalRef.current?.focus();
       }, 100);
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener('keydown', handleFocusTrap);
+      };
     }
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keydown', handleFocusTrap);
-
-      if (isOpen) {
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-      }
-    };
   }, [isOpen, handleKeyDown, handleFocusTrap]);
 
   const handleOverlayClick = (event: React.MouseEvent) => {

@@ -215,9 +215,9 @@ export const API = {
   // 用户相关API
   user: {
     // 认证相关
-    login: (data: LoginParams) => http.post<LoginResponse>('/users/login', data),
-    register: (data: RegisterParams) => http.post<RegisterResponse>('/users/register', data),
-    logout: () => http.post('/users/logout'),
+    login: (data: LoginParams) => http.post<LoginResponse>('/auth/login', data),
+    register: (data: RegisterParams) => http.post<RegisterResponse>('/auth/register', data),
+    logout: () => http.post('/auth/logout'),
 
     // 用户中心相关
     getProfile: () => http.get<UserProfile>('/users/profile'),
