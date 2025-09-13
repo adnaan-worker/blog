@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import {
-  FiFileText,
-  FiHeart,
-  FiEye,
-  FiMessageSquare,
-  FiUsers,
-  FiBookmark,
-  FiEdit,
-  FiTrendingUp,
-  FiSettings,
-} from 'react-icons/fi';
+import { FiFileText, FiHeart, FiEye, FiMessageSquare, FiUsers, FiBookmark, FiEdit, FiTrendingUp } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/ui';
 import { API, UserProfile, UserStats, UserActivity, UserAchievement } from '@/utils/api';
@@ -22,8 +12,9 @@ import {
   AchievementBadges,
   EditProfileModal,
 } from '@/components/profile';
-import SettingsPanel from '@/components/profile/settings-panel';
 import type { EditProfileForm } from '@/components/profile/types';
+import { ProfileLayout } from './modules/ProfileLayout';
+import { LoadingState } from './modules/LoadingState';
 
 const ProfileContainer = styled.div`
   max-width: 1200px;
@@ -35,109 +26,12 @@ const ProfileContainer = styled.div`
   }
 `;
 
-// 页面标题区域
-const PageHeader = styled.div`
-  margin-bottom: 2rem;
 
-  h1 {
-    font-size: 1.875rem;
-    font-weight: 300;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-  }
-
-  p {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-  }
-`;
-
-// 网格布局容器
-const GridLayout = styled.div`
-  display: grid;
-  gap: 1.5rem;
-
-  /* 移动端：单列 */
-  grid-template-columns: 1fr;
-
-  /* 平板及以上：两列 */
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 2fr;
-  }
-
-  /* 大屏：三列 */
-  @media (min-width: 1024px) {
-    grid-template-columns: 1fr 2fr 1fr;
-  }
-`;
-
-// 侧边栏区域
-const Sidebar = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`;
-
-// 主内容区域
-const MainContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`;
-
-// 右侧边栏
-const RightSidebar = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-
-  @media (max-width: 1023px) {
-    display: none;
-  }
-`;
-
-// 标签页导航
-const TabNavigation = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-`;
-
-const TabButton = styled.button<{ active: boolean }>`
-  padding: 0.75rem 1.5rem;
-  border: none;
-  background: none;
-  color: ${({ active }) => (active ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  font-weight: ${({ active }) => (active ? '600' : '500')};
-  cursor: pointer;
-  border-bottom: 2px solid ${({ active }) => (active ? 'var(--accent-color)' : 'transparent')};
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: var(--accent-color);
-  }
-`;
-
-// 标签页内容
-const TabContent = styled.div`
-  min-height: 400px;
-`;
-
-// 加载状态容器
-const LoadingContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  color: var(--text-secondary);
-`;
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
 
   // 状态管理
-  const [activeTab, setActiveTab] = useState<'overview' | 'settings'>('overview');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
@@ -405,9 +299,7 @@ const Profile: React.FC = () => {
     navigate('/user/analytics');
   };
 
-  const handleSettings = () => {
-    setActiveTab('settings');
-  };
+
 
   const handleExportData = async () => {
     try {
@@ -446,91 +338,55 @@ const Profile: React.FC = () => {
     toast.info(`${achievement.name}: ${achievement.description}`);
   };
 
-  const handleUpdateProfile = (profile: UserProfile) => {
-    setUser(profile);
-  };
-
   // 如果没有用户数据，显示加载状态
   if (!user) {
     return (
       <ProfileContainer>
-        <LoadingContainer>
-          <div>加载中...</div>
-        </LoadingContainer>
+        <LoadingState />
       </ProfileContainer>
     );
   }
 
   return (
     <ProfileContainer>
-      <PageHeader>
-        <h1>个人中心</h1>
-        <p>管理您的个人信息、设置和偏好</p>
-      </PageHeader>
+      <ProfileLayout
+        sidebar={
+          <UserInfoCard
+            user={user}
+            onEditProfile={handleEditProfile}
+            onAvatarChange={handleAvatarChange}
+            isLoading={isUserLoading}
+          />
+        }
+        mainContent={
+          <>
+            <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
+            <ActivityFeed
+              activities={activities}
+              onActivityClick={handleActivityClick}
+              onRefresh={handleRefreshActivities}
+              onLoadMore={handleLoadMoreActivities}
+              hasMore={hasMoreActivities}
+              isLoading={isActivitiesLoading}
+              isRefreshing={isRefreshing}
+            />
+          </>
+        }
+        rightSidebar={
+          <>
+            <QuickActions
+              onCreateArticle={handleCreateArticle}
+              onEditProfile={handleEditProfile}
+              onExportData={handleExportData}
+              onViewAnalytics={handleViewAnalytics}
+              onHelp={handleHelp}
+              onLogout={handleLogout}
+            />
+            <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+          </>
+        }
+      />
 
-      {/* 标签页导航 */}
-      <TabNavigation>
-        <TabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')}>
-          概览
-        </TabButton>
-        <TabButton active={activeTab === 'settings'} onClick={() => setActiveTab('settings')}>
-          <FiSettings size={16} style={{ marginRight: '0.5rem' }} />
-          设置
-        </TabButton>
-      </TabNavigation>
-
-      {/* 标签页内容 */}
-      <TabContent>
-        {activeTab === 'overview' ? (
-          <GridLayout>
-            {/* 左侧边栏 - 用户信息 */}
-            <Sidebar>
-              <UserInfoCard
-                user={user}
-                onEditProfile={handleEditProfile}
-                onAvatarChange={handleAvatarChange}
-                isLoading={isUserLoading}
-              />
-            </Sidebar>
-
-            {/* 主内容区域 */}
-            <MainContent>
-              {/* 数据统计 */}
-              <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
-
-              {/* 最近活动 */}
-              <ActivityFeed
-                activities={activities}
-                onActivityClick={handleActivityClick}
-                onRefresh={handleRefreshActivities}
-                onLoadMore={handleLoadMoreActivities}
-                hasMore={hasMoreActivities}
-                isLoading={isActivitiesLoading}
-                isRefreshing={isRefreshing}
-              />
-            </MainContent>
-
-            {/* 右侧边栏 - 快捷操作和成就 */}
-            <RightSidebar>
-              <QuickActions
-                onCreateArticle={handleCreateArticle}
-                onEditProfile={handleEditProfile}
-                onSettings={handleSettings}
-                onExportData={handleExportData}
-                onViewAnalytics={handleViewAnalytics}
-                onHelp={handleHelp}
-                onLogout={handleLogout}
-              />
-
-              <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
-            </RightSidebar>
-          </GridLayout>
-        ) : (
-          <SettingsPanel user={user} onUpdateProfile={handleUpdateProfile} />
-        )}
-      </TabContent>
-
-      {/* 编辑资料模态框 */}
       <EditProfileModal
         isOpen={isEditModalOpen}
         user={user}

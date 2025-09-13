@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiX, FiSave, FiUpload, FiGithub, FiTwitter, FiInstagram, FiLinkedin } from 'react-icons/fi';
+import { FiSave, FiUpload, FiGithub, FiTwitter, FiInstagram, FiLinkedin } from 'react-icons/fi';
 import { Button, Input } from '@/components/ui';
 import { Modal } from '@/ui/modal';
 import type { UserProfile, EditProfileForm } from './types';
@@ -14,51 +14,7 @@ interface EditProfileModalProps {
 }
 
 const ModalContent = styled.div`
-  width: 100%;
-  max-width: 500px;
-  max-height: 80vh;
-  overflow-y: auto;
   padding: 0;
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-`;
-
-const CloseButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-  }
-`;
-
-const ModalBody = styled.div`
-  padding: 1.5rem;
-  background: var(--bg-primary);
 `;
 
 const FormSection = styled.div`
@@ -191,15 +147,6 @@ const SocialIcon = styled.div`
 
 const SocialInput = styled(Input)`
   padding-left: 2.5rem;
-`;
-
-const ModalFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-secondary);
 `;
 
 const ErrorMessage = styled.div`
@@ -364,131 +311,124 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
   };
 
+  const footer = (
+    <>
+      <Button variant="outline" onClick={onClose} disabled={isLoading}>
+        取消
+      </Button>
+      <Button
+        variant="primary"
+        onClick={handleSave}
+        leftIcon={<FiSave size={16} />}
+        isLoading={isLoading}
+        disabled={isLoading}
+      >
+        保存更改
+      </Button>
+    </>
+  );
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="medium">
+    <Modal isOpen={isOpen} onClose={onClose} size="medium" title="编辑个人资料" footer={footer}>
       <ModalContent>
-        <ModalHeader>
-          <ModalTitle>编辑个人资料</ModalTitle>
-          <CloseButton onClick={onClose}>
-            <FiX size={18} />
-          </CloseButton>
-        </ModalHeader>
+        {/* 头像部分 */}
+        <FormSection>
+          <SectionTitle>👤 头像</SectionTitle>
+          <AvatarSection>
+            <AvatarPreview>
+              <img src={avatarPreview || '/api/placeholder/80/80'} alt="头像预览" />
+            </AvatarPreview>
+            <div>
+              <AvatarUploadButton onClick={() => document.getElementById('avatar-upload')?.click()}>
+                <FiUpload size={16} />
+                更换头像
+              </AvatarUploadButton>
+              <HiddenFileInput id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarChange} />
+            </div>
+          </AvatarSection>
+        </FormSection>
 
-        <ModalBody>
-          {/* 头像部分 */}
-          <FormSection>
-            <SectionTitle>👤 头像</SectionTitle>
-            <AvatarSection>
-              <AvatarPreview>
-                <img src={avatarPreview || '/api/placeholder/80/80'} alt="头像预览" />
-              </AvatarPreview>
-              <div>
-                <AvatarUploadButton onClick={() => document.getElementById('avatar-upload')?.click()}>
-                  <FiUpload size={16} />
-                  更换头像
-                </AvatarUploadButton>
-                <HiddenFileInput id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarChange} />
-              </div>
-            </AvatarSection>
-          </FormSection>
+        {/* 基本信息 */}
+        <FormSection>
+          <SectionTitle>📝 基本信息</SectionTitle>
 
-          {/* 基本信息 */}
-          <FormSection>
-            <SectionTitle>📝 基本信息</SectionTitle>
-
-            <FormRow>
-              <FormField>
-                <Label>用户名 *</Label>
-                <Input
-                  value={formData.username}
-                  onChange={(e) => handleInputChange('username', e.target.value)}
-                  placeholder="请输入用户名"
-                  isInvalid={!!errors.username}
-                />
-                {errors.username && <ErrorMessage>{errors.username}</ErrorMessage>}
-              </FormField>
-
-              <FormField>
-                <Label>邮箱 *</Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="请输入邮箱地址"
-                  isInvalid={!!errors.email}
-                />
-                {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
-              </FormField>
-            </FormRow>
-
-            <FormRow>
-              <FormField>
-                <Label>所在地</Label>
-                <Input
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  placeholder="请输入所在地"
-                />
-              </FormField>
-
-              <FormField>
-                <Label>个人网站</Label>
-                <Input
-                  value={formData.website}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
-                  placeholder="https://example.com"
-                  isInvalid={!!errors.website}
-                />
-                {errors.website && <ErrorMessage>{errors.website}</ErrorMessage>}
-              </FormField>
-            </FormRow>
+          <FormRow>
+            <FormField>
+              <Label>用户名 *</Label>
+              <Input
+                value={formData.username}
+                onChange={(e) => handleInputChange('username', e.target.value)}
+                placeholder="请输入用户名"
+                isInvalid={!!errors.username}
+              />
+              {errors.username && <ErrorMessage>{errors.username}</ErrorMessage>}
+            </FormField>
 
             <FormField>
-              <Label>个人简介</Label>
-              <TextArea
-                value={formData.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
-                placeholder="介绍一下自己..."
-                maxLength={500}
+              <Label>邮箱 *</Label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="请输入邮箱地址"
+                isInvalid={!!errors.email}
+              />
+              {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+            </FormField>
+          </FormRow>
+
+          <FormRow>
+            <FormField>
+              <Label>所在地</Label>
+              <Input
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                placeholder="请输入所在地"
               />
             </FormField>
-          </FormSection>
 
-          {/* 社交链接 */}
-          <FormSection>
-            <SectionTitle>🔗 社交链接</SectionTitle>
-            <SocialLinksGrid>
-              {Object.entries(formData.socialLinks).map(([platform, url]) => (
-                <FormField key={platform}>
-                  <Label>{platform.charAt(0).toUpperCase() + platform.slice(1)}</Label>
-                  <SocialInputWrapper>
-                    <SocialIcon>{getSocialIcon(platform)}</SocialIcon>
-                    <SocialInput
-                      value={url}
-                      onChange={(e) => handleSocialLinkChange(platform, e.target.value)}
-                      placeholder={getSocialPlaceholder(platform)}
-                    />
-                  </SocialInputWrapper>
-                </FormField>
-              ))}
-            </SocialLinksGrid>
-          </FormSection>
-        </ModalBody>
+            <FormField>
+              <Label>个人网站</Label>
+              <Input
+                value={formData.website}
+                onChange={(e) => handleInputChange('website', e.target.value)}
+                placeholder="https://example.com"
+                isInvalid={!!errors.website}
+              />
+              {errors.website && <ErrorMessage>{errors.website}</ErrorMessage>}
+            </FormField>
+          </FormRow>
 
-        <ModalFooter>
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            取消
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            leftIcon={<FiSave size={16} />}
-            isLoading={isLoading}
-            disabled={isLoading}
-          >
-            保存更改
-          </Button>
-        </ModalFooter>
+          <FormField>
+            <Label>个人简介</Label>
+            <TextArea
+              value={formData.bio}
+              onChange={(e) => handleInputChange('bio', e.target.value)}
+              placeholder="介绍一下自己..."
+              maxLength={500}
+            />
+          </FormField>
+        </FormSection>
+
+        {/* 社交链接 */}
+        <FormSection>
+          <SectionTitle>🔗 社交链接</SectionTitle>
+          <SocialLinksGrid>
+            {Object.entries(formData.socialLinks).map(([platform, url]) => (
+              <FormField key={platform}>
+                <Label>{platform.charAt(0).toUpperCase() + platform.slice(1)}</Label>
+                <SocialInputWrapper>
+                  <SocialIcon>{getSocialIcon(platform)}</SocialIcon>
+                  <SocialInput
+                    value={url}
+                    onChange={(e) => handleSocialLinkChange(platform, e.target.value)}
+                    placeholder={getSocialPlaceholder(platform)}
+                  />
+                </SocialInputWrapper>
+              </FormField>
+            ))}
+          </SocialLinksGrid>
+        </FormSection>
       </ModalContent>
     </Modal>
   );
