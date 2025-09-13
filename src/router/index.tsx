@@ -14,8 +14,10 @@ const Projects = lazy(() => import('@/pages/projects'));
 const ProjectDetail = lazy(() => import('@/pages/projects/detail'));
 
 // 个人中心相关页面
-const Profile = lazy(() => import('@/pages/user/Profile'));
-const UILibraryDemo = lazy(() => import('@/pages/examples/ui-library-demo'));
+const Profile = lazy(() => import('@/pages/user/Profile'));;
+
+// UI文档独立页面
+const UIDocsPage = lazy(() => import('@/pages/ui-docs'));
 
 // 创建路由配置
 const router = createHashRouter([
@@ -89,17 +91,17 @@ const router = createHashRouter([
           </Suspense>
         ),
       },
-      {
-        path: 'ui-library-demo',
-        element: (
-          <Suspense fallback={<PageLoading />}>
-            <UILibraryDemo />
-          </Suspense>
-        ),
-      },
     ],
   },
-  // 404页面作为独立路由，不继承主布局
+  // UI文档独立页面路由（不继承主布局）
+  {
+    path: '/ui-docs',
+    element: (
+      <Suspense fallback={<PageLoading />}>
+        <UIDocsPage />
+      </Suspense>
+    ),
+  },
   {
     path: '*',
     element: (

@@ -114,8 +114,8 @@ const NavList = styled.ul`
 
 const NavItem = styled.li`
   a {
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
     border-radius: 8px;
@@ -126,7 +126,7 @@ const NavItem = styled.li`
 
     &:hover {
       background: var(--bg-tertiary);
-  color: var(--accent-color);
+      color: var(--accent-color);
       transform: translateY(-1px);
     }
   }
@@ -561,7 +561,7 @@ Toast.success('简写形式！');`}
               </UtilityCard>
               <UtilityCard>
                 <h4>
-              <FiZap />
+                  <FiZap />
                   方式2：默认导入
                 </h4>
                 <p>适合需要使用多个UI组件的情况</p>
@@ -645,7 +645,7 @@ Toast.success('简写形式！');`}
             </Button>
           </ExampleSection>
 
-            <CodeBlock>
+          <CodeBlock>
             {`// 基础用法
 import { toast } from '@/ui';
 
@@ -660,7 +660,7 @@ toast.success('数据保存成功', '成功', 3000);
 // 全局调用方式
 window.UI.toast.success('全局调用');
 Toast.success('简写方式');`}
-            </CodeBlock>
+          </CodeBlock>
         </ComponentCard>
       </Section>
 
@@ -1228,7 +1228,7 @@ import { Input } from '@/components/ui';
             <h4>
               <FiCode />
               导入建议
-              </h4>
+            </h4>
             <p>优先使用具名导入，避免不必要的代码包含</p>
             <InlineCode>import {`{ toast, Button }`} from '@/ui'</InlineCode>
           </UtilityCard>
@@ -1237,7 +1237,7 @@ import { Input } from '@/components/ui';
             <h4>
               <FiZap />
               性能优化
-              </h4>
+            </h4>
             <p>Toast和Alert会自动管理实例，无需手动清理</p>
             <InlineCode>toast.success() // 自动管理</InlineCode>
           </UtilityCard>
@@ -1246,7 +1246,7 @@ import { Input } from '@/components/ui';
             <h4>
               <FiSettings />
               主题适配
-              </h4>
+            </h4>
             <p>所有组件自动适配明暗主题，使用CSS变量</p>
             <InlineCode>var(--text-primary)</InlineCode>
           </UtilityCard>
@@ -1255,7 +1255,7 @@ import { Input } from '@/components/ui';
             <h4>
               <FiHeart />
               无障碍访问
-              </h4>
+            </h4>
             <p>组件内置ARIA支持和键盘导航</p>
             <InlineCode>aria-label, role, tabindex</InlineCode>
           </UtilityCard>
