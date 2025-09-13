@@ -4,6 +4,7 @@ import { FiCalendar, FiClock, FiTag, FiUser } from 'react-icons/fi';
 import { RiRobot2Line } from 'react-icons/ri';
 import { createRoot } from 'react-dom/client';
 import CodeBlock from '@/components/common/code-block';
+import ImagePreview from '@/components/common/image-preview';
 
 // 语言检测函数
 const detectLanguageFromCode = (code: string): string => {
@@ -320,14 +321,6 @@ const AuthorInfo = styled.div`
   }
 `;
 
-// 图片容器增加懒加载支持
-const ArticleImage = styled.img`
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  transition: opacity 0.3s ease, filter 0.3s ease;
-`;
-
 interface ArticleContentProps {
   article: {
     id: number;
@@ -349,7 +342,6 @@ interface ArticleContentProps {
 const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRef }) => {
   // 创建内部内容引用
   const innerContentRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
 
   // 使用useMemo缓存标签展示
   const articleTags = useMemo(() => {
@@ -403,24 +395,34 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
       );
     });
 
-    // 处理文章中的图片 - 添加加载动画和错误处理
+    // 处理文章中的图片 - 替换为 ImagePreview 组件
     const images = innerContentRef.current.querySelectorAll('img');
     images.forEach((img) => {
-      img.style.opacity = '0';
-      img.style.transition = 'opacity 0.3s ease';
+      const src = img.src;
+      const alt = img.alt || '文章图片';
 
-      img.onload = () => {
-        img.style.opacity = '1';
-      };
+      // 创建容器元素
+      const wrapper = document.createElement('div');
+      wrapper.className = 'react-image-preview-wrapper';
+      wrapper.style.margin = '1.5rem 0';
+      wrapper.style.textAlign = 'center';
 
-      img.onerror = () => {
-        img.style.opacity = '0.5';
-        img.style.filter = 'grayscale(100%)';
-        img.setAttribute('alt', '图片加载失败');
-      };
+      // 替换原始图片
+      img.parentNode?.replaceChild(wrapper, img);
 
-      // 添加懒加载
-      img.setAttribute('loading', 'lazy');
+      // 渲染 React 组件
+      const root = createRoot(wrapper);
+      root.render(
+        <ImagePreview
+          src={src}
+          alt={alt}
+          style={{
+            maxWidth: '100%',
+            borderRadius: '8px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+          }}
+        />,
+      );
     });
 
     // 将内部ref设置的DOM元素传递给外部ref
@@ -428,9 +430,6 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
       contentRef.current = innerContentRef.current;
     }
   }, [article.content, contentRef]);
-
-  // 图片加载状态
-  const [imageLoaded, setImageLoaded] = React.useState(false);
 
   return (
     <ArticleDetailContainer>
@@ -463,15 +462,11 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
       </AISummaryContainer>
 
       <ArticleCover>
-        <ArticleImage
-          ref={imageRef}
+        <ImagePreview
           src={article.image}
           alt={article.title}
-          loading="lazy"
-          onLoad={() => setImageLoaded(true)}
           style={{
-            opacity: imageLoaded ? 1 : 0,
-            filter: imageLoaded ? 'none' : 'blur(10px)',
+            width: '100%',
           }}
         />
       </ArticleCover>
