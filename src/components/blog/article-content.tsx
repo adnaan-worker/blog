@@ -1,17 +1,60 @@
 import React, { useEffect, useRef, memo, useMemo } from 'react';
 import styled from '@emotion/styled';
-import { motion } from 'framer-motion';
 import { FiCalendar, FiClock, FiTag, FiUser } from 'react-icons/fi';
 import { RiRobot2Line } from 'react-icons/ri';
+import { createRoot } from 'react-dom/client';
+import CodeBlock from '@/components/common/code-block';
 
-// 为window添加hljs类型定义
-declare global {
-  interface Window {
-    hljs?: {
-      highlightElement: (element: HTMLElement) => void;
-    };
+// 语言检测函数
+const detectLanguageFromCode = (code: string): string => {
+  const trimmed = code.trim();
+
+  // React/JSX 检测
+  if (/import\s+React|from\s+['"]react['"]|<[A-Z][a-zA-Z]*/.test(trimmed)) {
+    return /\.tsx|interface\s+\w+|type\s+\w+\s*=/.test(trimmed) ? 'tsx' : 'jsx';
   }
-}
+
+  // TypeScript 检测
+  if (/interface\s+\w+|type\s+\w+\s*=|:\s*(string|number|boolean)/.test(trimmed)) {
+    return 'typescript';
+  }
+
+  // JavaScript 检测
+  if (/function\s+\w+|const\s+\w+\s*=|=>\s*{/.test(trimmed)) {
+    return 'javascript';
+  }
+
+  // CSS 检测
+  if (/\{[^}]*:[^}]*\}|@media|@keyframes/.test(trimmed)) {
+    return 'css';
+  }
+
+  // HTML 检测
+  if (/<html|<head|<body|<div|<span|<p|<!DOCTYPE/.test(trimmed)) {
+    return 'html';
+  }
+
+  // JSON 检测
+  if (/^\s*[\{\[]/.test(trimmed) && /[\}\]]\s*$/.test(trimmed) && /"[^"]*"\s*:/.test(trimmed)) {
+    return 'json';
+  }
+
+  // Python 检测
+  if (/def\s+\w+|import\s+\w+|from\s+\w+\s+import/.test(trimmed)) {
+    return 'python';
+  }
+
+  // Bash/Shell 检测
+  if (/^#!/.test(trimmed) || /\$\s*\w+|echo\s+/.test(trimmed)) {
+    return 'bash';
+  }
+
+  if (/echo\s+|cd\s+|ls\s+/.test(trimmed)) {
+    return 'bash';
+  }
+
+  return 'text';
+};
 
 // 文章详情页容器
 const ArticleDetailContainer = styled.div`
@@ -330,13 +373,35 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
       heading.classList.add('article-heading');
     });
 
-    // 为代码块添加语法高亮
+    // 替换代码块为 React 组件
     const codeBlocks = innerContentRef.current.querySelectorAll('pre code');
-    if (codeBlocks.length > 0 && window.hljs) {
-      codeBlocks.forEach((block) => {
-        window.hljs?.highlightElement(block as HTMLElement);
-      });
-    }
+    codeBlocks.forEach((codeElement) => {
+      const preElement = codeElement.parentElement;
+      if (!preElement) return;
+
+      const codeText = codeElement.textContent || '';
+      const languageClass = codeElement.className.match(/language-(\w+)/);
+      const language = languageClass ? languageClass[1] : detectLanguageFromCode(codeText);
+
+      // 创建容器元素
+      const wrapper = document.createElement('div');
+      wrapper.className = 'react-code-block-wrapper';
+
+      // 替换原始代码块
+      preElement.parentNode?.replaceChild(wrapper, preElement);
+
+      // 渲染 React 组件
+      const root = createRoot(wrapper);
+      root.render(
+        <CodeBlock
+          code={codeText}
+          language={language}
+          showLineNumbers={true}
+          allowCopy={true}
+          allowFullscreen={false}
+        />,
+      );
+    });
 
     // 处理文章中的图片 - 添加加载动画和错误处理
     const images = innerContentRef.current.querySelectorAll('img');

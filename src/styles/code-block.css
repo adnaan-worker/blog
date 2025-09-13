@@ -1,0 +1,160 @@
+/* 增强代码块样式 */
+.enhanced-code-block {
+  position: relative;
+  margin: 2rem 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-code);
+}
+
+.enhanced-code-block:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+[data-theme='dark'] .enhanced-code-block {
+  background: #1a1a1a;
+  border-color: #333;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* 代码头部 */
+.enhanced-code-block .code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
+}
+
+[data-theme='dark'] .enhanced-code-block .code-header {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom-color: #333;
+}
+
+/* 语言标签 */
+.enhanced-code-block .language-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0.25rem 0.75rem;
+  background: rgba(81, 131, 245, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(81, 131, 245, 0.2);
+}
+
+.enhanced-code-block .language-tag .icon {
+  font-size: 1rem;
+}
+
+.enhanced-code-block .language-tag .auto-detected {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-left: 0.25rem;
+}
+
+/* 复制按钮 */
+.enhanced-code-block .copy-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.enhanced-code-block .copy-button:hover {
+  background: rgba(81, 131, 245, 0.1);
+  color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.enhanced-code-block .copy-button:active {
+  transform: scale(0.95);
+}
+
+/* 代码内容 */
+.enhanced-code-block pre {
+  margin: 0;
+  padding: 1.25rem;
+  font-family: var(--font-code);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: transparent;
+  overflow-x: auto;
+  white-space: pre;
+  max-height: 500px;
+}
+
+.enhanced-code-block code {
+  font-family: inherit;
+  font-size: inherit;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* 自定义滚动条 */
+.enhanced-code-block pre::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.enhanced-code-block pre::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.enhanced-code-block pre::-webkit-scrollbar-thumb {
+  background: rgba(81, 131, 245, 0.3);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.enhanced-code-block pre::-webkit-scrollbar-thumb:hover {
+  background: rgba(81, 131, 245, 0.5);
+}
+
+[data-theme='dark'] .enhanced-code-block pre::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .enhanced-code-block {
+    margin: 1.5rem -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .enhanced-code-block pre {
+    padding: 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .enhanced-code-block .code-header {
+    padding: 0.5rem 1rem;
+  }
+  
+  .enhanced-code-block .language-tag {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+  }
+}
