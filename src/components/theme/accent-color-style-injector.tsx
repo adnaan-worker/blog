@@ -14,8 +14,6 @@ const ACCENT_COLORS: AccentColorConfig = {
     '#26A69A', // 薄荷绿
     '#69a6cc', // 天蓝
     '#FFB74D', // 明亮橙
-    '#FF8A65', // 浅珊瑚红
-    '#EF9A9A', // 淡粉红
     '#BA68C8', // 浅紫
     '#4FC3F7', // 亮天蓝
     '#AED581', // 淡黄绿
@@ -25,8 +23,6 @@ const ACCENT_COLORS: AccentColorConfig = {
     '#99D8CF', // 淡绿
     '#838BC6', // 淡蓝紫
     '#FFD54F', // 明亮黄
-    '#FFAB91', // 浅鲑鱼色
-    '#FFCDD2', // 极浅红
     '#D1C4E9', // 淡薰衣草紫
     '#B3E5FC', // 极浅蓝
     '#DCEDC8', // 极浅绿
