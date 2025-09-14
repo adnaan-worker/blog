@@ -10,11 +10,12 @@ const Code = lazy(() => import('@/pages/examples/code'));
 const Blog = lazy(() => import('@/pages/blog'));
 const BlogDetail = lazy(() => import('@/pages/blog/detail'));
 const Notes = lazy(() => import('@/pages/notes'));
+const NoteDetail = lazy(() => import('@/pages/notes/detail'));
 const Projects = lazy(() => import('@/pages/projects'));
 const ProjectDetail = lazy(() => import('@/pages/projects/detail'));
 
 // 个人中心相关页面
-const Profile = lazy(() => import('@/pages/user/Profile'));;
+const Profile = lazy(() => import('@/pages/user/Profile'));
 
 // UI文档独立页面
 const UIDocsPage = lazy(() => import('@/pages/ui-docs'));
@@ -62,6 +63,14 @@ const router = createHashRouter([
         element: (
           <Suspense fallback={<PageLoading />}>
             <Notes />
+          </Suspense>
+        ),
+      },
+      {
+        path: '/notes/:id',
+        element: (
+          <Suspense fallback={<PageLoading />}>
+            <NoteDetail />
           </Suspense>
         ),
       },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
@@ -233,7 +234,7 @@ const NotesPage: React.FC = () => {
 
     // TODO: 替换为真实分页逻辑
     // 模拟数据有限，加载5页后停止
-    if (page >= 5) {
+    if (page >= 2) {
       setHasMore(false);
     }
 
@@ -249,17 +250,19 @@ const NotesPage: React.FC = () => {
 
   // 渲染单个手记项目
   const renderNoteItem = (note: Note, index: number) => (
-    <NoteItem>
-      <NoteDate>{formatDate(note.createdAt)}</NoteDate>
-      <NoteTitle>{note.title || '生活随记'}</NoteTitle>
-      {note.tags && note.tags.length > 0 && (
-        <TagList>
-          {note.tags.slice(0, 2).map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
-        </TagList>
-      )}
-    </NoteItem>
+    <Link to={`/notes/${note.id}`} style={{ textDecoration: 'none' }}>
+      <NoteItem>
+        <NoteDate>{formatDate(note.createdAt)}</NoteDate>
+        <NoteTitle>{note.title || '生活随记'}</NoteTitle>
+        {note.tags && note.tags.length > 0 && (
+          <TagList>
+            {note.tags.slice(0, 2).map((tag) => (
+              <Tag key={tag}>{tag}</Tag>
+            ))}
+          </TagList>
+        )}
+      </NoteItem>
+    </Link>
   );
 
   // 空状态组件
