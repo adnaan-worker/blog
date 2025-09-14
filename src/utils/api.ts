@@ -340,7 +340,7 @@ export const API = {
       postId: string | number,
       params?: CommentParams,
     ): Promise<ApiResponse<PaginationResult<Comment>>> => {
-      return http.get(`/posts/${postId}/comments`, params);
+      return http.get(`/comments/${postId}`, params);
     },
 
     /**
@@ -349,7 +349,7 @@ export const API = {
      * @returns Promise<ApiResponse<Comment>>
      */
     getCommentDetail: (id: string | number): Promise<ApiResponse<Comment>> => {
-      return http.get(`/comments/${id}`);
+      return http.get(`/comments/${id}/detail`);
     },
 
     /**

@@ -290,7 +290,7 @@ const BlogDetail: React.FC = () => {
           readTime: Math.ceil((apiArticle.content?.length || 0) / 200),
           excerpt: apiArticle.summary || apiArticle.content?.substring(0, 150) + '...' || '',
           image: apiArticle.coverImage
-            ? `/api/uploads/${apiArticle.coverImage}`
+            ? `${apiArticle.coverImage}`
             : 'https://via.placeholder.com/800x450?text=Article',
           author: apiArticle.author?.fullName || apiArticle.author?.username || '匿名',
           content: apiArticle.content,
@@ -327,9 +327,7 @@ const BlogDetail: React.FC = () => {
             views: apiArt.viewCount || 0,
             readTime: Math.ceil((apiArt.content?.length || 0) / 200),
             excerpt: apiArt.summary || apiArt.content?.substring(0, 150) + '...' || '',
-            image: apiArt.coverImage
-              ? `/api/uploads/${apiArt.coverImage}`
-              : 'https://via.placeholder.com/800x450?text=Article',
+            image: apiArt.coverImage ? `${apiArt.coverImage}` : 'https://via.placeholder.com/800x450?text=Article',
             author: apiArt.author?.fullName || apiArt.author?.username || '匿名',
             content: apiArt.content,
           }));
@@ -353,8 +351,25 @@ const BlogDetail: React.FC = () => {
 
         // 加载评论
         const commentsResponse = await API.comment.getCommentsByPost(articleId);
+        console.log('评论响应数据:', commentsResponse); // 调试日志
         if (commentsResponse.success && commentsResponse.data) {
-          setComments(commentsResponse.data.list || []);
+          // 根据实际API响应结构获取评论数据
+          const responseData = commentsResponse.data as any;
+          const apiComments = responseData.comments || responseData.list || [];
+          console.log('API返回的评论列表:', apiComments); // 调试日志
+
+          // 转换评论数据格式以匹配CommentSection组件期望的格式
+          const transformedComments = apiComments.map((apiComment: any) => ({
+            id: apiComment.id,
+            author: apiComment.author?.username || apiComment.author?.fullName || '匿名用户',
+            date: apiComment.createdAt ? new Date(apiComment.createdAt).toLocaleDateString('zh-CN') : '',
+            content: apiComment.content,
+            // 保留原始数据以备后用
+            originalData: apiComment,
+          }));
+
+          console.log('转换后的评论列表:', transformedComments); // 调试日志
+          setComments(transformedComments);
         }
 
         // 从本地存储中读取点赞和收藏状态
