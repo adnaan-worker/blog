@@ -603,108 +603,307 @@ const ContentSection = styled(motion.section)`
 `;
 
 const ArticleGrid = styled(motion.div)`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.25rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 `;
 
 const ArticleCard = styled(motion.div)`
-  background: var(--bg-primary);
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
-  flex-direction: column;
-  height: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+  transition: all 0.2s ease;
+  position: relative;
+
+  /* 左侧彩色指示点 */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
 
   &:hover {
-    background-color: rgba(81, 131, 245, 0.06);
-    box-shadow: 0 8px 30px rgba(81, 131, 245, 0.1);
-    transform: translateY(-3px);
-  }
-`;
-
-const ArticleImage = styled.div`
-  height: 160px;
-  background-color: var(--bg-secondary);
-  position: relative;
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    &::before {
+      opacity: 1;
+      transform: translateY(-50%) scale(1.2);
+    }
   }
 
-  ${ArticleCard}:hover & img {
-    transform: scale(1.08);
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+
+  [data-theme='dark'] & {
+    border-bottom-color: rgba(75, 85, 99, 0.3);
   }
 `;
 
 const ArticleContent = styled.div`
-  padding: 1.2rem;
   flex: 1;
-  display: flex;
-  flex-direction: column;
-`;
+  min-width: 0;
+  padding-left: 1.2rem;
 
-const ArticleTitle = styled.h3`
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
-  color: var(--text-primary);
-`;
-
-const ArticleMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.7rem;
-
-  span {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
+  @media (max-width: 768px) {
+    padding-left: 1rem;
   }
 `;
 
-const ArticleExcerpt = styled.p`
-  font-size: 0.85rem;
+const ArticleTitle = styled.h3`
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin: 0;
+  transition: color 0.2s ease;
+
+  ${ArticleCard}:hover & {
+    color: var(--accent-color);
+  }
+`;
+
+const ArticleTime = styled.div`
+  font-size: 0.8rem;
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 1rem;
+  font-weight: 400;
+  opacity: 0.7;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+    margin-left: 1rem;
+  }
+`;
+
+// 两栏布局样式
+const TwoColumnLayout = styled(motion.div)`
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 4rem;
+  margin-bottom: 2.5rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr 350px;
+    gap: 3rem;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+`;
+
+const LeftColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+`;
+
+const RightColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  position: relative;
+`;
+
+// 活动滚动容器
+const ActivityScrollContainer = styled.div`
+  position: relative;
+  max-height: 400px;
+  overflow: hidden;
+`;
+
+// 活动相关样式
+const ActivityGrid = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 20px 0;
+  margin: -20px 0;
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
+  }
+`;
+
+// 虚化遮罩层
+const FadeMask = styled.div`
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 2;
+
+  &.top {
+    top: 0;
+    height: 30px;
+    background: linear-gradient(
+      180deg,
+      var(--bg-primary) 0%,
+      rgba(var(--bg-primary-rgb, 255, 255, 255), 0.9) 40%,
+      rgba(var(--bg-primary-rgb, 255, 255, 255), 0.3) 80%,
+      transparent 100%
+    );
+  }
+
+  &.bottom {
+    bottom: 0;
+    height: 30px;
+    background: linear-gradient(
+      0deg,
+      var(--bg-primary) 0%,
+      rgba(var(--bg-primary-rgb, 255, 255, 255), 0.9) 40%,
+      rgba(var(--bg-primary-rgb, 255, 255, 255), 0.3) 80%,
+      transparent 100%
+    );
+  }
+
+  [data-theme='dark'] & {
+    &.top {
+      background: linear-gradient(
+        180deg,
+        var(--bg-primary) 0%,
+        rgba(var(--bg-primary-rgb, 30, 30, 30), 0.9) 40%,
+        rgba(var(--bg-primary-rgb, 30, 30, 30), 0.3) 80%,
+        transparent 100%
+      );
+    }
+
+    &.bottom {
+      background: linear-gradient(
+        0deg,
+        var(--bg-primary) 0%,
+        rgba(var(--bg-primary-rgb, 30, 30, 30), 0.9) 40%,
+        rgba(var(--bg-primary-rgb, 30, 30, 30), 0.3) 80%,
+        transparent 100%
+      );
+    }
+  }
+`;
+
+const ActivityLink = styled(motion.a)`
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+  transition: all 0.2s ease;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+
+  /* 左侧彩色指示点 */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 1.2rem;
+    width: 6px;
+    height: 6px;
+    background: #ef4444;
+    border-radius: 50%;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+  }
+
+  &:hover {
+    &::before {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  [data-theme='dark'] & {
+    border-bottom-color: rgba(75, 85, 99, 0.3);
+  }
+`;
+
+const ActivityContent = styled.div`
+  flex: 1;
+  min-width: 0;
+  padding-left: 1.2rem;
+`;
+
+const ActivityTitle = styled.h4`
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin: 0 0 0.3rem 0;
+  transition: color 0.2s ease;
+
+  ${ActivityLink}:hover & {
+    color: #ef4444;
+  }
+`;
+
+const ActivityMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+`;
+
+const ActivityAuthor = styled.span`
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+`;
+
+const ActivityTime = styled.span`
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+
+  &::before {
+    content: '·';
+    margin-right: 0.5rem;
+  }
+`;
+
+const ActivityDescription = styled.p`
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+  opacity: 0.8;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  flex: 1;
-`;
-
-const ReadMore = styled(MotionSpan)`
-  font-size: 0.85rem;
-  color: var(--accent-color);
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin-top: auto;
-  font-weight: 500;
-
-  svg {
-    transition: transform 0.2s ease;
-  }
-
-  ${ArticleCard}:hover & svg {
-    transform: translateX(4px);
-  }
 `;
 
 const ActivitySection = styled(motion.section)`
@@ -745,29 +944,6 @@ const ActivityIcon = styled.div`
   flex-shrink: 0;
   font-size: 0.9rem;
   border: 1px solid rgba(81, 131, 245, 0.15);
-`;
-
-const ActivityContent = styled.div`
-  flex: 1;
-`;
-
-const ActivityTitle = styled.h4`
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 0.3rem;
-
-  a {
-    color: var(--accent-color);
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-`;
-
-const ActivityTime = styled.div`
-  font-size: 0.8rem;
-  color: var(--text-secondary);
 `;
 
 const ChartSection = styled(motion.section)`
@@ -1105,24 +1281,98 @@ const mockArticles = [
   },
 ];
 
-const mockActivities = [
+const mockNotes = [
   {
     id: 1,
-    type: 'comment',
-    title: '在《Monthly Issue - 2025.3》中发表了评论',
-    time: '3天前',
+    title: '从代码到诗，从算法到哲学台',
+    date: '1天前',
   },
   {
     id: 2,
-    type: 'post',
-    title: '发布了新文章《使用React Native Screens 和 Native Navigation 提升应用性能》',
-    time: '6天前',
+    title: '在夜十中修炼，在代码中追梦',
+    date: '2个月前',
   },
   {
     id: 3,
-    type: 'like',
-    title: '赞了文章《应用性能优化的12个技巧》',
-    time: '1周前',
+    title: '复日商务游戏乐园',
+    date: '2个月前',
+  },
+  {
+    id: 4,
+    title: '或许这样更好',
+    date: '3个月前',
+  },
+  {
+    id: 5,
+    title: '镜头与代码的交响：打造个人生活画廊网站',
+    date: '3个月前',
+  },
+];
+
+const mockActivities = [
+  {
+    id: 1,
+    title: 'Next.js + Vite，这样什么都能做吧？',
+    author: 'XiaoChen1027',
+    time: '访问',
+    description: '微信名称Moon',
+    link: '/activity/1',
+  },
+  {
+    id: 2,
+    title: 'https://github.com/XiaoChen1027',
+    author: 'XiaoChen1027',
+    time: '访问',
+    description: '',
+    link: '/activity/2',
+  },
+  {
+    id: 3,
+    title: 'username 是什么',
+    author: 'Innei',
+    time: '访问',
+    description: '',
+    link: '/activity/3',
+  },
+  {
+    id: 4,
+    title: '四月，你好的样子',
+    author: '某人',
+    time: '访问',
+    description: '',
+    link: '/activity/4',
+  },
+  {
+    id: 5,
+    title: 'React 18 新特性深度解析',
+    author: 'TechGuru',
+    time: '访问',
+    description: '并发渲染和自动批处理',
+    link: '/activity/5',
+  },
+  {
+    id: 6,
+    title: 'TypeScript 5.0 发布了',
+    author: 'DevNews',
+    time: '访问',
+    description: '装饰器和新的语法特性',
+    link: '/activity/6',
+  },
+  {
+    id: 7,
+    title: 'Vite 4.0 性能优化指南',
+    author: 'BuildMaster',
+    time: '访问',
+    description: '构建速度提升50%',
+    link: '/activity/7',
+  },
+  {
+    id: 8,
+    title: '前端工程化最佳实践',
+    author: 'CodeReview',
+    time: '访问',
+    description: 'ESLint + Prettier + Husky',
+    link: '/activity/8',
   },
 ];
 
@@ -1514,89 +1764,102 @@ const Home = () => {
           </ScrollIndicator>
         </HeroSection>
 
-        {/* 文章部分 */}
-        <ContentSection
+        {/* 两栏布局容器 */}
+        <TwoColumnLayout
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
           variants={staggerContainerVariants}
         >
-          <SectionTitle variants={fadeInUpVariants}>
-            最近更新的文稿
-            <motion.a href="/blog" whileHover={{ x: 5 }} variants={fadeInUpVariants}>
-              查看全部 <FiArrowRight size={12} />
-            </motion.a>
-          </SectionTitle>
+          {/* 左侧栏 */}
+          <LeftColumn>
+            {/* 文章部分 */}
+            <ContentSection variants={fadeInUpVariants}>
+              <SectionTitle>
+                最近更新的文稿
+                <motion.a href="/blog" whileHover={{ x: 5 }}>
+                  还有更多 <FiArrowRight size={12} />
+                </motion.a>
+              </SectionTitle>
 
-          <ArticleGrid variants={staggerContainerVariants}>
-            {/* TODO: 替换为真实 API 数据 */}
-            {mockArticles.map((article, index) => (
-              <ArticleLink
-                to={`/blog/${article.id}`}
-                key={article.id}
-                variants={cardVariants}
-                whileHover={{ y: -5 }}
-                custom={index}
-              >
-                <ArticleImage>
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    onError={(e) => {
-                      e.currentTarget.src = ErrorImage;
-                    }}
-                  />
-                </ArticleImage>
-                <ArticleContent>
-                  <ArticleTitle>{article.title}</ArticleTitle>
-                  <ArticleMeta>
-                    <span>
-                      <FiCalendar size={12} /> {article.date}
-                    </span>
-                    <span>
-                      <FiClock size={12} /> {article.views} 次阅读
-                    </span>
-                  </ArticleMeta>
-                  <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
-                  <ReadMore>
-                    阅读更多 <FiArrowRight size={12} />
-                  </ReadMore>
-                </ArticleContent>
-              </ArticleLink>
-            ))}
-          </ArticleGrid>
-        </ContentSection>
+              <ArticleGrid variants={staggerContainerVariants}>
+                {mockArticles.map((article, index) => (
+                  <ArticleLink
+                    to={`/blog/${article.id}`}
+                    key={article.id}
+                    variants={cardVariants}
+                    whileHover={{ x: 2 }}
+                    custom={index}
+                  >
+                    <ArticleContent>
+                      <ArticleTitle>{article.title}</ArticleTitle>
+                    </ArticleContent>
+                    <ArticleTime>{article.date}</ArticleTime>
+                  </ArticleLink>
+                ))}
+              </ArticleGrid>
+            </ContentSection>
 
-        {/* 活动部分 */}
-        <ActivitySection
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          variants={staggerContainerVariants}
-        >
-          <SectionTitle variants={fadeInUpVariants}>
-            最近发生的事
-            <motion.a href="/activities" whileHover={{ x: 5 }} variants={fadeInUpVariants}>
-              查看全部 <FiArrowRight size={12} />
-            </motion.a>
-          </SectionTitle>
+            {/* 手记部分 */}
+            <ContentSection variants={fadeInUpVariants}>
+              <SectionTitle>
+                最近更新的手记
+                <motion.a href="/notes" whileHover={{ x: 5 }}>
+                  还有更多 <FiArrowRight size={12} />
+                </motion.a>
+              </SectionTitle>
 
-          <ActivityList variants={staggerContainerVariants}>
-            {mockActivities.map((activity, index) => (
-              <ActivityItem key={activity.id} variants={activityVariants} custom={index} whileHover={{ y: -3, x: 3 }}>
-                <ActivityIcon>
-                  {activity.type === 'comment' && <FiMessageCircle size={16} />}
-                  {activity.type === 'post' && <FiCalendar size={16} />}
-                  {activity.type === 'like' && <span>❤️</span>}
-                </ActivityIcon>
-                <ActivityContent>
-                  <ActivityTitle>{activity.title}</ActivityTitle>
-                  <ActivityTime>{activity.time}</ActivityTime>
-                </ActivityContent>
-              </ActivityItem>
-            ))}
-          </ActivityList>
-        </ActivitySection>
+              <ArticleGrid variants={staggerContainerVariants}>
+                {mockNotes.map((note, index) => (
+                  <ArticleLink
+                    to={`/notes/${note.id}`}
+                    key={note.id}
+                    variants={cardVariants}
+                    whileHover={{ x: 2 }}
+                    custom={index}
+                  >
+                    <ArticleContent>
+                      <ArticleTitle>{note.title}</ArticleTitle>
+                    </ArticleContent>
+                    <ArticleTime>{note.date}</ArticleTime>
+                  </ArticleLink>
+                ))}
+              </ArticleGrid>
+            </ContentSection>
+          </LeftColumn>
+
+          {/* 右侧栏 */}
+          <RightColumn>
+            <ContentSection variants={fadeInUpVariants}>
+              <SectionTitle>最近发生的事</SectionTitle>
+
+              <ActivityScrollContainer>
+                <FadeMask className="top" />
+                <ActivityGrid variants={staggerContainerVariants}>
+                  {mockActivities.map((activity, index) => (
+                    <ActivityLink
+                      href={activity.link || '#'}
+                      key={activity.id}
+                      variants={cardVariants}
+                      whileHover={{ x: 2 }}
+                      custom={index}
+                    >
+                      <ActivityContent>
+                        <ActivityTitle>{activity.title}</ActivityTitle>
+                        <ActivityMeta>
+                          <ActivityAuthor>{activity.author}</ActivityAuthor>
+                          <ActivityTime>{activity.time}</ActivityTime>
+                        </ActivityMeta>
+                        {activity.description && <ActivityDescription>{activity.description}</ActivityDescription>}
+                      </ActivityContent>
+                    </ActivityLink>
+                  ))}
+                </ActivityGrid>
+                <FadeMask className="bottom" />
+              </ActivityScrollContainer>
+            </ContentSection>
+          </RightColumn>
+        </TwoColumnLayout>
 
         {/* 图表部分 */}
         <ChartSection
