@@ -1074,6 +1074,7 @@ const projectVariants: Variants = {
 };
 
 // 示例数据
+// 将使用真实 API 数据替换
 const mockArticles = [
   {
     id: 1,
@@ -1528,6 +1529,7 @@ const Home = () => {
           </SectionTitle>
 
           <ArticleGrid variants={staggerContainerVariants}>
+            {/* TODO: 替换为真实 API 数据 */}
             {mockArticles.map((article, index) => (
               <ArticleLink
                 to={`/blog/${article.id}`}

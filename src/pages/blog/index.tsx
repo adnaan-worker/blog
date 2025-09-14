@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import styled from '@emotion/styled';
 import ArticleList, { Article } from '@/components/blog/article-list';
 import BlogSidebar from '@/components/blog/blog-sidebar';
+import { API, Article as ApiArticle } from '@/utils/api';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -65,109 +66,6 @@ const PageButton = styled.button<{ active?: boolean }>`
   }
 `;
 
-// 示例博客文章数据
-const DUMMY_ARTICLES = [
-  {
-    id: 1,
-    title: 'Vue3 + TypeScript 开发实践与优化技巧',
-    date: '2025-04-15',
-    category: '前端开发',
-    tags: ['Vue', 'TypeScript', '前端'],
-    views: 842,
-    readTime: 8,
-    excerpt: '深入探讨Vue3与TypeScript结合的最佳实践，包括组件设计、状态管理优化、性能调优以及常见陷阱的规避方法。',
-    image: 'https://via.placeholder.com/800x450?text=Vue+TypeScript',
-  },
-  {
-    id: 2,
-    title: 'React 18新特性解析：并发渲染与Suspense',
-    date: '2025-04-10',
-    category: '前端开发',
-    tags: ['React', 'JavaScript', '前端'],
-    views: 756,
-    readTime: 6,
-    excerpt: '详细解读React 18中的并发渲染机制，以及Suspense组件如何简化异步数据加载和提升用户体验。',
-    image: 'https://via.placeholder.com/800x450?text=React+18',
-  },
-  {
-    id: 3,
-    title: 'Node.js微服务架构设计与实现',
-    date: '2025-04-05',
-    category: '后端开发',
-    tags: ['Node.js', '微服务', '后端'],
-    views: 693,
-    readTime: 10,
-    excerpt: '从零开始构建一个基于Node.js的微服务系统，涵盖服务发现、负载均衡、熔断机制以及容器化部署。',
-    image: 'https://via.placeholder.com/800x450?text=Node.js+Microservices',
-  },
-  {
-    id: 4,
-    title: 'CSS Grid与Flexbox布局实战指南',
-    date: '2025-04-01',
-    category: '前端开发',
-    tags: ['CSS', '布局', '前端'],
-    views: 581,
-    readTime: 5,
-    excerpt: '通过实例讲解CSS Grid和Flexbox的使用场景、核心概念以及如何结合两者创建复杂而灵活的页面布局。',
-    image: 'https://via.placeholder.com/800x450?text=CSS+Layout',
-  },
-  {
-    id: 5,
-    title: 'TypeScript高级类型系统深度剖析',
-    date: '2025-03-28',
-    category: '编程语言',
-    tags: ['TypeScript', '编程语言', '类型系统'],
-    views: 724,
-    readTime: 12,
-    excerpt: '探索TypeScript的高级类型特性，包括条件类型、映射类型、类型推断以及如何利用这些特性编写更安全的代码。',
-    image: 'https://via.placeholder.com/800x450?text=TypeScript+Advanced',
-  },
-  {
-    id: 6,
-    title: '构建高性能Web应用的最佳实践',
-    date: '2025-03-25',
-    category: '性能优化',
-    tags: ['性能优化', 'Web开发', '最佳实践'],
-    views: 865,
-    readTime: 9,
-    excerpt: '全面介绍提升Web应用性能的策略和技术，从网络请求优化、资源加载到渲染性能和运行时优化的全方位指南。',
-    image: 'https://via.placeholder.com/800x450?text=Web+Performance',
-  },
-  {
-    id: 7,
-    title: 'GraphQL与RESTful API设计对比',
-    date: '2025-03-20',
-    category: 'API设计',
-    tags: ['GraphQL', 'RESTful', 'API'],
-    views: 619,
-    readTime: 7,
-    excerpt: '分析GraphQL和RESTful API的设计理念、优缺点以及各自适用的场景，帮助开发者选择最适合项目的API方案。',
-    image: 'https://via.placeholder.com/800x450?text=GraphQL+vs+REST',
-  },
-  {
-    id: 8,
-    title: 'JavaScript异步编程模式演进',
-    date: '2025-03-15',
-    category: '编程语言',
-    tags: ['JavaScript', '异步编程', '编程语言'],
-    views: 732,
-    readTime: 8,
-    excerpt: '从回调函数、Promise到Async/Await，全面回顾JavaScript异步编程模式的发展历程及最佳实践。',
-    image: 'https://via.placeholder.com/800x450?text=JS+Async',
-  },
-  {
-    id: 9,
-    title: '深入Webpack5：模块联邦与缓存优化',
-    date: '2025-03-10',
-    category: '工具',
-    tags: ['Webpack', '工具', '构建工具'],
-    views: 547,
-    readTime: 11,
-    excerpt: '详细介绍Webpack5的新特性，特别是模块联邦如何实现微前端架构，以及持久化缓存如何提升构建性能。',
-    image: 'https://via.placeholder.com/800x450?text=Webpack5',
-  },
-];
-
 // 排序选项
 const SORT_OPTIONS = ['最新发布', '最多浏览', '阅读时间'];
 
@@ -195,8 +93,10 @@ const formatCategories = (articles: Article[]): { name: string; count: number }[
 
 const Blog: React.FC = () => {
   // 状态管理
-  const [articles] = useState<Article[]>(DUMMY_ARTICLES);
-  const [filteredArticles, setFilteredArticles] = useState<Article[]>(DUMMY_ARTICLES);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('全部');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('最新发布');
@@ -204,6 +104,68 @@ const Blog: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [viewMode, setViewMode] = useState<'timeline' | 'card'>('timeline');
   const articlesPerPage = 5;
+
+  // 获取文章数据
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await API.article.getArticles({ page: 1, pageSize: 100 });
+
+        // 根据实际 API 返回格式处理数据
+        let articleList: any[] = [];
+
+        if (response && typeof response === 'object') {
+          if ('success' in response && response.success && response.data) {
+            // 如果是分页格式 { success, data: { list } }
+            const data = response.data as any;
+            articleList = data.list || data || [];
+          } else if (Array.isArray(response)) {
+            // 如果直接返回数组
+            articleList = response;
+          } else if ('data' in response && Array.isArray(response.data)) {
+            // 如果是 { data: [] } 格式
+            articleList = response.data;
+          }
+        }
+
+        if (articleList.length > 0) {
+          // 转换 API 数据格式为组件期望的格式
+          const convertedArticles: Article[] = articleList.map((apiArticle: any) => ({
+            id: Number(apiArticle.id),
+            title: apiArticle.title,
+            date: apiArticle.publishedAt
+              ? new Date(apiArticle.publishedAt).toISOString().split('T')[0]
+              : apiArticle.createdAt
+              ? new Date(apiArticle.createdAt).toISOString().split('T')[0]
+              : new Date().toISOString().split('T')[0],
+            category: apiArticle.category?.name || '未分类',
+            tags: apiArticle.tags?.map((tag: any) => tag.name) || [],
+            views: apiArticle.viewCount || 0,
+            readTime: Math.ceil((apiArticle.content?.length || 0) / 200), // 估算阅读时间
+            excerpt: apiArticle.summary || apiArticle.content?.substring(0, 150) + '...' || '',
+            image: apiArticle.coverImage
+              ? `/api/uploads/${apiArticle.coverImage}`
+              : 'https://via.placeholder.com/800x450?text=Article',
+            author: apiArticle.author?.fullName || apiArticle.author?.username || '匿名',
+            content: apiArticle.content,
+          }));
+          setArticles(convertedArticles);
+          setFilteredArticles(convertedArticles);
+        } else {
+          setError('暂无文章数据');
+        }
+      } catch (err) {
+        console.error('获取文章失败:', err);
+        setError('网络错误，请稍后重试');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, []);
 
   // 计算所有标签和分类
   const allTags = useMemo(() => extractAllTags(articles), [articles]);
@@ -316,35 +278,28 @@ const Blog: React.FC = () => {
 
         {/* 主内容区域 */}
         <BlogMainContent>
-          <ArticleList 
-            articles={currentArticles} 
-            viewMode={viewMode} 
-          />
-          
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
+          ) : error ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--error-color)' }}>{error}</div>
+          ) : (
+            <ArticleList articles={currentArticles} viewMode={viewMode} />
+          )}
+
           {/* 分页控件 */}
           {totalPages > 1 && (
             <Pagination>
-              <PageButton 
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
+              <PageButton onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
                 &lt;
               </PageButton>
 
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PageButton
-                  key={page}
-                  active={currentPage === page}
-                  onClick={() => handlePageChange(page)}
-                >
+                <PageButton key={page} active={currentPage === page} onClick={() => handlePageChange(page)}>
                   {page}
                 </PageButton>
               ))}
 
-              <PageButton 
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
+              <PageButton onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
                 &gt;
               </PageButton>
             </Pagination>

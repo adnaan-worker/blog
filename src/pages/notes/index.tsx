@@ -149,6 +149,7 @@ const NotesPage: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
 
+  // TODO: 替换为真实 API 数据
   // 生成更多模拟数据
   const generateMoreNotes = (pageNum: number): Note[] => {
     const baseId = (pageNum - 1) * 10;
@@ -205,6 +206,7 @@ const NotesPage: React.FC = () => {
 
   // 初始数据加载
   useEffect(() => {
+    // TODO: 替换为真实 API 调用
     const loadMockData = async () => {
       await new Promise((resolve) => setTimeout(resolve, 600));
 
@@ -229,6 +231,7 @@ const NotesPage: React.FC = () => {
     setNotes((prevNotes) => [...prevNotes, ...newNotes]);
     setPage((prevPage) => prevPage + 1);
 
+    // TODO: 替换为真实分页逻辑
     // 模拟数据有限，加载5页后停止
     if (page >= 5) {
       setHasMore(false);
