@@ -236,7 +236,6 @@ const BlogDetail: React.FC = () => {
   const [bookmarked, setBookmarked] = useState(false);
   const [prevArticle, setPrevArticle] = useState<Article | null>(null);
   const [nextArticle, setNextArticle] = useState<Article | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // 目录状态
@@ -257,7 +256,6 @@ const BlogDetail: React.FC = () => {
   // 获取文章数据 - 使用useCallback
   const fetchArticle = useCallback(async (articleId: string) => {
     try {
-      setLoading(true);
       setError(null);
 
       // 获取文章详情
@@ -344,7 +342,6 @@ const BlogDetail: React.FC = () => {
       setError('网络错误，请稍后重试');
       setArticle(null);
     } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -625,15 +622,6 @@ const BlogDetail: React.FC = () => {
       handleShare,
     ],
   );
-
-  // 加载中状态
-  if (loading) {
-    return (
-      <PageContainer>
-        <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-secondary)' }}>加载中...</div>
-      </PageContainer>
-    );
-  }
 
   // 错误状态
   if (error) {

@@ -95,7 +95,6 @@ const Blog: React.FC = () => {
   // 状态管理
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('全部');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -109,7 +108,6 @@ const Blog: React.FC = () => {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
-        setLoading(true);
         setError(null);
         const response = await API.article.getArticles({ page: 1, pageSize: 100 });
 
@@ -141,7 +139,6 @@ const Blog: React.FC = () => {
         console.error('获取文章失败:', err);
         setError('网络错误，请稍后重试');
       } finally {
-        setLoading(false);
       }
     };
 
@@ -259,9 +256,7 @@ const Blog: React.FC = () => {
 
         {/* 主内容区域 */}
         <BlogMainContent>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
-          ) : error ? (
+          {error ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--error-color)' }}>{error}</div>
           ) : (
             <ArticleList articles={currentArticles} viewMode={viewMode} />
