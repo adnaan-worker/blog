@@ -275,27 +275,8 @@ const BlogDetail: React.FC = () => {
       }
 
       if (apiArticle) {
-        // 转换 API 数据格式为组件期望的格式
-        const foundArticle: Article = {
-          id: Number(apiArticle.id),
-          title: apiArticle.title,
-          date: apiArticle.publishedAt
-            ? new Date(apiArticle.publishedAt).toISOString().split('T')[0]
-            : apiArticle.createdAt
-            ? new Date(apiArticle.createdAt).toISOString().split('T')[0]
-            : new Date().toISOString().split('T')[0],
-          category: apiArticle.category?.name || '未分类',
-          tags: apiArticle.tags?.map((tag: any) => tag.name) || [],
-          views: apiArticle.viewCount || 0,
-          readTime: Math.ceil((apiArticle.content?.length || 0) / 200),
-          excerpt: apiArticle.summary || apiArticle.content?.substring(0, 150) + '...' || '',
-          image: apiArticle.coverImage
-            ? `${apiArticle.coverImage}`
-            : 'https://via.placeholder.com/800x450?text=Article',
-          author: apiArticle.author?.fullName || apiArticle.author?.username || '匿名',
-          content: apiArticle.content,
-        };
-        setArticle(foundArticle);
+        // 后端已经返回了前端期望的格式，直接使用
+        setArticle(apiArticle);
 
         // 获取文章列表用于导航
         const listResponse = await API.article.getArticles({ page: 1, pageSize: 100 });
@@ -313,26 +294,10 @@ const BlogDetail: React.FC = () => {
         }
 
         if (apiArticles.length > 0) {
-          // 转换所有文章数据
-          const allArticles: Article[] = apiArticles.map((apiArt: any) => ({
-            id: Number(apiArt.id),
-            title: apiArt.title,
-            date: apiArt.publishedAt
-              ? new Date(apiArt.publishedAt).toISOString().split('T')[0]
-              : apiArt.createdAt
-              ? new Date(apiArt.createdAt).toISOString().split('T')[0]
-              : new Date().toISOString().split('T')[0],
-            category: apiArt.category?.name || '未分类',
-            tags: apiArt.tags?.map((tag: any) => tag.name) || [],
-            views: apiArt.viewCount || 0,
-            readTime: Math.ceil((apiArt.content?.length || 0) / 200),
-            excerpt: apiArt.summary || apiArt.content?.substring(0, 150) + '...' || '',
-            image: apiArt.coverImage ? `${apiArt.coverImage}` : 'https://via.placeholder.com/800x450?text=Article',
-            author: apiArt.author?.fullName || apiArt.author?.username || '匿名',
-            content: apiArt.content,
-          }));
+          // 后端已经返回了前端期望的格式，直接使用
+          const allArticles: Article[] = apiArticles;
 
-          const articleIndex = allArticles.findIndex((a) => a.id === foundArticle.id);
+          const articleIndex = allArticles.findIndex((a) => a.id === apiArticle.id);
 
           // 获取上一篇和下一篇文章
           setPrevArticle(articleIndex > 0 ? allArticles[articleIndex - 1] : null);
@@ -342,8 +307,8 @@ const BlogDetail: React.FC = () => {
           const related = allArticles
             .filter(
               (a) =>
-                a.id !== foundArticle.id &&
-                (a.category === foundArticle.category || a.tags?.some((tag) => foundArticle.tags?.includes(tag))),
+                a.id !== apiArticle.id &&
+                (a.category === apiArticle.category || a.tags?.some((tag) => apiArticle.tags?.includes(tag))),
             )
             .slice(0, 2);
           setRelatedArticles(related);
@@ -353,23 +318,11 @@ const BlogDetail: React.FC = () => {
         const commentsResponse = await API.comment.getCommentsByPost(articleId);
         console.log('评论响应数据:', commentsResponse); // 调试日志
         if (commentsResponse.success && commentsResponse.data) {
-          // 根据实际API响应结构获取评论数据
+          // 后端已经返回了前端期望的格式，直接使用
           const responseData = commentsResponse.data as any;
-          const apiComments = responseData.comments || responseData.list || [];
-          console.log('API返回的评论列表:', apiComments); // 调试日志
-
-          // 转换评论数据格式以匹配CommentSection组件期望的格式
-          const transformedComments = apiComments.map((apiComment: any) => ({
-            id: apiComment.id,
-            author: apiComment.author?.username || apiComment.author?.fullName || '匿名用户',
-            date: apiComment.createdAt ? new Date(apiComment.createdAt).toLocaleDateString('zh-CN') : '',
-            content: apiComment.content,
-            // 保留原始数据以备后用
-            originalData: apiComment,
-          }));
-
-          console.log('转换后的评论列表:', transformedComments); // 调试日志
-          setComments(transformedComments);
+          const commentsList = responseData.comments || [];
+          console.log('处理后的评论列表:', commentsList); // 调试日志
+          setComments(commentsList);
         }
 
         // 从本地存储中读取点赞和收藏状态

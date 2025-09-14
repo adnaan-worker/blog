@@ -131,28 +131,9 @@ const Blog: React.FC = () => {
         }
 
         if (articleList.length > 0) {
-          // 转换 API 数据格式为组件期望的格式
-          const convertedArticles: Article[] = articleList.map((apiArticle: any) => ({
-            id: Number(apiArticle.id),
-            title: apiArticle.title,
-            date: apiArticle.publishedAt
-              ? new Date(apiArticle.publishedAt).toISOString().split('T')[0]
-              : apiArticle.createdAt
-              ? new Date(apiArticle.createdAt).toISOString().split('T')[0]
-              : new Date().toISOString().split('T')[0],
-            category: apiArticle.category?.name || '未分类',
-            tags: apiArticle.tags?.map((tag: any) => tag.name) || [],
-            views: apiArticle.viewCount || 0,
-            readTime: Math.ceil((apiArticle.content?.length || 0) / 200), // 估算阅读时间
-            excerpt: apiArticle.summary || apiArticle.content?.substring(0, 150) + '...' || '',
-            image: apiArticle.coverImage
-              ? `/api/uploads/${apiArticle.coverImage}`
-              : 'https://via.placeholder.com/800x450?text=Article',
-            author: apiArticle.author?.fullName || apiArticle.author?.username || '匿名',
-            content: apiArticle.content,
-          }));
-          setArticles(convertedArticles);
-          setFilteredArticles(convertedArticles);
+          // 后端已经返回了前端期望的格式，直接使用
+          setArticles(articleList);
+          setFilteredArticles(articleList);
         } else {
           setError('暂无文章数据');
         }
