@@ -55,15 +55,22 @@ export default defineConfig(({ mode }) => {
       // 根据环境变量配置代理
       proxy: {
         '/api': {
-          target: env.VITE_PROXY_TARGET,
+          target: env.VITE_PROXY_TARGET || 'http://localhost:8200',
           changeOrigin: true,
           rewrite: env.VITE_PROXY_REWRITE === 'true' ? (path) => path.replace(/^\/api/, '') : undefined,
           secure: false,
         },
         '/uploads': {
           // 去掉env.VITE_PROXY_TARGET后面的/api
-          target: env.VITE_PROXY_TARGET.replace('/api', ''),
+          target: (env.VITE_PROXY_TARGET || 'http://localhost:8200').replace('/api', ''),
           changeOrigin: true,
+          secure: false,
+        },
+        // 添加 Socket.IO 代理
+        '/socket.io': {
+          target: env.VITE_PROXY_TARGET || 'http://localhost:8200',
+          changeOrigin: true,
+          ws: true, // 启用 WebSocket 代理
           secure: false,
         },
       },

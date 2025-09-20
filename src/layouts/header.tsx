@@ -27,6 +27,7 @@ import NavLinks from './modules/nav-links';
 import UserMenu, { MobileAvatar } from './modules/user-menu';
 import ThemeToggle from './modules/theme-toggle';
 import MobileMenu from './modules/mobile-menu';
+import AppStatus from './modules/app-status';
 
 // 定义菜单数据类型
 interface MenuItem {
@@ -507,16 +508,21 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   return (
     <div className={`header ${internalScrolled ? 'scrolled' : ''}`}>
       <HeaderContainer scrolled={internalScrolled}>
-        <LogoContainer to="/" onMouseEnter={handleLogoMouseEnter} onMouseLeave={handleLogoMouseLeave}>
-          <LogoIconContainer className="logo-icon">
-            <img src="/logo.png" alt="" />
-          </LogoIconContainer>
-          <LogoText className="logo-text">
-            <LogoHighlight className="logo-highlight">a</LogoHighlight>dnaan's
-            <LogoHighlight className="logo-highlight"> blog</LogoHighlight>
-          </LogoText>
-          <LogoTooltip visible={showLogoTooltip}>{tooltipMessage}</LogoTooltip>
-        </LogoContainer>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <LogoContainer to="/" onMouseEnter={handleLogoMouseEnter} onMouseLeave={handleLogoMouseLeave}>
+            <LogoIconContainer className="logo-icon">
+              <img src="/logo.png" alt="" />
+            </LogoIconContainer>
+            <LogoText className="logo-text">
+              <LogoHighlight className="logo-highlight">a</LogoHighlight>dnaan's
+              <LogoHighlight className="logo-highlight"> blog</LogoHighlight>
+            </LogoText>
+            <LogoTooltip visible={showLogoTooltip}>{tooltipMessage}</LogoTooltip>
+          </LogoContainer>
+
+          {/* Logo右侧的应用状态 */}
+          <AppStatus />
+        </div>
 
         {/* 桌面导航 */}
         <div className="nav-card">
