@@ -19,6 +19,7 @@ export interface SocketManager {
   disconnect: () => void;
   emit: (event: string, data?: any) => boolean;
   reconnect: () => void;
+  resetReconnectionState: () => void;
   addEventListener: (event: string, handler: Function) => () => void;
   removeEventListener: (event: string, handler: Function) => void;
   getStats: () => SocketState & { uptime: number };
@@ -35,17 +36,37 @@ interface SocketConfig {
 
 // 获取Socket URL
 const getSocketUrl = (): string => {
+  // 优先使用专门的Socket URL环境变量
   if (import.meta.env.VITE_SOCKET_URL) {
-    return import.meta.env.VITE_SOCKET_URL.replace('ws://', 'http://').replace('/socket.io', '');
-  }
+    let socketUrl = import.meta.env.VITE_SOCKET_URL;
 
-  if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost') {
-      return window.location.origin; // 使用代理
+    // Socket.IO客户端使用HTTP/HTTPS协议连接，会自动升级到WebSocket
+    if (socketUrl.startsWith('ws://')) {
+      socketUrl = socketUrl.replace('ws://', 'http://');
+    } else if (socketUrl.startsWith('wss://')) {
+      socketUrl = socketUrl.replace('wss://', 'https://');
     }
-    return window.location.origin; // 生产环境
+
+    // 移除路径后缀，让Socket.IO自动处理
+    return socketUrl.replace('/socket.io', '');
   }
 
+  // 如果在浏览器环境中
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname, port } = window.location;
+
+    // 开发环境
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      // 开发环境通常使用代理，直接使用当前域名
+      return window.location.origin;
+    }
+
+    // 生产环境，使用当前协议和域名
+    const socketProtocol = protocol === 'https:' ? 'https:' : 'http:';
+    return `${socketProtocol}//${hostname}${port ? ':' + port : ''}`;
+  }
+
+  // 默认回退
   return 'http://localhost:3001';
 };
 
@@ -128,6 +149,25 @@ class GlobalSocketManager {
     // 连接失败
     socket.on('connect_error', (error) => {
       console.error('❌ Socket连接失败:', error.message);
+
+      // 检查是否是鉴权错误
+      const isAuthError =
+        error.message &&
+        (error.message.includes('Authentication required') || error.message.includes('Invalid authentication token'));
+
+      if (isAuthError) {
+        console.error('🔐 鉴权失败，停止重连尝试');
+        this.updateState({
+          isConnected: false,
+          isConnecting: false,
+          error: `鉴权失败: ${error.message}`,
+          reconnectAttempts: this.config.maxReconnectionAttempts, // 设置为最大值以停止重连
+        });
+        this.connectionPromise = null;
+        this.triggerEventListeners('connect_error', error);
+        return; // 不再尝试重连
+      }
+
       this.updateState({
         isConnected: false,
         isConnecting: false,
@@ -229,7 +269,9 @@ class GlobalSocketManager {
       console.error('❌ 达到最大重连次数，停止重连');
       this.updateState({
         error: `重连失败，已达到最大尝试次数 (${this.config.maxReconnectionAttempts})`,
+        isConnecting: false,
       });
+      this.connectionPromise = null; // 清理连接Promise
       return;
     }
 
@@ -241,12 +283,21 @@ class GlobalSocketManager {
     console.log(`🔄 ${delay}ms后尝试重连 (第${this.state.reconnectAttempts + 1}次)`);
 
     this.reconnectTimer = setTimeout(() => {
-      this.connect();
+      // 再次检查是否超过最大次数
+      if (this.state.reconnectAttempts < this.config.maxReconnectionAttempts) {
+        this.connect();
+      }
     }, delay);
   }
 
   // 连接Socket
   public async connect(): Promise<boolean> {
+    // 如果已达到最大重连次数，拒绝连接
+    if (this.state.reconnectAttempts >= this.config.maxReconnectionAttempts) {
+      console.log('🚫 已达到最大重连次数，拒绝连接');
+      return false;
+    }
+
     // 如果已经在连接中，返回现有Promise
     if (this.connectionPromise) {
       return this.connectionPromise;
@@ -266,6 +317,10 @@ class GlobalSocketManager {
         this.socket = null;
       }
 
+      // 获取鉴权令牌 - 添加调试信息
+      const authToken = import.meta.env.VITE_SOCKET_IO_AUTH_KEY || 'default-socket-key-2024';
+      console.log('🔑 使用Socket.IO鉴权令牌:', authToken.substring(0, 8) + '...');
+
       // 创建新连接
       this.socket = io(this.config.url, {
         transports: ['polling', 'websocket'],
@@ -275,8 +330,12 @@ class GlobalSocketManager {
         upgrade: true,
         rememberUpgrade: false,
         auth: {
+          token: authToken,
           client_type: 'web_client',
           version: '1.0',
+        },
+        extraHeaders: {
+          Authorization: authToken,
         },
       });
 
@@ -392,6 +451,15 @@ class GlobalSocketManager {
     return () => this.stateListeners.delete(listener);
   }
 
+  // 重置重连状态（用于手动重新开始连接）
+  public resetReconnectionState() {
+    this.updateState({
+      reconnectAttempts: 0,
+      error: null,
+    });
+    console.log('🔄 重置重连状态');
+  }
+
   // 获取统计信息
   public getStats() {
     return {
@@ -434,6 +502,7 @@ export const useSocketManager = (): SocketManager => {
     disconnect: globalSocketManager.disconnect.bind(globalSocketManager),
     emit: globalSocketManager.emit.bind(globalSocketManager),
     reconnect: globalSocketManager.reconnect.bind(globalSocketManager),
+    resetReconnectionState: globalSocketManager.resetReconnectionState.bind(globalSocketManager),
     addEventListener: globalSocketManager.addEventListener.bind(globalSocketManager),
     removeEventListener: globalSocketManager.removeEventListener.bind(globalSocketManager),
     getStats: globalSocketManager.getStats.bind(globalSocketManager),

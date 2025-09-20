@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import styled from '@emotion/styled';
 import { keyframes, css } from '@emotion/react';
 import { useSocket, useSocketEvent } from '@/hooks/useSocketManager';
+import { checkSocketConfig } from '@/utils/socket-config';
 import {
   FiChrome,
   FiCode,
@@ -360,6 +361,18 @@ const AppStatus: React.FC = () => {
   useEffect(() => {
     console.log('🔄 AppStatus初始化，连接状态:', isConnected, '连接中:', isConnecting);
 
+    // 检查Socket配置
+    const configCheck = checkSocketConfig();
+    if (!configCheck.isValid) {
+      console.error('❌ Socket.IO配置不完整，可能导致连接失败');
+    }
+
+    // 检查是否有错误状态，如果有则不再尝试连接
+    if (error) {
+      console.log('🚫 检测到错误状态，跳过连接尝试:', error);
+      return;
+    }
+
     let isMounted = true;
     let initializeTimeout: NodeJS.Timeout;
 
@@ -416,7 +429,7 @@ const AppStatus: React.FC = () => {
       }
       console.log('🧹 AppStatus组件卸载');
     };
-  }, [isConnected, isConnecting]); // 移除函数依赖，只保留状态依赖
+  }, [isConnected, isConnecting, error]); // 添加error依赖，以便在错误状态改变时重新评估
 
   // 处理状态变化动画
   useEffect(() => {
