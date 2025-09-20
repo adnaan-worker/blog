@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import styled from '@emotion/styled';
 import { keyframes, css } from '@emotion/react';
-import { useSocket, useSocketEvent } from '@/hooks/useSocket';
+import { useSocket, useSocketEvent } from '@/hooks/useSocketManager';
 import {
   FiChrome,
   FiCode,
@@ -297,51 +297,126 @@ const AppStatus: React.FC = () => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [animatingIcons, setAnimatingIcons] = useState<Set<number>>(new Set());
 
-  // 使用Socket连接
-  const { isConnected, connect, emit } = useSocket();
+  // 使用优化后的Socket管理器
+  const { isConnected, isConnecting, error, connect, emit, getStats } = useSocket();
 
-  // HTTP接口已删除，现在只通过Socket.IO获取状态数据
+  // 使用useRef保存稳定的函数引用
+  const connectRef = useRef(connect);
+  const emitRef = useRef(emit);
 
-  // 监听状态更新
-  useSocketEvent('status:updated', (data: StatusResponse['data']) => {
+  // 更新函数引用
+  connectRef.current = connect;
+  emitRef.current = emit;
+
+  // 使用useCallback稳定事件处理器
+  const handleStatusUpdate = useCallback((data: StatusResponse['data']) => {
     console.log('📊 收到状态更新:', data);
     setStatusData(data);
     setIsLoading(false);
-  });
+  }, []);
 
-  // 监听当前状态响应
-  useSocketEvent('status:current', (data: StatusResponse['data']) => {
+  const handleStatusCurrent = useCallback((data: StatusResponse['data']) => {
     console.log('📊 收到当前状态:', data);
     setStatusData(data);
     setIsLoading(false);
-  });
+  }, []);
 
-  // 监听连接成功
-  useSocketEvent('connected', () => {
+  const handleConnected = useCallback(() => {
     console.log('✅ Socket连接成功，请求状态');
-    emit('status:request');
-  });
+    emitRef.current('status:request');
+  }, []); // 移除emit依赖，使用稳定的ref
+
+  const handleHeartbeat = useCallback((data: { serverTime: number; clientTime: number }) => {
+    const latency = data.serverTime - data.clientTime;
+    if (latency > 5000) {
+      console.warn('⚠️ 网络延迟较高:', latency + 'ms');
+    }
+  }, []);
+
+  const handleServerShutdown = useCallback((data: { message: string }) => {
+    console.warn('⚠️ 服务器即将关闭:', data.message);
+    setIsLoading(true);
+  }, []);
+
+  const handleConnectError = useCallback((error: any) => {
+    console.error('❌ Socket连接错误:', error);
+  }, []);
+
+  const handleDisconnect = useCallback((reason: string) => {
+    console.warn('🔌 Socket连接断开:', reason);
+    setIsLoading(true);
+  }, []);
+
+  // 监听Socket事件
+  useSocketEvent('status:updated', handleStatusUpdate);
+  useSocketEvent('status:current', handleStatusCurrent);
+  useSocketEvent('connected', handleConnected);
+  useSocketEvent('heartbeat_ack', handleHeartbeat);
+  useSocketEvent('server_shutdown', handleServerShutdown);
+  useSocketEvent('connect_error', handleConnectError);
+  useSocketEvent('disconnect', handleDisconnect);
 
   // 初始化连接和状态获取
   useEffect(() => {
-    console.log('🔄 AppStatus初始化，连接状态:', isConnected);
+    console.log('🔄 AppStatus初始化，连接状态:', isConnected, '连接中:', isConnecting);
 
-    if (isConnected) {
-      // 已连接，直接请求状态
-      emit('status:request');
-    } else {
-      // 未连接，尝试连接
-      connect().then((success) => {
-        if (success) {
-          emit('status:request');
-        } else {
-          // 连接失败，设置加载完成
-          console.warn('Socket.IO连接失败，等待重连');
+    let isMounted = true;
+    let initializeTimeout: NodeJS.Timeout;
+
+    const initializeConnection = async () => {
+      if (!isMounted) return;
+
+      try {
+        if (isConnected) {
+          // 已连接，直接请求状态
+          console.log('✅ Socket已连接，请求状态');
+          emitRef.current('status:request');
+          setIsLoading(false);
+        } else if (!isConnecting) {
+          // 未连接且不在连接中，尝试连接
+          console.log('🔗 尝试建立Socket连接...');
+          const success = await connectRef.current();
+
+          if (!isMounted) return;
+
+          if (success) {
+            console.log('✅ Socket连接成功，请求状态');
+            // 延迟请求，确保连接稳定
+            initializeTimeout = setTimeout(() => {
+              if (isMounted) {
+                emitRef.current('status:request');
+              }
+            }, 200);
+          } else {
+            console.warn('❌ Socket连接失败，等待自动重连');
+            setIsLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('❌ 连接初始化失败:', error);
+        if (isMounted) {
           setIsLoading(false);
         }
-      });
-    }
-  }, []); // 只在组件挂载时执行一次
+      }
+    };
+
+    // 防抖：避免快速重复调用
+    const debounceTimeout = setTimeout(() => {
+      if (isMounted) {
+        initializeConnection();
+      }
+    }, 100);
+
+    // 清理函数
+    return () => {
+      isMounted = false;
+      clearTimeout(debounceTimeout);
+      if (initializeTimeout) {
+        clearTimeout(initializeTimeout);
+      }
+      console.log('🧹 AppStatus组件卸载');
+    };
+  }, [isConnected, isConnecting]); // 移除函数依赖，只保留状态依赖
 
   // 处理状态变化动画
   useEffect(() => {
@@ -367,10 +442,11 @@ const AppStatus: React.FC = () => {
     const prefix = isActive ? '正在使用' : '最近使用';
     const realtimeStatus = isConnected ? '实时推送' : '离线状态';
 
-    if (app.appType === 'music') {
-      return `${prefix}: 🎵 ${app.displayInfo}\n${realtimeStatus}`;
-    }
-    return `${prefix}: ${app.displayInfo || app.appName}\n${realtimeStatus}`;
+    // 统一显示逻辑，不再区分音乐和普通应用
+    const displayText = app.displayInfo || app.appName;
+    const icon = app.appType === 'music' ? '🎵' : '🖥️';
+
+    return `${prefix}: ${icon} ${displayText}\n${realtimeStatus}`;
   };
 
   return (
