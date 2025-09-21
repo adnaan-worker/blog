@@ -207,11 +207,16 @@ const AppStatus: React.FC = () => {
         }
       },
 
-      'status:current': (response: SocketResponse<StatusResponse>) => {
+      'status:current': (response: SocketResponse<StatusResponse> & { isInactive?: boolean }) => {
         console.log('📊 收到当前状态:', response);
         if (response.success && response.data) {
           setStatusData(response.data);
           setLastError(null); // 清除错误状态
+
+          // 如果系统处于不活跃状态，显示相应信息
+          if (response.isInactive) {
+            console.log('⏸️ 系统处于不活跃状态');
+          }
         } else {
           const errorMsg = response.error || response.message || '获取状态失败';
           console.error('获取状态失败:', errorMsg);
