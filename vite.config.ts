@@ -54,24 +54,37 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       // 根据环境变量配置代理
       proxy: {
+        // API代理
         '/api': {
-          target: env.VITE_PROXY_TARGET || 'http://localhost:8200',
+          target: env.VITE_PROXY_TARGET,
           changeOrigin: true,
+          secure: false,
+          // 只在明确设置时才重写路径
           rewrite: env.VITE_PROXY_REWRITE === 'true' ? (path) => path.replace(/^\/api/, '') : undefined,
-          secure: false,
         },
+        // 文件上传代理
         '/uploads': {
-          // 去掉env.VITE_PROXY_TARGET后面的/api
-          target: (env.VITE_PROXY_TARGET || 'http://localhost:8200').replace('/api', ''),
+          target: env.VITE_PROXY_TARGET,
           changeOrigin: true,
           secure: false,
         },
-        // 添加 Socket.IO 代理
+        // Socket.IO代理 - 这是必需的！
         '/socket.io': {
-          target: env.VITE_PROXY_TARGET || 'http://localhost:8200',
+          target: env.VITE_SOCKET_URL,
           changeOrigin: true,
-          ws: true, // 启用 WebSocket 代理
+          ws: true, // 启用WebSocket代理
           secure: false,
+          // 添加超时配置
+          timeout: 60000,
+          // 保持连接活跃
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              // 设置Socket.IO相关的请求头
+              if (req.url?.includes('socket.io')) {
+                proxyReq.setHeader('Connection', 'keep-alive');
+              }
+            });
+          },
         },
       },
       // 启用HMR
@@ -215,16 +228,14 @@ export default defineConfig(({ mode }) => {
       drop: isProduction ? ['console', 'debugger'] : [],
       // 默认启用 JSX 转换
       jsx: 'automatic',
-      // 禁用类型检查
-      tsconfigRaw: {
-        compilerOptions: {
-          // 禁用类型检查
-          skipLibCheck: true,
-          // 允许未使用的变量
-          noUnusedLocals: false,
-          noUnusedParameters: false,
-        },
-      },
+      // TypeScript配置
+      tsconfigRaw: `{
+        "compilerOptions": {
+          "skipLibCheck": true,
+          "noUnusedLocals": false,
+          "noUnusedParameters": false
+        }
+      }`,
     },
   };
 });
