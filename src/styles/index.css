@@ -11,77 +11,77 @@
   --font-code: 'JetBrainsMono', 'Fira code Retina', 'Fira code', Consolas, Monaco, 'Hannotate SC', monospace, -apple-system;
 
   /* 颜色系统 - 亮色模式 */
-  --text-primary: #252525;
-  --text-secondary: #606060;
-  --text-tertiary: #767676;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7f9fb;
-  --bg-tertiary: #efefef;
+  --text-primary: #252525; /* 主文本颜色 */
+  --text-secondary: #606060; /* 次文本颜色 */
+  --text-tertiary: #767676; /* 三级文本颜色 */
+  --bg-primary: #ffffff; /* 主背景颜色 */
+  --bg-secondary: #f7f9fb; /* 次背景颜色 */
+  --bg-tertiary: #efefef; /* 三级背景颜色 */
   --accent-color: var(--accent-color-light); /* 主色 */
   --accent-color-assistant: var(--accent-color-light-assistant); /* 辅助色 */
   --accent-color-hover: var(--accent-color-light-hover); /* 悬停色 */
   --accent-color-alpha: var(--accent-color-light-alpha); /* 透明色 */
-  --tw-gradient-from-position: 0%;
-  --tw-gradient-to-position: 100%;
-  --tw-gradient-via-position: 50%;
-  --tw-gradient-from: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-from-position);
-  --tw-gradient-to: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-to-position);
-  --spotlight-color: oklch(var(--a)/0.12);
-  --underline-bg: var(--tw-gradient-from),var(--fallback-a,oklch(var(--a)/0.7)) var(--tw-gradient-via-position),var(--tw-gradient-to);
-  --error-color: #e53935;
-  --success-color: #43a047;
-  --border-color: rgba(0, 0, 0, 0.06);
+  --tw-gradient-from-position: 0%; /* 渐变起始位置 */
+  --tw-gradient-to-position: 100%; /* 渐变结束位置 */
+  --tw-gradient-via-position: 50%; /* 渐变中间位置 */
+  --tw-gradient-from: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-from-position); /* 渐变起始颜色 */
+  --tw-gradient-to: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-to-position); /* 渐变结束颜色 */
+  --spotlight-color: oklch(var(--a)/0.12); /* 高亮颜色 */
+  --underline-bg: var(--tw-gradient-from),var(--fallback-a,oklch(var(--a)/0.7)) var(--tw-gradient-via-position),var(--tw-gradient-to); /* 下划线背景 */
+  --error-color: #e53935; /* 错误颜色 */
+  --success-color: #43a047; /* 成功颜色 */
+  --border-color: rgba(0, 0, 0, 0.06); /* 边框颜色 */
 
   /* 尺寸和间距 */
-  --header-height: 60px;
-  --max-width: 1120px;
-  --content-width: 860px;
-  --sidebar-width: 260px;
+  --header-height: 60px; /* 头部高度 */
+  --max-width: 1120px; /* 最大宽度 */
+  --content-width: 860px; /* 内容宽度 */
+  --sidebar-width: 260px; /* 侧边栏宽度 */
 
   /* 阴影 */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.08);
-  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --card-shadow: 0 8px 30px rgba(81, 131, 245, 0.08);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04); /* 小阴影 */
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08); /* 中阴影 */
+  --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.08); /* 大阴影 */
+  --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.12); /* 超大阴影 */
+  --card-shadow: 0 8px 30px rgba(81, 131, 245, 0.08); /* 卡片阴影 */
 
   /* 圆角 */
-  --radius-small: 8px;
-  --radius-medium: 12px;
-  --radius-large: 16px;
-  --radius-full: 9999px;
+  --radius-small: 8px; /* 小圆角 */
+  --radius-medium: 12px; /* 中圆角 */
+  --radius-large: 16px; /* 大圆角 */
+  --radius-full: 9999px; /* 全圆角 */
 
   /* 过渡效果 */
-  --transition-fast: 0.1s;
-  --transition: 0.2s;
-  --transition-slow: 0.3s;
-  --transition-normal: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  --bezier-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  --bezier-accelerate: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --bezier-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.1s; /* 快速过渡 */
+  --transition: 0.2s; /* 过渡 */
+  --transition-slow: 0.3s; /* 慢速过渡 */
+  --transition-normal: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* 正常过渡 */
+  --bezier-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 反弹过渡 */
+  --bezier-accelerate: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 加速过渡 */
+  --bezier-smooth: cubic-bezier(0.4, 0, 0.2, 1); /* 平滑过渡 */
 
   /* 断点 */
-  --mobile: 768px;
-  --tablet: 992px;
-  --desktop: 1200px;
+  --mobile: 768px; /* 移动端断点 */
+  --tablet: 992px; /* 平板断点 */
+  --desktop: 1200px; /* 桌面断点 */
 }
 
 /**
  * 暗色主题变量
  */
 [data-theme='dark'] {
-  --text-primary: #f0f0f0;
-  --text-secondary: #a0a0a0;
-  --text-tertiary: #888;
-  --bg-primary: #121212;
-  --bg-secondary: #181818;
-  --bg-tertiary: #333;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-  --accent-color: var(--accent-color-dark);
-  --accent-color-assistant: var(--accent-color-dark-assistant);
-  --accent-color-hover: var(--accent-color-dark-hover,rgba(81, 131, 245, 0.2));
-  --accent-color-alpha: var(--accent-color-dark-alpha, rgba(81, 131, 245, 0.1));
+  --text-primary: #f0f0f0; /* 主文本颜色 */
+  --text-secondary: #a0a0a0; /* 次文本颜色 */
+  --text-tertiary: #888; /* 三级文本颜色 */
+  --bg-primary: #121212; /* 主背景颜色 */
+  --bg-secondary: #181818; /* 次背景颜色 */
+  --bg-tertiary: #333; /* 三级背景颜色 */
+  --border-color: rgba(255, 255, 255, 0.08); /* 边框颜色 */
+  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.25); /* 卡片阴影 */
+  --accent-color: var(--accent-color-dark); /* 主色 */
+  --accent-color-assistant: var(--accent-color-dark-assistant); /* 辅助色 */
+  --accent-color-hover: var(--accent-color-dark-hover,rgba(81, 131, 245, 0.2)); /* 悬停色 */
+  --accent-color-alpha: var(--accent-color-dark-alpha, rgba(81, 131, 245, 0.1)); /* 透明色 */
 }
 
 /**
