@@ -65,6 +65,12 @@ const colorUtils = {
       to: colorUtils.hexToRgbString(toColor.toString()),
     };
   },
+
+  // 生成背景色
+  generateBgColor: (hex: string) => {
+    const color = new Color(hex);
+    return color.mix('white', 0.2).toString();
+  },
 };
 
 /**
@@ -93,12 +99,14 @@ const AccentColorStyleInjector: React.FC = () => {
       const lightColorHover = colorUtils.generateAssistantColor(currentLightColor, '#000000', 0.15);
       const lightColorAlpha = colorUtils.generateAlphaColor(currentLightColor, '#ffffff', 0.45, 0.1);
       const lightGradient = colorUtils.generateGradientColors(currentLightColor);
+      const lightBgColor = colorUtils.generateBgColor(currentLightColor);
 
       // 生成暗色模式相关颜色
       const darkColorAssistant = colorUtils.generateAssistantColor(currentDarkColor, '#000000', 0.2);
       const darkColorHover = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.15);
       const darkColorAlpha = colorUtils.generateAlphaColor(currentDarkColor, '#000000', 0.45, 0.1);
       const darkGradient = colorUtils.generateGradientColors(currentDarkColor);
+      const darkBgColor = colorUtils.generateBgColor(currentDarkColor);
 
       // 生成OKLCH值
       const [hl, sl, ll] = colorUtils.hexToOklchString(currentLightColor);
@@ -108,6 +116,7 @@ const AccentColorStyleInjector: React.FC = () => {
       return `
         [data-theme='dark'] {
           --accent-color-dark: ${currentDarkColor};
+          --accent-bg-color-dark: ${darkBgColor};
           --accent-color-dark-assistant: ${darkColorAssistant};
           --accent-color-dark-hover: ${darkColorHover};
           --accent-color-dark-alpha: ${darkColorAlpha};
@@ -117,6 +126,7 @@ const AccentColorStyleInjector: React.FC = () => {
         }
         [data-theme='light'] {
           --accent-color-light: ${currentLightColor};
+          --accent-bg-color-light: ${lightBgColor};
           --accent-color-light-assistant: ${lightColorAssistant};
           --accent-color-light-hover: ${lightColorHover};
           --accent-color-light-alpha: ${lightColorAlpha};

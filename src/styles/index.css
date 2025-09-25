@@ -17,7 +17,8 @@
   --bg-primary: #ffffff; /* 主背景颜色 */
   --bg-secondary: #f7f9fb; /* 次背景颜色 */
   --bg-tertiary: #efefef; /* 三级背景颜色 */
-  --accent-color: var(--accent-color-light); /* 主色 */
+  --accent-color: var(--accent-color-light); /* 主题主色 */
+  --accent-bg-color:var(--accent-bg-color-light); /* 主题背景色 */
   --accent-color-assistant: var(--accent-color-light-assistant); /* 辅助色 */
   --accent-color-hover: var(--accent-color-light-hover); /* 悬停色 */
   --accent-color-alpha: var(--accent-color-light-alpha); /* 透明色 */
@@ -79,6 +80,7 @@
   --border-color: rgba(255, 255, 255, 0.08); /* 边框颜色 */
   --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.25); /* 卡片阴影 */
   --accent-color: var(--accent-color-dark); /* 主色 */
+  --accent-bg-color: var(--accent-bg-color-dark); /* 背景色 */
   --accent-color-assistant: var(--accent-color-dark-assistant); /* 辅助色 */
   --accent-color-hover: var(--accent-color-dark-hover,rgba(81, 131, 245, 0.2)); /* 悬停色 */
   --accent-color-alpha: var(--accent-color-dark-alpha, rgba(81, 131, 245, 0.1)); /* 透明色 */

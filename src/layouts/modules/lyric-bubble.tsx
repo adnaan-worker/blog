@@ -7,7 +7,7 @@ const BubbleContainer = styled(motion.div)`
   bottom: 20px;
   right: 5%;
   transform: translateX(-50%);
-  background: rgba(0, 140, 255, 0.8);
+  background: var(--accent-bg-color);
   backdrop-filter: blur(8px);
   padding: 0.8rem 1.5rem;
   border-radius: 20px;
