@@ -829,7 +829,7 @@ const ActivityLink = styled(motion.a)`
     top: 1.2rem;
     width: 6px;
     height: 6px;
-    background: #ef4444;
+    background: var(--accent-color);
     border-radius: 50%;
     opacity: 0.7;
     transition: all 0.2s ease;
@@ -866,7 +866,7 @@ const ActivityTitle = styled.h4`
   transition: color 0.2s ease;
 
   ${ActivityLink}:hover & {
-    color: #ef4444;
+    color: var(--accent-color-hover);
   }
 `;
 
@@ -906,45 +906,6 @@ const ActivityDescription = styled.p`
   overflow: hidden;
 `;
 
-const ActivitySection = styled(motion.section)`
-  margin-bottom: 2.5rem;
-`;
-
-const ActivityList = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-`;
-
-const ActivityItem = styled(motion.div)`
-  display: flex;
-  gap: 0.75rem;
-  padding: 1rem;
-  border-radius: 12px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    background-color: rgba(81, 131, 245, 0.06);
-    box-shadow: 0 8px 24px rgba(81, 131, 245, 0.08);
-    transform: translateY(-2px) scale(1.01);
-  }
-`;
-
-const ActivityIcon = styled.div`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--bg-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent-color);
-  flex-shrink: 0;
-  font-size: 0.9rem;
-  border: 1px solid rgba(81, 131, 245, 0.15);
-`;
 
 const ChartSection = styled(motion.section)`
   margin: 2.5rem 0;
@@ -1017,19 +978,6 @@ const cardVariants: Variants = {
     transition: {
       duration: 0.5,
       ease: [0.25, 1, 0.5, 1],
-    },
-  },
-};
-
-// 活动项目动画变体
-const activityVariants: Variants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.4,
-      ease: 'easeOut',
     },
   },
 };

@@ -18,13 +18,13 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f7f9fb;
   --bg-tertiary: #efefef;
-  --accent-color: var(--accent-color-light);
-  --accent-color-assistant: var(--accent-color-light-assistant);
-  --accent-color-hover: var(--accent-color-light-hover);
-  --accent-color-alpha: var(--accent-color-light-alpha);
-  --tw-gradient-from-position: ;
-  --tw-gradient-to-position: ;
-  --tw-gradient-via-position: ;
+  --accent-color: var(--accent-color-light); /* 主色 */
+  --accent-color-assistant: var(--accent-color-light-assistant); /* 辅助色 */
+  --accent-color-hover: var(--accent-color-light-hover); /* 悬停色 */
+  --accent-color-alpha: var(--accent-color-light-alpha); /* 透明色 */
+  --tw-gradient-from-position: 0%;
+  --tw-gradient-to-position: 100%;
+  --tw-gradient-via-position: 50%;
   --tw-gradient-from: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-from-position);
   --tw-gradient-to: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-to-position);
   --spotlight-color: oklch(var(--a)/0.12);
