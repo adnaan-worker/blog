@@ -198,6 +198,80 @@ export interface Comment {
 export interface CommentParams extends PaginationParams {
   postId?: string | number;
   status?: 'approved' | 'pending' | 'spam';
+}
+
+/**
+ * 手记相关接口类型定义
+ */
+export interface Note {
+  id: string | number;
+  title?: string;
+  content: string;
+  mood?: '开心' | '平静' | '思考' | '感慨' | '兴奋' | '忧郁' | '愤怒' | '恐惧' | '惊讶' | '厌恶';
+  weather?: string;
+  location?: string;
+  tags?: string[];
+  isPrivate?: boolean;
+  readingTime?: number;
+  viewCount?: number;
+  likeCount?: number;
+  isLiked?: boolean;
+  author?: {
+    id: string | number;
+    username: string;
+    fullName?: string;
+    avatar?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateNoteParams {
+  title?: string;
+  content: string;
+  mood?: string;
+  weather?: string;
+  location?: string;
+  tags?: string[];
+  isPrivate?: boolean;
+}
+
+export interface UpdateNoteParams {
+  title?: string;
+  content?: string;
+  mood?: string;
+  weather?: string;
+  location?: string;
+  tags?: string[];
+  isPrivate?: boolean;
+}
+
+export interface NoteParams extends PaginationParams {
+  mood?: string;
+  weather?: string;
+  tags?: string[];
+  search?: string;
+  isPrivate?: boolean;
+  userId?: string | number;
+  orderBy?: 'createdAt' | 'updatedAt' | 'viewCount' | 'likeCount';
+  orderDirection?: 'ASC' | 'DESC';
+}
+
+export interface NoteStats {
+  totalNotes: number;
+  totalViews: number;
+  totalLikes: number;
+  privateNotes: number;
+  publicNotes: number;
+  moodDistribution: Record<string, number>;
+}
+
+export interface NoteMetadata {
+  commonTags: string[];
+  commonMoods: string[];
+  commonWeathers: string[];
+  commonLocations: string[];
+  moodOptions: string[];
   parentId?: string | number;
 }
 
@@ -255,6 +329,89 @@ export const API = {
         data: { filePath },
       }),
     getUploadStats: (uploadDir?: string) => http.get('/users/upload-stats', { uploadDir }),
+  },
+
+  // 手记相关
+  note: {
+    /**
+     * 获取手记列表
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<Note>>>
+     */
+    getNotes: (params?: NoteParams): Promise<ApiResponse<PaginationResult<Note>>> => {
+      return http.get('/notes', params);
+    },
+
+    /**
+     * 获取我的手记列表
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<Note>>>
+     */
+    getMyNotes: (params?: Omit<NoteParams, 'userId'>): Promise<ApiResponse<PaginationResult<Note>>> => {
+      return http.get('/notes/my', params);
+    },
+
+    /**
+     * 获取手记详情
+     * @param id 手记ID
+     * @returns Promise<ApiResponse<Note>>
+     */
+    getNoteDetail: (id: string | number): Promise<ApiResponse<Note & { relatedNotes?: Note[] }>> => {
+      return http.get(`/notes/${id}`);
+    },
+
+    /**
+     * 创建手记
+     * @param data 手记数据
+     * @returns Promise<ApiResponse<Note>>
+     */
+    createNote: (data: CreateNoteParams): Promise<ApiResponse<Note>> => {
+      return http.post('/notes', data);
+    },
+
+    /**
+     * 更新手记
+     * @param id 手记ID
+     * @param data 手记数据
+     * @returns Promise<ApiResponse<Note>>
+     */
+    updateNote: (id: string | number, data: UpdateNoteParams): Promise<ApiResponse<Note>> => {
+      return http.put(`/notes/${id}`, data);
+    },
+
+    /**
+     * 删除手记
+     * @param id 手记ID
+     * @returns Promise<ApiResponse<null>>
+     */
+    deleteNote: (id: string | number): Promise<ApiResponse<null>> => {
+      return http.delete(`/notes/${id}`);
+    },
+
+    /**
+     * 切换手记点赞状态
+     * @param id 手记ID
+     * @returns Promise<ApiResponse<{ liked: boolean; likeCount: number }>>
+     */
+    toggleLike: (id: string | number): Promise<ApiResponse<{ liked: boolean; likeCount: number }>> => {
+      return http.post(`/notes/${id}/like`);
+    },
+
+    /**
+     * 获取手记统计
+     * @returns Promise<ApiResponse<NoteStats>>
+     */
+    getStats: (): Promise<ApiResponse<NoteStats>> => {
+      return http.get('/notes/stats');
+    },
+
+    /**
+     * 获取手记元数据
+     * @returns Promise<ApiResponse<NoteMetadata>>
+     */
+    getMetadata: (): Promise<ApiResponse<NoteMetadata>> => {
+      return http.get('/notes/metadata');
+    },
   },
 
   // 博客文章相关

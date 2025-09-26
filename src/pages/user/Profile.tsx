@@ -11,6 +11,7 @@ import {
   QuickActions,
   AchievementBadges,
   EditProfileModal,
+  NoteManagement,
 } from '@/components/profile';
 import type { EditProfileForm } from '@/components/profile/types';
 import { ProfileLayout } from './modules/ProfileLayout';
@@ -26,7 +27,36 @@ const ProfileContainer = styled.div`
   }
 `;
 
+const TabsContainer = styled.div`
+  margin-bottom: 2rem;
+`;
 
+const TabsList = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 2rem;
+`;
+
+const TabButton = styled.button<{ active?: boolean }>`
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: none;
+  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid ${(props) => (props.active ? 'var(--accent-color)' : 'transparent')};
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: var(--accent-color);
+  }
+`;
+
+const TabContent = styled.div`
+  min-height: 400px;
+`;
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -37,6 +67,7 @@ const Profile: React.FC = () => {
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'notes'>('dashboard');
 
   // 用户数据
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -299,8 +330,6 @@ const Profile: React.FC = () => {
     navigate('/user/analytics');
   };
 
-
-
   const handleExportData = async () => {
     try {
       const response = await API.user.exportData();
@@ -359,18 +388,35 @@ const Profile: React.FC = () => {
           />
         }
         mainContent={
-          <>
-            <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
-            <ActivityFeed
-              activities={activities}
-              onActivityClick={handleActivityClick}
-              onRefresh={handleRefreshActivities}
-              onLoadMore={handleLoadMoreActivities}
-              hasMore={hasMoreActivities}
-              isLoading={isActivitiesLoading}
-              isRefreshing={isRefreshing}
-            />
-          </>
+          <TabsContainer>
+            <TabsList>
+              <TabButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')}>
+                数据概览
+              </TabButton>
+              <TabButton active={activeTab === 'notes'} onClick={() => setActiveTab('notes')}>
+                我的手记
+              </TabButton>
+            </TabsList>
+
+            <TabContent>
+              {activeTab === 'dashboard' && (
+                <>
+                  <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
+                  <ActivityFeed
+                    activities={activities}
+                    onActivityClick={handleActivityClick}
+                    onRefresh={handleRefreshActivities}
+                    onLoadMore={handleLoadMoreActivities}
+                    hasMore={hasMoreActivities}
+                    isLoading={isActivitiesLoading}
+                    isRefreshing={isRefreshing}
+                  />
+                </>
+              )}
+
+              {activeTab === 'notes' && <NoteManagement />}
+            </TabContent>
+          </TabsContainer>
         }
         rightSidebar={
           <>

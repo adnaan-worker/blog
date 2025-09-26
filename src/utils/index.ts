@@ -5,6 +5,9 @@ export { HttpRequest } from './http';
 // 导出API封装
 export { default as API } from './api';
 
+// 导出富文本解析工具
+export { RichTextParser } from './rich-text-parser';
+
 // 导出类型定义
 export * from './types';
 

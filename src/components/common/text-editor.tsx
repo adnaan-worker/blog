@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { EditorProvider, useCurrentEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -6,6 +6,9 @@ import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
+import { Button } from '@/components/ui';
+import RichTextRenderer from './rich-text-renderer';
+import RichTextStats from './rich-text-stats';
 import {
   FiBold,
   FiItalic,
@@ -21,6 +24,11 @@ import {
   FiAlignJustify,
   FiMaximize2,
   FiMoreHorizontal,
+  FiEye,
+  FiEdit3,
+  FiBarChart,
+  FiSave,
+  FiX,
 } from 'react-icons/fi';
 
 // 定义扩展数组
@@ -46,13 +54,18 @@ const extensions = [
 ];
 
 // 初始内容
-const initialContent = '<p>开始编写你的内容...</p>';
+const initialContent = '';
 
 interface TextEditorProps {
   content?: string;
   onChange?: (html: string) => void;
   placeholder?: string;
   minHeight?: string;
+  mode?: 'full' | 'simple'; // 编辑器工具栏模式
+  showPreview?: boolean; // 是否显示预览切换
+  showStats?: boolean; // 是否显示统计信息
+  onSave?: () => void; // 保存回调
+  onCancel?: () => void; // 取消回调
 }
 
 // 工具栏样式
@@ -121,7 +134,7 @@ const editorStyles = {
 };
 
 // 工具栏按钮组件
-const MenuBar = () => {
+const MenuBar = ({ mode = 'full' }: { mode?: 'full' | 'simple' }) => {
   const { editor } = useCurrentEditor();
 
   if (!editor) {
@@ -156,6 +169,76 @@ const MenuBar = () => {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
+  // 简化模式的工具栏
+  if (mode === 'simple') {
+    return (
+      <div style={editorStyles.editorToolbar}>
+        <div style={editorStyles.toolbarGroup}>
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            style={{
+              ...editorStyles.toolbarButton,
+              ...(editor.isActive('bold') ? editorStyles.toolbarButtonActive : {}),
+            }}
+            title="加粗"
+          >
+            <FiBold size={16} />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            style={{
+              ...editorStyles.toolbarButton,
+              ...(editor.isActive('italic') ? editorStyles.toolbarButtonActive : {}),
+            }}
+            title="斜体"
+          >
+            <FiItalic size={16} />
+          </button>
+        </div>
+
+        <div style={editorStyles.toolbarGroup}>
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            style={{
+              ...editorStyles.toolbarButton,
+              ...(editor.isActive('bulletList') ? editorStyles.toolbarButtonActive : {}),
+            }}
+            title="无序列表"
+          >
+            <FiList size={16} />
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            style={{
+              ...editorStyles.toolbarButton,
+              ...(editor.isActive('blockquote') ? editorStyles.toolbarButtonActive : {}),
+            }}
+            title="引用"
+          >
+            <span style={editorStyles.toolbarText}>『』</span>
+          </button>
+        </div>
+
+        <div style={{ ...editorStyles.toolbarGroup, ...editorStyles.toolbarGroupLast }}>
+          <button
+            onClick={setLink}
+            style={{
+              ...editorStyles.toolbarButton,
+              ...(editor.isActive('link') ? editorStyles.toolbarButtonActive : {}),
+            }}
+            title="添加链接"
+          >
+            <FiLink size={16} />
+          </button>
+          <button onClick={addImage} style={editorStyles.toolbarButton} title="插入图片">
+            <FiImage size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 完整模式的工具栏（原有代码）
   return (
     <div style={editorStyles.editorToolbar}>
       <div style={editorStyles.toolbarGroup}>
@@ -434,8 +517,22 @@ const TextEditor: React.FC<TextEditorProps> = ({
   onChange,
   placeholder = '开始编写你的内容...',
   minHeight = '400px',
+  mode = 'full',
+  showPreview = false,
+  showStats = false,
+  onSave,
+  onCancel,
 }) => {
-  const [value, setValue] = useState(content);
+  const [value, setValue] = useState(content || '');
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+  const [showStatsPanel, setShowStatsPanel] = useState(false);
+
+  // 监听外部 content 变化
+  useEffect(() => {
+    if (content !== undefined) {
+      setValue(content);
+    }
+  }, [content]);
 
   const handleUpdate = ({ editor }: { editor: any }) => {
     const html = editor.getHTML();
@@ -446,21 +543,131 @@ const TextEditor: React.FC<TextEditorProps> = ({
     }
   };
 
+  // 额外的工具栏（预览切换、统计、操作按钮）
+  const ExtraToolbar = () => {
+    if (!showPreview && !showStats && !onSave && !onCancel) {
+      return null;
+    }
+
+    return (
+      <div
+        style={{
+          ...editorStyles.editorToolbar,
+          borderBottom: '1px solid var(--border-color)',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {showPreview && (
+            <>
+              <button
+                onClick={() => setViewMode('edit')}
+                style={{
+                  ...editorStyles.toolbarButton,
+                  ...(viewMode === 'edit' ? editorStyles.toolbarButtonActive : {}),
+                  width: 'auto',
+                  padding: '0.5rem 0.75rem',
+                }}
+                title="编辑模式"
+              >
+                <FiEdit3 size={14} />
+                <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>编辑</span>
+              </button>
+              <button
+                onClick={() => setViewMode('preview')}
+                style={{
+                  ...editorStyles.toolbarButton,
+                  ...(viewMode === 'preview' ? editorStyles.toolbarButtonActive : {}),
+                  width: 'auto',
+                  padding: '0.5rem 0.75rem',
+                }}
+                title="预览模式"
+              >
+                <FiEye size={14} />
+                <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>预览</span>
+              </button>
+            </>
+          )}
+
+          {showStats && value && (
+            <button
+              onClick={() => setShowStatsPanel(!showStatsPanel)}
+              style={{
+                ...editorStyles.toolbarButton,
+                ...(showStatsPanel ? editorStyles.toolbarButtonActive : {}),
+                width: 'auto',
+                padding: '0.5rem 0.75rem',
+              }}
+              title="统计信息"
+            >
+              <FiBarChart size={14} />
+              <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>统计</span>
+            </button>
+          )}
+        </div>
+
+        {(onSave || onCancel) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {onCancel && (
+              <Button variant="secondary" onClick={onCancel}>
+                取消
+              </Button>
+            )}
+            {onSave && (
+              <Button variant="primary" onClick={onSave}>
+                保存
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div style={editorStyles.richTextEditorWrapper}>
       <div style={editorStyles.textEditorContainer}>
         <style dangerouslySetInnerHTML={{ __html: getCustomStyles(minHeight) }} />
-        <EditorProvider
-          extensions={extensions}
-          content={value}
-          onUpdate={handleUpdate}
-          editorProps={{
-            attributes: {
-              class: 'tiptap-editor',
-            },
-          }}
-          slotBefore={<MenuBar />}
-        />
+
+        {/* 额外工具栏 */}
+        <ExtraToolbar />
+
+        {/* 统计面板 */}
+        {showStats && showStatsPanel && value && <RichTextStats content={value} showDetailed={true} />}
+
+        {viewMode === 'edit' ? (
+          <EditorProvider
+            key={`editor-${value}`} // 强制重新渲染以确保内容更新
+            extensions={extensions}
+            content={value || ''}
+            onUpdate={handleUpdate}
+            editorProps={{
+              attributes: {
+                class: 'tiptap-editor',
+              },
+            }}
+            slotBefore={<MenuBar mode={mode} />}
+          />
+        ) : (
+          <div
+            style={{
+              padding: '1rem',
+              minHeight,
+              maxHeight: '500px',
+              overflowY: 'auto',
+              background: 'var(--bg-primary)',
+              border: 'none',
+            }}
+          >
+            <RichTextRenderer
+              content={value || '<p>暂无内容</p>'}
+              mode="note"
+              enableCodeHighlight={true}
+              enableImagePreview={true}
+              enableTableOfContents={false}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

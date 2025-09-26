@@ -3,6 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiCalendar, FiTag, FiMapPin, FiCloud, FiHeart, FiEdit3, FiClock } from 'react-icons/fi';
 import styled from '@emotion/styled';
+import { API, Note } from '@/utils/api';
+import { toast } from '@/ui';
+import RichTextRenderer from '@/components/common/rich-text-renderer';
+import RichTextStats from '@/components/common/rich-text-stats';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -332,79 +336,10 @@ const pageVariants = {
   },
 };
 
-// 手记数据类型
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  mood?: string;
-  weather?: string;
-  location?: string;
-  tags?: string[];
-  readingTime?: number;
+// 扩展Note接口以包含相关手记
+interface NoteWithRelated extends Note {
+  relatedNotes?: Note[];
 }
-
-// 模拟手记数据
-const DUMMY_NOTES: Note[] = [
-  {
-    id: '1',
-    title: '晨光初现',
-    content: `今天早上六点就醒了，推开窗户，看到远山如黛，晨光熹微。空气中还带着昨夜雨水的清香，让人心情格外舒畅。
-
-泡了一壶茶，坐在阳台上静静地看着这座城市慢慢苏醒。远处传来鸟儿的啁啾声，偶尔有早起的行人匆匆走过。这样的时刻总是让我觉得特别珍贵，仿佛整个世界都属于自己。
-
-想起昨天读到的一句话："生活不是等待暴风雨过去，而是学会在雨中起舞。" 或许这就是生活的真谛吧，不管遇到什么困难，都要保持一颗平静而坚韧的心。
-
-> "每一个清晨都是新的开始，每一次日出都是希望的象征。"
-
-今天要开始新的项目了，虽然有些紧张，但更多的是期待。相信只要用心去做，一定会有好的结果。`,
-    createdAt: '2025-01-15T06:30:00Z',
-    mood: '平静',
-    weather: '晴',
-    location: '家中阳台',
-    tags: ['生活', '感悟', '晨光'],
-    readingTime: 2,
-  },
-  {
-    id: '2',
-    title: '午后阳光',
-    content: `下午的阳光透过百叶窗洒在桌案上，形成一道道金色的光影。手中的咖啡还冒着热气，书页在微风中轻轻翻动。
-
-这样的午后总是让人想起很多往事。记得小时候，也是这样的阳光，奶奶总是坐在院子里纳鞋底，我在一旁写作业。那时候觉得时间过得很慢，现在却觉得那些日子过得太快了。
-
-人总是这样，拥有的时候不懂得珍惜，失去了才知道可贵。但这也许就是成长的代价吧，我们在失去中学会珍惜，在回忆中学会感恩。
-
-今天读了几页《瓦尔登湖》，梭罗说："我步入丛林，因为我希望生活得有意义。" 这句话让我思考了很久，什么才是有意义的生活呢？
-
-也许就是像现在这样，在平凡的日子里找到属于自己的节奏，在简单的事物中发现美好。`,
-    createdAt: '2025-01-14T14:20:00Z',
-    mood: '思考',
-    weather: '晴',
-    location: '书房',
-    tags: ['阅读', '回忆', '思考'],
-    readingTime: 3,
-  },
-  {
-    id: '3',
-    title: '夜晚思考',
-    content: `夜深了，城市的喧嚣渐渐平息。坐在窗前，看着远处零星的灯火，心情格外宁静。
-
-今天遇到了一些挫折，项目进展不如预期，心情有些低落。但静下心来想想，这些困难其实都是成长路上必经的风景。每一次跌倒都是为了更好地站起来，每一次失败都是为了下一次的成功积累经验。
-
-想起一位朋友曾经说过的话："困难就像弹簧，你弱它就强，你强它就弱。" 面对挫折，最重要的是保持积极的心态，相信自己有能力克服一切困难。
-
-明天又是新的一天，要带着今天的经验和教训，继续前行。相信只要不放弃，总会找到解决问题的方法。
-
-> "黑夜给了我黑色的眼睛，我却用它寻找光明。"`,
-    createdAt: '2025-01-13T23:45:00Z',
-    mood: '感慨',
-    weather: '阴',
-    location: '卧室',
-    tags: ['反思', '成长', '坚持'],
-    readingTime: 2,
-  },
-];
 
 // 工具函数
 const formatDate = (dateString: string) => {
@@ -427,29 +362,44 @@ const formatTime = (dateString: string) => {
 
 const NoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [note, setNote] = useState<Note | null>(null);
-  const [relatedNotes, setRelatedNotes] = useState<Note[]>([]);
+  const [note, setNote] = useState<NoteWithRelated | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
-    // 在实际应用中，这里应该从API获取数据
-    const foundNote = DUMMY_NOTES.find((note) => note.id === id);
-    setNote(foundNote || null);
-
-    // 获取相关手记（同标签或时间相近的手记）
-    if (foundNote) {
-      const related = DUMMY_NOTES.filter(
-        (n) =>
-          n.id !== foundNote.id &&
-          (n.tags?.some((tag) => foundNote.tags?.includes(tag)) ||
-            Math.abs(new Date(n.createdAt).getTime() - new Date(foundNote.createdAt).getTime()) <
-              7 * 24 * 60 * 60 * 1000),
-      ).slice(0, 3);
-      setRelatedNotes(related);
-    }
-
+    loadNote();
     // 滚动到页面顶部
     window.scrollTo(0, 0);
   }, [id]);
+
+  const loadNote = async () => {
+    if (!id) return;
+
+    try {
+      setIsLoading(true);
+      const response = await API.note.getNoteDetail(id);
+      setNote(response.data);
+    } catch (error: any) {
+      toast.error(error.message || '加载手记失败');
+      setNote(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 加载中状态
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <BackLink to="/notes">
+          <FiArrowLeft /> 返回手记列表
+        </BackLink>
+        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+          <div>正在加载手记...</div>
+        </div>
+      </PageContainer>
+    );
+  }
 
   // 手记未找到
   if (!note) {
@@ -481,29 +431,26 @@ const NoteDetail: React.FC = () => {
               <span>
                 <FiClock size={16} /> {formatTime(note.createdAt)}
               </span>
-              {note.readingTime && (
-                <span>
-                  <FiEdit3 size={16} /> 约 {note.readingTime} 分钟阅读
-                </span>
-              )}
             </NoteMeta>
 
-            <NoteContent>
-              {note.content.split('\n\n').map((paragraph, index) => {
-                if (paragraph.startsWith('> ')) {
-                  return <blockquote key={index}>{paragraph.substring(2)}</blockquote>;
-                }
-                return <p key={index}>{paragraph}</p>;
-              })}
-            </NoteContent>
+            <RichTextStats content={note.content} showDetailed={true} />
+
+            <RichTextRenderer
+              content={note.content}
+              mode="note"
+              enableCodeHighlight={true}
+              enableImagePreview={true}
+              enableTableOfContents={false}
+              onImageClick={(src) => setPreviewImage(src)}
+            />
 
             {/* 相关手记 */}
-            {relatedNotes.length > 0 && (
+            {note.relatedNotes && note.relatedNotes.length > 0 && (
               <RelatedNotes>
                 <RelatedTitle>相关手记</RelatedTitle>
-                {relatedNotes.map((relatedNote) => (
+                {note.relatedNotes.map((relatedNote) => (
                   <RelatedCard key={relatedNote.id} to={`/notes/${relatedNote.id}`}>
-                    <h4>{relatedNote.title}</h4>
+                    <h4>{relatedNote.title || '生活随记'}</h4>
                     <p>{relatedNote.content.substring(0, 100)}...</p>
                     <div className="date">{formatDate(relatedNote.createdAt)}</div>
                   </RelatedCard>
@@ -589,6 +536,36 @@ const NoteDetail: React.FC = () => {
         </NoteLayout>
       </motion.div>
       <PageHeadGradient />
+
+      {/* 图片预览模态框 */}
+      {previewImage && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            alt="预览"
+            style={{
+              maxWidth: '90%',
+              maxHeight: '90%',
+              objectFit: 'contain',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </PageContainer>
   );
 };

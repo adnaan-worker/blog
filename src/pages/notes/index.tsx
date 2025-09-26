@@ -3,16 +3,8 @@ import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
-
-// 手记数据类型
-interface Note extends TimelineItem {
-  title?: string;
-  content: string;
-  mood?: string;
-  weather?: string;
-  location?: string;
-  tags?: string[];
-}
+import { API, Note, NoteParams } from '@/utils/api';
+import { toast } from '@/ui';
 
 // 页面样式组件
 const PageContainer = styled.div`
@@ -144,101 +136,64 @@ const formatDate = (dateString: string) => {
 };
 
 const NotesPage: React.FC = () => {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<TimelineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
 
-  // TODO: 替换为真实 API 数据
-  // 生成更多模拟数据
-  const generateMoreNotes = (pageNum: number): Note[] => {
-    const baseId = (pageNum - 1) * 10;
-    const currentYear = new Date().getFullYear();
-
-    const titles = [
-      '晨光初现',
-      '午后阳光',
-      '夜晚思考',
-      '雨中漫步',
-      '咖啡时光',
-      '阅读时光',
-      '编程心得',
-      '周末悠闲',
-      '城市探索',
-      '友谊时光',
-      '音乐感悟',
-      '电影夜晚',
-      '运动日记',
-      '美食体验',
-      '旅行见闻',
-    ];
-
-    const tagOptions = [
-      ['生活', '感悟'],
-      ['学习', '成长'],
-      ['工作', '思考'],
-      ['娱乐', '放松'],
-      ['阅读', '知识'],
-      ['运动', '健康'],
-      ['美食', '享受'],
-      ['旅行', '探索'],
-      ['音乐', '艺术'],
-      ['电影', '文化'],
-      ['友谊', '社交'],
-      ['家庭', '温暖'],
-    ];
-
-    return Array.from({ length: 10 }, (_, i) => {
-      const noteIndex = baseId + i;
-      const randomYear = currentYear - Math.floor(Math.random() * 3); // 2022-2024
-      const randomMonth = Math.floor(Math.random() * 12);
-      const randomDay = Math.floor(Math.random() * 28) + 1;
-
-      return {
-        id: `${noteIndex + 1}`,
-        title: titles[noteIndex % titles.length],
-        content: `第${pageNum}页的第${i + 1}条手记内容`,
-        createdAt: new Date(randomYear, randomMonth, randomDay).toISOString(),
-        tags: tagOptions[noteIndex % tagOptions.length],
-      };
-    });
-  };
-
   // 初始数据加载
   useEffect(() => {
-    // TODO: 替换为真实 API 调用
-    const loadMockData = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      const initialNotes = generateMoreNotes(1);
-      setNotes(initialNotes);
-      setIsLoading(false);
-    };
-
-    loadMockData();
+    loadNotes(1);
   }, []);
+
+  // 将Note转换为TimelineItem
+  const convertNoteToTimelineItem = (note: Note): TimelineItem => ({
+    id: String(note.id),
+    title: note.title || '生活随记',
+    content: note.content,
+    createdAt: note.createdAt,
+    tags: note.tags,
+  });
+
+  // 加载手记数据
+  const loadNotes = async (pageNum: number, append = false) => {
+    try {
+      if (!append) setIsLoading(true);
+      else setIsLoadingMore(true);
+
+      const params: NoteParams = {
+        page: pageNum,
+        limit: 10,
+        orderBy: 'createdAt',
+        orderDirection: 'DESC',
+      };
+
+      const response = await API.note.getNotes(params);
+      const apiNotes = response.data.data || response.data.list || [];
+      const newNotes = apiNotes.map(convertNoteToTimelineItem);
+
+      if (append) {
+        setNotes((prev) => [...prev, ...newNotes]);
+      } else {
+        setNotes(newNotes);
+      }
+
+      const pagination = response.data.pagination || { page: pageNum, totalPages: 1 };
+      setHasMore(pagination.page < pagination.totalPages);
+      setPage(pageNum);
+    } catch (error: any) {
+      toast.error(error.message || '加载手记失败');
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  };
 
   // 加载更多数据
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
-
-    setIsLoadingMore(true);
-
-    // 模拟网络延迟
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    const newNotes = generateMoreNotes(page + 1);
-    setNotes((prevNotes) => [...prevNotes, ...newNotes]);
-    setPage((prevPage) => prevPage + 1);
-
-    // TODO: 替换为真实分页逻辑
-    // 模拟数据有限，加载5页后停止
-    if (page >= 2) {
-      setHasMore(false);
-    }
-
-    setIsLoadingMore(false);
+    await loadNotes(page + 1, true);
   }, [page, isLoadingMore, hasMore]);
 
   // 使用无限滚动Hook
