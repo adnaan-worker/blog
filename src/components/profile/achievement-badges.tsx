@@ -9,27 +9,24 @@ interface AchievementBadgesProps {
   maxDisplay?: number;
 }
 
-// 卡片基础样式
-const Card = styled.div`
-  background: var(--bg-secondary);
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-color);
+// 内容容器（不包含外层卡片样式）
+const Container = styled.div`
   padding: 1.5rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+
+  &::before {
+    content: '🏆';
+    font-size: 1.2rem;
+  }
 `;
 
 const BadgesGrid = styled.div`
@@ -186,8 +183,8 @@ export const AchievementBadges: React.FC<AchievementBadgesProps> = ({ achievemen
   };
 
   return (
-    <Card>
-      <SectionTitle>🏆 成就徽章</SectionTitle>
+    <Container>
+      <SectionTitle>成就徽章</SectionTitle>
 
       <BadgesGrid>
         {displayedAchievements.map((achievement) => (
@@ -228,6 +225,6 @@ export const AchievementBadges: React.FC<AchievementBadgesProps> = ({ achievemen
       </BadgesGrid>
 
       {hasMore && <ViewAllButton onClick={handleViewAll}>查看所有成就 ({achievements.length})</ViewAllButton>}
-    </Card>
+    </Container>
   );
 };

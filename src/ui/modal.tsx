@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { createPortal } from 'react-dom';
 import React from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,10 +12,10 @@ const useScrollLock = (isLocked: boolean) => {
       // 保存当前滚动位置
       const scrollY = window.scrollY;
       const scrollX = window.scrollX;
-      
+
       // 计算滚动条宽度
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      
+
       // 应用样式锁定滚动
       const originalStyle = {
         position: document.body.style.position,
@@ -24,18 +25,18 @@ const useScrollLock = (isLocked: boolean) => {
         paddingRight: document.body.style.paddingRight,
         overflow: document.body.style.overflow,
       };
-      
+
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
       document.body.style.left = `-${scrollX}px`;
       document.body.style.width = '100%';
       document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = 'hidden';
-      
+
       return () => {
         // 恢复原始样式
         Object.assign(document.body.style, originalStyle);
-        
+
         // 恢复滚动位置
         window.scrollTo(scrollX, scrollY);
       };
@@ -52,7 +53,7 @@ const ModalOverlay = styled(motion.div)`
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  z-index: 1000;
+  z-index: 9999; /* 提高z-index确保覆盖所有内容 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -277,6 +278,7 @@ interface ModalComponentProps extends ModalOptions {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  usePortal?: boolean; // 新增：是否使用Portal
 }
 
 const ModalComponent: React.FC<ModalComponentProps> = ({
@@ -291,6 +293,7 @@ const ModalComponent: React.FC<ModalComponentProps> = ({
   centerContent = false,
   footer,
   className,
+  usePortal = true, // 默认使用Portal
 }) => {
   const modalRef = React.useRef<HTMLDivElement>(null);
 
@@ -353,7 +356,7 @@ const ModalComponent: React.FC<ModalComponentProps> = ({
     }
   };
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <ModalOverlay
@@ -397,6 +400,9 @@ const ModalComponent: React.FC<ModalComponentProps> = ({
       )}
     </AnimatePresence>
   );
+
+  // 根据usePortal决定是否使用Portal
+  return usePortal ? createPortal(modalContent, document.body) : modalContent;
 };
 
 // Modal 函数式API

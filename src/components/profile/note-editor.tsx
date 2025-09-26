@@ -1,78 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { motion } from 'framer-motion';
-import { FiX, FiSave, FiEye, FiEyeOff, FiHash, FiMapPin, FiCloud, FiHeart, FiPlus, FiMinus } from 'react-icons/fi';
+import { FiSave, FiEye, FiEyeOff, FiHash, FiMapPin, FiCloud, FiHeart, FiPlus, FiMinus } from 'react-icons/fi';
 import { Button, Input } from '@/components/ui';
+import { Modal } from '@/ui/modal';
 import TextEditor from '@/components/common/text-editor';
 import { toast } from '@/ui';
-import { API, Note, CreateNoteParams, UpdateNoteParams, NoteMetadata } from '@/utils/api';
+import { API, Note, CreateNoteParams, UpdateNoteParams } from '@/utils/api';
 import { RichTextParser } from '@/utils/rich-text-parser';
 import RichTextStats from '@/components/common/rich-text-stats';
 
 // 样式组件
-const Overlay = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-`;
-
-const Modal = styled(motion.div)`
-  background: var(--bg-primary);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-`;
-
-const Header = styled.div`
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const Title = styled.h2`
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-  }
-`;
-
-const Content = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  padding: 1.5rem;
-`;
-
 const FormGroup = styled.div`
   margin-bottom: 1.5rem;
 
@@ -99,32 +36,6 @@ const MetaRow = styled.div`
   }
 `;
 
-const SelectGroup = styled.div`
-  position: relative;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: var(--accent-color);
-  }
-
-  option {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-  }
-`;
-
 const TagsContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -136,12 +47,12 @@ const Tag = styled.div`
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.6rem;
-  background: rgba(var(--accent-color-rgb), 0.1);
+  background: var(--accent-color-alpha);
   color: var(--accent-color);
-  border-radius: 20px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
   font-size: 0.8rem;
-  font-weight: 500;
+  border: 1px solid var(--accent-color);
 `;
 
 const TagRemove = styled.button`
@@ -150,12 +61,16 @@ const TagRemove = styled.button`
   color: inherit;
   cursor: pointer;
   padding: 0;
-  font-size: 0.7rem;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
 
   &:hover {
-    opacity: 1;
+    background: rgba(255, 255, 255, 0.2);
   }
 `;
 
@@ -165,44 +80,37 @@ const TagInput = styled.div`
   margin-top: 0.5rem;
 `;
 
-const PrivacyToggle = styled.div`
+const StatsDisplay = styled.div`
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+`;
+
+const PrivacyToggle = styled.button`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  width: 100%;
   padding: 0.75rem;
+  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  background: var(--bg-secondary);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
+    background: var(--bg-tertiary);
     border-color: var(--accent-color);
+  }
+
+  span {
+    font-size: 0.9rem;
   }
 `;
 
-const Footer = styled.div`
-  padding: 1.5rem;
-  border-top: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-`;
-
-const FooterLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const FooterRight = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-// 组件接口
+// 组件Props
 interface NoteEditorProps {
   isOpen: boolean;
   note?: Note | null;
@@ -210,8 +118,18 @@ interface NoteEditorProps {
   onSave: (note: Note) => void;
 }
 
+interface FormData {
+  title: string;
+  content: string;
+  mood: string;
+  weather: string;
+  location: string;
+  tags: string[];
+  isPrivate: boolean;
+}
+
 const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onClose, onSave }) => {
-  const [formData, setFormData] = useState<CreateNoteParams | UpdateNoteParams>({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     content: '',
     mood: '',
@@ -220,23 +138,15 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onClose, onSave }
     tags: [],
     isPrivate: false,
   });
-  const [metadata, setMetadata] = useState<NoteMetadata | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [newTag, setNewTag] = useState('');
-
-  // 加载元数据
-  useEffect(() => {
-    if (isOpen) {
-      loadMetadata();
-    }
-  }, [isOpen]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // 初始化表单数据
   useEffect(() => {
     if (note) {
       setFormData({
         title: note.title || '',
-        content: note.content || '',
+        content: note.content,
         mood: note.mood || '',
         weather: note.weather || '',
         location: note.location || '',
@@ -256,47 +166,69 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onClose, onSave }
     }
   }, [note]);
 
-  const loadMetadata = async () => {
-    try {
-      const response = await API.note.getMetadata();
-      setMetadata(response.data);
-    } catch (error: any) {
-      console.error('加载元数据失败:', error);
-    }
+  // 处理输入变化
+  const handleInputChange = (field: keyof FormData, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  const handleInputChange = (field: keyof typeof formData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
+  // 添加标签
   const handleAddTag = () => {
-    if (newTag.trim() && !formData.tags?.includes(newTag.trim())) {
-      handleInputChange('tags', [...(formData.tags || []), newTag.trim()]);
+    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
+      handleInputChange('tags', [...formData.tags, newTag.trim()]);
       setNewTag('');
     }
   };
 
+  // 删除标签
   const handleRemoveTag = (tagToRemove: string) => {
-    handleInputChange('tags', formData.tags?.filter((tag) => tag !== tagToRemove) || []);
+    handleInputChange(
+      'tags',
+      formData.tags.filter((tag) => tag !== tagToRemove),
+    );
   };
 
+  // 保存手记
   const handleSave = async () => {
-    if (!formData.content?.trim()) {
-      toast.error('请填写手记内容');
+    if (!formData.title.trim()) {
+      toast.error('请输入手记标题');
+      return;
+    }
+
+    if (!formData.content.trim()) {
+      toast.error('请输入手记内容');
       return;
     }
 
     setIsLoading(true);
+
     try {
-      let response;
+      const noteData: CreateNoteParams | UpdateNoteParams = {
+        title: formData.title.trim(),
+        content: formData.content,
+        mood: formData.mood || undefined,
+        weather: formData.weather || undefined,
+        location: formData.location || undefined,
+        tags: formData.tags.length > 0 ? formData.tags : undefined,
+        isPrivate: formData.isPrivate,
+      };
+
+      let savedNote: Note;
       if (note) {
-        response = await API.note.updateNote(note.id, formData as UpdateNoteParams);
+        // 更新现有手记
+        const response = await API.note.updateNote(note.id, noteData as UpdateNoteParams);
+        savedNote = response.data;
+        toast.success('手记更新成功');
       } else {
-        response = await API.note.createNote(formData as CreateNoteParams);
+        // 创建新手记
+        const response = await API.note.createNote(noteData as CreateNoteParams);
+        savedNote = response.data;
+        toast.success('手记创建成功');
       }
 
-      toast.success(note ? '手记更新成功' : '手记创建成功');
-      onSave(response.data);
+      onSave(savedNote);
       onClose();
     } catch (error: any) {
       toast.error(error.message || (note ? '更新失败' : '创建失败'));
@@ -305,168 +237,132 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onClose, onSave }
     }
   };
 
-  if (!isOpen) return null;
+  // Modal底部按钮
+  const footerButtons = (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+      <Button variant="secondary" onClick={onClose} disabled={isLoading}>
+        取消
+      </Button>
+      <Button variant="primary" onClick={handleSave} isLoading={isLoading}>
+        <FiSave size={14} />
+        <span style={{ marginLeft: '0.5rem' }}>{note ? '更新' : '保存'}</span>
+      </Button>
+    </div>
+  );
 
   return (
-    <Overlay initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-      <Modal
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Header>
-          <Title>{note ? '编辑手记' : '创建手记'}</Title>
-          <CloseButton onClick={onClose}>
-            <FiX />
-          </CloseButton>
-        </Header>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={note ? '编辑手记' : '创建手记'}
+      size="large"
+      closeOnOverlayClick={false}
+      footer={footerButtons}
+    >
+      <FormGroup>
+        <Label>标题 *</Label>
+        <Input
+          value={formData.title}
+          onChange={(e) => handleInputChange('title', e.target.value)}
+          placeholder="给你的手记取个标题..."
+          maxLength={100}
+        />
+      </FormGroup>
 
-        <Content>
-          <FormGroup>
-            <Label>标题（可选）</Label>
-            <Input
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="为你的手记起个标题..."
-              maxLength={200}
-            />
-          </FormGroup>
+      <FormGroup>
+        <Label>内容 *</Label>
+        <TextEditor
+          content={formData.content}
+          onChange={(content) => handleInputChange('content', content)}
+          placeholder="记录下你的想法..."
+          showPreview={true}
+          showStats={false}
+        />
+      </FormGroup>
 
-          <FormGroup>
-            <Label>内容 *</Label>
-            <TextEditor
-              content={formData.content}
-              onChange={(html) => handleInputChange('content', html)}
-              placeholder="写下你的想法、感受或经历..."
-              minHeight="200px"
-              mode="simple"
-              showPreview={true}
-              showStats={true}
-            />
-          </FormGroup>
+      <MetaRow>
+        <FormGroup>
+          <Label>心情</Label>
+          <Input
+            value={formData.mood}
+            onChange={(e) => handleInputChange('mood', e.target.value)}
+            placeholder="今天的心情..."
+            maxLength={20}
+          />
+        </FormGroup>
 
-          <MetaRow>
-            <FormGroup>
-              <Label>
-                <FiHeart size={14} style={{ marginRight: '0.3rem' }} />
-                心情
-              </Label>
-              <SelectGroup>
-                <Select value={formData.mood} onChange={(e) => handleInputChange('mood', e.target.value)}>
-                  <option value="">选择心情</option>
-                  {metadata?.moodOptions.map((mood) => (
-                    <option key={mood} value={mood}>
-                      {mood}
-                    </option>
-                  ))}
-                </Select>
-              </SelectGroup>
-            </FormGroup>
+        <FormGroup>
+          <Label>天气</Label>
+          <Input
+            value={formData.weather}
+            onChange={(e) => handleInputChange('weather', e.target.value)}
+            placeholder="今天的天气..."
+            maxLength={20}
+          />
+        </FormGroup>
+      </MetaRow>
 
-            <FormGroup>
-              <Label>
-                <FiCloud size={14} style={{ marginRight: '0.3rem' }} />
-                天气
-              </Label>
-              <Input
-                value={formData.weather}
-                onChange={(e) => handleInputChange('weather', e.target.value)}
-                placeholder="晴天、多云、下雨..."
-                maxLength={20}
-                list="weather-suggestions"
-              />
-              <datalist id="weather-suggestions">
-                {metadata?.commonWeathers.map((weather) => (
-                  <option key={weather} value={weather} />
-                ))}
-              </datalist>
-            </FormGroup>
-          </MetaRow>
+      <FormGroup>
+        <Label>地点</Label>
+        <Input
+          value={formData.location}
+          onChange={(e) => handleInputChange('location', e.target.value)}
+          placeholder="在哪里写下这篇手记..."
+          maxLength={50}
+        />
+      </FormGroup>
 
-          <FormGroup>
-            <Label>
-              <FiMapPin size={14} style={{ marginRight: '0.3rem' }} />
-              地点
-            </Label>
-            <Input
-              value={formData.location}
-              onChange={(e) => handleInputChange('location', e.target.value)}
-              placeholder="记录这个时刻的地点..."
-              maxLength={100}
-              list="location-suggestions"
-            />
-            <datalist id="location-suggestions">
-              {metadata?.commonLocations.map((location) => (
-                <option key={location} value={location} />
-              ))}
-            </datalist>
-          </FormGroup>
+      <FormGroup>
+        <Label>标签</Label>
+        <TagInput>
+          <Input
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            placeholder="添加标签..."
+            maxLength={20}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddTag();
+              }
+            }}
+          />
+          <Button variant="secondary" onClick={handleAddTag} disabled={!newTag.trim()}>
+            <FiPlus size={14} />
+          </Button>
+        </TagInput>
+        {formData.tags.length > 0 && (
+          <TagsContainer>
+            {formData.tags.map((tag) => (
+              <Tag key={tag}>
+                <FiHash size={10} />
+                {tag}
+                <TagRemove onClick={() => handleRemoveTag(tag)}>
+                  <FiMinus size={10} />
+                </TagRemove>
+              </Tag>
+            ))}
+          </TagsContainer>
+        )}
+      </FormGroup>
 
-          <FormGroup>
-            <Label>
-              <FiHash size={14} style={{ marginRight: '0.3rem' }} />
-              标签
-            </Label>
-            <TagInput>
-              <Input
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                placeholder="添加标签..."
-                maxLength={20}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                list="tag-suggestions"
-              />
-              <Button variant="secondary" size="small" onClick={handleAddTag} disabled={!newTag.trim()}>
-                <FiPlus size={14} />
-              </Button>
-            </TagInput>
-            <datalist id="tag-suggestions">
-              {metadata?.commonTags.map((tag) => (
-                <option key={tag} value={tag} />
-              ))}
-            </datalist>
-            {formData.tags && formData.tags.length > 0 && (
-              <TagsContainer>
-                {formData.tags.map((tag) => (
-                  <Tag key={tag}>
-                    #{tag}
-                    <TagRemove onClick={() => handleRemoveTag(tag)}>
-                      <FiMinus size={12} />
-                    </TagRemove>
-                  </Tag>
-                ))}
-              </TagsContainer>
-            )}
-          </FormGroup>
+      <FormGroup>
+        <Label>隐私设置</Label>
+        <PrivacyToggle onClick={() => handleInputChange('isPrivate', !formData.isPrivate)}>
+          {formData.isPrivate ? <FiEyeOff /> : <FiEye />}
+          <span>{formData.isPrivate ? '私密手记（仅自己可见）' : '公开手记（他人可见）'}</span>
+        </PrivacyToggle>
+      </FormGroup>
 
-          <FormGroup>
-            <Label>隐私设置</Label>
-            <PrivacyToggle onClick={() => handleInputChange('isPrivate', !formData.isPrivate)}>
-              {formData.isPrivate ? <FiEyeOff /> : <FiEye />}
-              <span>{formData.isPrivate ? '私密手记（仅自己可见）' : '公开手记（他人可见）'}</span>
-            </PrivacyToggle>
-          </FormGroup>
-        </Content>
-
-        <Footer>
-          <FooterRight>
-            <Button variant="secondary" onClick={onClose} disabled={isLoading}>
-              取消
-            </Button>
-            <Button variant="primary" onClick={handleSave} isLoading={isLoading}>
-              <FiSave size={14} />
-              {note ? '更新' : '保存'}
-            </Button>
-          </FooterRight>
-        </Footer>
-      </Modal>
-    </Overlay>
+      {formData.content && (
+        <FormGroup>
+          <Label>内容统计</Label>
+          <StatsDisplay>
+            <RichTextStats content={formData.content} showDetailed={false} />
+          </StatsDisplay>
+        </FormGroup>
+      )}
+    </Modal>
   );
 };
 

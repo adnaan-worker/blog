@@ -82,16 +82,19 @@ const editorStyles = {
   editorToolbar: {
     display: 'flex',
     flexWrap: 'wrap' as const,
-    padding: '0.5rem',
-    gap: '0.5rem',
+    padding: '0.75rem',
+    gap: '0.75rem',
     borderBottom: '1px solid var(--border-color)',
     background: 'var(--bg-secondary)',
+    alignItems: 'center',
   },
   toolbarGroup: {
     display: 'flex',
+    alignItems: 'center',
+    gap: '0.25rem',
     borderRight: '1px solid var(--border-color)',
-    paddingRight: '0.5rem',
-    marginRight: '0.5rem',
+    paddingRight: '0.75rem',
+    marginRight: '0.75rem',
   },
   toolbarGroupLast: {
     borderRight: 'none',
@@ -102,13 +105,12 @@ const editorStyles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '32px',
-    height: '32px',
+    width: '36px',
+    height: '36px',
     padding: '0',
-    marginRight: '2px',
     background: 'var(--bg-primary)',
     border: '1px solid var(--border-color)',
-    borderRadius: '4px',
+    borderRadius: '6px',
     color: 'var(--text-primary)',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
@@ -552,62 +554,69 @@ const TextEditor: React.FC<TextEditorProps> = ({
     return (
       <div
         style={{
-          ...editorStyles.editorToolbar,
+          padding: '0.75rem',
           borderBottom: '1px solid var(--border-color)',
-          justifyContent: 'space-between',
+          background: 'var(--bg-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {showPreview && (
-            <>
+        {/* 第一行：预览和统计功能 */}
+        {(showPreview || (showStats && value)) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {showPreview && (
+              <>
+                <button
+                  onClick={() => setViewMode('edit')}
+                  style={{
+                    ...editorStyles.toolbarButton,
+                    ...(viewMode === 'edit' ? editorStyles.toolbarButtonActive : {}),
+                    width: 'auto',
+                    padding: '0.5rem 0.75rem',
+                  }}
+                  title="编辑模式"
+                >
+                  <FiEdit3 size={14} />
+                  <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>编辑</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('preview')}
+                  style={{
+                    ...editorStyles.toolbarButton,
+                    ...(viewMode === 'preview' ? editorStyles.toolbarButtonActive : {}),
+                    width: 'auto',
+                    padding: '0.5rem 0.75rem',
+                  }}
+                  title="预览模式"
+                >
+                  <FiEye size={14} />
+                  <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>预览</span>
+                </button>
+              </>
+            )}
+
+            {showStats && value && (
               <button
-                onClick={() => setViewMode('edit')}
+                onClick={() => setShowStatsPanel(!showStatsPanel)}
                 style={{
                   ...editorStyles.toolbarButton,
-                  ...(viewMode === 'edit' ? editorStyles.toolbarButtonActive : {}),
+                  ...(showStatsPanel ? editorStyles.toolbarButtonActive : {}),
                   width: 'auto',
                   padding: '0.5rem 0.75rem',
                 }}
-                title="编辑模式"
+                title="统计信息"
               >
-                <FiEdit3 size={14} />
-                <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>编辑</span>
+                <FiBarChart size={14} />
+                <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>统计</span>
               </button>
-              <button
-                onClick={() => setViewMode('preview')}
-                style={{
-                  ...editorStyles.toolbarButton,
-                  ...(viewMode === 'preview' ? editorStyles.toolbarButtonActive : {}),
-                  width: 'auto',
-                  padding: '0.5rem 0.75rem',
-                }}
-                title="预览模式"
-              >
-                <FiEye size={14} />
-                <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>预览</span>
-              </button>
-            </>
-          )}
+            )}
+          </div>
+        )}
 
-          {showStats && value && (
-            <button
-              onClick={() => setShowStatsPanel(!showStatsPanel)}
-              style={{
-                ...editorStyles.toolbarButton,
-                ...(showStatsPanel ? editorStyles.toolbarButtonActive : {}),
-                width: 'auto',
-                padding: '0.5rem 0.75rem',
-              }}
-              title="统计信息"
-            >
-              <FiBarChart size={14} />
-              <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>统计</span>
-            </button>
-          )}
-        </div>
-
+        {/* 第二行：操作按钮 */}
         {(onSave || onCancel) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
             {onCancel && (
               <Button variant="secondary" onClick={onCancel}>
                 取消

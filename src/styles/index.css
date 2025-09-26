@@ -31,7 +31,9 @@
   --spotlight-color: oklch(var(--a)/0.12); /* 高亮颜色 */
   --underline-bg: var(--tw-gradient-from),var(--fallback-a,oklch(var(--a)/0.7)) var(--tw-gradient-via-position),var(--tw-gradient-to); /* 下划线背景 */
   --error-color: #e53935; /* 错误颜色 */
+  --error-hover: #c62828; /* 错误悬停色 */
   --success-color: #43a047; /* 成功颜色 */
+  --success-hover: #388e3c; /* 成功悬停色 */
   --border-color: rgba(0, 0, 0, 0.06); /* 边框颜色 */
 
   /* 尺寸和间距 */

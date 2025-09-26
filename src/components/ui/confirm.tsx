@@ -71,7 +71,7 @@ const Button = styled.button<{ variant?: 'primary' | 'danger' | 'default' }>`
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   ${({ variant }) => {
     if (variant === 'primary') {
       return `
@@ -80,7 +80,7 @@ const Button = styled.button<{ variant?: 'primary' | 'danger' | 'default' }>`
         border: none;
         
         &:hover {
-          background-color: var(--accent-hover);
+          background-color: var(--accent-color-hover);
         }
       `;
     } else if (variant === 'danger') {
@@ -215,4 +215,4 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   );
 };
 
-export default ConfirmDialog; 
+export default ConfirmDialog;

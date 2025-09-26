@@ -34,7 +34,7 @@ const RichTextContainer = styled.div`
       margin: 2rem 0 1rem;
       color: var(--text-primary);
 
-      &:first-child {
+      &:first-of-type {
         margin-top: 0;
       }
     }
@@ -206,14 +206,16 @@ const RichTextContainer = styled.div`
       }
 
       tbody tr {
-        transition: background-color 0.2s ease;
-
-        &:hover {
-          background: var(--bg-secondary);
-        }
-
         &:nth-of-type(even) {
           background: rgba(var(--accent-color-rgb), 0.05);
+        }
+
+        @media (hover: hover) {
+          transition: background-color 0.2s ease;
+
+          &:hover {
+            background: var(--bg-secondary);
+          }
         }
       }
     }
@@ -289,34 +291,53 @@ interface RichTextRendererProps {
 // React组件渲染管理器
 class ComponentRenderer {
   private roots: Map<Element, Root> = new Map();
+  private cache: Map<string, Element> = new Map();
 
   renderCodeBlock(container: Element, code: string, language: string) {
-    const root = createRoot(container);
-    this.roots.set(container, root);
+    try {
+      // 创建缓存键
+      const cacheKey = `code_${code.length}_${language}`;
 
-    root.render(
-      React.createElement(CodeBlock, {
-        code: code.trim(),
-        language: language,
-        showLineNumbers: true,
-        allowCopy: true,
-        allowFullscreen: true,
-        title: language ? `${language.toUpperCase()} 代码` : undefined,
-      }),
-    );
+      // 检查是否已经渲染过相同内容
+      if (this.cache.has(cacheKey)) {
+        return;
+      }
+
+      const root = createRoot(container);
+      this.roots.set(container, root);
+
+      root.render(
+        React.createElement(CodeBlock, {
+          code: code.trim(),
+          language: language,
+          showLineNumbers: true,
+          allowCopy: true,
+          allowFullscreen: true,
+          title: language ? `${language.toUpperCase()} 代码` : undefined,
+        }),
+      );
+
+      this.cache.set(cacheKey, container);
+    } catch (error) {
+      console.warn('渲染代码块失败:', error);
+    }
   }
 
   renderImagePreview(container: Element, src: string, alt: string, onClick?: () => void) {
-    const root = createRoot(container);
-    this.roots.set(container, root);
+    try {
+      const root = createRoot(container);
+      this.roots.set(container, root);
 
-    root.render(
-      React.createElement(ImagePreview, {
-        src,
-        alt,
-        onClick,
-      }),
-    );
+      root.render(
+        React.createElement(ImagePreview, {
+          src,
+          alt,
+          onClick,
+        }),
+      );
+    } catch (error) {
+      console.warn('渲染图片预览失败:', error);
+    }
   }
 
   cleanup() {
@@ -328,6 +349,7 @@ class ComponentRenderer {
       }
     });
     this.roots.clear();
+    this.cache.clear();
   }
 }
 
@@ -367,74 +389,88 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     return headings;
   }, [processedContent, enableTableOfContents]);
 
-  // 组件渲染逻辑
+  // 防抖渲染逻辑
   useEffect(() => {
     if (!containerRef.current) return;
 
     const container = containerRef.current;
     const renderer = rendererRef.current;
 
-    // 清理之前的组件
-    renderer.cleanup();
+    let rafId: number;
+    let isProcessing = false;
 
-    // 延迟执行以确保DOM已经更新
-    const timer = setTimeout(() => {
-      // 渲染代码块
-      if (enableCodeHighlight) {
-        const codeBlocks = container.querySelectorAll('.rich-text-code-block');
-        codeBlocks.forEach((block) => {
-          const language = block.getAttribute('data-language') || '';
-          const code = block.textContent || '';
+    const processComponents = () => {
+      if (isProcessing) return;
+      isProcessing = true;
 
-          // 创建容器
-          const codeContainer = document.createElement('div');
-          codeContainer.style.margin = '1.5rem 0';
+      try {
+        // 清理之前的组件
+        renderer.cleanup();
 
-          // 渲染组件
-          renderer.renderCodeBlock(codeContainer, code, language);
+        // 批量处理代码块
+        if (enableCodeHighlight) {
+          const codeBlocks = Array.from(container.querySelectorAll('.rich-text-code-block'));
+          codeBlocks.forEach((block) => {
+            const language = block.getAttribute('data-language') || '';
+            const code = block.textContent || '';
 
-          // 替换原元素
-          block.parentNode?.replaceChild(codeContainer, block);
-        });
+            if (!code.trim()) return; // 跳过空代码块
+
+            const codeContainer = document.createElement('div');
+            codeContainer.style.margin = '1.5rem 0';
+
+            renderer.renderCodeBlock(codeContainer, code, language);
+            block.parentNode?.replaceChild(codeContainer, block);
+          });
+        }
+
+        // 批量处理图片
+        if (enableImagePreview) {
+          const images = Array.from(container.querySelectorAll('.rich-text-image'));
+          images.forEach((img) => {
+            const src = img.getAttribute('src');
+            const alt = img.getAttribute('alt') || '';
+
+            if (!src) return; // 跳过无src的图片
+
+            const imageContainer = document.createElement('div');
+            imageContainer.style.margin = '1.5rem 0';
+            imageContainer.style.textAlign = 'center';
+
+            renderer.renderImagePreview(imageContainer, src, alt, onImageClick ? () => onImageClick(src) : undefined);
+            img.parentNode?.replaceChild(imageContainer, img);
+          });
+        }
+
+        // 一次性设置所有标题锚点
+        if (enableTableOfContents && tableOfContents.length > 0) {
+          const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+          headings.forEach((heading, index) => {
+            if (tableOfContents[index]) {
+              heading.id = tableOfContents[index].id;
+            }
+          });
+        }
+
+        // 设置模式属性
+        container.setAttribute('data-mode', mode);
+      } catch (error) {
+        console.warn('RichTextRenderer: 组件渲染失败', error);
+      } finally {
+        isProcessing = false;
       }
+    };
 
-      // 渲染图片预览
-      if (enableImagePreview) {
-        const images = container.querySelectorAll('.rich-text-image');
-        images.forEach((img) => {
-          const src = img.getAttribute('src') || '';
-          const alt = img.getAttribute('alt') || '';
-
-          // 创建容器
-          const imageContainer = document.createElement('div');
-          imageContainer.style.margin = '1.5rem 0';
-          imageContainer.style.textAlign = 'center';
-
-          // 渲染组件
-          renderer.renderImagePreview(imageContainer, src, alt, onImageClick ? () => onImageClick(src) : undefined);
-
-          // 替换原元素
-          img.parentNode?.replaceChild(imageContainer, img);
-        });
-      }
-
-      // 添加目录锚点
-      if (enableTableOfContents && tableOfContents.length > 0) {
-        const headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
-        headings.forEach((heading, index) => {
-          if (tableOfContents[index]) {
-            heading.id = tableOfContents[index].id;
-          }
-        });
-      }
-
-      // 根据模式调整样式
-      container.setAttribute('data-mode', mode);
-    }, 0);
+    // 使用 requestAnimationFrame 确保在下一帧渲染
+    rafId = requestAnimationFrame(processComponents);
 
     return () => {
-      clearTimeout(timer);
-      renderer.cleanup();
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+      if (!isProcessing) {
+        renderer.cleanup();
+      }
     };
   }, [
     processedContent,

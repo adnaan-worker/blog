@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiFileText, FiHeart, FiEye, FiMessageSquare, FiUsers, FiBookmark, FiEdit, FiTrendingUp } from 'react-icons/fi';
+import {
+  FiFileText,
+  FiHeart,
+  FiEye,
+  FiMessageSquare,
+  FiUsers,
+  FiBookmark,
+  FiEdit,
+  FiTrendingUp,
+  FiX,
+} from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/ui';
 import { API, UserProfile, UserStats, UserActivity, UserAchievement } from '@/utils/api';
@@ -14,48 +24,171 @@ import {
   NoteManagement,
 } from '@/components/profile';
 import type { EditProfileForm } from '@/components/profile/types';
-import { ProfileLayout } from './modules/ProfileLayout';
+
 import { LoadingState } from './modules/LoadingState';
 
 const ProfileContainer = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 1rem;
+  min-height: calc(100vh - 120px);
 
   @media (min-width: 768px) {
     padding: 2rem;
   }
 `;
 
-const TabsContainer = styled.div`
-  margin-bottom: 2rem;
+// 新的现代布局
+const ModernLayout = styled.div`
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 1fr;
+  position: relative;
+  isolation: isolate; /* 创建新的层叠上下文 */
+
+  @media (min-width: 768px) {
+    grid-template-columns: 320px 1fr;
+  }
+
+  @media (min-width: 1200px) {
+    grid-template-columns: 320px 1fr 280px;
+  }
+`;
+
+// 左侧用户卡片区域
+const UserSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+// 主内容区域
+const MainContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 600px;
+`;
+
+// 右侧快捷操作区域
+const QuickActionsSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  @media (max-width: 1199px) {
+    display: none;
+  }
+`;
+
+// 移动端快捷操作（在主内容顶部显示）
+const MobileQuickActions = styled.div`
+  display: block;
+  margin-bottom: 1.5rem;
+
+  @media (min-width: 1200px) {
+    display: none;
+  }
+`;
+
+// 卡片容器
+const Card = styled.div`
+  background: var(--bg-primary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+
+  [data-theme='dark'] & {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+`;
+
+// 标签页容器
+const TabsContainer = styled(Card)`
+  margin-bottom: 0;
 `;
 
 const TabsList = styled.div`
   display: flex;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 2rem;
+  background: var(--bg-secondary);
+  padding: 0.5rem;
+  gap: 0.25rem;
+  border-radius: 8px;
+  margin: 1rem;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+  }
 `;
 
 const TabButton = styled.button<{ active?: boolean }>`
-  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
   border: none;
-  background: none;
-  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  font-size: 0.95rem;
+  background: ${(props) => (props.active ? 'var(--bg-primary)' : 'transparent')};
+  color: ${(props) => (props.active ? 'var(--text-primary)' : 'var(--text-secondary)')};
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  border-bottom: 2px solid ${(props) => (props.active ? 'var(--accent-color)' : 'transparent')};
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  box-shadow: ${(props) => (props.active ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none')};
+  white-space: nowrap;
+  min-width: fit-content;
+
+  &:hover {
+    background: ${(props) => (props.active ? 'var(--bg-primary)' : 'rgba(var(--accent-color-rgb), 0.1)')};
+    color: ${(props) => (props.active ? 'var(--text-primary)' : 'var(--accent-color)')};
+  }
+
+  [data-theme='dark'] & {
+    box-shadow: ${(props) => (props.active ? '0 2px 8px rgba(0, 0, 0, 0.3)' : 'none')};
+  }
+`;
+
+const CloseButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin-left: 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.8rem;
   transition: all 0.2s ease;
 
   &:hover {
-    color: var(--accent-color);
+    background: rgba(var(--error-color-rgb), 0.2);
+    color: var(--error-color);
   }
 `;
 
 const TabContent = styled.div`
-  min-height: 400px;
+  padding: 1.5rem;
+  min-height: 500px;
 `;
 
 const Profile: React.FC = () => {
@@ -67,7 +200,11 @@ const Profile: React.FC = () => {
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'notes'>('dashboard');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [openTabs, setOpenTabs] = useState([
+    { id: 'dashboard', label: '📊 数据概览', closable: false },
+    { id: 'notes', label: '📝 我的手记', closable: false },
+  ]);
 
   // 用户数据
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -78,6 +215,19 @@ const Profile: React.FC = () => {
   // 分页状态
   const [activitiesPage, setActivitiesPage] = useState(1);
   const [hasMoreActivities, setHasMoreActivities] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 检测屏幕尺寸
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // 初始化数据
   useEffect(() => {
@@ -323,31 +473,19 @@ const Profile: React.FC = () => {
 
   // 快捷操作处理
   const handleCreateArticle = () => {
-    navigate('/user/create-article');
+    addTab('create-article', '✏️ 创建文章');
   };
 
   const handleViewAnalytics = () => {
-    navigate('/user/analytics');
+    addTab('analytics', '📈 数据分析');
   };
 
   const handleExportData = async () => {
-    try {
-      const response = await API.user.exportData();
-      // 创建下载链接
-      const link = document.createElement('a');
-      link.href = response.data.downloadUrl;
-      link.download = `user-data-${new Date().toISOString().split('T')[0]}.zip`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success('数据导出已开始');
-    } catch (error: any) {
-      toast.error(error.message || '导出失败，请重试');
-    }
+    addTab('export-data', '📦 数据导出');
   };
 
   const handleHelp = () => {
-    window.open('/help', '_blank');
+    addTab('help', '❓ 帮助中心');
   };
 
   const handleLogout = () => {
@@ -367,6 +505,129 @@ const Profile: React.FC = () => {
     toast.info(`${achievement.name}: ${achievement.description}`);
   };
 
+  // 标签页管理
+  const addTab = (id: string, label: string, closable = true) => {
+    // 检查标签页是否已存在
+    if (openTabs.find((tab) => tab.id === id)) {
+      setActiveTab(id);
+      return;
+    }
+
+    setOpenTabs((prev) => [...prev, { id, label, closable }]);
+    setActiveTab(id);
+  };
+
+  const closeTab = (tabId: string) => {
+    const filteredTabs = openTabs.filter((tab) => tab.id !== tabId);
+    setOpenTabs(filteredTabs);
+
+    // 如果关闭的是当前活动标签页，切换到第一个标签页
+    if (activeTab === tabId && filteredTabs.length > 0) {
+      setActiveTab(filteredTabs[0].id);
+    }
+  };
+
+  // 渲染标签页内容
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <>
+            <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
+
+            {/* 移动端显示成就徽章 */}
+            {isMobile && (
+              <div
+                style={{
+                  background: 'var(--bg-primary)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-color)',
+                }}
+              >
+                <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+              </div>
+            )}
+
+            <ActivityFeed
+              activities={activities}
+              onActivityClick={handleActivityClick}
+              onRefresh={handleRefreshActivities}
+              onLoadMore={handleLoadMoreActivities}
+              hasMore={hasMoreActivities}
+              isLoading={isActivitiesLoading}
+              isRefreshing={isRefreshing}
+            />
+          </>
+        );
+
+      case 'notes':
+        return <NoteManagement />;
+
+      case 'create-article':
+        return (
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <h3>✏️ 创建文章</h3>
+            <p>文章编辑器功能正在开发中...</p>
+          </div>
+        );
+
+      case 'analytics':
+        return (
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <h3>📈 数据分析</h3>
+            <p>数据分析面板正在开发中...</p>
+            <div style={{ marginTop: '2rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+              <h4>📊 统计概览</h4>
+              <p>这里将展示详细的博客数据分析图表</p>
+            </div>
+          </div>
+        );
+
+      case 'export-data':
+        return (
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <h3>📦 数据导出</h3>
+            <p>数据导出功能正在开发中...</p>
+            <button
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'var(--accent-color)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                marginTop: '1rem',
+              }}
+              onClick={() => toast.success('导出功能即将上线！')}
+            >
+              开始导出
+            </button>
+          </div>
+        );
+
+      case 'help':
+        return (
+          <div style={{ padding: '2rem' }}>
+            <h3>❓ 帮助中心</h3>
+            <div style={{ marginTop: '1rem', lineHeight: 1.6 }}>
+              <h4>📖 使用指南</h4>
+              <p>• 在"数据概览"中查看你的博客统计</p>
+              <p>• 在"我的手记"中管理你的私人笔记</p>
+              <p>• 使用右侧快捷操作快速访问功能</p>
+
+              <h4>🎯 快捷键</h4>
+              <p>• Ctrl+N: 创建新文章</p>
+              <p>• Ctrl+E: 编辑资料</p>
+              <p>• Ctrl+H: 打开帮助</p>
+            </div>
+          </div>
+        );
+
+      default:
+        return <div>页面未找到</div>;
+    }
+  };
+
   // 如果没有用户数据，显示加载状态
   if (!user) {
     return (
@@ -378,48 +639,69 @@ const Profile: React.FC = () => {
 
   return (
     <ProfileContainer>
-      <ProfileLayout
-        sidebar={
-          <UserInfoCard
-            user={user}
-            onEditProfile={handleEditProfile}
-            onAvatarChange={handleAvatarChange}
-            isLoading={isUserLoading}
-          />
-        }
-        mainContent={
+      <ModernLayout>
+        {/* 左侧用户信息区域 */}
+        <UserSection>
+          <Card>
+            <UserInfoCard
+              user={user}
+              onEditProfile={handleEditProfile}
+              onAvatarChange={handleAvatarChange}
+              isLoading={isUserLoading}
+            />
+          </Card>
+
+          {/* 成就徽章 */}
+          {!isMobile && (
+            <Card>
+              <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+            </Card>
+          )}
+        </UserSection>
+
+        {/* 主内容区域 */}
+        <MainContent>
+          {/* 移动端快捷操作 */}
+          <MobileQuickActions>
+            <Card>
+              <QuickActions
+                onCreateArticle={handleCreateArticle}
+                onEditProfile={handleEditProfile}
+                onExportData={handleExportData}
+                onViewAnalytics={handleViewAnalytics}
+                onHelp={handleHelp}
+                onLogout={handleLogout}
+              />
+            </Card>
+          </MobileQuickActions>
+
+          {/* 标签页容器 */}
           <TabsContainer>
             <TabsList>
-              <TabButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')}>
-                数据概览
-              </TabButton>
-              <TabButton active={activeTab === 'notes'} onClick={() => setActiveTab('notes')}>
-                我的手记
-              </TabButton>
+              {openTabs.map((tab) => (
+                <TabButton key={tab.id} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)}>
+                  {tab.label}
+                  {tab.closable && (
+                    <CloseButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        closeTab(tab.id);
+                      }}
+                    >
+                      <FiX size={12} />
+                    </CloseButton>
+                  )}
+                </TabButton>
+              ))}
             </TabsList>
 
-            <TabContent>
-              {activeTab === 'dashboard' && (
-                <>
-                  <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
-                  <ActivityFeed
-                    activities={activities}
-                    onActivityClick={handleActivityClick}
-                    onRefresh={handleRefreshActivities}
-                    onLoadMore={handleLoadMoreActivities}
-                    hasMore={hasMoreActivities}
-                    isLoading={isActivitiesLoading}
-                    isRefreshing={isRefreshing}
-                  />
-                </>
-              )}
-
-              {activeTab === 'notes' && <NoteManagement />}
-            </TabContent>
+            <TabContent>{renderTabContent()}</TabContent>
           </TabsContainer>
-        }
-        rightSidebar={
-          <>
+        </MainContent>
+
+        {/* 右侧快捷操作区域（大屏显示） */}
+        <QuickActionsSection>
+          <Card>
             <QuickActions
               onCreateArticle={handleCreateArticle}
               onEditProfile={handleEditProfile}
@@ -428,10 +710,9 @@ const Profile: React.FC = () => {
               onHelp={handleHelp}
               onLogout={handleLogout}
             />
-            <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
-          </>
-        }
-      />
+          </Card>
+        </QuickActionsSection>
+      </ModernLayout>
 
       <EditProfileModal
         isOpen={isEditModalOpen}

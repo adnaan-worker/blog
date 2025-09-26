@@ -18,12 +18,12 @@ import {
   FiRefreshCw,
   FiMoreHorizontal,
 } from 'react-icons/fi';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, InfiniteScroll } from '@/components/ui';
 import { toast } from '@/ui';
 import { API, Note, NoteParams, NoteStats } from '@/utils/api';
 import { RichTextParser } from '@/utils/rich-text-parser';
 import NoteEditor from './note-editor';
-import { confirm } from '@/ui';
+import { confirmDialog } from '@/ui';
 
 // 样式组件
 const Container = styled.div`
@@ -38,15 +38,8 @@ const Header = styled.div`
   padding: 1.5rem;
   border-bottom: 1px solid var(--border-color);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 1rem;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
 `;
 
 const HeaderLeft = styled.div`
@@ -85,13 +78,33 @@ const StatItem = styled.div`
   }
 `;
 
+const HeaderTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+`;
+
 const HeaderRight = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     justify-content: space-between;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
   }
 `;
 
@@ -316,17 +329,6 @@ const EmptyState = styled.div`
   }
 `;
 
-const LoadingState = styled.div`
-  text-align: center;
-  padding: 3rem 2rem;
-  color: var(--text-tertiary);
-`;
-
-const LoadMoreButton = styled(Button)`
-  width: 100%;
-  margin-top: 1rem;
-`;
-
 // 组件接口
 interface NoteManagementProps {
   className?: string;
@@ -335,10 +337,11 @@ interface NoteManagementProps {
 const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [stats, setStats] = useState<NoteStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
+  const [error, setError] = useState<Error | null>(null);
+  const [totalItems, setTotalItems] = useState(0);
 
   // 筛选和搜索状态
   const [searchQuery, setSearchQuery] = useState('');
@@ -350,43 +353,71 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
 
-  // 加载数据
-  const loadNotes = useCallback(
-    async (pageNum = 1, append = false) => {
-      try {
-        if (!append) setIsLoading(true);
-        else setIsLoadingMore(true);
+  // 加载更多数据
+  const loadMoreNotes = useCallback(async () => {
+    if (isLoading || !hasMore || error) return;
 
-        const params: NoteParams = {
-          page: pageNum,
-          limit: 10,
-          search: searchQuery || undefined,
-          mood: selectedMood || undefined,
-          isPrivate: selectedPrivacy,
-          orderBy: 'createdAt',
-          orderDirection: 'DESC',
-        };
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        const response = await API.note.getMyNotes(params);
-        const newNotes = response.data.data;
+      const params: NoteParams = {
+        page: page + 1,
+        limit: 10,
+        search: searchQuery || undefined,
+        mood: selectedMood || undefined,
+        isPrivate: selectedPrivacy,
+        orderBy: 'createdAt',
+        orderDirection: 'DESC',
+      };
 
-        if (append) {
-          setNotes((prev) => [...prev, ...newNotes]);
-        } else {
-          setNotes(newNotes);
-        }
+      const response = await API.note.getMyNotes(params);
+      const newNotes = response.data.data;
 
-        setHasMore(response.data.pagination.page < response.data.pagination.totalPages);
-        setPage(pageNum);
-      } catch (error: any) {
-        toast.error(error.message || '加载手记失败');
-      } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-      }
-    },
-    [searchQuery, selectedMood, selectedPrivacy],
-  );
+      setNotes((prev) => [...prev, ...newNotes]);
+      setHasMore(page + 1 < response.data.pagination.totalPages);
+      setPage(page + 1);
+      setTotalItems((prev) => prev + newNotes.length);
+    } catch (err: any) {
+      console.error('加载更多手记失败:', err);
+      setError(new Error(err.message || '加载失败，请重试'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, hasMore, isLoading, error, searchQuery, selectedMood, selectedPrivacy]);
+
+  // 重新加载数据（搜索/筛选时使用）
+  const reloadNotes = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setPage(1);
+      setHasMore(true);
+
+      const params: NoteParams = {
+        page: 1,
+        limit: 10,
+        search: searchQuery || undefined,
+        mood: selectedMood || undefined,
+        isPrivate: selectedPrivacy,
+        orderBy: 'createdAt',
+        orderDirection: 'DESC',
+      };
+
+      const response = await API.note.getMyNotes(params);
+      const newNotes = response.data.data;
+
+      setNotes(newNotes);
+      setHasMore(1 < response.data.pagination.totalPages);
+      setTotalItems(newNotes.length);
+    } catch (err: any) {
+      console.error('加载手记失败:', err);
+      setError(new Error(err.message || '加载失败，请重试'));
+      setNotes([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery, selectedMood, selectedPrivacy]);
 
   // 加载统计数据
   const loadStats = useCallback(async () => {
@@ -400,23 +431,18 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
 
   // 初始化
   useEffect(() => {
-    loadNotes();
+    reloadNotes();
     loadStats();
-  }, [loadNotes, loadStats]);
+  }, [reloadNotes, loadStats]);
 
   // 搜索和筛选变化时重新加载
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (page === 1) {
-        loadNotes(1);
-      } else {
-        setPage(1);
-        loadNotes(1);
-      }
+      reloadNotes();
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, selectedMood, selectedPrivacy]);
+  }, [searchQuery, selectedMood, selectedPrivacy, reloadNotes]);
 
   // 处理创建手记
   const handleCreateNote = () => {
@@ -432,13 +458,7 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
 
   // 处理删除手记
   const handleDeleteNote = async (note: Note) => {
-    const confirmed = await confirm({
-      title: '删除手记',
-      content: '确定要删除这篇手记吗？删除后无法恢复。',
-      confirmText: '删除',
-      cancelText: '取消',
-      type: 'danger',
-    });
+    const confirmed = await confirmDialog.delete('确定要删除这篇手记吗？删除后无法恢复。', '删除手记');
 
     if (!confirmed) return;
 
@@ -464,17 +484,9 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
     loadStats(); // 重新加载统计
   };
 
-  // 处理加载更多
-  const handleLoadMore = () => {
-    if (hasMore && !isLoadingMore) {
-      loadNotes(page + 1, true);
-    }
-  };
-
   // 处理刷新
   const handleRefresh = () => {
-    setPage(1);
-    loadNotes(1);
+    reloadNotes();
     loadStats();
   };
 
@@ -484,25 +496,32 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
   return (
     <Container className={className}>
       <Header>
-        <HeaderLeft>
-          <Title>我的手记</Title>
-          {stats && (
-            <StatsContainer>
-              <StatItem>
-                <span className="number">{stats.totalNotes}</span>
-                <span>篇</span>
-              </StatItem>
-              <StatItem>
-                <FiEye size={12} />
-                <span className="number">{stats.totalViews}</span>
-              </StatItem>
-              <StatItem>
-                <FiHeart size={12} />
-                <span className="number">{stats.totalLikes}</span>
-              </StatItem>
-            </StatsContainer>
-          )}
-        </HeaderLeft>
+        <HeaderTop>
+          <HeaderLeft>
+            <Title>我的手记</Title>
+            {stats && (
+              <StatsContainer>
+                <StatItem>
+                  <span className="number">{stats.totalNotes}</span>
+                  <span>篇</span>
+                </StatItem>
+                <StatItem>
+                  <FiEye size={12} />
+                  <span className="number">{stats.totalViews}</span>
+                </StatItem>
+                <StatItem>
+                  <FiHeart size={12} />
+                  <span className="number">{stats.totalLikes}</span>
+                </StatItem>
+              </StatsContainer>
+            )}
+          </HeaderLeft>
+          <Button variant="primary" onClick={handleCreateNote}>
+            <FiPlus size={14} />
+            <span style={{ marginLeft: '0.5rem' }}>写手记</span>
+          </Button>
+        </HeaderTop>
+
         <HeaderRight>
           <SearchContainer>
             <SearchInput
@@ -516,14 +535,10 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
           </SearchContainer>
           <FilterButton active={showFilters} onClick={() => setShowFilters(!showFilters)}>
             <FiFilter size={14} />
-            筛选
+            <span style={{ marginLeft: '0.25rem' }}>筛选</span>
           </FilterButton>
-          <Button variant="secondary" size="small" onClick={handleRefresh}>
+          <Button variant="secondary" onClick={handleRefresh}>
             <FiRefreshCw size={14} />
-          </Button>
-          <Button variant="primary" size="small" onClick={handleCreateNote}>
-            <FiPlus size={14} />
-            写手记
           </Button>
         </HeaderRight>
       </Header>
@@ -576,20 +591,26 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
       </AnimatePresence>
 
       <Content>
-        {isLoading ? (
-          <LoadingState>
-            <div>正在加载手记...</div>
-          </LoadingState>
-        ) : notes.length === 0 ? (
-          <EmptyState>
-            <h3>还没有手记</h3>
-            <p>开始记录你的生活点滴吧</p>
-            <Button variant="primary" onClick={handleCreateNote}>
-              <FiPlus size={14} />
-              写第一篇手记
-            </Button>
-          </EmptyState>
-        ) : (
+        <InfiniteScroll
+          hasMore={hasMore}
+          loading={isLoading}
+          error={error}
+          onLoadMore={loadMoreNotes}
+          onRetry={reloadNotes}
+          itemCount={notes.length}
+          maxHeight="calc(100vh - 400px)"
+          showScrollToTop={true}
+          emptyComponent={
+            <EmptyState>
+              <h3>还没有手记</h3>
+              <p>开始记录你的生活点滴吧</p>
+              <Button variant="primary" onClick={handleCreateNote}>
+                <FiPlus size={14} />
+                写第一篇手记
+              </Button>
+            </EmptyState>
+          }
+        >
           <NotesList>
             <AnimatePresence>
               {notes.map((note, index) => (
@@ -667,14 +688,8 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
                 </NoteCard>
               ))}
             </AnimatePresence>
-
-            {hasMore && (
-              <LoadMoreButton variant="secondary" onClick={handleLoadMore} isLoading={isLoadingMore}>
-                {isLoadingMore ? '加载中...' : '加载更多'}
-              </LoadMoreButton>
-            )}
           </NotesList>
-        )}
+        </InfiniteScroll>
       </Content>
 
       <AnimatePresence>

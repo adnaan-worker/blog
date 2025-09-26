@@ -23,27 +23,24 @@ interface QuickActionsProps {
   onLogout?: () => void;
 }
 
-// 卡片基础样式
-const Card = styled.div`
-  background: var(--bg-secondary);
-  border-radius: 0.5rem;
-  border: 1px solid var(--border-color);
+// 内容容器（不包含边框和背景，因为外层已有Card）
+const Container = styled.div`
   padding: 1.5rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+
+  &::before {
+    content: '⚡';
+    font-size: 1.2rem;
+  }
 `;
 
 const ActionsList = styled.div`
@@ -136,8 +133,8 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   const actionsToRender = actions || defaultActions;
 
   return (
-    <Card>
-      <SectionTitle>⚡ 快捷操作</SectionTitle>
+    <Container>
+      <SectionTitle>快捷操作</SectionTitle>
 
       <ActionsList>
         {actionsToRender.map((action) => (
@@ -170,6 +167,6 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           </ActionButton>
         ))}
       </ActionsList>
-    </Card>
+    </Container>
   );
 };

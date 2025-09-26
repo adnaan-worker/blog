@@ -7,9 +7,13 @@ export { default as Button } from './button';
 export { default as Input } from './input';
 export { default as Badge } from './badge';
 export { default as Tabs } from './tabs';
+export { default as Pagination } from './pagination';
+export { default as InfiniteScroll } from './infinite-scroll';
 export { Modal } from '@/ui/modal';
 
 // 导出类型
 export type { ButtonProps } from './button';
 export type { InputProps } from './input';
+export type { PaginationProps } from './pagination';
+export type { InfiniteScrollProps } from './infinite-scroll';
 export type { ModalOptions, ModalSize } from '@/ui/modal';

@@ -244,7 +244,7 @@ const NotesPage: React.FC = () => {
 
         <TimelineMasonry
           items={notes}
-          renderItem={renderNoteItem}
+          renderItem={(item, index) => renderNoteItem(item as Note, index)}
           loading={isLoading}
           loadingMore={isLoadingMore}
           hasMore={hasMore}
