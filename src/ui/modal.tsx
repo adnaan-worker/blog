@@ -7,17 +7,22 @@ import { FiX } from 'react-icons/fi';
 
 // 滚动锁定 Hook
 const useScrollLock = (isLocked: boolean) => {
+  const scrollPosition = React.useRef({ x: 0, y: 0 });
+  const originalStyle = React.useRef<any>({});
+
   React.useEffect(() => {
     if (isLocked) {
       // 保存当前滚动位置
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
+      scrollPosition.current = {
+        x: window.scrollX,
+        y: window.scrollY,
+      };
 
       // 计算滚动条宽度
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
-      // 应用样式锁定滚动
-      const originalStyle = {
+      // 保存原始样式
+      originalStyle.current = {
         position: document.body.style.position,
         top: document.body.style.top,
         left: document.body.style.left,
@@ -26,20 +31,33 @@ const useScrollLock = (isLocked: boolean) => {
         overflow: document.body.style.overflow,
       };
 
+      // 应用样式锁定滚动
       document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = `-${scrollX}px`;
+      document.body.style.top = `-${scrollPosition.current.y}px`;
+      document.body.style.left = `-${scrollPosition.current.x}px`;
       document.body.style.width = '100%';
       document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = 'hidden';
+    } else {
+      // 延迟恢复，等待Modal动画完成
+      const timeoutId = setTimeout(() => {
+        // 使用平滑的方式恢复滚动位置
+        const { x, y } = scrollPosition.current;
 
-      return () => {
-        // 恢复原始样式
-        Object.assign(document.body.style, originalStyle);
+        // 先恢复样式，但保持当前滚动位置
+        Object.assign(document.body.style, originalStyle.current);
 
-        // 恢复滚动位置
-        window.scrollTo(scrollX, scrollY);
-      };
+        // 立即恢复到正确的滚动位置，避免闪烁
+        if (x !== 0 || y !== 0) {
+          window.scrollTo({
+            left: x,
+            top: y,
+            behavior: 'instant', // 使用instant避免动画
+          });
+        }
+      }, 250); // 略长于动画时间(200ms)
+
+      return () => clearTimeout(timeoutId);
     }
   }, [isLocked]);
 };

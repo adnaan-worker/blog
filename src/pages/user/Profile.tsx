@@ -643,12 +643,12 @@ const Profile: React.FC = () => {
         {/* 左侧用户信息区域 */}
         <UserSection>
           <Card>
-            <UserInfoCard
-              user={user}
-              onEditProfile={handleEditProfile}
-              onAvatarChange={handleAvatarChange}
-              isLoading={isUserLoading}
-            />
+          <UserInfoCard
+            user={user}
+            onEditProfile={handleEditProfile}
+            onAvatarChange={handleAvatarChange}
+            isLoading={isUserLoading}
+          />
           </Card>
 
           {/* 成就徽章 */}

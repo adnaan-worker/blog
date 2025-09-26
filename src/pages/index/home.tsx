@@ -906,7 +906,6 @@ const ActivityDescription = styled.p`
   overflow: hidden;
 `;
 
-
 const ChartSection = styled(motion.section)`
   margin: 2.5rem 0;
 `;
