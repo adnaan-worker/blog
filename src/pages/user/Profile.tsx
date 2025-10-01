@@ -22,6 +22,7 @@ import {
   AchievementBadges,
   EditProfileModal,
   NoteManagement,
+  ArticleManagement,
 } from '@/components/profile';
 import type { EditProfileForm } from '@/components/profile/types';
 
@@ -204,6 +205,7 @@ const Profile: React.FC = () => {
   const [openTabs, setOpenTabs] = useState([
     { id: 'dashboard', label: '📊 数据概览', closable: false },
     { id: 'notes', label: '📝 我的手记', closable: false },
+    { id: 'articles', label: '📰 我的文章', closable: false },
   ]);
 
   // 用户数据
@@ -562,6 +564,9 @@ const Profile: React.FC = () => {
 
       case 'notes':
         return <NoteManagement />;
+
+      case 'articles':
+        return <ArticleManagement />;
 
       case 'create-article':
         return (

@@ -9,7 +9,6 @@ import './styles/index.css';
 import AccentColorStyleInjector from './components/theme/accent-color-style-injector';
 // 导入UI组件库并初始化
 import UI from './ui';
-
 // 初始化UI组件库
 UI.install();
 

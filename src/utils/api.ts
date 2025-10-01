@@ -417,12 +417,22 @@ export const API = {
   // 博客文章相关
   article: {
     /**
-     * 获取文章列表
+     * 获取公开文章列表（分页）
      * @param params 查询参数
      * @returns Promise<ApiResponse<PaginationResult<Article>>>
      */
     getArticles: (params?: ArticleParams): Promise<ApiResponse<PaginationResult<Article>>> => {
       return http.get('/posts/page', params);
+    },
+
+    /**
+     * 获取所有文章（管理员）或我的文章（普通用户）
+     * 后端会根据用户角色自动判断返回内容
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<Article>>>
+     */
+    getMyArticles: (params?: ArticleParams): Promise<ApiResponse<PaginationResult<Article>>> => {
+      return http.get('/posts', params);
     },
 
     /**
@@ -472,6 +482,34 @@ export const API = {
     getCategories: (): Promise<ApiResponse<Category[]>> => {
       return http.get('/categories');
     },
+
+    /**
+     * 创建分类（管理员）
+     * @param data 分类数据
+     * @returns Promise<ApiResponse<Category>>
+     */
+    createCategory: (data: { name: string; description?: string }): Promise<ApiResponse<Category>> => {
+      return http.post('/categories', data);
+    },
+
+    /**
+     * 更新分类（管理员）
+     * @param id 分类ID
+     * @param data 分类数据
+     * @returns Promise<ApiResponse<Category>>
+     */
+    updateCategory: (id: number, data: { name?: string; description?: string }): Promise<ApiResponse<Category>> => {
+      return http.put(`/categories/${id}`, data);
+    },
+
+    /**
+     * 删除分类（管理员）
+     * @param id 分类ID
+     * @returns Promise<ApiResponse<null>>
+     */
+    deleteCategory: (id: number): Promise<ApiResponse<null>> => {
+      return http.delete(`/categories/${id}`);
+    },
   },
 
   // 标签相关
@@ -482,6 +520,34 @@ export const API = {
      */
     getTags: (): Promise<ApiResponse<Tag[]>> => {
       return http.get('/tags');
+    },
+
+    /**
+     * 创建标签（管理员）
+     * @param data 标签数据
+     * @returns Promise<ApiResponse<Tag>>
+     */
+    createTag: (data: { name: string; description?: string }): Promise<ApiResponse<Tag>> => {
+      return http.post('/tags', data);
+    },
+
+    /**
+     * 更新标签（管理员）
+     * @param id 标签ID
+     * @param data 标签数据
+     * @returns Promise<ApiResponse<Tag>>
+     */
+    updateTag: (id: number, data: { name?: string; description?: string }): Promise<ApiResponse<Tag>> => {
+      return http.put(`/tags/${id}`, data);
+    },
+
+    /**
+     * 删除标签（管理员）
+     * @param id 标签ID
+     * @returns Promise<ApiResponse<null>>
+     */
+    deleteTag: (id: number): Promise<ApiResponse<null>> => {
+      return http.delete(`/tags/${id}`);
     },
   },
 

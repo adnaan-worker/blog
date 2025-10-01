@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { FiCalendar, FiClock, FiTag, FiArrowRight } from 'react-icons/fi';
+import type { Article } from '@/utils/api';
+import ImageError from '@/assets/images/image-error.png';
 
 // 动画变体定义
 export const fadeInUpVariants = {
@@ -24,20 +26,8 @@ export const staggerContainerVariants = {
   },
 };
 
-// 文章类型定义
-export interface Article {
-  id: number;
-  title: string;
-  date: string;
-  category: string;
-  tags?: string[];
-  views: number;
-  readTime: number;
-  excerpt: string;
-  image: string;
-  author?: string;
-  content?: string;
-}
+// 导出 Article 类型供其他组件使用
+export type { Article };
 
 // 时间线容器
 const TimelineContainer = styled(motion.div)`
@@ -259,26 +249,33 @@ const NoArticles = styled(motion.div)`
 
 // 时间线文章组件
 export const TimelineArticleComponent: React.FC<{ article: Article }> = ({ article }) => {
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toISOString().split('T')[0];
+  };
+
+  const readTime = Math.ceil((article.content?.length || 0) / 200);
+
   return (
     <TimelineItem>
       <TimelineDate>
-        <FiCalendar size={14} /> {article.date}
+        <FiCalendar size={14} /> {formatDate(article.publishedAt || article.createdAt)}
       </TimelineDate>
       <TimelineContent>
         <ArticleTitle>{article.title}</ArticleTitle>
         <ArticleMeta>
           <span>
-            <FiClock size={14} /> {article.readTime} 分钟阅读
+            <FiClock size={14} /> {readTime} 分钟阅读
           </span>
           <span>
-            <FiTag size={14} /> {article.category}
+            <FiTag size={14} /> {article.category?.name || '未分类'}
           </span>
         </ArticleMeta>
-        <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
+        <ArticleExcerpt>{article.summary || article.content?.substring(0, 150) + '...' || ''}</ArticleExcerpt>
         <ArticleFooter>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {article.tags?.slice(0, 2).map((tag) => (
-              <ArticleTag key={tag}>{tag}</ArticleTag>
+              <ArticleTag key={tag.id}>{tag.name}</ArticleTag>
             ))}
           </div>
           <ReadMoreButton to={`/blog/${article.id}`}>
@@ -292,14 +289,24 @@ export const TimelineArticleComponent: React.FC<{ article: Article }> = ({ artic
 
 // 卡片文章组件
 export const BlogCardComponent: React.FC<{ article: Article }> = ({ article }) => {
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toISOString().split('T')[0];
+  };
+
+  const readTime = Math.ceil((article.content?.length || 0) / 200);
+  const imageUrl = article.coverImage 
+    ? `/api/uploads/${article.coverImage}`
+    : ImageError;
+
   return (
     <ArticleCard whileHover={{ y: -5 }}>
       <ArticleImage>
         <img
-          src={article.image}
+          src={imageUrl}
           alt={article.title}
           onError={(e) => {
-            e.currentTarget.src = 'https://via.placeholder.com/600x400?text=博客图片';
+            e.currentTarget.src = ImageError;
           }}
         />
       </ArticleImage>
@@ -307,18 +314,18 @@ export const BlogCardComponent: React.FC<{ article: Article }> = ({ article }) =
         <ArticleTitle>{article.title}</ArticleTitle>
         <ArticleMeta>
           <span>
-            <FiCalendar size={14} /> {article.date}
+            <FiCalendar size={14} /> {formatDate(article.publishedAt || article.createdAt)}
           </span>
           <span>
-            <FiClock size={14} /> {article.readTime} 分钟阅读
+            <FiClock size={14} /> {readTime} 分钟阅读
           </span>
           <span>
-            <FiTag size={14} /> {article.category}
+            <FiTag size={14} /> {article.category?.name || '未分类'}
           </span>
         </ArticleMeta>
-        <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>
+        <ArticleExcerpt>{article.summary || article.content?.substring(0, 150) + '...' || ''}</ArticleExcerpt>
         <ArticleFooter>
-          <ArticleTag>{article.tags?.[0] || article.category}</ArticleTag>
+          <ArticleTag>{article.tags?.[0]?.name || article.category?.name || '未分类'}</ArticleTag>
           <ReadMoreButton to={`/blog/${article.id}`}>
             阅读更多 <FiArrowRight size={14} />
           </ReadMoreButton>

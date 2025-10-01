@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import styled from '@emotion/styled';
-import ArticleList, { Article } from '@/components/blog/article-list';
+import ArticleList from '@/components/blog/article-list';
+import type { Article } from '@/components/blog/article-list';
 import BlogSidebar from '@/components/blog/blog-sidebar';
-import { API, Article as ApiArticle } from '@/utils/api';
+import { API } from '@/utils/api';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -73,7 +74,7 @@ const SORT_OPTIONS = ['最新发布', '最多浏览', '阅读时间'];
 const extractAllTags = (articles: Article[]): string[] => {
   const tagSet = new Set<string>();
   articles.forEach((article) => {
-    article.tags?.forEach((tag) => tagSet.add(tag));
+    article.tags?.forEach((tag) => tagSet.add(tag.name));
   });
   return Array.from(tagSet);
 };
@@ -85,7 +86,8 @@ const formatCategories = (articles: Article[]): { name: string; count: number }[
   };
 
   articles.forEach((article) => {
-    counts[article.category] = (counts[article.category] || 0) + 1;
+    const categoryName = article.category?.name || '未分类';
+    counts[categoryName] = (counts[categoryName] || 0) + 1;
   });
 
   return Object.entries(counts).map(([name, count]) => ({ name, count }));
@@ -110,26 +112,9 @@ const Blog: React.FC = () => {
       try {
         setError(null);
         const response = await API.article.getArticles({ page: 1, pageSize: 100 });
-
-        // 根据实际 API 返回格式处理数据
-        let articleList: any[] = [];
-
-        if (response && typeof response === 'object') {
-          if ('success' in response && response.success && response.data) {
-            // 如果是分页格式 { success, data: { list } }
-            const data = response.data as any;
-            articleList = data.list || data || [];
-          } else if (Array.isArray(response)) {
-            // 如果直接返回数组
-            articleList = response;
-          } else if ('data' in response && Array.isArray(response.data)) {
-            // 如果是 { data: [] } 格式
-            articleList = response.data;
-          }
-        }
+        const articleList = response.data.data || [];
 
         if (articleList.length > 0) {
-          // 后端已经返回了前端期望的格式，直接使用
           setArticles(articleList);
           setFilteredArticles(articleList);
         } else {
@@ -138,7 +123,6 @@ const Blog: React.FC = () => {
       } catch (err) {
         console.error('获取文章失败:', err);
         setError('网络错误，请稍后重试');
-      } finally {
       }
     };
 
@@ -155,12 +139,12 @@ const Blog: React.FC = () => {
 
     // 应用分类筛选
     if (selectedCategory !== '全部') {
-      result = result.filter((article) => article.category === selectedCategory);
+      result = result.filter((article) => (article.category?.name || '未分类') === selectedCategory);
     }
 
     // 应用标签筛选
     if (selectedTag) {
-      result = result.filter((article) => article.tags?.includes(selectedTag));
+      result = result.filter((article) => article.tags?.some(tag => tag.name === selectedTag));
     }
 
     // 应用搜索筛选
@@ -169,21 +153,26 @@ const Blog: React.FC = () => {
       result = result.filter(
         (article) =>
           article.title.toLowerCase().includes(query) ||
-          article.excerpt.toLowerCase().includes(query) ||
-          article.tags?.some((tag) => tag.toLowerCase().includes(query)),
+          article.summary?.toLowerCase().includes(query) ||
+          article.tags?.some((tag) => tag.name.toLowerCase().includes(query)),
       );
     }
 
     // 应用排序
     switch (sortBy) {
       case '最新发布':
-        result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        result.sort((a, b) => {
+          const dateA = new Date(a.publishedAt || a.createdAt).getTime();
+          const dateB = new Date(b.publishedAt || b.createdAt).getTime();
+          return dateB - dateA;
+        });
         break;
       case '最多浏览':
-        result.sort((a, b) => b.views - a.views);
+        result.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
         break;
       case '阅读时间':
-        result.sort((a, b) => a.readTime - b.readTime);
+        const getReadTime = (article: Article) => Math.ceil((article.content?.length || 0) / 200);
+        result.sort((a, b) => getReadTime(a) - getReadTime(b));
         break;
       default:
         break;

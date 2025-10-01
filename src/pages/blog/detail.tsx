@@ -5,7 +5,7 @@ import { FiArrowLeft, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import ArticleContent from '@/components/blog/article-content';
 import ArticleToc from '@/components/blog/article-toc';
 import CommentSection from '@/components/blog/comment-section';
-import { Article } from '@/components/blog/article-list';
+import type { Article } from '@/utils/api';
 import styled from '@emotion/styled';
 import { useDebugTool, DebugTool } from '@/utils';
 import { API, Article as ApiArticle } from '@/utils/api';
@@ -260,39 +260,16 @@ const BlogDetail: React.FC = () => {
 
       // 获取文章详情
       const articleResponse = await API.article.getArticleDetail(articleId);
-
-      // 处理不同的响应格式
-      let apiArticle: any = null;
-      if (articleResponse && typeof articleResponse === 'object') {
-        if ('success' in articleResponse && articleResponse.success && articleResponse.data) {
-          apiArticle = articleResponse.data;
-        } else if ('id' in articleResponse) {
-          // 直接返回文章对象
-          apiArticle = articleResponse;
-        }
-      }
+      const apiArticle = articleResponse.data;
 
       if (apiArticle) {
-        // 后端已经返回了前端期望的格式，直接使用
         setArticle(apiArticle);
 
         // 获取文章列表用于导航
         const listResponse = await API.article.getArticles({ page: 1, pageSize: 100 });
-
-        let apiArticles: any[] = [];
-        if (listResponse && typeof listResponse === 'object') {
-          if ('success' in listResponse && listResponse.success && listResponse.data) {
-            const data = listResponse.data as any;
-            apiArticles = data.list || data || [];
-          } else if (Array.isArray(listResponse)) {
-            apiArticles = listResponse;
-          } else if ('data' in listResponse && Array.isArray(listResponse.data)) {
-            apiArticles = listResponse.data;
-          }
-        }
+        const apiArticles = listResponse.data.data || [];
 
         if (apiArticles.length > 0) {
-          // 后端已经返回了前端期望的格式，直接使用
           const allArticles: Article[] = apiArticles;
 
           const articleIndex = allArticles.findIndex((a) => a.id === apiArticle.id);
@@ -306,7 +283,8 @@ const BlogDetail: React.FC = () => {
             .filter(
               (a) =>
                 a.id !== apiArticle.id &&
-                (a.category === apiArticle.category || a.tags?.some((tag) => apiArticle.tags?.includes(tag))),
+                (a.category?.id === apiArticle.category?.id || 
+                 a.tags?.some((tag) => apiArticle.tags?.some(t => t.id === tag.id))),
             )
             .slice(0, 2);
           setRelatedArticles(related);

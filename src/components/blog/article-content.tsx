@@ -5,6 +5,7 @@ import { RiRobot2Line } from 'react-icons/ri';
 import { createRoot } from 'react-dom/client';
 import CodeBlock from '@/components/common/code-block';
 import ImagePreview from '@/components/common/image-preview';
+import type { Article } from '@/utils/api';
 
 // 语言检测函数
 const detectLanguageFromCode = (code: string): string => {
@@ -322,19 +323,7 @@ const AuthorInfo = styled.div`
 `;
 
 interface ArticleContentProps {
-  article: {
-    id: number;
-    title: string;
-    date: string;
-    category: string;
-    tags?: string[];
-    views?: number;
-    readTime?: number;
-    excerpt?: string;
-    image: string;
-    author?: string;
-    content: string;
-  };
+  article: Article;
   contentRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -345,7 +334,7 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
 
   // 使用useMemo缓存标签展示
   const articleTags = useMemo(() => {
-    return article.tags?.map((tag: string) => <ArticleTag key={tag}>{tag}</ArticleTag>);
+    return article.tags?.map((tag) => <ArticleTag key={tag.id}>{tag.name}</ArticleTag>);
   }, [article.tags]);
 
   // 处理内容DOM解析和标题ID设置
@@ -431,22 +420,33 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
     }
   }, [article.content, contentRef]);
 
+  const authorName = typeof article.author === 'object' 
+    ? (article.author?.fullName || article.author?.username)
+    : (article.author || '匿名');
+  
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toISOString().split('T')[0];
+  };
+
+  const readTime = Math.ceil((article.content?.length || 0) / 200);
+
   return (
     <ArticleDetailContainer>
       <ArticleDetailHeader>
         <ArticleDetailTitle>{article.title}</ArticleDetailTitle>
         <ArticleDetailMeta>
           <span>
-            <FiUser size={16} /> {article.author}
+            <FiUser size={16} /> {authorName}
           </span>
           <span>
-            <FiCalendar size={16} /> {article.date}
+            <FiCalendar size={16} /> {formatDate(article.publishedAt || article.createdAt)}
           </span>
           <span>
-            <FiClock size={16} /> {article.readTime || 5} 分钟阅读
+            <FiClock size={16} /> {readTime} 分钟阅读
           </span>
           <span>
-            <FiTag size={16} /> {article.category}
+            <FiTag size={16} /> {article.category?.name || '未分类'}
           </span>
         </ArticleDetailMeta>
       </ArticleDetailHeader>
@@ -458,7 +458,7 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
           </AIIconWrapper>
           <AISummaryTitle>AI 摘要</AISummaryTitle>
         </AISummaryHeader>
-        <AISummaryContent>{article.excerpt || '本文为您提供了详细的内容和指南。'}</AISummaryContent>
+        <AISummaryContent>{article.summary || '本文为您提供了详细的内容和指南。'}</AISummaryContent>
       </AISummaryContainer>
 
       <ArticleCover>
