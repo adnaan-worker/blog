@@ -40,6 +40,39 @@
   hyphens: auto;
 }
 
+/* 代码块样式 */
+.rich-text-content .rich-text-code-block {
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--rich-text-code-bg);
+  border: 1px solid var(--rich-text-border);
+  
+  /* 确保代码块在移动设备上的可读性 */
+  font-family: var(--font-code);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.rich-text-content .rich-text-code-block pre {
+  margin: 0;
+  padding: 1rem;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow-x: auto;
+}
+
+.rich-text-content .rich-text-code-block code {
+  background: none !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+  color: var(--rich-text-primary);
+}
+
 /* 代码高亮主题适配 */
 .rich-text-content pre[class*="language-"] {
   background: var(--rich-text-code-bg) !important;
@@ -61,6 +94,144 @@
   border: none !important;
   border-radius: 0 !important;
   font-size: inherit !important;
+}
+
+/* 内联代码样式 */
+.rich-text-content .rich-text-inline-code {
+  font-family: var(--font-code);
+  background: var(--rich-text-code-bg);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: var(--rich-text-primary);
+  border: 1px solid var(--rich-text-border);
+}
+
+/* 引用块样式 */
+.rich-text-content .rich-text-quote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  border-left: 4px solid var(--rich-text-quote-border);
+  background: var(--rich-text-background-secondary);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  position: relative;
+}
+
+/* 图片样式 */
+.rich-text-content .rich-text-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rich-text-content .rich-text-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* 链接样式 */
+.rich-text-content .rich-text-link {
+  color: var(--rich-text-accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.rich-text-content .rich-text-link:hover {
+  border-bottom-color: var(--rich-text-accent);
+}
+
+/* 表格样式 */
+.rich-text-content .rich-text-table-wrapper {
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--rich-text-border);
+}
+
+.rich-text-content .rich-text-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--rich-text-background);
+}
+
+.rich-text-content .rich-text-table th,
+.rich-text-content .rich-text-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--rich-text-border);
+}
+
+.rich-text-content .rich-text-table th {
+  background: var(--rich-text-background-secondary);
+  font-weight: 600;
+}
+
+/* 标题样式 */
+.rich-text-content h1,
+.rich-text-content h2,
+.rich-text-content h3,
+.rich-text-content h4,
+.rich-text-content h5,
+.rich-text-content h6 {
+  color: var(--rich-text-primary);
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 2rem 0 1rem;
+}
+
+.rich-text-content h1 {
+  font-size: 2rem;
+}
+
+.rich-text-content h2 {
+  font-size: 1.6rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.rich-text-content h2::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: var(--rich-text-accent);
+  border-radius: 2px;
+}
+
+.rich-text-content h3 {
+  font-size: 1.3rem;
+}
+
+/* 段落和列表样式 */
+.rich-text-content p {
+  margin-bottom: 1.5rem;
+  color: var(--rich-text-secondary);
+}
+
+.rich-text-content ul,
+.rich-text-content ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.rich-text-content li {
+  margin-bottom: 0.5rem;
+  color: var(--rich-text-secondary);
+}
+
+/* 分割线样式 */
+.rich-text-content hr {
+  border: none;
+  height: 1px;
+  background: var(--rich-text-border);
+  margin: 2rem 0;
 }
 
 /* 滚动条样式 */
@@ -121,58 +292,10 @@
   opacity: 1;
 }
 
-/* 链接悬停动画 */
-.rich-text-link {
-  position: relative;
-  transition: all 0.2s ease;
-}
-
-.rich-text-link::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--rich-text-accent);
-  transition: width 0.3s ease;
-}
-
-.rich-text-link:hover::after {
-  width: 100%;
-}
-
 /* 引用块样式增强 */
 .rich-text-quote {
   position: relative;
   overflow: hidden;
-}
-
-.rich-text-quote::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(
-    to bottom,
-    var(--rich-text-quote-border),
-    transparent
-  );
-}
-
-/* 内联代码增强 */
-.rich-text-inline-code {
-  position: relative;
-  transition: all 0.2s ease;
-}
-
-.rich-text-inline-code:hover {
-  background: var(--rich-text-accent);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* 打印样式 */

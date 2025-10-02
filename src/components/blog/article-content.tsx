@@ -2,61 +2,9 @@ import React, { useEffect, useRef, memo, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { FiCalendar, FiClock, FiTag, FiUser } from 'react-icons/fi';
 import { RiRobot2Line } from 'react-icons/ri';
-import { createRoot } from 'react-dom/client';
-import CodeBlock from '@/components/common/code-block';
+import RichTextRenderer from '@/components/common/rich-text-renderer';
 import ImagePreview from '@/components/common/image-preview';
 import type { Article } from '@/utils/api';
-
-// 语言检测函数
-const detectLanguageFromCode = (code: string): string => {
-  const trimmed = code.trim();
-
-  // React/JSX 检测
-  if (/import\s+React|from\s+['"]react['"]|<[A-Z][a-zA-Z]*/.test(trimmed)) {
-    return /\.tsx|interface\s+\w+|type\s+\w+\s*=/.test(trimmed) ? 'tsx' : 'jsx';
-  }
-
-  // TypeScript 检测
-  if (/interface\s+\w+|type\s+\w+\s*=|:\s*(string|number|boolean)/.test(trimmed)) {
-    return 'typescript';
-  }
-
-  // JavaScript 检测
-  if (/function\s+\w+|const\s+\w+\s*=|=>\s*{/.test(trimmed)) {
-    return 'javascript';
-  }
-
-  // CSS 检测
-  if (/\{[^}]*:[^}]*\}|@media|@keyframes/.test(trimmed)) {
-    return 'css';
-  }
-
-  // HTML 检测
-  if (/<html|<head|<body|<div|<span|<p|<!DOCTYPE/.test(trimmed)) {
-    return 'html';
-  }
-
-  // JSON 检测
-  if (/^\s*[\{\[]/.test(trimmed) && /[\}\]]\s*$/.test(trimmed) && /"[^"]*"\s*:/.test(trimmed)) {
-    return 'json';
-  }
-
-  // Python 检测
-  if (/def\s+\w+|import\s+\w+|from\s+\w+\s+import/.test(trimmed)) {
-    return 'python';
-  }
-
-  // Bash/Shell 检测
-  if (/^#!/.test(trimmed) || /\$\s*\w+|echo\s+/.test(trimmed)) {
-    return 'bash';
-  }
-
-  if (/echo\s+|cd\s+|ls\s+/.test(trimmed)) {
-    return 'bash';
-  }
-
-  return 'text';
-};
 
 // 文章详情页容器
 const ArticleDetailContainer = styled.div`
@@ -329,101 +277,32 @@ interface ArticleContentProps {
 
 // 使用memo包装组件，避免不必要的重渲染
 const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRef }) => {
-  // 创建内部内容引用
-  const innerContentRef = useRef<HTMLDivElement>(null);
-
   // 使用useMemo缓存标签展示
   const articleTags = useMemo(() => {
-    return article.tags?.map((tag) => <ArticleTag key={tag.id}>{tag.name}</ArticleTag>);
+    if (!article.tags || !Array.isArray(article.tags)) return null;
+
+    return article.tags.map((tag: any, index: number) => {
+      // 处理标签可能是字符串或对象的情况
+      const tagName = typeof tag === 'string' ? tag : tag?.name || String(tag);
+      const tagId = typeof tag === 'string' ? index : tag?.id || index;
+
+      return <ArticleTag key={tagId}>{tagName}</ArticleTag>;
+    });
   }, [article.tags]);
 
-  // 处理内容DOM解析和标题ID设置
+  // 简化的useEffect，只处理contentRef的设置
   useEffect(() => {
-    if (!innerContentRef.current) return;
-
-    // 将HTML内容插入DOM
-    innerContentRef.current.innerHTML = article.content || '';
-
-    // 处理标题元素
-    const headings = innerContentRef.current.querySelectorAll('h2');
-    headings.forEach((heading, index) => {
-      const headingId = `heading-${index}`;
-      heading.setAttribute('id', headingId);
-
-      // 添加类以便于样式调整
-      heading.classList.add('article-heading');
-    });
-
-    // 替换代码块为 React 组件
-    const codeBlocks = innerContentRef.current.querySelectorAll('pre code');
-    codeBlocks.forEach((codeElement) => {
-      const preElement = codeElement.parentElement;
-      if (!preElement) return;
-
-      const codeText = codeElement.textContent || '';
-      const languageClass = codeElement.className.match(/language-(\w+)/);
-      const language = languageClass ? languageClass[1] : detectLanguageFromCode(codeText);
-
-      // 创建容器元素
-      const wrapper = document.createElement('div');
-      wrapper.className = 'react-code-block-wrapper';
-
-      // 替换原始代码块
-      preElement.parentNode?.replaceChild(wrapper, preElement);
-
-      // 渲染 React 组件
-      const root = createRoot(wrapper);
-      root.render(
-        <CodeBlock
-          code={codeText}
-          language={language}
-          showLineNumbers={true}
-          allowCopy={true}
-          allowFullscreen={false}
-        />,
-      );
-    });
-
-    // 处理文章中的图片 - 替换为 ImagePreview 组件
-    const images = innerContentRef.current.querySelectorAll('img');
-    images.forEach((img) => {
-      const src = img.src;
-      const alt = img.alt || '文章图片';
-
-      // 创建容器元素
-      const wrapper = document.createElement('div');
-      wrapper.className = 'react-image-preview-wrapper';
-      wrapper.style.margin = '1.5rem 0';
-      wrapper.style.textAlign = 'center';
-
-      // 替换原始图片
-      img.parentNode?.replaceChild(wrapper, img);
-
-      // 渲染 React 组件
-      const root = createRoot(wrapper);
-      root.render(
-        <ImagePreview
-          src={src}
-          alt={alt}
-          style={{
-            maxWidth: '100%',
-            borderRadius: '8px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          }}
-        />,
-      );
-    });
-
-    // 将内部ref设置的DOM元素传递给外部ref
-    if (contentRef && typeof contentRef === 'object') {
-      contentRef.current = innerContentRef.current;
+    // 这里不再需要复杂的DOM操作，RichTextRenderer会处理所有内容
+    if (contentRef && typeof contentRef === 'object' && contentRef.current) {
+      // 可以在这里添加一些额外的处理逻辑
     }
-  }, [article.content, contentRef]);
+  }, [contentRef, article.content]);
 
-  const authorName = typeof article.author === 'object' 
-    ? (article.author?.fullName || article.author?.username)
-    : (article.author || '匿名');
-  
+  const authorName =
+    typeof article.author === 'object'
+      ? article.author?.fullName || article.author?.username
+      : article.author || '匿名';
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     return new Date(dateStr).toISOString().split('T')[0];
@@ -461,20 +340,30 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
         <AISummaryContent>{article.summary || '本文为您提供了详细的内容和指南。'}</AISummaryContent>
       </AISummaryContainer>
 
-      <ArticleCover>
-        <ImagePreview
-          src={article.image}
-          alt={article.title}
-          style={{
-            width: '100%',
-          }}
+      {article.image && (
+        <ArticleCover>
+          <ImagePreview
+            src={article.image}
+            alt={article.title}
+            style={{
+              width: '100%',
+            }}
+          />
+        </ArticleCover>
+      )}
+
+      {/* 使用RichTextRenderer处理所有内容 */}
+      <ArticleContentWrapper ref={contentRef}>
+        <RichTextRenderer
+          content={article.content || ''}
+          mode="article"
+          enableCodeHighlight={true}
+          enableImagePreview={true}
+          enableTableOfContents={false}
         />
-      </ArticleCover>
+      </ArticleContentWrapper>
 
-      {/* 使用内部ref代替dangerouslySetInnerHTML */}
-      <ArticleContentWrapper ref={innerContentRef} />
-
-      <ArticleTags>{articleTags}</ArticleTags>
+      {articleTags && <ArticleTags>{articleTags}</ArticleTags>}
     </ArticleDetailContainer>
   );
 });

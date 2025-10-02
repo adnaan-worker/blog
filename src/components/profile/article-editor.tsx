@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiSave, FiImage, FiHash, FiTag, FiPlus, FiMinus, FiFolder } from 'react-icons/fi';
+import { FiSave, FiImage, FiHash, FiTag, FiPlus, FiMinus, FiFolder, FiMonitor } from 'react-icons/fi';
 import { Button, Input } from '@/components/ui';
 import { Modal } from '@/ui/modal';
 import TextEditor from '@/components/common/text-editor';
+import AITaskMonitor from '@/components/common/ai-task-monitor';
 import { toast } from '@/ui';
 import { API, Article, Category } from '@/utils/api';
 import RichTextStats from '@/components/common/rich-text-stats';
@@ -194,6 +195,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
   const [newCategoryName, setNewCategoryName] = useState('');
   const [showNewTagInput, setShowNewTagInput] = useState(false);
   const [newTagName, setNewTagName] = useState('');
+  const [showTaskMonitor, setShowTaskMonitor] = useState(false);
 
   // 加载分类和标签列表
   useEffect(() => {
@@ -201,16 +203,14 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
       try {
         // 加载分类
         const categoryResponse = await API.category.getCategories();
-        const categoriesData: Category[] = Array.isArray(categoryResponse.data) 
-          ? categoryResponse.data 
-          : ((categoryResponse.data as any)?.data || []);
+        const categoriesData: Category[] = Array.isArray(categoryResponse.data)
+          ? categoryResponse.data
+          : (categoryResponse.data as any)?.data || [];
         setCategories(categoriesData);
 
         // 加载标签
         const tagResponse = await API.tag.getTags();
-        const tagsData = Array.isArray(tagResponse.data)
-          ? tagResponse.data
-          : ((tagResponse.data as any)?.data || []);
+        const tagsData = Array.isArray(tagResponse.data) ? tagResponse.data : (tagResponse.data as any)?.data || [];
         setAvailableTags(tagsData);
       } catch (error: any) {
         console.error('加载分类和标签失败:', error);
@@ -226,7 +226,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
     if (article) {
       // 处理状态：数字 1=已发布, 0=草稿
       const status = article.status === 1 ? 'published' : 'draft';
-      
+
       // 处理标签 - 提取标签ID
       let tagIds: number[] = [];
       let tagNames: string[] = [];
@@ -274,8 +274,11 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
   const handleToggleTag = (tagId: number, tagName: string) => {
     if (selectedTagIds.includes(tagId)) {
       // 取消选择
-      setSelectedTagIds(selectedTagIds.filter(id => id !== tagId));
-      handleInputChange('tags', formData.tags.filter(name => name !== tagName));
+      setSelectedTagIds(selectedTagIds.filter((id) => id !== tagId));
+      handleInputChange(
+        'tags',
+        formData.tags.filter((name) => name !== tagName),
+      );
     } else {
       // 添加选择
       setSelectedTagIds([...selectedTagIds, tagId]);
@@ -377,15 +380,32 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
   };
 
   // Modal底部按钮
+  // 处理AI内容更新
+  const handleAIContentUpdate = (newContent: string) => {
+    setFormData((prev) => ({ ...prev, content: newContent }));
+  };
+
+  // 处理AI任务完成
+  const handleAITaskComplete = (taskId: string, result: string) => {
+    setFormData((prev) => ({ ...prev, content: result }));
+    toast.success('AI任务完成');
+  };
+
   const footerButtons = (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-      <Button variant="secondary" onClick={onClose} disabled={isLoading}>
-        取消
-      </Button>
-      <Button variant="primary" onClick={handleSave} isLoading={isLoading}>
-        <FiSave size={14} />
-        <span style={{ marginLeft: '0.5rem' }}>{article ? '更新' : '发布'}</span>
-      </Button>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <Button variant="outline" onClick={() => setShowTaskMonitor(true)} title="AI任务监控" disabled={isLoading}>
+          <FiMonitor size={14} />
+          <span style={{ marginLeft: '0.5rem' }}>任务监控</span>
+        </Button>
+        <Button variant="secondary" onClick={onClose} disabled={isLoading}>
+          取消
+        </Button>
+        <Button variant="primary" onClick={handleSave} isLoading={isLoading}>
+          <FiSave size={14} />
+          <span style={{ marginLeft: '0.5rem' }}>{article ? '更新' : '发布'}</span>
+        </Button>
+      </div>
     </div>
   );
 
@@ -417,9 +437,11 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
         <TextEditor
           content={formData.content}
           onChange={(content) => handleInputChange('content', content)}
-          placeholder="开始编写你的文章..."
+          placeholder="开始编写你的文章内容..."
+          minHeight="500px"
+          mode="full"
           showPreview={true}
-          showStats={false}
+          showStats={true}
         />
       </FormGroup>
 
@@ -454,11 +476,13 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
                 style={{ flex: 1 }}
               >
                 <option value="">选择分类...</option>
-                {categories && Array.isArray(categories) && categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
+                {categories &&
+                  Array.isArray(categories) &&
+                  categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
               </Select>
               <Button variant="secondary" onClick={() => setShowNewCategoryInput(true)}>
                 <FiPlus size={14} />
@@ -482,10 +506,13 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
               <Button variant="primary" onClick={handleCreateCategory}>
                 <FiSave size={14} />
               </Button>
-              <Button variant="secondary" onClick={() => {
-                setShowNewCategoryInput(false);
-                setNewCategoryName('');
-              }}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowNewCategoryInput(false);
+                  setNewCategoryName('');
+                }}
+              >
                 取消
               </Button>
             </div>
@@ -499,8 +526,8 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
           <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>
             {formData.tags.length > 0 ? `已选择: ${formData.tags.join(', ')}` : '点击选择标签'}
           </span>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             onClick={() => setShowNewTagInput(!showNewTagInput)}
             style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem' }}
           >
@@ -508,7 +535,7 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
             <span style={{ marginLeft: '0.3rem' }}>新建标签</span>
           </Button>
         </div>
-        
+
         {showNewTagInput && (
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
             <Input
@@ -527,10 +554,13 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
             <Button variant="primary" onClick={handleCreateTag}>
               <FiSave size={14} />
             </Button>
-            <Button variant="secondary" onClick={() => {
-              setShowNewTagInput(false);
-              setNewTagName('');
-            }}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowNewTagInput(false);
+                setNewTagName('');
+              }}
+            >
               取消
             </Button>
           </div>
@@ -543,18 +573,14 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
               style={{
                 cursor: 'pointer',
                 opacity: selectedTagIds.includes(tag.id) ? 1 : 0.5,
-                background: selectedTagIds.includes(tag.id) 
-                  ? 'var(--accent-color)' 
-                  : 'var(--accent-color-alpha)',
+                background: selectedTagIds.includes(tag.id) ? 'var(--accent-color)' : 'var(--accent-color-alpha)',
                 color: selectedTagIds.includes(tag.id) ? 'white' : 'var(--accent-color)',
               }}
               onClick={() => handleToggleTag(tag.id, tag.name)}
             >
               <FiHash size={10} />
               {tag.name}
-              {selectedTagIds.includes(tag.id) && (
-                <span style={{ marginLeft: '0.3rem' }}>✓</span>
-              )}
+              {selectedTagIds.includes(tag.id) && <span style={{ marginLeft: '0.3rem' }}>✓</span>}
             </Tag>
           ))}
         </TagsContainer>
@@ -583,8 +609,11 @@ const ArticleEditor: React.FC<ArticleEditorProps> = ({ isOpen, article, onClose,
           </StatsDisplay>
         </FormGroup>
       )}
+
+      {/* AI任务监控 */}
+      <AITaskMonitor tasks={[]} isVisible={showTaskMonitor} onTaskComplete={handleAITaskComplete} />
     </Modal>
   );
 };
 
-export default ArticleEditor; 
+export default ArticleEditor;

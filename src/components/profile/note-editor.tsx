@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiSave, FiEye, FiEyeOff, FiHash, FiMapPin, FiCloud, FiHeart, FiPlus, FiMinus } from 'react-icons/fi';
+import {
+  FiSave,
+  FiEye,
+  FiEyeOff,
+  FiHash,
+  FiMapPin,
+  FiCloud,
+  FiHeart,
+  FiPlus,
+  FiMinus,
+  FiMonitor,
+} from 'react-icons/fi';
 import { Button, Input } from '@/components/ui';
 import { Modal } from '@/ui/modal';
 import TextEditor from '@/components/common/text-editor';
+import AITaskMonitor from '@/components/common/ai-task-monitor';
 import { toast } from '@/ui';
 import { API, Note, CreateNoteParams, UpdateNoteParams } from '@/utils/api';
 import { RichTextParser } from '@/utils/rich-text-parser';
@@ -140,6 +152,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onClose, onSave }
   });
   const [newTag, setNewTag] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showTaskMonitor, setShowTaskMonitor] = useState(false);
 
   // 初始化表单数据
   useEffect(() => {
@@ -237,16 +250,30 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onClose, onSave }
     }
   };
 
+  // 处理AI任务完成
+  const handleAITaskComplete = (taskId: string, result: string) => {
+    setFormData((prev) => ({ ...prev, content: result }));
+    toast.success('AI任务完成');
+  };
+
   // Modal底部按钮
   const footerButtons = (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-      <Button variant="secondary" onClick={onClose} disabled={isLoading}>
-        取消
-      </Button>
-      <Button variant="primary" onClick={handleSave} isLoading={isLoading}>
-        <FiSave size={14} />
-        <span style={{ marginLeft: '0.5rem' }}>{note ? '更新' : '保存'}</span>
-      </Button>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <Button variant="outline" onClick={() => setShowTaskMonitor(true)} title="AI任务监控" disabled={isLoading}>
+          <FiMonitor size={14} />
+          <span style={{ marginLeft: '0.5rem' }}>任务监控</span>
+        </Button>
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <Button variant="secondary" onClick={onClose} disabled={isLoading}>
+          取消
+        </Button>
+        <Button variant="primary" onClick={handleSave} disabled={isLoading || !formData.title.trim()}>
+          <FiSave size={14} />
+          <span style={{ marginLeft: '0.5rem' }}>{note ? '更新' : '保存'}</span>
+        </Button>
+      </div>
     </div>
   );
 
@@ -362,6 +389,9 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ isOpen, note, onClose, onSave }
           </StatsDisplay>
         </FormGroup>
       )}
+
+      {/* AI任务监控 */}
+      <AITaskMonitor tasks={[]} isVisible={showTaskMonitor} onTaskComplete={handleAITaskComplete} />
     </Modal>
   );
 };

@@ -9,7 +9,7 @@ const ToastContainer = styled.div`
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 9999;
+  z-index: 99999999;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -102,10 +102,12 @@ export interface ToastProps {
   duration?: number;
 }
 
-type ToastContextType = {
-  addToast: (toast: Omit<ToastProps, 'id'>) => void;
-  removeToast: (id: string) => void;
-} | undefined;
+type ToastContextType =
+  | {
+      addToast: (toast: Omit<ToastProps, 'id'>) => void;
+      removeToast: (id: string) => void;
+    }
+  | undefined;
 
 // Toast上下文
 const ToastContext = createContext<ToastContextType>(undefined);
@@ -191,4 +193,4 @@ export const useToast = () => {
   };
 };
 
-export default { ToastProvider, useToast }; 
+export default { ToastProvider, useToast };

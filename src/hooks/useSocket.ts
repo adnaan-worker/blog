@@ -16,7 +16,7 @@ import { getSocketConfig } from '@/utils/socket-config';
 const SOCKET_CONFIG = {
   ...getSocketConfig(),
   reconnectDelay: 2000,
-  maxReconnectAttempts: 5,
+  maxReconnectAttempts: 2,
   timeout: 15000,
 };
 

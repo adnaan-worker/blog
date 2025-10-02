@@ -90,17 +90,6 @@ const RootLayout = () => {
     setTimeout(() => setIsLoading(false), 500);
   }, [location.pathname]);
 
-  // 添加调试输出，帮助排查问题
-  useEffect(() => {
-    console.log('路由状态:', {
-      pathname: location.pathname,
-      isLoading,
-      showLoader,
-      isPending,
-      animationCompleted: loaderAnimationCompleted.current,
-    });
-  }, [location.pathname, isLoading, showLoader, isPending]);
-
   // 处理加载动画的完整显示
   useEffect(() => {
     // 当实际加载状态变化或路由变化时

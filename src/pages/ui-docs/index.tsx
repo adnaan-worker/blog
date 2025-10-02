@@ -7,6 +7,9 @@ import ToastListener from '@/components/ui/toast-listener';
 import { toast } from '@/ui';
 import CodePreview from '@/components/ui/docs/code-preview';
 import PropsTable from '@/components/ui/docs/props-table';
+import RichTextRenderer from '@/components/common/rich-text-renderer';
+import TextEditor from '@/components/common/text-editor';
+import { testRichTextParser } from '@/utils/rich-text-parser';
 import {
   getAllComponentDocs,
   groupComponentsByCategory,
@@ -845,37 +848,178 @@ const UIDocsPage: React.FC = () => {
             <div className="description">尝试调整搜索关键词或选择其他分类查看组件</div>
           </EmptyState>
         ) : (
-          Object.entries(groupComponentsByCategory(filteredDocs)).map(([categoryKey, docs]) => (
-            <ComponentSection key={categoryKey}>
-              <SectionHeader>
-                <SectionTitle>{CATEGORIES[categoryKey as keyof typeof CATEGORIES]?.title}</SectionTitle>
-                <SectionDescription>
-                  {CATEGORIES[categoryKey as keyof typeof CATEGORIES]?.description}
-                </SectionDescription>
-                <Badge count={docs.length} />
-              </SectionHeader>
+          <>
+            {/* 富文本测试区域 */}
+            {selectedCategory === 'all' && (
+              <ComponentSection>
+                <SectionHeader>
+                  <SectionTitle>富文本渲染测试</SectionTitle>
+                  <SectionDescription>测试富文本解析器和渲染器的功能，包括代码块、Markdown等</SectionDescription>
+                </SectionHeader>
 
-              {docs.map((doc) => (
-                <ComponentCard key={doc.name}>
+                <ComponentCard>
                   <ComponentHeader>
-                    <ComponentTitle>{doc.name}</ComponentTitle>
-                    <ComponentDescription>{doc.description}</ComponentDescription>
-                    <ImportCode>
-                      import {`{ ${doc.name} }`} from '{doc.importPath}';
-                    </ImportCode>
+                    <ComponentTitle>RichTextRenderer 测试</ComponentTitle>
+                    <ComponentDescription>测试富文本内容的解析和渲染效果</ComponentDescription>
                   </ComponentHeader>
 
                   <ComponentContent>
-                    {/* 组件示例 */}
-                    {renderComponentExamples(doc.examples, doc.name)}
+                    <div style={{ marginBottom: '2rem' }}>
+                      <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>测试内容：</h4>
 
-                    {/* 属性表格 */}
-                    <PropsTable props={doc.props} />
+                      {/* 调试按钮 */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <Button
+                          variant="primary"
+                          onClick={() => {
+                            const testContent = `# ECMAScript 2015 (ES6) 新特性概览
+
+ECMAScript 2015，通常称为 ES6，为 JavaScript 语言带来了大量的更新和改进。这些新特性极大地增强了语言的语法，提高了开发效率和代码的可读性。
+
+## 主要新特性
+
+以下是 ES6 引入的一些激动人心的新特性：
+
+- **箭头函数** (\`=>\`): 简化了函数的书写方式，尤其适合匿名函数的场景。
+- **类** (\`class\`): 引入了类的概念，提供了更接近传统面向对象编程的语法。
+- **模块** (\`import\`/\`export\`): 支持模块的导入导出，有利于代码的封装和组织。
+
+### 箭头函数
+
+箭头函数提供了一种更简洁的方式来写函数表达式。
+
+\`\`\`javascript
+// 传统函数表达式
+const add = function(a, b) {
+  return a + b;
+};
+
+// 箭头函数
+const add = (a, b) => a + b;
+\`\`\`
+
+### 类
+
+类的引入使得创建构造器和继承更加直观。
+
+\`\`\`javascript
+class Person {
+  constructor(name) {
+    this.name = name;
+  }
+  greet() {
+    return \`Hello, my name is \${this.name}!\`;
+  }
+}
+
+const person = new Person('Alice');
+console.log(person.greet());
+\`\`\`
+
+## 结论
+
+ES6 的这些新特性为 JavaScript 开发者提供了更强大的工具集，使代码更清晰、更易于维护。`;
+
+                            testRichTextParser(testContent);
+                          }}
+                        >
+                          测试解析器
+                        </Button>
+                      </div>
+
+                      <RichTextRenderer
+                        content={`# React Hooks：革新性的组件编写方式
+
+React Hooks 是 React 生态系统中的一个重要里程碑，它为我们编写组件的方式带来了彻底的改变。以下将详细探讨这一变革及其对开发流程的积极影响。
+
+## 编写组件的新维度
+
+### 1. 简化状态和生命周期管理
+
+React Hooks 允许你在不编写类的情况下使用状态和其他 React 特性。这让函数组件得以拥有一等公民的地位，同时减少了冗余代码，使得组件更加简洁明了。
+
+\`\`\`javascript
+function Example() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>
+        Click me
+      </button>
+    </div>
+  );
+}
+\`\`\`
+
+### 2. 逻辑重用与解耦
+
+Hooks 使组件逻辑的重用变得更加容易。通过自定义 Hooks，你可以将组件逻辑提取到可重用的函数中。
+
+\`\`\`typescript
+function useCustomHook() {
+  const [someValue, setSomeValue] = useState(null);
+  // ... 其他逻辑
+  return [someValue, setSomeValue];
+}
+
+function MyComponent() {
+  const [someValue, setSomeValue] = useCustomHook();
+  // ... 使用someValue和setSomeValue
+}
+\`\`\`
+
+## 优势体现
+
+- **易于理解**：函数组件加上 Hooks 让组件的渲染逻辑更加直观。
+- **类型安全**：TypeScript 支持使得 Hooks 在静态类型检查方面表现更佳。
+- **树摇友好**：减少了不必要的代码被引入，优化了最终构建的体积。
+
+> 通过以上结构化内容的展示，我们可以清楚地看到 React Hooks 带来的益处及其在现代前端开发中的重要性。`}
+                        mode="article"
+                        enableCodeHighlight={true}
+                        enableImagePreview={true}
+                        enableTableOfContents={false}
+                      />
+                    </div>
                   </ComponentContent>
                 </ComponentCard>
-              ))}
-            </ComponentSection>
-          ))
+              </ComponentSection>
+            )}
+
+            {Object.entries(groupComponentsByCategory(filteredDocs)).map(([categoryKey, docs]) => (
+              <ComponentSection key={categoryKey}>
+                <SectionHeader>
+                  <SectionTitle>{CATEGORIES[categoryKey as keyof typeof CATEGORIES]?.title}</SectionTitle>
+                  <SectionDescription>
+                    {CATEGORIES[categoryKey as keyof typeof CATEGORIES]?.description}
+                  </SectionDescription>
+                  <Badge count={docs.length} />
+                </SectionHeader>
+
+                {docs.map((doc) => (
+                  <ComponentCard key={doc.name}>
+                    <ComponentHeader>
+                      <ComponentTitle>{doc.name}</ComponentTitle>
+                      <ComponentDescription>{doc.description}</ComponentDescription>
+                      <ImportCode>
+                        import {`{ ${doc.name} }`} from '{doc.importPath}';
+                      </ImportCode>
+                    </ComponentHeader>
+
+                    <ComponentContent>
+                      {/* 组件示例 */}
+                      {renderComponentExamples(doc.examples, doc.name)}
+
+                      {/* 属性表格 */}
+                      <PropsTable props={doc.props} />
+                    </ComponentContent>
+                  </ComponentCard>
+                ))}
+              </ComponentSection>
+            ))}
+          </>
         )}
       </Container>
     </ToastProvider>

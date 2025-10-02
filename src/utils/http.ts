@@ -287,6 +287,73 @@ class HttpRequest {
       ...config,
     });
   }
+
+  /**
+   * 流式POST请求 (Server-Sent Events)
+   * @param url - 请求URL
+   * @param data - 请求数据
+   * @param onChunk - 流数据回调
+   * @returns Promise<string> - 完整响应内容
+   */
+  public async streamPost(
+    url: string,
+    data?: any,
+    onChunk?: (chunk: string) => void
+  ): Promise<string> {
+    // 获取token
+    const userInfo = storage.local.get('user') as any;
+    const token = userInfo?.token;
+
+    const response = await fetch(`${this.baseConfig.baseURL}${url}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`流式请求失败: ${response.status} ${response.statusText}`);
+    }
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    let result = '';
+
+    if (!reader) {
+      throw new Error('无法获取响应流');
+    }
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            
+            if (data.type === 'chunk') {
+              result += data.chunk;
+              onChunk?.(data.chunk);
+            } else if (data.type === 'done') {
+              return result;
+            } else if (data.type === 'error') {
+              throw new Error(data.error);
+            }
+          } catch (e) {
+            // 忽略解析错误
+          }
+        }
+      }
+    }
+
+    return result;
+  }
 }
 
 // 创建默认的请求实例

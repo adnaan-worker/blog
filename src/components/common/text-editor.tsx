@@ -9,6 +9,7 @@ import Underline from '@tiptap/extension-underline';
 import { Button } from '@/components/ui';
 import RichTextRenderer from './rich-text-renderer';
 import RichTextStats from './rich-text-stats';
+import AIAgentController from './ai-agent-controller';
 import {
   FiBold,
   FiItalic,
@@ -29,11 +30,18 @@ import {
   FiBarChart,
   FiSave,
   FiX,
+  FiCpu,
 } from 'react-icons/fi';
 
 // 定义扩展数组
 const extensions = [
-  StarterKit,
+  StarterKit.configure({
+    codeBlock: {
+      HTMLAttributes: {
+        class: 'tiptap-code-block',
+      },
+    },
+  }),
   Placeholder.configure({
     placeholder: '开始编写你的内容...',
   }),
@@ -491,26 +499,131 @@ const getCustomStyles = (minHeight: string) => `
     padding: 0.2rem 0.4rem;
     border-radius: 4px;
     font-size: 0.9em;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
   }
   
+  /* TipTap代码块样式 */
+  .tiptap-editor .tiptap-code-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    font-family: var(--font-code);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    position: relative;
+  }
+  
+  .tiptap-editor .tiptap-code-block code {
+    background: transparent;
+    padding: 0;
+    border: none;
+    font-family: inherit;
+    color: var(--text-primary);
+  }
+  
+  /* 普通代码块样式 */
   .tiptap-editor pre {
     background: var(--bg-secondary);
     padding: 1rem;
     border-radius: 8px;
     overflow-x: auto;
-    margin-bottom: 1.5rem;
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+    position: relative;
+    font-family: var(--font-code);
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
   
   .tiptap-editor pre code {
     background: transparent;
     padding: 0;
     border-radius: 0;
+    border: none;
+    font-family: var(--font-code);
+    color: var(--text-primary);
+  }
+  
+  /* 为代码块添加语言标识 */
+  .tiptap-editor pre[data-language]::before {
+    content: attr(data-language);
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--accent-color);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+  
+  /* 富文本代码块样式 */
+  .tiptap-editor .rich-text-code-block {
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+  }
+  
+  .tiptap-editor .rich-text-code-block pre {
+    margin: 0;
+    background: transparent;
+    border: none;
   }
   
   .tiptap-editor img {
     max-width: 100%;
     border-radius: 8px;
     margin: 1.5rem 0;
+  }
+  
+  /* 链接样式 */
+  .tiptap-editor a {
+    color: var(--accent-color);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+  
+  .tiptap-editor a:hover {
+    border-bottom-color: var(--accent-color);
+  }
+  
+  /* 表格样式 */
+  .tiptap-editor table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .tiptap-editor th,
+  .tiptap-editor td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .tiptap-editor th {
+    background: var(--bg-secondary);
+    font-weight: 600;
+  }
+  
+  /* 分割线样式 */
+  .tiptap-editor hr {
+    border: none;
+    height: 1px;
+    background: var(--border-color);
+    margin: 2rem 0;
   }
 `;
 
@@ -528,20 +641,132 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const [value, setValue] = useState(content || '');
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [showStatsPanel, setShowStatsPanel] = useState(false);
+  const [showAIAgent, setShowAIAgent] = useState(false);
+  const [editorKey, setEditorKey] = useState(0); // 用于强制重新渲染编辑器
 
-  // 监听外部 content 变化
+  // 验证并清理内容格式
+  const sanitizeContent = (inputContent: any): string => {
+    // 如果是字符串，直接返回
+    if (typeof inputContent === 'string') {
+      return inputContent;
+    }
+
+    // 如果是对象，尝试提取文本内容
+    if (inputContent && typeof inputContent === 'object') {
+      // 处理AI写作助手返回的对象格式
+      if (inputContent.result && typeof inputContent.result === 'string') {
+        return inputContent.result;
+      }
+
+      // 处理可能的其他格式
+      if (inputContent.content && typeof inputContent.content === 'string') {
+        return inputContent.content;
+      }
+
+      // 如果是其他对象，转换为JSON字符串（仅用于调试）
+      console.warn('[TextEditor] 接收到非字符串内容:', inputContent);
+      return '';
+    }
+
+    // 其他类型转换为字符串
+    return String(inputContent || '');
+  };
+
+  // 预处理内容，将Markdown转换为HTML以便在TipTap中显示
+  const preprocessContent = (content: string): string => {
+    if (!content) return '';
+
+    // 如果内容看起来像Markdown，进行基本转换
+    let processedContent = content;
+
+    // 处理代码块
+    processedContent = processedContent.replace(/```(\w+)?\s*\n([\s\S]*?)\n```/g, (match, language, code) => {
+      const lang = language || 'text';
+      return `<pre class="tiptap-code-block" data-language="${lang}"><code>${code.trim()}</code></pre>`;
+    });
+
+    // 处理内联代码
+    processedContent = processedContent.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // 处理粗体
+    processedContent = processedContent.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+    // 处理斜体
+    processedContent = processedContent.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+    // 处理标题
+    processedContent = processedContent.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    processedContent = processedContent.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    processedContent = processedContent.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // 处理链接
+    processedContent = processedContent.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+    // 处理段落（将连续的非HTML行包装为段落）
+    const lines = processedContent.split('\n');
+    const processedLines: string[] = [];
+    let currentParagraph: string[] = [];
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+
+      // 如果是空行或HTML标签行，结束当前段落
+      if (!trimmedLine || trimmedLine.startsWith('<')) {
+        if (currentParagraph.length > 0) {
+          processedLines.push(`<p>${currentParagraph.join(' ')}</p>`);
+          currentParagraph = [];
+        }
+        if (trimmedLine) {
+          processedLines.push(trimmedLine);
+        }
+      } else {
+        // 普通文本行，添加到当前段落
+        currentParagraph.push(trimmedLine);
+      }
+    }
+
+    // 处理最后一个段落
+    if (currentParagraph.length > 0) {
+      processedLines.push(`<p>${currentParagraph.join(' ')}</p>`);
+    }
+
+    return processedLines.join('\n');
+  };
+
+  // 监听外部 content 变化 - 修复无限循环问题
   useEffect(() => {
     if (content !== undefined) {
-      setValue(content);
+      const sanitizedContent = sanitizeContent(content);
+      // 只有当内容真正不同时才更新
+      if (sanitizedContent !== value) {
+        setValue(sanitizedContent);
+        // 强制重新渲染编辑器以确保内容同步
+        setEditorKey((prev) => prev + 1);
+      }
     }
-  }, [content]);
+  }, [content]); // 移除 value 依赖，避免无限循环
 
   const handleUpdate = ({ editor }: { editor: any }) => {
     const html = editor.getHTML();
-    setValue(html);
+
+    // 防止不必要的更新
+    if (html !== value) {
+      setValue(html);
+
+      if (onChange) {
+        onChange(html);
+      }
+    }
+  };
+
+  // 处理AI内容更新
+  const handleAIContentUpdate = (newContent: string) => {
+    const sanitizedContent = sanitizeContent(newContent);
+    setValue(sanitizedContent);
+    setEditorKey((prev) => prev + 1); // 强制重新渲染编辑器
 
     if (onChange) {
-      onChange(html);
+      onChange(sanitizedContent);
     }
   };
 
@@ -562,8 +787,8 @@ const TextEditor: React.FC<TextEditorProps> = ({
           gap: '0.75rem',
         }}
       >
-        {/* 第一行：预览和统计功能 */}
-        {(showPreview || (showStats && value)) && (
+        {/* 第一行：预览、统计、AI代理功能 */}
+        {(showPreview || (showStats && value) || mode === 'full') && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             {showPreview && (
               <>
@@ -611,6 +836,23 @@ const TextEditor: React.FC<TextEditorProps> = ({
                 <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>统计</span>
               </button>
             )}
+
+            {/* AI代理开关按钮 */}
+            {mode === 'full' && (
+              <button
+                onClick={() => setShowAIAgent(!showAIAgent)}
+                style={{
+                  ...editorStyles.toolbarButton,
+                  ...(showAIAgent ? editorStyles.toolbarButtonActive : {}),
+                  width: 'auto',
+                  padding: '0.5rem 0.75rem',
+                }}
+                title="AI智能代理"
+              >
+                <FiCpu size={14} />
+                <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem' }}>AI代理</span>
+              </button>
+            )}
           </div>
         )}
 
@@ -644,11 +886,14 @@ const TextEditor: React.FC<TextEditorProps> = ({
         {/* 统计面板 */}
         {showStats && showStatsPanel && value && <RichTextStats content={value} showDetailed={true} />}
 
+        {/* AI代理控制器 */}
+        {showAIAgent && <AIAgentController content={value} onContentUpdate={handleAIContentUpdate} />}
+
         {viewMode === 'edit' ? (
           <EditorProvider
-            key={`editor-${value}`} // 强制重新渲染以确保内容更新
+            key={editorKey} // 使用独立的key来控制重新渲染
             extensions={extensions}
-            content={value || ''}
+            content={preprocessContent(sanitizeContent(value)) || ''}
             onUpdate={handleUpdate}
             editorProps={{
               attributes: {

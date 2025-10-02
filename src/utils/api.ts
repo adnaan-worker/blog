@@ -304,6 +304,63 @@ export interface CreateCommentData {
 }
 
 /**
+ * AI写作助手相关接口类型定义
+ */
+export interface AIWritingParams {
+  action: 'generate' | 'improve' | 'translate' | 'summarize' | 'expand' | 'polish';
+  content?: string;
+  params?: {
+    targetLang?: string;
+    style?: string;
+    tone?: string;
+    length?: 'short' | 'medium' | 'long';
+    keywords?: string[];
+    prompt?: string;
+  };
+}
+
+export interface AIGenerateParams {
+  type: 'article' | 'note' | 'title' | 'summary' | 'outline';
+  params: {
+    title?: string;
+    keywords?: string[];
+    wordCount?: number;
+    style?: string;
+    tone?: string;
+    prompt?: string;
+  };
+}
+
+export interface AITaskStatus {
+  taskId: string;
+  userId?: number;
+  type: 'generate_content' | 'batch_generate' | 'analyze' | 'writing_assistant';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  progress?: number;
+  result?: any;
+  error?: string;
+  startedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+}
+
+export interface AIQuota {
+  dailyChatLimit: number;
+  dailyChatUsed: number;
+  dailyGenerateLimit: number;
+  dailyGenerateUsed: number;
+  monthlyTokenLimit: number;
+  monthlyTokenUsed: number;
+  available: boolean;
+}
+
+export interface AIChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp?: string;
+}
+
+/**
  * API封装层
  * 所有的API请求都应该在这里定义
  */
@@ -643,6 +700,120 @@ export const API = {
      */
     updateSiteSettings: (data: UpdateSiteSettingsParams): Promise<ApiResponse<SiteSettings>> => {
       return http.put('/site-settings', data);
+    },
+  },
+
+  // AI写作助手相关
+  ai: {
+    /**
+     * 简单聊天
+     * @param message 消息内容
+     * @param sessionId 会话ID
+     * @returns Promise<ApiResponse<{ message: string; sessionId: string; timestamp: string }>>
+     */
+    chat: (message: string, sessionId?: string): Promise<ApiResponse<{ message: string; sessionId: string; timestamp: string }>> => {
+      return http.post('/ai/chat', { message, sessionId });
+    },
+
+    /**
+     * 流式聊天
+     * @param message 消息内容
+     * @param sessionId 会话ID
+     * @param onChunk 流式数据回调
+     * @returns Promise<string>
+     */
+    streamChat: async (
+      message: string, 
+      sessionId?: string, 
+      onChunk?: (chunk: string) => void
+    ): Promise<string> => {
+      return await http.streamPost('/ai/stream-chat', { message, sessionId }, onChunk);
+    },
+
+    /**
+     * 内容生成
+     * @param params 生成参数
+     * @returns Promise<ApiResponse<{ type: string; content: string; timestamp: string }>>
+     */
+    generate: (params: AIGenerateParams): Promise<ApiResponse<{ type: string; content: string; timestamp: string }>> => {
+      return http.post('/ai/generate', params);
+    },
+
+    /**
+     * 智能写作助手（异步）
+     * @param params 写作助手参数
+     * @returns Promise<ApiResponse<{ taskId: string; status: string; message: string }>>
+     */
+    writingAssistant: (params: AIWritingParams): Promise<ApiResponse<{ taskId: string; status: string; message: string }>> => {
+      return http.post('/ai/writing-assistant', params);
+    },
+
+    /**
+     * 批量内容生成（异步）
+     * @param tasks 任务列表
+     * @returns Promise<ApiResponse<{ taskId: string; status: string; message: string }>>
+     */
+    batchGenerate: (tasks: AIGenerateParams[]): Promise<ApiResponse<{ taskId: string; status: string; message: string }>> => {
+      return http.post('/ai/batch-generate', { tasks });
+    },
+
+    /**
+     * 获取任务状态
+     * @param taskId 任务ID
+     * @returns Promise<ApiResponse<AITaskStatus>>
+     */
+    getTaskStatus: (taskId: string): Promise<ApiResponse<AITaskStatus>> => {
+      return http.get(`/ai/task/${taskId}`);
+    },
+
+    /**
+     * 获取用户任务列表
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<AITaskStatus>>>
+     */
+    getUserTasks: (params?: { page?: number; limit?: number }): Promise<ApiResponse<PaginationResult<AITaskStatus>>> => {
+      return http.get('/ai/tasks', params);
+    },
+
+    /**
+     * 获取用户配额
+     * @returns Promise<ApiResponse<AIQuota>>
+     */
+    getQuota: (): Promise<ApiResponse<AIQuota>> => {
+      return http.get('/ai/quota');
+    },
+
+    /**
+     * 获取聊天历史
+     * @returns Promise<ApiResponse<{ history: AIChatMessage[]; count: number }>>
+     */
+    getChatHistory: (): Promise<ApiResponse<{ history: AIChatMessage[]; count: number }>> => {
+      return http.get('/ai/history');
+    },
+
+    /**
+     * 清除聊天历史
+     * @returns Promise<ApiResponse<null>>
+     */
+    clearChatHistory: (): Promise<ApiResponse<null>> => {
+      return http.delete('/ai/history');
+    },
+
+    /**
+     * 获取AI服务状态
+     * @returns Promise<ApiResponse<{ provider: string; available: boolean; timestamp: string }>>
+     */
+    getStatus: (): Promise<ApiResponse<{ provider: string; available: boolean; timestamp: string }>> => {
+      return http.get('/ai/status');
+    },
+
+    /**
+     * 删除AI任务
+     * @param taskId 任务ID
+     * @returns Promise<ApiResponse<null>>
+     */
+    deleteTask: (taskId: string): Promise<ApiResponse<null>> => {
+      return http.delete(`/ai/task/${taskId}`);
     },
   },
 };

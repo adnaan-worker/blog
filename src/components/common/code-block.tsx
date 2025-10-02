@@ -12,22 +12,22 @@ const detectLanguage = (code: string): string => {
   }
 
   // TypeScript 检测
-  if (/interface\s+\w+|type\s+\w+\s*=|:\s*(string|number|boolean)/.test(trimmed)) {
+  if (/interface\s+\w+|type\s+\w+\s*=|:\s*(string|number|boolean)|<T>|<T\s+extends/.test(trimmed)) {
     return 'typescript';
   }
 
   // JavaScript 检测
-  if (/function\s+\w+|const\s+\w+\s*=|=>\s*{/.test(trimmed)) {
+  if (/function\s+\w+|const\s+\w+\s*=|=>\s*{|export\s+(default\s+)?|require\(/.test(trimmed)) {
     return 'javascript';
   }
 
   // CSS 检测
-  if (/\{[^}]*:[^}]*\}|@media|@keyframes/.test(trimmed)) {
+  if (/\{[^}]*:[^}]*\}|@media|@keyframes|@import|\.[\w-]+\s*\{/.test(trimmed)) {
     return 'css';
   }
 
   // HTML 检测
-  if (/<html|<head|<body|<div|<span|<p|<!DOCTYPE/.test(trimmed)) {
+  if (/<html|<head|<body|<div|<span|<p|<!DOCTYPE|<meta|<link/.test(trimmed)) {
     return 'html';
   }
 
@@ -37,13 +37,23 @@ const detectLanguage = (code: string): string => {
   }
 
   // Python 检测
-  if (/def\s+\w+|import\s+\w+|from\s+\w+\s+import/.test(trimmed)) {
+  if (/def\s+\w+|import\s+\w+|from\s+\w+\s+import|if\s+__name__\s*==/.test(trimmed)) {
     return 'python';
   }
 
   // Bash/Shell 检测
-  if (/^#!/.test(trimmed) || /\$\s*\w+|echo\s+/.test(trimmed)) {
+  if (/^#!/.test(trimmed) || /\$\s*\w+|echo\s+|cd\s+|ls\s+|mkdir\s+/.test(trimmed)) {
     return 'bash';
+  }
+
+  // SQL 检测
+  if (/SELECT\s+|INSERT\s+INTO|UPDATE\s+|DELETE\s+FROM|CREATE\s+TABLE/i.test(trimmed)) {
+    return 'sql';
+  }
+
+  // Markdown 检测
+  if (/^#{1,6}\s+|^\*\*[^*]+\*\*|^\*[^*]+\*|^[-*+]\s+|^\d+\.\s+|^>\s+/.test(trimmed)) {
+    return 'markdown';
   }
 
   return 'text';
@@ -295,11 +305,21 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   // 检测语言
   const detectedLanguage = providedLanguage || detectLanguage(code);
   const languageInfo = getLanguageInfo(detectedLanguage);
   const lines = code.split('\n');
+
+  // 确保组件完全准备好后再显示
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 10);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // 复制功能
   const handleCopy = async () => {
@@ -350,52 +370,75 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
     <Container isFullscreen={isFullscreen} className={className}>
       <CopyToast show={showCopyToast}>代码已复制到剪贴板</CopyToast>
 
-      <Header>
-        <LanguageTag>
-          <span className="icon">{languageInfo.icon}</span>
-          <span>{title || languageInfo.name}</span>
-          {!providedLanguage && <span className="auto-detected">(自动检测)</span>}
-        </LanguageTag>
+      {isReady ? (
+        <>
+          <Header>
+            <LanguageTag>
+              <span className="icon">{languageInfo.icon}</span>
+              <span>{title || languageInfo.name}</span>
+              {!providedLanguage && <span className="auto-detected">(自动检测)</span>}
+            </LanguageTag>
 
-        <Actions>
-          <ActionButton onClick={() => setShowLineNumbers(!showLineNumbers)} active={showLineNumbers} title="切换行号">
-            <FiCode size={14} />
-          </ActionButton>
+            <Actions>
+              <ActionButton
+                onClick={() => setShowLineNumbers(!showLineNumbers)}
+                active={showLineNumbers}
+                title="切换行号"
+              >
+                <FiCode size={14} />
+              </ActionButton>
 
-          {allowCopy && (
-            <ActionButton onClick={handleCopy} title="复制代码">
-              {copied ? <FiCheck size={14} /> : <FiCopy size={14} />}
-            </ActionButton>
-          )}
+              {allowCopy && (
+                <ActionButton onClick={handleCopy} title="复制代码">
+                  {copied ? <FiCheck size={14} /> : <FiCopy size={14} />}
+                </ActionButton>
+              )}
 
-          {allowFullscreen && (
-            <ActionButton onClick={toggleFullscreen} title="全屏查看">
-              {isFullscreen ? <FiMinimize2 size={14} /> : <FiMaximize2 size={14} />}
-            </ActionButton>
-          )}
-        </Actions>
-      </Header>
+              {allowFullscreen && (
+                <ActionButton onClick={toggleFullscreen} title="全屏查看">
+                  {isFullscreen ? <FiMinimize2 size={14} /> : <FiMaximize2 size={14} />}
+                </ActionButton>
+              )}
+            </Actions>
+          </Header>
 
-      <Content showLineNumbers={showLineNumbers} isFullscreen={isFullscreen}>
-        <pre>
-          {showLineNumbers && (
-            <LineNumbers>
-              {lines.map((_, index) => (
-                <div key={index} className={`line ${highlightLines.includes(index + 1) ? 'highlight' : ''}`}>
-                  {index + 1}
-                </div>
-              ))}
-            </LineNumbers>
-          )}
-          <code>
-            {lines.map((line, index) => (
-              <div key={index} className={`code-line ${highlightLines.includes(index + 1) ? 'highlight' : ''}`}>
-                {line}
-              </div>
-            ))}
-          </code>
-        </pre>
-      </Content>
+          <Content showLineNumbers={showLineNumbers} isFullscreen={isFullscreen}>
+            <pre>
+              {showLineNumbers && (
+                <LineNumbers>
+                  {lines.map((_, index) => (
+                    <div key={index} className={`line ${highlightLines.includes(index + 1) ? 'highlight' : ''}`}>
+                      {index + 1}
+                    </div>
+                  ))}
+                </LineNumbers>
+              )}
+              <code>
+                {lines.map((line, index) => (
+                  <div key={index} className={`code-line ${highlightLines.includes(index + 1) ? 'highlight' : ''}`}>
+                    {line}
+                  </div>
+                ))}
+              </code>
+            </pre>
+          </Content>
+        </>
+      ) : (
+        // 加载状态
+        <div
+          style={{
+            padding: '1rem',
+            textAlign: 'center',
+            color: 'var(--text-secondary)',
+            minHeight: '100px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          正在加载代码块...
+        </div>
+      )}
     </Container>
   );
 };

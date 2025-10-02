@@ -68,6 +68,7 @@ export interface PaginationParams {
  * @template T 列表项数据类型
  */
 export interface PaginationResult<T = any> {
+  [x: string]: any;
   pagination: { page: number; totalPages: number };
   data: T[];
   list?: T[]; // 数据列表 (前端格式)

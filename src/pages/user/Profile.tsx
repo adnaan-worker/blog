@@ -164,7 +164,7 @@ const TabButton = styled.button<{ active?: boolean }>`
   }
 `;
 
-const CloseButton = styled.button`
+const CloseButton = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,7 +172,6 @@ const CloseButton = styled.button`
   height: 18px;
   padding: 0;
   margin-left: 0.5rem;
-  border: none;
   background: transparent;
   color: var(--text-secondary);
   border-radius: 50%;

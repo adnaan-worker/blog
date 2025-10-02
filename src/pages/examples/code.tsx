@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
 import CodeBlock from '@/components/common/code-block';
+import RichTextRenderer from '@/components/common/rich-text-renderer';
+import { RichTextParser } from '@/utils/rich-text-parser';
+import React, { useState } from 'react';
 
 const PageContainer = styled.div`
   padding: 2rem 0;
@@ -196,7 +199,89 @@ test_array = [64, 34, 25, 12, 22, 11, 90]
 sorted_array = bubble_sort(test_array.copy())
 print(f"排序后的数组: {sorted_array}")`;
 
+// 测试用的Markdown内容，验证解析器功能
+const testMarkdownContent = `
+# 富文本解析测试
+
+## 1. 标题测试
+### 三级标题
+#### 四级标题
+
+## 2. 文本格式测试
+这是一个包含 **粗体文字** 和 *斜体文字* 的段落。
+
+还可以使用 \`内联代码\` 来标记专业术语。
+
+## 3. 列表测试
+
+### 无序列表
+- 第一项
+- 第二项
+- 第三项
+
+### 有序列表
+1. 第一步
+2. 第二步
+3. 第三步
+
+## 4. 代码块测试
+
+\`\`\`javascript
+function hello() {
+  console.log("Hello World!");
+  return "success";
+}
+\`\`\`
+
+\`\`\`css
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+\`\`\`
+
+## 5. 引用测试
+
+> 这是一个重要的引用内容，用来强调某个观点或者提供额外的信息。
+
+## 6. 链接和图片测试
+
+这里有一个 [链接示例](https://example.com)。
+
+## 7. 分割线测试
+
+---
+
+## 8. 表格测试
+
+| 列1 | 列2 | 列3 |
+|-----|-----|-----|
+| 数据1 | 数据2 | 数据3 |
+| 数据4 | 数据5 | 数据6 |
+`;
+
 const Code = () => {
+  const [count, setCount] = useState(0);
+
+  // 调试富文本解析器
+  const debugParser = () => {
+    const testHtml = `
+<h3>测试pre标签</h3>
+<pre class="language-css">
+.container {
+  display: flex;
+  justify-content: center;
+}
+</pre>
+<p>测试结束</p>
+    `;
+
+    console.log('原始HTML:', testHtml);
+    const processed = RichTextParser.addContentStyles(testHtml);
+    console.log('处理后HTML:', processed);
+  };
+
   return (
     <PageContainer>
       <Section>
@@ -266,6 +351,17 @@ const Code = () => {
         >
           <CodeBlock code={pythonCode} language="python" showLineNumbers={true} />
         </motion.div>
+
+        <div style={{ marginBottom: '2rem' }}>
+          <h3>Markdown解析测试</h3>
+          <RichTextRenderer
+            content={testMarkdownContent}
+            enableCodeHighlight={true}
+            enableImagePreview={true}
+            enableTableOfContents={false}
+            mode="article"
+          />
+        </div>
       </Section>
     </PageContainer>
   );
