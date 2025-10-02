@@ -43,28 +43,14 @@ export interface RegisterResponse {
 export interface UserProfile {
   id: string | number;
   username: string;
-  nickname?: string;
+  fullName?: string; // 对应数据库的 full_name 字段
   email: string;
   avatar?: string;
   bio?: string;
-  location?: string;
-  website?: string;
+  role?: string;
+  status?: string;
   joinDate: string;
   lastLoginTime?: string;
-  socialLinks?: {
-    github?: string;
-    twitter?: string;
-    linkedin?: string;
-    instagram?: string;
-    weibo?: string;
-    zhihu?: string;
-  };
-  preferences?: {
-    theme?: 'light' | 'dark' | 'auto';
-    language?: 'zh-CN' | 'en-US';
-    emailNotifications?: boolean;
-    pushNotifications?: boolean;
-  };
   stats?: {
     articleCount: number;
     viewCount: number;
@@ -77,19 +63,9 @@ export interface UserProfile {
 }
 
 export interface UpdateProfileParams {
-  nickname?: string;
+  fullName?: string; // 对应数据库的 full_name 字段
   email?: string;
   bio?: string;
-  location?: string;
-  website?: string;
-  socialLinks?: {
-    github?: string;
-    twitter?: string;
-    linkedin?: string;
-    instagram?: string;
-    weibo?: string;
-    zhihu?: string;
-  };
 }
 
 export interface ChangePasswordParams {
@@ -354,9 +330,6 @@ export const API = {
       http.get<UserActivity[]>('/users/activities', params),
     getAchievements: () => http.get<UserAchievement[]>('/users/achievements'),
     getStats: () => http.get<UserStats>('/users/stats'),
-
-    // 用户偏好设置
-    updatePreferences: (data: Partial<UserProfile['preferences']>) => http.put('/users/preferences', data),
 
     // 数据管理
     exportData: () => http.post('/users/export'),

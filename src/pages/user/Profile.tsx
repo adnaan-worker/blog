@@ -282,7 +282,8 @@ const Profile: React.FC = () => {
       });
 
       // 转换活动数据，添加图标
-      const activitiesWithIcons = response.data.data.map((activity: UserActivity) => ({
+      const activitiesData = Array.isArray(response.data) ? response.data : response.data.data || [];
+      const activitiesWithIcons = activitiesData.map((activity: UserActivity) => ({
         ...activity,
         icon: getActivityIcon(activity.type),
       }));
@@ -293,7 +294,7 @@ const Profile: React.FC = () => {
         setActivities(activitiesWithIcons);
       }
 
-      setHasMoreActivities(response.data.data.length === 10);
+      setHasMoreActivities(activitiesData.length === 10);
       setActivitiesPage(page);
     } catch (error: any) {
       toast.error(error.message || '加载活动记录失败');
@@ -382,12 +383,9 @@ const Profile: React.FC = () => {
 
       // 更新用户资料
       const updateData = {
-        nickname: formData.username,
+        fullName: formData.fullName,
         email: formData.email,
         bio: formData.bio,
-        location: formData.location,
-        website: formData.website,
-        socialLinks: formData.socialLinks,
       };
 
       const response = await API.user.updateProfile(updateData);
@@ -492,15 +490,15 @@ const Profile: React.FC = () => {
         setIsEditSiteSettingsModalOpen(true);
         break;
       case 'logout':
-    if (confirm('确定要退出登录吗？')) {
-      API.user
-        .logout()
-        .then(() => {
-          navigate('/');
-        })
-        .catch(() => {
-          navigate('/');
-        });
+        if (confirm('确定要退出登录吗？')) {
+          API.user
+            .logout()
+            .then(() => {
+              navigate('/');
+            })
+            .catch(() => {
+              navigate('/');
+            });
         }
         break;
       default:
@@ -657,13 +655,15 @@ const Profile: React.FC = () => {
         </QuickActionsSection>
       </ModernLayout>
 
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        user={user}
-        onClose={handleCloseEditModal}
-        onSave={handleSaveProfile}
-        isLoading={isUserLoading}
-      />
+      {user && (
+        <EditProfileModal
+          isOpen={isEditModalOpen}
+          user={user}
+          onClose={handleCloseEditModal}
+          onSave={handleSaveProfile}
+          isLoading={isUserLoading}
+        />
+      )}
 
       <EditSiteSettingsModal
         isOpen={isEditSiteSettingsModalOpen}

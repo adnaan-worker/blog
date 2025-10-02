@@ -4,9 +4,8 @@ import {
   FiEdit,
   FiEdit3,
   FiCalendar,
-  FiMapPin,
+  FiUser,
   FiMail,
-  FiGlobe,
   FiGithub,
   FiTwitter,
   FiInstagram,
@@ -250,24 +249,15 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
       {user.bio && <UserBio>{user.bio}</UserBio>}
 
       <UserDetails>
-        {user.location && (
-          <DetailItem>
-            <FiMapPin size={16} />
-            <span>{user.location}</span>
-          </DetailItem>
-        )}
-
         <DetailItem>
           <FiMail size={16} />
           <span>{user.email}</span>
         </DetailItem>
 
-        {user.website && (
+        {user.fullName && (
           <DetailItem>
-            <FiGlobe size={16} />
-            <a href={user.website} target="_blank" rel="noopener noreferrer">
-              {user.website}
-            </a>
+            <FiUser size={16} />
+            <span>{user.fullName}</span>
           </DetailItem>
         )}
 
@@ -276,18 +266,6 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
           <span>加入于 {formatDate(user.joinDate)}</span>
         </DetailItem>
       </UserDetails>
-
-      {/* 社交链接 */}
-      <SocialLinks>
-        {Object.entries(user.socialLinks).map(([platform, url]) => {
-          if (!url) return null;
-          return (
-            <SocialLink key={platform} href={url} target="_blank" rel="noopener noreferrer" title={platform}>
-              {getSocialIcon(platform)}
-            </SocialLink>
-          );
-        })}
-      </SocialLinks>
 
       <Button
         variant="primary"

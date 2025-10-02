@@ -126,14 +126,8 @@ const EmptyState = styled.div`
   }
 `;
 
-// 工具函数
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-  });
-};
+// 导入封装的工具函数
+import { formatDate as formatDateUtil } from '@/utils';
 
 const NotesPage: React.FC = () => {
   const [notes, setNotes] = useState<TimelineItem[]>([]);
@@ -207,7 +201,7 @@ const NotesPage: React.FC = () => {
   const renderNoteItem = (note: Note, index: number) => (
     <Link to={`/notes/${note.id}`} style={{ textDecoration: 'none' }}>
       <NoteItem>
-        <NoteDate>{formatDate(note.createdAt)}</NoteDate>
+                          <NoteDate>{formatDateUtil(note.createdAt, 'MM-DD')}</NoteDate>
         <NoteTitle>{note.title || '生活随记'}</NoteTitle>
         {note.tags && note.tags.length > 0 && (
           <TagList>

@@ -341,16 +341,8 @@ interface NoteWithRelated extends Note {
   relatedNotes?: Note[];
 }
 
-// 工具函数
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'long',
-  });
-};
+// 导入封装的工具函数
+import { formatDate as formatDateUtil } from '@/utils';
 
 const formatTime = (dateString: string) => {
   const date = new Date(dateString);
@@ -426,7 +418,7 @@ const NoteDetail: React.FC = () => {
 
             <NoteMeta>
               <span>
-                <FiCalendar size={16} /> {formatDate(note.createdAt)}
+                <FiCalendar size={16} /> {formatDateUtil(note.createdAt, 'YYYY-MM-DD')}
               </span>
               <span>
                 <FiClock size={16} /> {formatTime(note.createdAt)}
@@ -452,7 +444,7 @@ const NoteDetail: React.FC = () => {
                   <RelatedCard key={relatedNote.id} to={`/notes/${relatedNote.id}`}>
                     <h4>{relatedNote.title || '生活随记'}</h4>
                     <p>{relatedNote.content.substring(0, 100)}...</p>
-                    <div className="date">{formatDate(relatedNote.createdAt)}</div>
+                    <div className="date">{formatDateUtil(relatedNote.createdAt, 'YYYY-MM-DD')}</div>
                   </RelatedCard>
                 ))}
               </RelatedNotes>
@@ -468,7 +460,7 @@ const NoteDetail: React.FC = () => {
                     <FiCalendar size={14} />
                     日期
                   </InfoLabel>
-                  <InfoValue>{formatDate(note.createdAt)}</InfoValue>
+                  <InfoValue>{formatDateUtil(note.createdAt, 'YYYY-MM-DD')}</InfoValue>
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>

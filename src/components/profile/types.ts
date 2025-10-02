@@ -1,28 +1,14 @@
 export interface UserProfile {
   id: string | number;
   username: string;
-  nickname?: string;
+  fullName?: string; // 对应数据库的 full_name 字段
   email: string;
   avatar?: string;
   bio?: string;
-  location?: string;
-  website?: string;
+  role?: string;
+  status?: string;
   joinDate: string;
   lastLoginTime?: string;
-  socialLinks: {
-    github?: string;
-    twitter?: string;
-    linkedin?: string;
-    instagram?: string;
-    weibo?: string;
-    zhihu?: string;
-  };
-  preferences?: {
-    theme?: 'light' | 'dark' | 'auto';
-    language?: 'zh-CN' | 'en-US';
-    emailNotifications?: boolean;
-    pushNotifications?: boolean;
-  };
   stats?: {
     articleCount: number;
     viewCount: number;
@@ -79,18 +65,9 @@ export interface Achievement {
 
 export interface EditProfileForm {
   username: string;
+  fullName: string; // 对应数据库的 full_name 字段
   email: string;
   bio: string;
-  location: string;
-  website: string;
-  socialLinks: {
-    github?: string;
-    twitter?: string;
-    linkedin?: string;
-    instagram?: string;
-    weibo?: string;
-    zhihu?: string;
-  };
 }
 
 // 新增类型定义

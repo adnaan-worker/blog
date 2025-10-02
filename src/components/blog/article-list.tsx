@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { FiCalendar, FiClock, FiTag, FiArrowRight } from 'react-icons/fi';
 import type { Article } from '@/utils/api';
 import ImageError from '@/assets/images/image-error.png';
+import { formatDate } from '@/utils';
 
 // 动画变体定义
 export const fadeInUpVariants = {
@@ -249,17 +250,13 @@ const NoArticles = styled(motion.div)`
 
 // 时间线文章组件
 export const TimelineArticleComponent: React.FC<{ article: Article }> = ({ article }) => {
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toISOString().split('T')[0];
-  };
 
   const readTime = Math.ceil((article.content?.length || 0) / 200);
 
   return (
     <TimelineItem>
       <TimelineDate>
-        <FiCalendar size={14} /> {formatDate(article.publishedAt || article.createdAt)}
+        <FiCalendar size={14} /> {formatDate(article.publishedAt || article.createdAt, 'YYYY-MM-DD')}
       </TimelineDate>
       <TimelineContent>
         <ArticleTitle>{article.title}</ArticleTitle>
