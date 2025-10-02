@@ -26,8 +26,6 @@ import {
 } from '@/components/profile';
 import type { EditProfileForm } from '@/components/profile/types';
 
-import { LoadingState } from './modules/LoadingState';
-
 const ProfileContainer = styled.div`
   max-width: 1400px;
   margin: 0 auto;
@@ -202,11 +200,7 @@ const Profile: React.FC = () => {
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [openTabs, setOpenTabs] = useState([
-    { id: 'dashboard', label: '📊 数据概览', closable: false },
-    { id: 'notes', label: '📝 我的手记', closable: false },
-    { id: 'articles', label: '📰 我的文章', closable: false },
-  ]);
+  const [openTabs, setOpenTabs] = useState([{ id: 'dashboard', label: '📊 数据概览', closable: false }]);
 
   // 用户数据
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -354,10 +348,6 @@ const Profile: React.FC = () => {
   };
 
   // 处理函数
-  const handleEditProfile = () => {
-    setIsEditModalOpen(true);
-  };
-
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false);
   };
@@ -473,33 +463,29 @@ const Profile: React.FC = () => {
     }
   };
 
-  // 快捷操作处理
-  const handleCreateArticle = () => {
-    addTab('create-article', '✏️ 创建文章');
-  };
-
-  const handleViewAnalytics = () => {
-    addTab('analytics', '📈 数据分析');
-  };
-
-  const handleExportData = async () => {
-    addTab('export-data', '📦 数据导出');
-  };
-
-  const handleHelp = () => {
-    addTab('help', '❓ 帮助中心');
-  };
-
-  const handleLogout = () => {
-    if (confirm('确定要退出登录吗？')) {
-      API.user
-        .logout()
-        .then(() => {
-          navigate('/');
-        })
-        .catch(() => {
-          navigate('/');
-        });
+  // 统一的快捷操作处理
+  const handleQuickAction = (actionId: string) => {
+    switch (actionId) {
+      case 'view-notes':
+        addTab('notes', '📝 我的手记');
+        break;
+      case 'view-articles':
+        addTab('articles', '📰 我的文章');
+        break;
+      case 'logout':
+        if (confirm('确定要退出登录吗？')) {
+          API.user
+            .logout()
+            .then(() => {
+              navigate('/');
+            })
+            .catch(() => {
+              navigate('/');
+            });
+        }
+        break;
+      default:
+        console.warn('未知的操作:', actionId);
     }
   };
 
@@ -567,80 +553,10 @@ const Profile: React.FC = () => {
 
       case 'articles':
         return <ArticleManagement />;
-
-      case 'create-article':
-        return (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
-            <h3>✏️ 创建文章</h3>
-            <p>文章编辑器功能正在开发中...</p>
-          </div>
-        );
-
-      case 'analytics':
-        return (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
-            <h3>📈 数据分析</h3>
-            <p>数据分析面板正在开发中...</p>
-            <div style={{ marginTop: '2rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
-              <h4>📊 统计概览</h4>
-              <p>这里将展示详细的博客数据分析图表</p>
-            </div>
-          </div>
-        );
-
-      case 'export-data':
-        return (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
-            <h3>📦 数据导出</h3>
-            <p>数据导出功能正在开发中...</p>
-            <button
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: 'var(--accent-color)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                marginTop: '1rem',
-              }}
-              onClick={() => toast.success('导出功能即将上线！')}
-            >
-              开始导出
-            </button>
-          </div>
-        );
-
-      case 'help':
-        return (
-          <div style={{ padding: '2rem' }}>
-            <h3>❓ 帮助中心</h3>
-            <div style={{ marginTop: '1rem', lineHeight: 1.6 }}>
-              <h4>📖 使用指南</h4>
-              <p>• 在"数据概览"中查看你的博客统计</p>
-              <p>• 在"我的手记"中管理你的私人笔记</p>
-              <p>• 使用右侧快捷操作快速访问功能</p>
-
-              <h4>🎯 快捷键</h4>
-              <p>• Ctrl+N: 创建新文章</p>
-              <p>• Ctrl+E: 编辑资料</p>
-              <p>• Ctrl+H: 打开帮助</p>
-            </div>
-          </div>
-        );
-
       default:
         return <div>页面未找到</div>;
     }
   };
-
-  // 如果没有用户数据，显示加载状态
-  if (!user) {
-    return (
-      <ProfileContainer>
-        <LoadingState />
-      </ProfileContainer>
-    );
-  }
 
   return (
     <ProfileContainer>
@@ -648,12 +564,14 @@ const Profile: React.FC = () => {
         {/* 左侧用户信息区域 */}
         <UserSection>
           <Card>
-          <UserInfoCard
-            user={user}
-            onEditProfile={handleEditProfile}
-            onAvatarChange={handleAvatarChange}
-            isLoading={isUserLoading}
-          />
+            {user && (
+              <UserInfoCard
+                user={user}
+                onEditProfile={() => handleQuickAction('edit-profile')}
+                onAvatarChange={handleAvatarChange}
+                isLoading={isUserLoading}
+              />
+            )}
           </Card>
 
           {/* 成就徽章 */}
@@ -669,14 +587,7 @@ const Profile: React.FC = () => {
           {/* 移动端快捷操作 */}
           <MobileQuickActions>
             <Card>
-              <QuickActions
-                onCreateArticle={handleCreateArticle}
-                onEditProfile={handleEditProfile}
-                onExportData={handleExportData}
-                onViewAnalytics={handleViewAnalytics}
-                onHelp={handleHelp}
-                onLogout={handleLogout}
-              />
+              <QuickActions onAction={handleQuickAction} />
             </Card>
           </MobileQuickActions>
 
@@ -707,14 +618,7 @@ const Profile: React.FC = () => {
         {/* 右侧快捷操作区域（大屏显示） */}
         <QuickActionsSection>
           <Card>
-            <QuickActions
-              onCreateArticle={handleCreateArticle}
-              onEditProfile={handleEditProfile}
-              onExportData={handleExportData}
-              onViewAnalytics={handleViewAnalytics}
-              onHelp={handleHelp}
-              onLogout={handleLogout}
-            />
+            <QuickActions onAction={handleQuickAction} />
           </Card>
         </QuickActionsSection>
       </ModernLayout>

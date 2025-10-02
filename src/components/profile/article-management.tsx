@@ -431,7 +431,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
       };
 
       const response = await API.article.getMyArticles(params);
-      // 统一的返回格式：{ data: { data: [], pagination: {} } }
       const newArticles = response.data.data || [];
       const pagination = response.data.pagination || { totalPages: 1 };
 

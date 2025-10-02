@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { FiEdit, FiSettings, FiDownload, FiPlus, FiBarChart, FiHelpCircle, FiLogOut } from 'react-icons/fi';
+import { FiEdit, FiSettings, FiDownload, FiPlus, FiBarChart, FiHelpCircle, FiLogOut, FiBookOpen, FiFileText } from 'react-icons/fi';
 import { Button } from '@/components/ui';
 
 interface QuickAction {
@@ -14,13 +14,7 @@ interface QuickAction {
 
 interface QuickActionsProps {
   actions?: QuickAction[];
-  onCreateArticle?: () => void;
-  onEditProfile?: () => void;
-  onSettings?: () => void;
-  onExportData?: () => void;
-  onViewAnalytics?: () => void;
-  onHelp?: () => void;
-  onLogout?: () => void;
+  onAction?: (actionId: string) => void;
 }
 
 // 内容容器（不包含边框和背景，因为外层已有Card）
@@ -64,51 +58,27 @@ const Divider = styled.div`
   margin: 0.5rem 0;
 `;
 
-export const QuickActions: React.FC<QuickActionsProps> = ({
-  actions,
-  onCreateArticle,
-  onEditProfile,
-  onSettings,
-  onExportData,
-  onViewAnalytics,
-  onHelp,
-  onLogout,
-}) => {
+export const QuickActions: React.FC<QuickActionsProps> = ({ actions, onAction }) => {
+  const handleAction = (actionId: string) => {
+    if (onAction) {
+      onAction(actionId);
+    }
+  };
+
   // 默认操作列表
   const defaultActions: QuickAction[] = [
     {
-      id: 'create-article',
-      label: '创建文章',
-      icon: <FiPlus size={16} />,
-      onClick: onCreateArticle || (() => {}),
-      variant: 'primary',
-    },
-    {
-      id: 'edit-profile',
-      label: '编辑资料',
-      icon: <FiEdit size={16} />,
-      onClick: onEditProfile || (() => {}),
+      id: 'view-notes',
+      label: '我的手记',
+      icon: <FiBookOpen size={16} />,
+      onClick: () => handleAction('view-notes'),
       variant: 'outline',
     },
     {
-      id: 'view-analytics',
-      label: '数据分析',
-      icon: <FiBarChart size={16} />,
-      onClick: onViewAnalytics || (() => {}),
-      variant: 'outline',
-    },
-    {
-      id: 'settings',
-      label: '账户设置',
-      icon: <FiSettings size={16} />,
-      onClick: onSettings || (() => {}),
-      variant: 'outline',
-    },
-    {
-      id: 'export-data',
-      label: '数据导出',
-      icon: <FiDownload size={16} />,
-      onClick: onExportData || (() => {}),
+      id: 'view-articles',
+      label: '我的文章',
+      icon: <FiFileText size={16} />,
+      onClick: () => handleAction('view-articles'),
       variant: 'outline',
     },
   ];
@@ -118,14 +88,14 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       id: 'help',
       label: '帮助中心',
       icon: <FiHelpCircle size={16} />,
-      onClick: onHelp || (() => {}),
+      onClick: () => handleAction('help'),
       variant: 'outline',
     },
     {
       id: 'logout',
       label: '退出登录',
       icon: <FiLogOut size={16} />,
-      onClick: onLogout || (() => {}),
+      onClick: () => handleAction('logout'),
       variant: 'outline',
     },
   ];

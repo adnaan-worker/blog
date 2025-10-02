@@ -56,8 +56,6 @@ const ContentLoading = () => {
         style={{
           width: '100px',
           objectFit: 'contain',
-          // borderRadius: '10px',
-          // boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.1)',
           marginBottom: '20px',
         }}
       />

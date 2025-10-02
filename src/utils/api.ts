@@ -123,6 +123,7 @@ export interface UserAchievement {
 }
 
 export interface UserStats {
+  [x: string]: any;
   label: string;
   value: string | number;
   icon?: React.ReactNode;
