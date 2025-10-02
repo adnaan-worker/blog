@@ -567,7 +567,7 @@ const Profile: React.FC = () => {
             {user && (
               <UserInfoCard
                 user={user}
-                onEditProfile={() => handleQuickAction('edit-profile')}
+                onEditProfile={() => setIsEditModalOpen(true)}
                 onAvatarChange={handleAvatarChange}
                 isLoading={isUserLoading}
               />

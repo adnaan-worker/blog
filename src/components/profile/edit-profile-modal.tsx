@@ -14,6 +14,8 @@ interface EditProfileModalProps {
 }
 
 const ModalContent = styled.div`
+  width: 100%;
+  height: 500px;
   padding: 0;
 `;
 
