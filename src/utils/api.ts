@@ -98,6 +98,51 @@ export interface ChangePasswordParams {
   confirmPassword: string;
 }
 
+/**
+ * 网站设置相关接口类型定义（介绍卡片 + 社交链接）
+ */
+export interface SiteSettings {
+  id?: number;
+  userId?: number;
+  authorName?: string;
+  authorTitle?: string;
+  authorBio?: string;
+  mbti?: string;
+  location?: string;
+  occupation?: string;
+  skills?: string[];
+  socialLinks?: {
+    email?: string;
+    github?: string;
+    bilibili?: string;
+    twitter?: string;
+    rss?: string;
+  };
+  quote?: string;
+  quoteAuthor?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UpdateSiteSettingsParams {
+  authorName?: string;
+  authorTitle?: string;
+  authorBio?: string;
+  mbti?: string;
+  location?: string;
+  occupation?: string;
+  skills?: string[];
+  socialLinks?: {
+    email?: string;
+    github?: string;
+    bilibili?: string;
+    twitter?: string;
+    rss?: string;
+  };
+  quote?: string;
+  quoteAuthor?: string;
+}
+
 export interface UserActivity {
   id: string | number;
   type: 'article_published' | 'like_received' | 'comment_received' | 'follow_received' | 'achievement_unlocked';
@@ -605,6 +650,26 @@ export const API = {
       status: 'approved' | 'pending' | 'spam',
     ): Promise<ApiResponse<Comment>> => {
       return http.patch(`/comments/${id}/status`, { status });
+    },
+  },
+
+  // 网站设置相关
+  siteSettings: {
+    /**
+     * 获取网站设置（公开）
+     * @returns Promise<ApiResponse<SiteSettings>>
+     */
+    getSiteSettings: (): Promise<ApiResponse<SiteSettings>> => {
+      return http.get('/site-settings');
+    },
+
+    /**
+     * 更新网站设置（仅管理员）
+     * @param data 网站设置数据
+     * @returns Promise<ApiResponse<SiteSettings>>
+     */
+    updateSiteSettings: (data: UpdateSiteSettingsParams): Promise<ApiResponse<SiteSettings>> => {
+      return http.put('/site-settings', data);
     },
   },
 };

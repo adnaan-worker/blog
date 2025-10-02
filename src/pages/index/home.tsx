@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import ErrorImage from '@/assets/images/image-error.png';
 import {
   FiArrowRight,
   FiCalendar,
@@ -15,6 +14,8 @@ import {
   FiFolderPlus,
   FiCode,
 } from 'react-icons/fi';
+import { API, SiteSettings } from '@/utils/api';
+import { formatDate } from '@/utils';
 
 // 使用motion直接访问组件
 const MotionDiv = motion.div;
@@ -1197,65 +1198,6 @@ const projectVariants: Variants = {
 };
 
 // 示例数据
-// 将使用真实 API 数据替换
-const mockArticles = [
-  {
-    id: 1,
-    title: '使用React Native Screens 和 Native Navigation 提升应用性能',
-    date: '2025-3-10',
-    category: '技术',
-    views: 630,
-    excerpt: '探索如何利用React Native Screens和Native Navigation优化应用性能，减少启动时间。',
-    image: '3',
-  },
-  {
-    id: 2,
-    title: 'React Native 构建WebView与原生的深度集成',
-    date: '2025-3-5',
-    category: '开发',
-    views: 415,
-    excerpt: '详解React Native WebView组件与原生模块的集成方式，实现更流畅的用户体验。',
-    image: '2',
-  },
-  {
-    id: 3,
-    title: '在Expo中使用原生模块的完整指南',
-    date: '2025-2-28',
-    category: '教程',
-    views: 527,
-    excerpt: '一步步教你如何在Expo项目中集成和使用原生模块，突破Expo的限制。',
-    image: '1',
-  },
-];
-
-const mockNotes = [
-  {
-    id: 1,
-    title: '从代码到诗，从算法到哲学台',
-    date: '1天前',
-  },
-  {
-    id: 2,
-    title: '在夜十中修炼，在代码中追梦',
-    date: '2个月前',
-  },
-  {
-    id: 3,
-    title: '复日商务游戏乐园',
-    date: '2个月前',
-  },
-  {
-    id: 4,
-    title: '或许这样更好',
-    date: '3个月前',
-  },
-  {
-    id: 5,
-    title: '镜头与代码的交响：打造个人生活画廊网站',
-    date: '3个月前',
-  },
-];
-
 const mockActivities = [
   {
     id: 1,
@@ -1392,10 +1334,70 @@ const SkillTags = styled(motion.div)`
 const Home = () => {
   // 卡片翻转状态
   const [isFlipped, setIsFlipped] = useState(false);
+  // 网站设置数据
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+  // 文章和手记数据
+  const [articles, setArticles] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
+
+  // 加载网站设置
+  useEffect(() => {
+    const loadSiteSettings = async () => {
+      try {
+        const response = await API.siteSettings.getSiteSettings();
+        setSiteSettings(response.data);
+      } catch (error) {
+        console.error('加载网站设置失败:', error);
+      } finally {
+      }
+    };
+
+    loadSiteSettings();
+  }, []);
+
+  // 加载文章列表
+  useEffect(() => {
+    const loadArticles = async () => {
+      try {
+        const response = await API.article.getArticles({ page: 1, pageSize: 3 });
+        setArticles(response.data.data || []);
+      } catch (error) {
+        console.error('加载文章失败:', error);
+      }
+    };
+
+    loadArticles();
+  }, []);
+
+  // 加载手记列表
+  useEffect(() => {
+    const loadNotes = async () => {
+      try {
+        const response = await API.note.getNotes({ page: 1, pageSize: 5, isPrivate: false });
+        setNotes(response.data.data || []);
+      } catch (error) {
+        console.error('加载手记失败:', error);
+      }
+    };
+
+    loadNotes();
+  }, []);
 
   const handleCardFlip = () => {
     setIsFlipped(!isFlipped);
   };
+
+  // 使用网站设置或默认值（仅用于介绍卡片）
+  const authorName = siteSettings?.authorName || '';
+  const authorTitle = siteSettings?.authorTitle || '';
+  const authorBio = siteSettings?.authorBio || '';
+  const mbti = siteSettings?.mbti || '';
+  const location = siteSettings?.location || '';
+  const occupation = siteSettings?.occupation || '';
+  const skills = siteSettings?.skills || [];
+  const quote = siteSettings?.quote || '';
+  const quoteAuthor = siteSettings?.quoteAuthor || '';
+  const socialLinks = siteSettings?.socialLinks || [];
 
   return (
     <>
@@ -1514,7 +1516,7 @@ const Home = () => {
 
               <SocialLinks variants={staggerContainerVariants}>
                 <SocialLink
-                  href="mailto:example@example.com"
+                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.email}
                   aria-label="Email"
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
@@ -1523,7 +1525,7 @@ const Home = () => {
                   <FiMail />
                 </SocialLink>
                 <SocialLink
-                  href="https://github.com"
+                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="GitHub"
@@ -1534,7 +1536,7 @@ const Home = () => {
                   <FiGithub />
                 </SocialLink>
                 <SocialLink
-                  href="https://bilibili.com"
+                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.bilibili}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Bilibili"
@@ -1557,7 +1559,7 @@ const Home = () => {
                   </svg>
                 </SocialLink>
                 <SocialLink
-                  href="https://twitter.com"
+                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.twitter}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Twitter"
@@ -1576,7 +1578,7 @@ const Home = () => {
                   </svg>
                 </SocialLink>
                 <SocialLink
-                  href="/rss.xml"
+                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.rss}
                   aria-label="RSS Feed"
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
@@ -1608,29 +1610,37 @@ const Home = () => {
                   <ProfileImage>
                     <img
                       src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100"
-                      alt="Adnaan"
+                      alt={authorName}
                     />
                   </ProfileImage>
-                  <ProfileName>adnaan</ProfileName>
-                  <ProfileTitle>Web 全栈开发者 & 设计爱好者</ProfileTitle>
+                  <ProfileName>{authorName}</ProfileName>
+                  <ProfileTitle>{authorTitle}</ProfileTitle>
 
                   <ProfileInfoList>
-                    <ProfileInfoItem>
-                      <span>MBTI</span>
-                      <span>INFJ-T</span>
-                    </ProfileInfoItem>
-                    <ProfileInfoItem>
-                      <span>地点</span>
-                      <span>大连, 中国</span>
-                    </ProfileInfoItem>
-                    <ProfileInfoItem>
-                      <span>职业</span>
-                      <span>全栈开发者</span>
-                    </ProfileInfoItem>
-                    <ProfileInfoItem>
-                      <span>技能</span>
-                      <span>Vue, React, Node.js, Python, Java</span>
-                    </ProfileInfoItem>
+                    {mbti && (
+                      <ProfileInfoItem>
+                        <span>MBTI</span>
+                        <span>{mbti}</span>
+                      </ProfileInfoItem>
+                    )}
+                    {location && (
+                      <ProfileInfoItem>
+                        <span>地点</span>
+                        <span>{location}</span>
+                      </ProfileInfoItem>
+                    )}
+                    {occupation && (
+                      <ProfileInfoItem>
+                        <span>职业</span>
+                        <span>{occupation}</span>
+                      </ProfileInfoItem>
+                    )}
+                    {skills && skills.length > 0 && (
+                      <ProfileInfoItem>
+                        <span>技能</span>
+                        <span>{skills.join(', ')}</span>
+                      </ProfileInfoItem>
+                    )}
                   </ProfileInfoList>
 
                   <CardFlipHint>
@@ -1658,16 +1668,14 @@ const Home = () => {
                       color: 'var(--text-secondary)',
                     }}
                   >
-                    热衷于探索前沿Web技术，专注于打造流畅优雅的用户界面和交互体验，善于将设计理念转化为精美的代码实现。
+                    {authorBio}
                   </p>
 
                   <CardTitle>技能标签</CardTitle>
                   <SkillList>
-                    <SkillItem>React</SkillItem>
-                    <SkillItem>Node.js</SkillItem>
-                    <SkillItem>TypeScript</SkillItem>
-                    <SkillItem>MongoDB</SkillItem>
-                    <SkillItem>UI设计</SkillItem>
+                    {skills.map((skill, index) => (
+                      <SkillItem key={index}>{skill}</SkillItem>
+                    ))}
                   </SkillList>
 
                   <CardFlipHint>
@@ -1689,7 +1697,7 @@ const Home = () => {
           </Hero>
 
           <Quote initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} transition={{ duration: 0.8, delay: 0.5 }}>
-            请保持理性，冰冷的数字总是比七彩门的炫法走得更久。 —— 猴哥蔡嵩
+            {quote} {quoteAuthor && `—— ${quoteAuthor}`}
           </Quote>
 
           {/* 滚动指示器 */}
@@ -1730,7 +1738,7 @@ const Home = () => {
               </SectionTitle>
 
               <ArticleGrid variants={staggerContainerVariants}>
-                {mockArticles.map((article, index) => (
+                {articles.slice(0, 3).map((article, index) => (
                   <ArticleLink
                     to={`/blog/${article.id}`}
                     key={article.id}
@@ -1741,7 +1749,7 @@ const Home = () => {
                     <ArticleContent>
                       <ArticleTitle>{article.title}</ArticleTitle>
                     </ArticleContent>
-                    <ArticleTime>{article.date}</ArticleTime>
+                    <ArticleTime>{formatDate(article.publishedAt || article.createdAt, 'YYYY-MM-DD') || article.date}</ArticleTime>
                   </ArticleLink>
                 ))}
               </ArticleGrid>
@@ -1757,7 +1765,7 @@ const Home = () => {
               </SectionTitle>
 
               <ArticleGrid variants={staggerContainerVariants}>
-                {mockNotes.map((note, index) => (
+                {notes.slice(0, 5).map((note, index) => (
                   <ArticleLink
                     to={`/notes/${note.id}`}
                     key={note.id}
@@ -1766,9 +1774,9 @@ const Home = () => {
                     custom={index}
                   >
                     <ArticleContent>
-                      <ArticleTitle>{note.title}</ArticleTitle>
+                      <ArticleTitle>{note.title || '无标题手记'}</ArticleTitle>
                     </ArticleContent>
-                    <ArticleTime>{note.date}</ArticleTime>
+                    <ArticleTime>{formatDate(note.createdAt, 'YYYY-MM-DD') || note.date}</ArticleTime>
                   </ArticleLink>
                 ))}
               </ArticleGrid>

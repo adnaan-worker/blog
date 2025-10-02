@@ -13,7 +13,7 @@ import {
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/ui';
-import { API, UserProfile, UserStats, UserActivity, UserAchievement } from '@/utils/api';
+import { API, UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings } from '@/utils/api';
 import {
   UserInfoCard,
   DataStatsGrid,
@@ -21,6 +21,7 @@ import {
   QuickActions,
   AchievementBadges,
   EditProfileModal,
+  EditSiteSettingsModal,
   NoteManagement,
   ArticleManagement,
 } from '@/components/profile';
@@ -195,10 +196,12 @@ const Profile: React.FC = () => {
 
   // 状态管理
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditSiteSettingsModalOpen, setIsEditSiteSettingsModalOpen] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSiteSettingsLoading, setIsSiteSettingsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [openTabs, setOpenTabs] = useState([{ id: 'dashboard', label: '📊 数据概览', closable: false }]);
 
@@ -207,6 +210,7 @@ const Profile: React.FC = () => {
   const [userStats, setUserStats] = useState<UserStats[]>([]);
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
 
   // 分页状态
   const [activitiesPage, setActivitiesPage] = useState(1);
@@ -231,6 +235,7 @@ const Profile: React.FC = () => {
     loadUserStats();
     loadUserActivities();
     loadUserAchievements();
+    loadSiteSettings();
   }, []);
 
   // 加载用户资料
@@ -304,6 +309,17 @@ const Profile: React.FC = () => {
       setAchievements(response.data);
     } catch (error: any) {
       toast.error(error.message || '加载成就数据失败');
+    }
+  };
+
+  // 加载网站设置
+  const loadSiteSettings = async () => {
+    try {
+      const response = await API.siteSettings.getSiteSettings();
+      setSiteSettings(response.data);
+    } catch (error: any) {
+      // 如果没有设置，不显示错误
+      console.log('网站设置未配置');
     }
   };
 
@@ -472,20 +488,38 @@ const Profile: React.FC = () => {
       case 'view-articles':
         addTab('articles', '📰 我的文章');
         break;
+      case 'edit-site-settings':
+        setIsEditSiteSettingsModalOpen(true);
+        break;
       case 'logout':
-        if (confirm('确定要退出登录吗？')) {
-          API.user
-            .logout()
-            .then(() => {
-              navigate('/');
-            })
-            .catch(() => {
-              navigate('/');
-            });
+    if (confirm('确定要退出登录吗？')) {
+      API.user
+        .logout()
+        .then(() => {
+          navigate('/');
+        })
+        .catch(() => {
+          navigate('/');
+        });
         }
         break;
       default:
         console.warn('未知的操作:', actionId);
+    }
+  };
+
+  // 保存网站设置
+  const handleSaveSiteSettings = async (settings: Partial<SiteSettings>) => {
+    setIsSiteSettingsLoading(true);
+    try {
+      const response = await API.siteSettings.updateSiteSettings(settings);
+      setSiteSettings(response.data);
+      toast.success('网站设置更新成功！');
+      setIsEditSiteSettingsModalOpen(false);
+    } catch (error: any) {
+      toast.error(error.message || '更新失败，请重试');
+    } finally {
+      setIsSiteSettingsLoading(false);
     }
   };
 
@@ -629,6 +663,14 @@ const Profile: React.FC = () => {
         onClose={handleCloseEditModal}
         onSave={handleSaveProfile}
         isLoading={isUserLoading}
+      />
+
+      <EditSiteSettingsModal
+        isOpen={isEditSiteSettingsModalOpen}
+        settings={siteSettings}
+        onClose={() => setIsEditSiteSettingsModalOpen(false)}
+        onSave={handleSaveSiteSettings}
+        isLoading={isSiteSettingsLoading}
       />
     </ProfileContainer>
   );

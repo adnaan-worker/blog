@@ -4,6 +4,7 @@ export { ActivityFeed } from './activity-feed';
 export { QuickActions } from './quick-actions';
 export { AchievementBadges } from './achievement-badges';
 export { EditProfileModal } from './edit-profile-modal';
+export { EditSiteSettingsModal } from './edit-site-settings-modal';
 export { default as NoteManagement } from './note-management';
 export { default as NoteEditor } from './note-editor';
 export { default as ArticleManagement } from './article-management';

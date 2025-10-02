@@ -1,7 +1,8 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { FiEdit, FiSettings, FiDownload, FiPlus, FiBarChart, FiHelpCircle, FiLogOut, FiBookOpen, FiFileText } from 'react-icons/fi';
+import { FiEdit, FiSettings, FiDownload, FiPlus, FiBarChart, FiHelpCircle, FiLogOut, FiBookOpen, FiFileText, FiGlobe } from 'react-icons/fi';
 import { Button } from '@/components/ui';
+import { storage } from '@/utils';
 
 interface QuickAction {
   id: string;
@@ -65,6 +66,10 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ actions, onAction })
     }
   };
 
+  // 获取用户信息检查是否是管理员
+  const userInfo = storage.local.get<any>('user');
+  const isAdmin = userInfo?.user.role === 'admin';
+
   // 默认操作列表
   const defaultActions: QuickAction[] = [
     {
@@ -81,6 +86,14 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ actions, onAction })
       onClick: () => handleAction('view-articles'),
       variant: 'outline',
     },
+    // 仅管理员可见
+    ...(isAdmin ? [{
+      id: 'edit-site-settings',
+      label: '网站设置',
+      icon: <FiGlobe size={16} />,
+      onClick: () => handleAction('edit-site-settings'),
+      variant: 'outline' as const,
+    }] : []),
   ];
 
   const bottomActions: QuickAction[] = [
