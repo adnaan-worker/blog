@@ -144,7 +144,7 @@ const NavLinks: React.FC<NavLinksProps> = ({
                 active={isItemActive(item)}
                 onClick={(e) => {
                   e.preventDefault();
-                  toggleMoreDropdown();
+                  toggleMoreDropdown(e);
                 }}
                 icon={item.icon}
               >

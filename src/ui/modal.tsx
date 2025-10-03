@@ -4,61 +4,40 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX } from 'react-icons/fi';
+import { scrollLock } from '@/utils/scroll-lock';
 
-// 滚动锁定 Hook
+// 滚动锁定 Hook - 使用统一的滚动锁定管理器
 const useScrollLock = (isLocked: boolean) => {
-  const scrollPosition = React.useRef({ x: 0, y: 0 });
-  const originalStyle = React.useRef<any>({});
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
-    if (isLocked) {
-      // 保存当前滚动位置
-      scrollPosition.current = {
-        x: window.scrollX,
-        y: window.scrollY,
-      };
-
-      // 计算滚动条宽度
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-      // 保存原始样式
-      originalStyle.current = {
-        position: document.body.style.position,
-        top: document.body.style.top,
-        left: document.body.style.left,
-        width: document.body.style.width,
-        paddingRight: document.body.style.paddingRight,
-        overflow: document.body.style.overflow,
-      };
-
-      // 应用样式锁定滚动
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollPosition.current.y}px`;
-      document.body.style.left = `-${scrollPosition.current.x}px`;
-      document.body.style.width = '100%';
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.body.style.overflow = 'hidden';
-    } else {
-      // 延迟恢复，等待Modal动画完成
-      const timeoutId = setTimeout(() => {
-        // 使用平滑的方式恢复滚动位置
-        const { x, y } = scrollPosition.current;
-
-        // 先恢复样式，但保持当前滚动位置
-        Object.assign(document.body.style, originalStyle.current);
-
-        // 立即恢复到正确的滚动位置，避免闪烁
-        if (x !== 0 || y !== 0) {
-          window.scrollTo({
-            left: x,
-            top: y,
-            behavior: 'instant', // 使用instant避免动画
-          });
-        }
-      }, 250); // 略长于动画时间(200ms)
-
-      return () => clearTimeout(timeoutId);
+    // 清理之前的定时器
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
+
+    if (isLocked) {
+      scrollLock.lock();
+    } else {
+      // 延迟解锁，等待Modal动画完成
+      timeoutRef.current = setTimeout(() => {
+        scrollLock.unlock();
+        timeoutRef.current = null;
+      }, 250); // 略长于动画时间(200ms)
+    }
+
+    // 组件卸载时确保解锁
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      // 如果当前是锁定状态，立即解锁
+      if (isLocked) {
+        scrollLock.unlock();
+      }
+    };
   }, [isLocked]);
 };
 

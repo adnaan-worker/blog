@@ -472,14 +472,14 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   };
 
   // 切换更多下拉菜单
-  const toggleMoreDropdown = (e: React.MouseEvent<Element, MouseEvent>) => {
-    e.stopPropagation();
+  const toggleMoreDropdown = (e?: React.MouseEvent<Element, MouseEvent>) => {
+    e?.stopPropagation();
     setMoreDropdownOpen(!moreDropdownOpen);
   };
 
   // 切换用户下拉菜单
-  const toggleUserDropdown = (e: React.MouseEvent<Element, MouseEvent>) => {
-    e.stopPropagation();
+  const toggleUserDropdown = (e?: React.MouseEvent<Element, MouseEvent>) => {
+    e?.stopPropagation();
     setUserDropdownOpen(!userDropdownOpen);
   };
 
@@ -554,7 +554,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
 
         {/* 移动端菜单按钮和头像 */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <MobileAvatar onClick={toggleUserDropdown}>
+          <MobileAvatar onClick={(e) => toggleUserDropdown(e)}>
             <img
               src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30"
               alt="用户头像"

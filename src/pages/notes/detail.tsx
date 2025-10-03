@@ -362,18 +362,24 @@ const NoteDetail: React.FC = () => {
   useEffect(() => {
     loadNote();
 
-    // 延迟处理滚动，确保页面完全加载
-    const timer = setTimeout(() => {
-      // 滚动到页面顶部
-      window.scrollTo(0, 0);
+    // 立即滚动到顶部，这是页面切换的正常行为
+    window.scrollTo(0, 0);
 
+    // 延迟处理body样式，确保不与滚动锁定管理器冲突
+    const timer = setTimeout(() => {
       // 确保 body 可以滚动，但不要覆盖滚动锁定管理器的状态
       if (!document.body.style.position || document.body.style.position === 'static') {
         document.body.style.overflow = '';
       }
-    }, 100);
+    }, 50);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      // 组件卸载时确保滚动状态正常
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🧹 手记详情页卸载，检查滚动状态');
+      }
+    };
   }, [id]);
 
   const loadNote = async () => {

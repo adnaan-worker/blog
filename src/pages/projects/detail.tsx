@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiCalendar, FiTag, FiExternalLink, FiGithub, FiCode, FiLink } from 'react-icons/fi';
 import styled from '@emotion/styled';
+import { scrollLock } from '@/utils/scroll-lock';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -441,15 +442,15 @@ const ProjectDetail: React.FC = () => {
   // 打开图片预览
   const openImagePreview = (image: string) => {
     setSelectedImage(image);
-    // 使用滚动锁定管理器而不是直接操作样式
-    // 这里可以添加滚动锁定逻辑，但为了简化，暂时保持原样
-    document.body.style.overflow = 'hidden';
+    // 使用统一的滚动锁定管理器
+    scrollLock.lock();
   };
 
   // 关闭图片预览
   const closeImagePreview = () => {
     setSelectedImage(null);
-    document.body.style.overflow = 'auto';
+    // 使用统一的滚动锁定管理器
+    scrollLock.unlock();
   };
 
   // 项目未找到

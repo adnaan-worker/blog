@@ -194,11 +194,11 @@ const UserMenu: React.FC<UserMenuProps> = ({
   return (
     <div ref={userDropdownRef} style={{ position: 'relative' }}>
       {isLoggedIn ? (
-        <Avatar hasImage onClick={toggleUserDropdown}>
+        <Avatar hasImage onClick={(e) => toggleUserDropdown(e)}>
           {user?.avatar ? <img src={user.avatar} alt={user.username} /> : <FiUser color="var(--text-secondary)" />}
         </Avatar>
       ) : (
-        <Avatar onClick={toggleUserDropdown}>
+        <Avatar onClick={(e) => toggleUserDropdown(e)}>
           <FiUser color="var(--text-secondary)" />
         </Avatar>
       )}
