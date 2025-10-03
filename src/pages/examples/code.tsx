@@ -313,7 +313,14 @@ const Code = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock code={javaScriptSample} language="javascript" showLineNumbers={true} />
+          <CodeBlock
+            code={javaScriptSample}
+            language="javascript"
+            title="JavaScript 示例"
+            showLineNumbers={true}
+            allowCopy={true}
+            allowFullscreen={true}
+          />
         </motion.div>
 
         <Subtitle {...animationProps}>TypeScript 示例</Subtitle>
@@ -322,7 +329,14 @@ const Code = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock code={typescriptSample} language="typescript" showLineNumbers={true} />
+          <CodeBlock
+            code={typescriptSample}
+            language="typescript"
+            title="TypeScript 示例"
+            showLineNumbers={true}
+            allowCopy={true}
+            allowFullscreen={true}
+          />
         </motion.div>
 
         <Subtitle {...animationProps}>React 组件示例</Subtitle>
@@ -331,7 +345,14 @@ const Code = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock code={reactSample} language="tsx" showLineNumbers={true} />
+          <CodeBlock
+            code={reactSample}
+            language="tsx"
+            title="React TSX 示例"
+            showLineNumbers={true}
+            allowCopy={true}
+            allowFullscreen={true}
+          />
         </motion.div>
 
         <Subtitle {...animationProps}>CSS 示例</Subtitle>
@@ -340,7 +361,14 @@ const Code = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock code={cssCode} language="css" showLineNumbers={true} />
+          <CodeBlock
+            code={cssCode}
+            language="css"
+            title="CSS 示例"
+            showLineNumbers={true}
+            allowCopy={true}
+            allowFullscreen={true}
+          />
         </motion.div>
 
         <Subtitle {...animationProps}>Python 示例</Subtitle>
@@ -349,7 +377,14 @@ const Code = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <CodeBlock code={pythonCode} language="python" showLineNumbers={true} />
+          <CodeBlock
+            code={pythonCode}
+            language="python"
+            title="Python 示例"
+            showLineNumbers={true}
+            allowCopy={true}
+            allowFullscreen={true}
+          />
         </motion.div>
 
         <div style={{ marginBottom: '2rem' }}>

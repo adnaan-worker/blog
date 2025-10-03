@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
 import { FiX, FiZoomIn, FiZoomOut, FiRotateCw, FiDownload, FiMaximize2 } from 'react-icons/fi';
+import { scrollLock } from '@/utils/scroll-lock';
 
 interface ImagePreviewProps {
   src: string;
@@ -18,7 +20,7 @@ interface PreviewModalProps {
 }
 
 // 图片容器
-const ImageContainer = styled.div`
+const ImageContainer = styled.span`
   position: relative;
   display: inline-block;
   cursor: pointer;
@@ -37,7 +39,7 @@ const ImageContainer = styled.div`
 `;
 
 // 预览覆盖层
-const PreviewOverlay = styled.div`
+const PreviewOverlay = styled.span`
   position: absolute;
   top: 0;
   left: 0;
@@ -292,7 +294,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, src, alt }
     }
   }, [isOpen, resetTransform]);
 
-  // 简单有效的页面滚动阻止
+  // 页面滚动阻止和键盘事件处理
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (
@@ -313,13 +315,12 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, src, alt }
       // 阻止键盘滚动
       document.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
 
-      // 阻止页面滚动的最简单有效方法
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      // 使用统一的滚动锁定管理器
+      scrollLock.lock();
 
       return () => {
         document.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
-        document.body.style.overflow = originalOverflow;
+        scrollLock.unlock();
       };
     }
   }, [isOpen]);
@@ -386,16 +387,24 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ src, alt, className, style,
 
   return (
     <>
-      <ImageContainer className={className} style={style} onClick={handleImageClick}>
+      <ImageContainer
+        className={className}
+        style={{ ...style, margin: '1.5rem 0', textAlign: 'center' }}
+        onClick={handleImageClick}
+      >
         <Image src={src} alt={alt} loading="lazy" />
         <PreviewOverlay className="preview-overlay">
-          <div className="preview-icon">
+          <span className="preview-icon">
             <FiMaximize2 size={20} />
-          </div>
+          </span>
         </PreviewOverlay>
       </ImageContainer>
 
-      <PreviewModal isOpen={isPreviewOpen} onClose={handleClosePreview} src={src} alt={alt} />
+      {isPreviewOpen &&
+        createPortal(
+          <PreviewModal isOpen={isPreviewOpen} onClose={handleClosePreview} src={src} alt={alt} />,
+          document.body,
+        )}
     </>
   );
 };

@@ -140,9 +140,12 @@ const NavLinks: React.FC<NavLinksProps> = ({
           return (
             <div key={item.path} ref={dropdownRef} style={{ position: 'relative' }}>
               <NavLinkWithHover
-                to="javascript:void(0)"
+                to="#"
                 active={isItemActive(item)}
-                onClick={toggleMoreDropdown}
+                onClick={(e) => {
+                  e.preventDefault();
+                  toggleMoreDropdown();
+                }}
                 icon={item.icon}
               >
                 {item.title}

@@ -7,6 +7,7 @@ import { API, Note } from '@/utils/api';
 import { toast } from '@/ui';
 import RichTextRenderer from '@/components/common/rich-text-renderer';
 import RichTextStats from '@/components/common/rich-text-stats';
+import ImagePreview from '@/components/common/image-preview';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -360,11 +361,19 @@ const NoteDetail: React.FC = () => {
 
   useEffect(() => {
     loadNote();
-    // 滚动到页面顶部
-    window.scrollTo(0, 0);
 
-    // 确保 body 可以滚动
-    document.body.style.overflow = '';
+    // 延迟处理滚动，确保页面完全加载
+    const timer = setTimeout(() => {
+      // 滚动到页面顶部
+      window.scrollTo(0, 0);
+
+      // 确保 body 可以滚动，但不要覆盖滚动锁定管理器的状态
+      if (!document.body.style.position || document.body.style.position === 'static') {
+        document.body.style.overflow = '';
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [id]);
 
   const loadNote = async () => {
@@ -537,35 +546,8 @@ const NoteDetail: React.FC = () => {
       </motion.div>
       <PageHeadGradient />
 
-      {/* 图片预览模态框 */}
-      {previewImage && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.9)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-          }}
-          onClick={() => setPreviewImage(null)}
-        >
-          <img
-            src={previewImage}
-            alt="预览"
-            style={{
-              maxWidth: '90%',
-              maxHeight: '90%',
-              objectFit: 'contain',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+      {/* 图片预览模态框 - 使用统一的ImagePreview组件 */}
+      {previewImage && <ImagePreview src={previewImage} alt="预览" onClick={() => setPreviewImage(null)} />}
     </PageContainer>
   );
 };

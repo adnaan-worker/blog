@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { FiCode, FiEye, FiCopy, FiCheck } from 'react-icons/fi';
-import { CodeBlock } from '@/components/common';
+import { FiCode, FiEye } from 'react-icons/fi';
+import CodeBlock from '@/components/common/code-block';
 
 // 样式组件
 const PreviewContainer = styled.div`
@@ -84,7 +84,7 @@ const DemoArea = styled.div`
 `;
 
 const CodeArea = styled.div<{ visible: boolean }>`
-  max-height: ${({ visible }) => (visible ? '400px' : '0')};
+  max-height: ${({ visible }) => (visible ? '500px' : '0')};
   overflow: hidden;
   transition: max-height 0.3s ease;
   border-top: ${({ visible }) => (visible ? '1px solid var(--border-color)' : 'none')};
@@ -95,21 +95,6 @@ const Description = styled.p`
   font-size: 0.9rem;
   color: var(--text-secondary);
   line-height: 1.5;
-`;
-
-const CopyFeedback = styled.div<{ visible: boolean }>`
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: var(--success-color);
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  opacity: ${({ visible }) => (visible ? 1 : 0)};
-  transform: ${({ visible }) => (visible ? 'translateY(0)' : 'translateY(-10px)')};
-  transition: all 0.2s ease;
-  pointer-events: none;
 `;
 
 // 组件接口
@@ -133,17 +118,6 @@ const CodePreview: React.FC<CodePreviewProps> = ({
   className,
 }) => {
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('复制失败:', error);
-    }
-  };
 
   return (
     <PreviewContainer className={className}>
@@ -157,10 +131,6 @@ const CodePreview: React.FC<CodePreviewProps> = ({
           <ActionButton active={activeTab === 'code'} onClick={() => setActiveTab('code')}>
             <FiCode size={14} />
             代码
-          </ActionButton>
-          <ActionButton onClick={handleCopy}>
-            {copied ? <FiCheck size={14} /> : <FiCopy size={14} />}
-            {copied ? '已复制' : '复制'}
           </ActionButton>
         </PreviewActions>
       </PreviewHeader>
@@ -177,19 +147,7 @@ const CodePreview: React.FC<CodePreviewProps> = ({
         )}
 
         <CodeArea visible={activeTab === 'code'}>
-          <div style={{ position: 'relative' }}>
-            <CodeBlock
-              code={code}
-              language={language}
-              showLineNumbers={true}
-              allowCopy={false} // 我们有自己的复制按钮
-              allowFullscreen={false}
-            />
-            <CopyFeedback visible={copied}>
-              <FiCheck size={12} style={{ marginRight: '0.25rem' }} />
-              已复制到剪贴板
-            </CopyFeedback>
-          </div>
+          <CodeBlock code={code} language={language} showLineNumbers={true} allowCopy={true} allowFullscreen={false} />
         </CodeArea>
       </PreviewContent>
     </PreviewContainer>

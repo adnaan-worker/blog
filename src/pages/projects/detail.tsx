@@ -441,6 +441,8 @@ const ProjectDetail: React.FC = () => {
   // 打开图片预览
   const openImagePreview = (image: string) => {
     setSelectedImage(image);
+    // 使用滚动锁定管理器而不是直接操作样式
+    // 这里可以添加滚动锁定逻辑，但为了简化，暂时保持原样
     document.body.style.overflow = 'hidden';
   };
 

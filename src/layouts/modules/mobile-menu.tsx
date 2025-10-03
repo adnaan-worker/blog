@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { FiLogOut, FiX } from 'react-icons/fi';
 import type { RootState } from '@/store';
+import { scrollLock } from '@/utils/scroll-lock';
 
 // 修改移动端菜单样式
 const MobileMenuContainer = styled(motion.div)`
@@ -227,20 +228,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   // 当菜单打开时锁定背景滚动
   useEffect(() => {
     if (isOpen) {
-      // 保存原始滚动位置
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
+      // 使用统一的滚动锁定管理器
+      scrollLock.lock();
 
       return () => {
-        // 恢复滚动
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
+        scrollLock.unlock();
       };
     }
   }, [isOpen]);

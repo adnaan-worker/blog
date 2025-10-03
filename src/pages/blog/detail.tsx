@@ -354,6 +354,11 @@ const BlogDetail: React.FC = () => {
 
     // 滚动到顶部
     window.scrollTo(0, 0);
+
+    // 确保 body 可以滚动，但不要覆盖滚动锁定管理器的状态
+    if (!document.body.style.position || document.body.style.position === 'static') {
+      document.body.style.overflow = '';
+    }
   }, [id, fetchArticle]);
 
   // 提取文章中的标题并设置导航 - 使用useCallback优化
