@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -22,7 +23,6 @@ import { Button, Input, InfiniteScroll } from '@/components/ui';
 import { toast } from '@/ui';
 import { API, Note, NoteParams, NoteStats } from '@/utils/api';
 import { RichTextParser } from '@/utils/rich-text-parser';
-import NoteEditor from './note-editor';
 import { confirmDialog } from '@/ui';
 
 // 样式组件
@@ -335,6 +335,7 @@ interface NoteManagementProps {
 }
 
 const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
+  const navigate = useNavigate();
   const [notes, setNotes] = useState<Note[]>([]);
   const [stats, setStats] = useState<NoteStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -350,8 +351,6 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
   const [showFilters, setShowFilters] = useState(false);
 
   // 编辑器状态
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   // 加载更多数据
   const loadMoreNotes = useCallback(async () => {
@@ -446,14 +445,12 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
 
   // 处理创建手记
   const handleCreateNote = () => {
-    setEditingNote(null);
-    setIsEditorOpen(true);
+    navigate('/editor/note');
   };
 
   // 处理编辑手记
   const handleEditNote = (note: Note) => {
-    setEditingNote(note);
-    setIsEditorOpen(true);
+    navigate(`/editor/note?id=${note.id}`);
   };
 
   // 处理删除手记
@@ -470,18 +467,6 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
     } catch (error: any) {
       toast.error(error.message || '删除失败');
     }
-  };
-
-  // 处理保存手记
-  const handleSaveNote = (note: Note) => {
-    if (editingNote) {
-      // 更新现有手记
-      setNotes((prev) => prev.map((n) => (n.id === note.id ? note : n)));
-    } else {
-      // 添加新手记
-      setNotes((prev) => [note, ...prev]);
-    }
-    loadStats(); // 重新加载统计
   };
 
   // 处理刷新
@@ -691,20 +676,6 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
           </NotesList>
         </InfiniteScroll>
       </Content>
-
-      <AnimatePresence>
-        {isEditorOpen && (
-          <NoteEditor
-            isOpen={isEditorOpen}
-            note={editingNote}
-            onClose={() => {
-              setIsEditorOpen(false);
-              setEditingNote(null);
-            }}
-            onSave={handleSaveNote}
-          />
-        )}
-      </AnimatePresence>
     </Container>
   );
 };

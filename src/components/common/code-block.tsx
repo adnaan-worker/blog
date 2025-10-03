@@ -20,17 +20,25 @@ const detectLanguage = (code: string): string => {
     { pattern: /\{[^}]*:[^}]*\}|@media|@keyframes|@import|\.[\w-]+\s*\{/, languages: ['css'] },
     { pattern: /<html|<head|<body|<div|<span|<p|<!DOCTYPE|<meta|<link/, languages: ['html'] },
     {
-      pattern: /^\s*[\{\[]/.test(trimmed) && /[\}\]]\s*$/.test(trimmed) && /"[^"]*"\s*:/.test(trimmed),
+      pattern: /^\s*[\{\[]/,
       languages: ['json'],
+      test: () => /^\s*[\{\[]/.test(trimmed) && /[\}\]]\s*$/.test(trimmed) && /"[^"]*"\s*:/.test(trimmed),
     },
     { pattern: /def\s+\w+|import\s+\w+|from\s+\w+\s+import|if\s+__name__\s*==/, languages: ['python'] },
-    { pattern: /^#!/.test(trimmed) || /\$\s*\w+|echo\s+|cd\s+|ls\s+|mkdir\s+/, languages: ['bash'] },
+    {
+      pattern: /^#!|\$\s*\w+|echo\s+|cd\s+|ls\s+|mkdir\s+/,
+      languages: ['bash'],
+      test: () => /^#!/.test(trimmed) || /\$\s*\w+|echo\s+|cd\s+|ls\s+|mkdir\s+/.test(trimmed),
+    },
     { pattern: /SELECT\s+|INSERT\s+INTO|UPDATE\s+|DELETE\s+FROM|CREATE\s+TABLE/i, languages: ['sql'] },
     { pattern: /^#{1,6}\s+|^\*\*[^*]+\*\*|^\*[^*]+\*|^[-*+]\s+|^\d+\.\s+|^>\s+/, languages: ['markdown'] },
   ];
 
-  for (const { pattern, languages } of languagePatterns) {
-    if (pattern.test(trimmed)) {
+  for (const { pattern, languages, test } of languagePatterns) {
+    // 如果有自定义测试函数，使用它；否则使用正则表达式测试
+    const matches = test ? test() : pattern.test(trimmed);
+
+    if (matches) {
       // 对于 React 相关，进一步判断是 TSX 还是 JSX
       if (languages.includes('tsx') && languages.includes('jsx')) {
         return /\.tsx|interface\s+\w+|type\s+\w+\s*=/.test(trimmed) ? 'tsx' : 'jsx';

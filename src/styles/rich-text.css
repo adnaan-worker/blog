@@ -26,8 +26,9 @@
   --font-code: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
-/* 富文本内容专用样式 */
-.rich-text-content {
+/* 富文本内容专用样式 - 同时应用于显示(.rich-text-content)和编辑(.ProseMirror) */
+.rich-text-content,
+.ProseMirror {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.8;
@@ -40,79 +41,58 @@
   hyphens: auto;
 }
 
-/* 代码块容器样式 - 当被 CodeBlock 组件替换后，这些样式不会应用 */
-/* 这些样式仅在未启用代码高亮时使用 */
-.rich-text-content .rich-text-code-block {
-  margin: 1.5rem 0;
-  border-radius: 8px;
-  overflow: hidden;
+/* 代码块样式 */
+.rich-text-content pre,
+.ProseMirror pre {
   background: var(--rich-text-code-bg);
   border: 1px solid var(--rich-text-border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
   font-family: var(--font-code);
   font-size: 14px;
   line-height: 1.5;
 }
 
-.rich-text-content .rich-text-code-block pre {
-  margin: 0;
-  padding: 1rem;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  overflow-x: auto;
-}
-
-.rich-text-content .rich-text-code-block code {
-  background: none !important;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: 0 !important;
-  font-size: inherit !important;
-  font-family: inherit !important;
+.rich-text-content pre code,
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+  font-family: inherit;
   color: var(--rich-text-primary);
 }
 
-/* 代码块容器样式 - CodeBlock 组件的容器 */
-.rich-text-code-container {
-  /* 不添加额外样式，让 CodeBlock 组件完全控制 */
+/* 确保 highlight.js 的语法高亮样式正确应用 */
+.rich-text-content pre code.hljs,
+.ProseMirror pre code.hljs {
+  background: transparent !important;
+  color: inherit !important;
 }
 
-/* 代码高亮主题适配 */
-.rich-text-content pre[class*='language-'] {
-  background: var(--rich-text-code-bg) !important;
-  border: 1px solid var(--rich-text-border);
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 1.5rem 0;
-  overflow-x: auto;
-
-  /* 确保代码块在移动设备上的可读性 */
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* 针对Prism.js的样式调整 */
-.rich-text-content pre[class*='language-'] code {
-  background: none !important;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: 0 !important;
-  font-size: inherit !important;
+/* 支持 highlight.js 的语法高亮类 */
+.rich-text-content pre code .hljs,
+.ProseMirror pre code .hljs {
+  background: transparent !important;
 }
 
 /* 内联代码样式 */
-.rich-text-content .rich-text-inline-code {
+.rich-text-content code,
+.ProseMirror code {
   font-family: var(--font-code);
   background: var(--rich-text-code-bg);
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
   font-size: 0.9em;
-  color: var(--rich-text-primary);
+  color: #e83e8c;
   border: 1px solid var(--rich-text-border);
 }
 
 /* 引用块样式 */
-.rich-text-content .rich-text-quote {
+.rich-text-content blockquote,
+.ProseMirror blockquote {
   margin: 1.5rem 0;
   padding: 1rem 1.5rem;
   border-left: 4px solid var(--rich-text-quote-border);
@@ -120,61 +100,46 @@
   border-radius: 0 8px 8px 0;
   font-style: italic;
   position: relative;
+  color: var(--rich-text-secondary);
+}
+
+.rich-text-content blockquote p,
+.ProseMirror blockquote p {
+  margin: 0.5rem 0;
+}
+
+.rich-text-content blockquote p:first-of-type,
+.ProseMirror blockquote p:first-of-type {
+  margin-top: 0;
+}
+
+.rich-text-content blockquote p:last-child,
+.ProseMirror blockquote p:last-child {
+  margin-bottom: 0;
 }
 
 /* 图片样式 */
-.rich-text-content .rich-text-image {
+.rich-text-content img,
+.ProseMirror img {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
   margin: 1.5rem 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.rich-text-content .rich-text-image:hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: block;
 }
 
 /* 链接样式 */
-.rich-text-content .rich-text-link {
+.rich-text-content a,
+.ProseMirror a {
   color: var(--rich-text-accent);
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: all 0.2s ease;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
 }
 
-.rich-text-content .rich-text-link:hover {
-  border-bottom-color: var(--rich-text-accent);
-}
-
-/* 表格样式 */
-.rich-text-content .rich-text-table-wrapper {
-  margin: 1.5rem 0;
-  overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid var(--rich-text-border);
-}
-
-.rich-text-content .rich-text-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--rich-text-background);
-}
-
-.rich-text-content .rich-text-table th,
-.rich-text-content .rich-text-table td {
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid var(--rich-text-border);
-}
-
-.rich-text-content .rich-text-table th {
-  background: var(--rich-text-background-secondary);
-  font-weight: 600;
+.rich-text-content a:hover,
+.ProseMirror a:hover {
+  opacity: 0.8;
 }
 
 /* 标题样式 */
@@ -183,147 +148,159 @@
 .rich-text-content h3,
 .rich-text-content h4,
 .rich-text-content h5,
-.rich-text-content h6 {
+.rich-text-content h6,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
   color: var(--rich-text-primary);
   font-weight: 600;
   line-height: 1.3;
   margin: 2rem 0 1rem;
 }
 
-.rich-text-content h1 {
-  font-size: 2rem;
+.rich-text-content h1,
+.ProseMirror h1 {
+  font-size: 2.5em;
+  margin-top: 0;
 }
 
-.rich-text-content h2 {
-  font-size: 1.6rem;
-  position: relative;
-  padding-bottom: 0.5rem;
+.rich-text-content h2,
+.ProseMirror h2 {
+  font-size: 2em;
 }
 
-.rich-text-content h2::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 40px;
-  height: 3px;
-  background: var(--rich-text-accent);
-  border-radius: 2px;
+.rich-text-content h3,
+.ProseMirror h3 {
+  font-size: 1.5em;
 }
 
-.rich-text-content h3 {
-  font-size: 1.3rem;
+.rich-text-content h4,
+.ProseMirror h4 {
+  font-size: 1.25em;
 }
 
-/* 段落和列表样式 */
-.rich-text-content p {
+.rich-text-content h5,
+.rich-text-content h6,
+.ProseMirror h5,
+.ProseMirror h6 {
+  font-size: 1.1em;
+}
+
+/* 段落样式 */
+.rich-text-content p,
+.ProseMirror p {
+  margin-top: 0;
   margin-bottom: 1.5rem;
   color: var(--rich-text-secondary);
+  min-height: 1.5em;
+  line-height: 1.8;
 }
 
+.rich-text-content p:last-child,
+.ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* 列表样式 */
 .rich-text-content ul,
-.rich-text-content ol {
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
+.rich-text-content ol,
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 2em;
+  margin: 1.5rem 0;
 }
 
-.rich-text-content li {
-  margin-bottom: 0.5rem;
+.rich-text-content li,
+.ProseMirror li {
+  margin: 0.5em 0;
   color: var(--rich-text-secondary);
+  line-height: 1.8;
+}
+
+.rich-text-content li p,
+.ProseMirror li p {
+  margin: 0.25rem 0;
 }
 
 /* 分割线样式 */
-.rich-text-content hr {
+.rich-text-content hr,
+.ProseMirror hr {
   border: none;
-  height: 1px;
+  height: 2px;
   background: var(--rich-text-border);
-  margin: 2rem 0;
+  margin: 2em 0;
+}
+
+/* 删除线样式 */
+.rich-text-content s,
+.ProseMirror s {
+  text-decoration: line-through;
+  color: var(--rich-text-secondary);
+}
+
+/* 高亮样式 */
+.rich-text-content mark,
+.ProseMirror mark {
+  background: #fef08a;
+  color: #000;
+  padding: 0.1em 0.2em;
+  border-radius: 3px;
+}
+
+[data-theme='dark'] .rich-text-content mark,
+[data-theme='dark'] .ProseMirror mark {
+  background: #fbbf24;
+  color: #000;
 }
 
 /* 滚动条样式 */
-.rich-text-content pre::-webkit-scrollbar {
+.rich-text-content pre::-webkit-scrollbar,
+.ProseMirror pre::-webkit-scrollbar {
   height: 8px;
 }
 
-.rich-text-content pre::-webkit-scrollbar-track {
+.rich-text-content pre::-webkit-scrollbar-track,
+.ProseMirror pre::-webkit-scrollbar-track {
   background: var(--rich-text-background-secondary);
   border-radius: 4px;
 }
 
-.rich-text-content pre::-webkit-scrollbar-thumb {
+.rich-text-content pre::-webkit-scrollbar-thumb,
+.ProseMirror pre::-webkit-scrollbar-thumb {
   background: var(--rich-text-border);
   border-radius: 4px;
 }
 
-.rich-text-content pre::-webkit-scrollbar-thumb:hover {
+.rich-text-content pre::-webkit-scrollbar-thumb:hover,
+.ProseMirror pre::-webkit-scrollbar-thumb:hover {
   background: var(--rich-text-accent);
-}
-
-/* 表格响应式处理 */
-.rich-text-table-wrapper {
-  position: relative;
-}
-
-.rich-text-table-wrapper::after {
-  content: '← 左右滑动查看更多 →';
-  position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  color: var(--rich-text-secondary);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-}
-
-@media (max-width: 768px) {
-  .rich-text-table-wrapper::after {
-    opacity: 1;
-  }
-}
-
-/* 图片懒加载效果 */
-.rich-text-image {
-  transition:
-    opacity 0.3s ease,
-    filter 0.3s ease;
-}
-
-.rich-text-image[loading='lazy'] {
-  filter: blur(5px);
-  opacity: 0.6;
-}
-
-.rich-text-image.loaded {
-  filter: none;
-  opacity: 1;
-}
-
-/* 引用块样式增强 */
-.rich-text-quote {
-  position: relative;
-  overflow: hidden;
 }
 
 /* 打印样式 */
 @media print {
-  .rich-text-content {
+  .rich-text-content,
+  .ProseMirror {
     color: #000 !important;
     background: #fff !important;
   }
 
-  .rich-text-content pre {
+  .rich-text-content pre,
+  .ProseMirror pre {
     background: #f8f9fa !important;
     border: 1px solid #ccc !important;
   }
 
-  .rich-text-content blockquote {
+  .rich-text-content blockquote,
+  .ProseMirror blockquote {
     background: #f8f9fa !important;
     border-left: 4px solid #ccc !important;
   }
 
-  .rich-text-content a {
+  .rich-text-content a,
+  .ProseMirror a {
     color: #000 !important;
     text-decoration: underline !important;
   }
@@ -331,7 +308,8 @@
 
 /* 可访问性增强 */
 @media (prefers-reduced-motion: reduce) {
-  .rich-text-content * {
+  .rich-text-content *,
+  .ProseMirror * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

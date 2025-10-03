@@ -17,6 +17,10 @@ const ProjectDetail = lazy(() => import('@/pages/projects/detail'));
 // 个人中心相关页面
 const Profile = lazy(() => import('@/pages/user/Profile'));
 
+// 编辑器页面
+const ArticleEditor = lazy(() => import('@/pages/editor/article'));
+const NoteEditor = lazy(() => import('@/pages/editor/note'));
+
 // UI文档独立页面
 const UIDocsPage = lazy(() => import('@/pages/ui-docs'));
 
@@ -101,6 +105,23 @@ const router = createHashRouter([
         ),
       },
     ],
+  },
+  // 编辑器独立页面路由（不继承主布局）
+  {
+    path: '/editor/article',
+    element: (
+      <Suspense fallback={<PageLoading />}>
+        <ArticleEditor />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/editor/note',
+    element: (
+      <Suspense fallback={<PageLoading />}>
+        <NoteEditor />
+      </Suspense>
+    ),
   },
   // UI文档独立页面路由（不继承主布局）
   {

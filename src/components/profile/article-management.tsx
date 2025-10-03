@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -20,7 +21,6 @@ import { Button, Input, InfiniteScroll } from '@/components/ui';
 import { toast } from '@/ui';
 import { API, Article, ArticleParams } from '@/utils/api';
 import { RichTextParser } from '@/utils/rich-text-parser';
-import ArticleEditor from './article-editor';
 import { confirmDialog } from '@/ui';
 
 // 样式组件
@@ -360,6 +360,7 @@ interface ArticleStats {
 }
 
 const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
+  const navigate = useNavigate();
   const [articles, setArticles] = useState<Article[]>([]);
   const [stats, setStats] = useState<ArticleStats>({
     totalArticles: 0,
@@ -381,8 +382,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
   const [showFilters, setShowFilters] = useState(false);
 
   // 编辑器状态
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
 
   // 加载更多数据
   const loadMoreArticles = useCallback(async () => {
@@ -479,14 +478,12 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
 
   // 处理创建文章
   const handleCreateArticle = () => {
-    setEditingArticle(null);
-    setIsEditorOpen(true);
+    navigate('/editor/article');
   };
 
   // 处理编辑文章
   const handleEditArticle = (article: Article) => {
-    setEditingArticle(article);
-    setIsEditorOpen(true);
+    navigate(`/editor/article?id=${article.id}`);
   };
 
   // 处理删除文章
@@ -503,18 +500,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
     } catch (error: any) {
       toast.error(error.message || '删除失败');
     }
-  };
-
-  // 处理保存文章
-  const handleSaveArticle = (article: Article) => {
-    if (editingArticle) {
-      // 更新现有文章
-      setArticles((prev) => prev.map((a) => (a.id === article.id ? article : a)));
-    } else {
-      // 添加新文章
-      setArticles((prev) => [article, ...prev]);
-    }
-    calculateStats(articles);
   };
 
   // 处理刷新
@@ -699,20 +684,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
           </ArticlesList>
         </InfiniteScroll>
       </Content>
-
-      <AnimatePresence>
-        {isEditorOpen && (
-          <ArticleEditor
-            isOpen={isEditorOpen}
-            article={editingArticle}
-            onClose={() => {
-              setIsEditorOpen(false);
-              setEditingArticle(null);
-            }}
-            onSave={handleSaveArticle}
-          />
-        )}
-      </AnimatePresence>
     </Container>
   );
 };

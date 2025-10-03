@@ -232,7 +232,7 @@ export class RichTextParser {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
-      return `<div class="rich-text-code-block" data-language="${lang}"><pre><code>${escapedCode}</code></pre></div>`;
+      return `<pre><code class="language-${lang}">${escapedCode}</code></pre>`;
     });
 
     // 处理内联代码
@@ -375,7 +375,7 @@ export class RichTextParser {
     }
 
     // 处理已有的HTML内容，添加必要的类名
-    // 处理代码块
+    // 处理代码块 - 保持原始格式，只添加必要的类名
     styledHtml = styledHtml.replace(
       /<pre([^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi,
       (match, preAttr, codeAttr, code) => {
@@ -383,11 +383,8 @@ export class RichTextParser {
           return match;
         }
 
-        // 提取语言
-        const langMatch = (preAttr + codeAttr).match(/(?:class|data-language)=["'](?:language-)?([^"']*)['"]/);
-        const lang = langMatch ? langMatch[1] : 'text';
-
-        return `<div class="rich-text-code-block" data-language="${lang}"><pre><code>${code}</code></pre></div>`;
+        // 保持原始格式，不包装
+        return match;
       },
     );
 

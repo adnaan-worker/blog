@@ -1,4 +1,5 @@
 import { API, AIWritingParams, AIGenerateParams, AITaskStatus } from './api';
+import { RichTextParser } from './rich-text-parser';
 
 /**
  * AI写作助手工具类
@@ -42,7 +43,7 @@ export class AIWritingHelper {
     };
 
     const response = await API.ai.generate(params);
-    return response.data.content;
+    return this.processContentForRichText(response.data.content);
   }
 
   /**
@@ -60,7 +61,7 @@ export class AIWritingHelper {
     };
 
     const response = await API.ai.generate(params);
-    return response.data.content;
+    return this.processContentForRichText(response.data.content);
   }
 
   /**
@@ -76,7 +77,7 @@ export class AIWritingHelper {
     };
 
     const response = await API.ai.generate(params);
-    return response.data.content;
+    return this.processContentForRichText(response.data.content);
   }
 
   /**
@@ -94,7 +95,7 @@ export class AIWritingHelper {
     };
 
     const response = await API.ai.generate(params);
-    return response.data.content;
+    return this.processContentForRichText(response.data.content);
   }
 
   /**
@@ -369,6 +370,56 @@ export class AIWritingHelper {
   async checkServiceStatus() {
     const response = await API.ai.getStatus();
     return response.data;
+  }
+
+  /**
+   * 处理内容格式，确保符合富文本组件要求
+   * @param content 原始内容
+   * @returns 处理后的内容
+   */
+  private processContentForRichText(content: string): string {
+    if (!content || typeof content !== 'string') {
+      return '<div class="rich-text-content"><p>内容为空</p></div>';
+    }
+
+    let processedContent = content.trim();
+
+    // 如果内容已经是HTML格式且包含rich-text-content类，直接返回
+    if (processedContent.includes('class="rich-text-content"')) {
+      return processedContent;
+    }
+
+    // 如果内容包含Markdown语法，转换为HTML
+    if (this.isMarkdownContent(processedContent)) {
+      processedContent = RichTextParser.markdownToHtml(processedContent);
+    }
+
+    // 使用统一的富文本处理工具添加样式和包装
+    processedContent = RichTextParser.addContentStyles(processedContent);
+
+    return processedContent;
+  }
+
+  /**
+   * 判断内容是否为Markdown格式
+   * @param content 内容
+   * @returns 是否为Markdown
+   */
+  private isMarkdownContent(content: string): boolean {
+    const markdownPatterns = [
+      /^#{1,6}\s+/m, // 标题
+      /\*\*[^*]+\*\*/, // 粗体
+      /\*[^*\n]+\*/, // 斜体
+      /^[-*+]\s+/m, // 无序列表
+      /^\d+\.\s+/m, // 有序列表
+      /^>\s+/m, // 引用
+      /```[\s\S]*?```/, // 代码块
+      /`[^`\n]+`/, // 内联代码
+      /\[.+?\]\(.+?\)/, // 链接
+      /!\[.*?\]\(.+?\)/, // 图片
+    ];
+
+    return markdownPatterns.some((pattern) => pattern.test(content));
   }
 }
 

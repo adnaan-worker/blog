@@ -127,11 +127,8 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   const processedContent = useMemo(() => {
     if (!content) return '';
 
-    // 使用您现有的富文本解析器进行基础处理
-    const sanitized = RichTextParser.sanitizeHtml(content);
-    const styled = RichTextParser.addContentStyles(sanitized);
-
-    return styled;
+    // 使用统一的富文本处理工具
+    return RichTextParser.addContentStyles(content);
   }, [content]);
 
   // 提取目录
@@ -166,7 +163,20 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
           element.children?.some((child: any) => child.name === 'code')
         ) {
           const codeElement = element.children?.find((child: any) => child.name === 'code') as any;
-          let language = element.attribs?.['data-language'] || '';
+          let language = '';
+
+          // 从 pre 标签的 data-language 属性获取
+          if (element.attribs?.['data-language']) {
+            language = element.attribs['data-language'];
+          }
+
+          // 从 pre 标签的 class 中提取语言
+          if (!language && element.attribs?.class) {
+            const classMatch = element.attribs.class.match(/language-(\w+)/);
+            if (classMatch) {
+              language = classMatch[1];
+            }
+          }
 
           // 从 code 标签的 class 中提取语言
           if (!language && codeElement?.attribs?.class) {
@@ -178,15 +188,15 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
 
           if (codeElement?.children) {
             // 提取文本内容
-            const extractText = (node: any): string => {
+            const extractTextFromNode = (node: any): string => {
               if (node.type === 'text') return node.data;
               if (node.children) {
-                return node.children.map(extractText).join('');
+                return node.children.map(extractTextFromNode).join('');
               }
               return '';
             };
 
-            const code = codeElement.children.map(extractText).join('');
+            const code = codeElement.children.map(extractTextFromNode).join('');
 
             // 解码 HTML 实体
             const decodedCode = code
@@ -242,6 +252,16 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
         if (element.name === 'code' && element.attribs?.class?.includes('rich-text-inline-code')) {
           const text = element.children?.map((child: any) => (child.type === 'text' ? child.data : '')).join('') || '';
           return <code className="hljs-inline">{text}</code>;
+        }
+
+        // 处理删除线
+        if (element.name === 's' || element.name === 'del') {
+          return <s>{domToReact(element.children as any, parserOptions)}</s>;
+        }
+
+        // 处理高亮
+        if (element.name === 'mark') {
+          return <mark>{domToReact(element.children as any, parserOptions)}</mark>;
         }
 
         // 默认返回 undefined，让解析器使用默认处理

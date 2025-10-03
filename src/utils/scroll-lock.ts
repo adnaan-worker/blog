@@ -30,21 +30,11 @@ class ScrollLockManager {
       return;
     }
 
-    // 调试信息
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔒 锁定滚动，当前锁定数:', this.lockCount);
-    }
-
     // 保存当前滚动位置
     this.scrollPosition = {
       x: window.scrollX,
       y: window.scrollY,
     };
-
-    // 调试信息
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📍 保存滚动位置:', this.scrollPosition);
-    }
 
     // 计算滚动条宽度
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -75,13 +65,6 @@ class ScrollLockManager {
    */
   public unlock(): void {
     this.lockCount = Math.max(0, this.lockCount - 1);
-
-    // 调试信息
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔓 解锁滚动，当前锁定数:', this.lockCount);
-      console.log('📍 准备恢复滚动位置:', this.scrollPosition);
-      console.log('🔍 当前锁定状态:', this.locked);
-    }
 
     // 如果还有其他锁，不恢复
     if (this.lockCount > 0) {
@@ -114,21 +97,12 @@ class ScrollLockManager {
     this.locked = false;
     this.originalStyle = {};
     this.scrollPosition = { x: 0, y: 0 };
-
-    // 调试信息
-    if (process.env.NODE_ENV === 'development') {
-      console.log('✅ 滚动解锁完成');
-    }
   }
 
   /**
    * 强制解锁（用于清理）
    */
   public forceUnlock(): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🚨 强制解锁滚动，当前锁定数:', this.lockCount);
-    }
-
     this.lockCount = 0;
     this.locked = false;
 
@@ -203,12 +177,6 @@ if (typeof window !== 'undefined') {
       scrollLock.forceUnlock();
     }
   });
-
-  // 添加全局调试方法，方便在控制台调试
-  (window as any).scrollLockDebug = () => {
-    console.log('🔍 滚动锁定调试信息:', scrollLock.getDebugInfo());
-  };
-
   // 添加强制解锁方法，方便在控制台调试
   (window as any).forceUnlockScroll = () => {
     console.log('🚨 手动强制解锁滚动');

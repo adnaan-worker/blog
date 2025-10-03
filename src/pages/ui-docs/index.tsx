@@ -8,8 +8,6 @@ import { toast } from '@/ui';
 import CodePreview from '@/components/ui/docs/code-preview';
 import PropsTable from '@/components/ui/docs/props-table';
 import RichTextRenderer from '@/components/common/rich-text-renderer';
-import TextEditor from '@/components/common/text-editor';
-import { testRichTextParser } from '@/utils/rich-text-parser';
 import {
   getAllComponentDocs,
   groupComponentsByCategory,
@@ -866,66 +864,6 @@ const UIDocsPage: React.FC = () => {
                   <ComponentContent>
                     <div style={{ marginBottom: '2rem' }}>
                       <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>测试内容：</h4>
-
-                      {/* 调试按钮 */}
-                      <div style={{ marginBottom: '1rem' }}>
-                        <Button
-                          variant="primary"
-                          onClick={() => {
-                            const testContent = `# ECMAScript 2015 (ES6) 新特性概览
-
-ECMAScript 2015，通常称为 ES6，为 JavaScript 语言带来了大量的更新和改进。这些新特性极大地增强了语言的语法，提高了开发效率和代码的可读性。
-
-## 主要新特性
-
-以下是 ES6 引入的一些激动人心的新特性：
-
-- **箭头函数** (\`=>\`): 简化了函数的书写方式，尤其适合匿名函数的场景。
-- **类** (\`class\`): 引入了类的概念，提供了更接近传统面向对象编程的语法。
-- **模块** (\`import\`/\`export\`): 支持模块的导入导出，有利于代码的封装和组织。
-
-### 箭头函数
-
-箭头函数提供了一种更简洁的方式来写函数表达式。
-
-\`\`\`javascript
-// 传统函数表达式
-const add = function(a, b) {
-  return a + b;
-};
-
-// 箭头函数
-const add = (a, b) => a + b;
-\`\`\`
-
-### 类
-
-类的引入使得创建构造器和继承更加直观。
-
-\`\`\`javascript
-class Person {
-  constructor(name) {
-    this.name = name;
-  }
-  greet() {
-    return \`Hello, my name is \${this.name}!\`;
-  }
-}
-
-const person = new Person('Alice');
-console.log(person.greet());
-\`\`\`
-
-## 结论
-
-ES6 的这些新特性为 JavaScript 开发者提供了更强大的工具集，使代码更清晰、更易于维护。`;
-
-                            testRichTextParser(testContent);
-                          }}
-                        >
-                          测试解析器
-                        </Button>
-                      </div>
 
                       <RichTextRenderer
                         content={`# React Hooks：革新性的组件编写方式

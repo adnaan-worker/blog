@@ -5,6 +5,7 @@ import { Button } from '@/components/ui';
 import AITaskMonitor from './ai-task-monitor';
 import { aiWritingHelper } from '@/utils/ai-writing-helper';
 import { API } from '@/utils/api';
+import { RichTextParser } from '@/utils/rich-text-parser';
 
 // 样式组件
 const ControllerContainer = styled.div`
@@ -195,6 +196,48 @@ const AI_ACTIONS = [
   },
 ];
 
+// 内容处理函数
+const processContentForRichText = (content: string): string => {
+  if (!content || typeof content !== 'string') {
+    return '<div class="rich-text-content"><p>内容为空</p></div>';
+  }
+
+  let processedContent = content.trim();
+
+  // 如果内容已经是HTML格式且包含rich-text-content类，直接返回
+  if (processedContent.includes('class="rich-text-content"')) {
+    return processedContent;
+  }
+
+  // 如果内容包含Markdown语法，转换为HTML
+  if (isMarkdownContent(processedContent)) {
+    processedContent = RichTextParser.markdownToHtml(processedContent);
+  }
+
+  // 使用统一的富文本处理工具添加样式和包装
+  processedContent = RichTextParser.addContentStyles(processedContent);
+
+  return processedContent;
+};
+
+// 判断内容是否为Markdown格式
+const isMarkdownContent = (content: string): boolean => {
+  const markdownPatterns = [
+    /^#{1,6}\s+/m, // 标题
+    /\*\*[^*]+\*\*/, // 粗体
+    /\*[^*\n]+\*/, // 斜体
+    /^[-*+]\s+/m, // 无序列表
+    /^\d+\.\s+/m, // 有序列表
+    /^>\s+/m, // 引用
+    /```[\s\S]*?```/, // 代码块
+    /`[^`\n]+`/, // 内联代码
+    /\[.+?\]\(.+?\)/, // 链接
+    /!\[.*?\]\(.+?\)/, // 图片
+  ];
+
+  return markdownPatterns.some((pattern) => pattern.test(content));
+};
+
 const AIAgentController: React.FC<AIAgentControllerProps> = ({ content, onContentUpdate, onStatusChange }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [tasks, setTasks] = useState<AITask[]>([]);
@@ -264,7 +307,9 @@ const AIAgentController: React.FC<AIAgentControllerProps> = ({ content, onConten
             const taskPromise = await getAsyncTaskPromise(actionType, content, options);
             result = await new Promise<string>((resolve, reject) => {
               taskPromise.onComplete((taskResult: string) => {
-                resolve(taskResult);
+                // 确保返回的内容符合富文本组件要求
+                const processedResult = processContentForRichText(taskResult);
+                resolve(processedResult);
               });
 
               // 模拟进度更新
@@ -325,7 +370,7 @@ const AIAgentController: React.FC<AIAgentControllerProps> = ({ content, onConten
         setIsProcessing(false);
       }
     },
-    [content, options, onContentUpdate],
+    [options, onContentUpdate],
   );
 
   // 获取异步任务Promise
@@ -336,9 +381,9 @@ const AIAgentController: React.FC<AIAgentControllerProps> = ({ content, onConten
       case 'improve':
         return await aiWritingHelper.improveText(content, '提高可读性和逻辑性');
       case 'expand':
-        return await aiWritingHelper.expandText(content, options.length);
+        return await aiWritingHelper.expandContent(content, options.length);
       case 'summarize':
-        return await aiWritingHelper.summarizeText(content, options.length);
+        return await aiWritingHelper.summarizeContent(content, options.length);
       default:
         throw new Error(`不支持的异步任务类型: ${actionType}`);
     }
@@ -352,7 +397,10 @@ const AIAgentController: React.FC<AIAgentControllerProps> = ({ content, onConten
   // 任务完成回调
   const handleTaskComplete = useCallback(
     (taskId: string, result: string) => {
-      onContentUpdate(result);
+      // 只有当结果真正改变时才更新内容
+      if (result) {
+        onContentUpdate(result);
+      }
     },
     [onContentUpdate],
   );
