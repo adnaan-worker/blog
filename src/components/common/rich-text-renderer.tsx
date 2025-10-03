@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import styled from '@emotion/styled';
-import { createRoot, Root } from 'react-dom/client';
+import parse, { HTMLReactParserOptions, Element, domToReact } from 'html-react-parser';
 import { RichTextParser } from '@/utils/rich-text-parser';
 import CodeBlock from './code-block';
 import ImagePreview from './image-preview';
@@ -121,6 +121,7 @@ const RichTextContainer = styled.div`
     }
 
     /* 引用样式 */
+    blockquote,
     .rich-text-quote {
       margin: 1.5rem 0;
       padding: 1rem 1.5rem;
@@ -151,6 +152,7 @@ const RichTextContainer = styled.div`
     }
 
     /* 内联代码样式 */
+    code,
     .rich-text-inline-code {
       font-family: var(--font-code);
       background: var(--bg-secondary);
@@ -162,6 +164,7 @@ const RichTextContainer = styled.div`
     }
 
     /* 链接样式 */
+    a,
     .rich-text-link {
       color: var(--accent-color);
       text-decoration: none;
@@ -265,6 +268,7 @@ const RichTextContainer = styled.div`
         padding-left: 1.5rem;
       }
 
+      blockquote,
       .rich-text-quote {
         padding: 0.75rem 1rem;
         margin: 1rem 0;
@@ -281,141 +285,11 @@ const RichTextContainer = styled.div`
 interface RichTextRendererProps {
   content: string;
   className?: string;
-  mode?: 'article' | 'note' | 'comment'; // 不同模式有不同的渲染行为
+  mode?: 'article' | 'note' | 'comment';
   enableCodeHighlight?: boolean;
   enableImagePreview?: boolean;
   enableTableOfContents?: boolean;
   onImageClick?: (src: string) => void;
-}
-
-// React组件渲染管理器
-class ComponentRenderer {
-  private roots: Map<Element, Root> = new Map();
-  private cache: Map<string, Element> = new Map();
-  private isCleaningUp: boolean = false;
-
-  renderCodeBlock(container: Element, code: string, language: string) {
-    try {
-      // 创建缓存键
-      const cacheKey = `code_${code.length}_${language}_${Date.now()}`;
-
-      // 清理可能存在的旧组件
-      const existingRoot = this.roots.get(container);
-      if (existingRoot) {
-        try {
-          existingRoot.unmount();
-        } catch (error) {
-          console.warn('清理旧代码块组件失败:', error);
-        }
-      }
-
-      const root = createRoot(container);
-      this.roots.set(container, root);
-
-      // 使用Promise确保组件渲染完成
-      return new Promise<void>((resolve) => {
-        root.render(
-          React.createElement(CodeBlock, {
-            code: code.trim(),
-            language: language,
-            showLineNumbers: true,
-            allowCopy: true,
-            allowFullscreen: true,
-            title: language ? `${language.toUpperCase()} 代码` : undefined,
-          }),
-        );
-
-        // 等待组件渲染完成
-        setTimeout(() => {
-          this.cache.set(cacheKey, container);
-          resolve();
-        }, 20);
-      });
-    } catch (error) {
-      console.warn('渲染代码块失败:', error);
-      return Promise.resolve();
-    }
-  }
-
-  renderImagePreview(container: Element, src: string, alt: string, onClick?: () => void) {
-    try {
-      // 清理可能存在的旧组件
-      const existingRoot = this.roots.get(container);
-      if (existingRoot) {
-        try {
-          existingRoot.unmount();
-        } catch (error) {
-          console.warn('清理旧图片组件失败:', error);
-        }
-      }
-
-      const root = createRoot(container);
-      this.roots.set(container, root);
-
-      return new Promise<void>((resolve) => {
-        root.render(
-          React.createElement(ImagePreview, {
-            src,
-            alt,
-            onClick,
-          }),
-        );
-
-        // 等待组件渲染完成
-        setTimeout(() => {
-          resolve();
-        }, 10);
-      });
-    } catch (error) {
-      console.warn('渲染图片预览失败:', error);
-      return Promise.resolve();
-    }
-  }
-
-  // 添加公共方法检查是否有组件需要清理
-  hasComponents(): boolean {
-    return this.roots.size > 0;
-  }
-
-  cleanup() {
-    if (this.isCleaningUp) return;
-    this.isCleaningUp = true;
-
-    // 使用 setTimeout 来异步清理，避免在渲染过程中同步卸载
-    setTimeout(() => {
-      this.roots.forEach((root, container) => {
-        try {
-          // 检查容器是否仍然在DOM中
-          if (container.isConnected) {
-            root.unmount();
-          }
-        } catch (error) {
-          console.warn('清理React组件时出错:', error);
-        }
-      });
-
-      this.roots.clear();
-      this.cache.clear();
-      this.isCleaningUp = false;
-    }, 0);
-  }
-
-  // 添加安全的单个组件清理方法
-  cleanupComponent(container: Element) {
-    const root = this.roots.get(container);
-    if (root) {
-      setTimeout(() => {
-        try {
-          if (container.isConnected) {
-            root.unmount();
-          }
-          this.roots.delete(container);
-        } catch (error) {
-          console.warn('清理单个React组件时出错:', error);
-        }
-      }, 0);
-    }
-  }
 }
 
 const RichTextRenderer: React.FC<RichTextRendererProps> = ({
@@ -427,15 +301,12 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   enableTableOfContents = false,
   onImageClick,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const rendererRef = useRef<ComponentRenderer>(new ComponentRenderer());
-  const lastContentRef = useRef<string>('');
-  const isProcessingRef = useRef<boolean>(false);
-
   // 处理内容样式化和安全清理
   const processedContent = useMemo(() => {
+    if (!content) return '';
     const sanitized = RichTextParser.sanitizeHtml(content);
-    return RichTextParser.addContentStyles(sanitized);
+    const styled = RichTextParser.addContentStyles(sanitized);
+    return styled;
   }, [content]);
 
   // 提取目录
@@ -456,180 +327,106 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
     return headings;
   }, [processedContent, enableTableOfContents]);
 
-  // 防抖渲染逻辑
-  useEffect(() => {
-    if (!containerRef.current) return;
+  // 解析 HTML 为 React 元素（使用 useMemo 缓存整个解析结果）
+  const parsedContent = useMemo(() => {
+    if (!processedContent) return null;
 
-    const container = containerRef.current;
-    const renderer = rendererRef.current;
+    // 计数器，用于生成唯一的 key
+    let codeBlockCounter = 0;
+    let imageCounter = 0;
 
-    let rafId: number;
-    let isMounted = true;
+    // HTML 解析选项
+    const parserOptions: HTMLReactParserOptions = {
+      replace: (domNode) => {
+        if (!(domNode instanceof Element)) return;
 
-    const processComponents = async () => {
-      if (isProcessingRef.current || !isMounted) {
-        return;
-      }
+        const element = domNode as Element;
 
-      // 检查内容是否真的变化了
-      if (lastContentRef.current === processedContent) {
-        return;
-      }
+        // 处理代码块
+        if (enableCodeHighlight && element.attribs?.class?.includes('rich-text-code-block')) {
+          const language = element.attribs['data-language'] || 'text';
 
-      isProcessingRef.current = true;
-      lastContentRef.current = processedContent;
+          // 从 pre > code 中提取代码内容
+          const preElement = element.children?.find((child: any) => child.name === 'pre') as any;
+          const codeElement = preElement?.children?.find((child: any) => child.name === 'code') as any;
 
-      try {
-        // 等待DOM完全更新
-        await new Promise((resolve) => setTimeout(resolve, 10));
+          if (codeElement?.children) {
+            // 提取文本内容
+            const extractText = (node: any): string => {
+              if (node.type === 'text') return node.data;
+              if (node.children) {
+                return node.children.map(extractText).join('');
+              }
+              return '';
+            };
 
-        if (!isMounted) return;
+            const code = codeElement.children.map(extractText).join('');
 
-        // 只有在内容真正变化时才清理旧组件
-        if (renderer.hasComponents()) {
-          renderer.cleanup();
-          // 等待清理完成
-          await new Promise((resolve) => setTimeout(resolve, 50));
-        }
+            // 解码 HTML 实体
+            const decodedCode = code
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, '&')
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'");
 
-        if (!isMounted) return;
-
-        // 批量处理代码块
-        if (enableCodeHighlight) {
-          const codeBlocks = Array.from(container.querySelectorAll('.rich-text-code-block'));
-
-          for (const block of codeBlocks) {
-            if (!isMounted) break;
-
-            const language = block.getAttribute('data-language') || '';
-
-            // 尝试从不同的结构中提取代码内容
-            let code = '';
-
-            // 检查是否有 pre > code 结构
-            const preElement = block.querySelector('pre');
-            const codeElement = preElement?.querySelector('code') || block.querySelector('code');
-
-            if (codeElement) {
-              code = codeElement.textContent || '';
-            } else {
-              // 回退到直接获取文本内容
-              code = block.textContent || '';
-            }
-
-            if (!code.trim()) {
-              continue; // 跳过空代码块
-            }
-
-            const codeContainer = document.createElement('div');
-            codeContainer.style.margin = '1.5rem 0';
-            codeContainer.className = 'rich-text-code-container';
-
-            // 先替换DOM元素
-            block.parentNode?.replaceChild(codeContainer, block);
-
-            // 等待DOM更新
-            await new Promise((resolve) => requestAnimationFrame(resolve));
-
-            if (!isMounted) break;
-
-            // 渲染React组件
-            await renderer.renderCodeBlock(codeContainer, code, language);
-          }
-        }
-
-        if (!isMounted) return;
-
-        // 批量处理图片
-        if (enableImagePreview) {
-          const images = Array.from(container.querySelectorAll('.rich-text-image'));
-
-          for (const img of images) {
-            if (!isMounted) break;
-
-            const src = img.getAttribute('src');
-            const alt = img.getAttribute('alt') || '';
-
-            if (!src) continue; // 跳过无src的图片
-
-            const imageContainer = document.createElement('div');
-            imageContainer.style.margin = '1.5rem 0';
-            imageContainer.style.textAlign = 'center';
-            imageContainer.className = 'rich-text-image-container';
-
-            // 先替换DOM元素
-            img.parentNode?.replaceChild(imageContainer, img);
-
-            // 等待DOM更新
-            await new Promise((resolve) => requestAnimationFrame(resolve));
-
-            if (!isMounted) break;
-
-            // 渲染React组件
-            await renderer.renderImagePreview(
-              imageContainer,
-              src,
-              alt,
-              onImageClick ? () => onImageClick(src) : undefined,
+            return (
+              <CodeBlock
+                key={`code-${codeBlockCounter++}`}
+                code={decodedCode}
+                language={language}
+                showLineNumbers={true}
+                allowCopy={true}
+                allowFullscreen={true}
+              />
             );
           }
         }
 
-        if (!isMounted) return;
+        // 处理图片
+        if (enableImagePreview && element.name === 'img' && element.attribs?.class?.includes('rich-text-image')) {
+          const src = element.attribs.src;
+          const alt = element.attribs.alt || '';
 
-        // 一次性设置所有标题锚点
-        if (enableTableOfContents && tableOfContents.length > 0) {
-          const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-          headings.forEach((heading, index) => {
-            if (tableOfContents[index]) {
-              heading.id = tableOfContents[index].id;
-            }
-          });
+          if (src) {
+            return (
+              <div key={`image-${imageCounter++}`} style={{ margin: '1.5rem 0', textAlign: 'center' }}>
+                <ImagePreview src={src} alt={alt} onClick={onImageClick ? () => onImageClick(src) : undefined} />
+              </div>
+            );
+          }
         }
 
-        // 设置模式属性
-        container.setAttribute('data-mode', mode);
-      } catch (error) {
-        console.warn('RichTextRenderer: 组件渲染失败', error);
-      } finally {
-        isProcessingRef.current = false;
-      }
+        // 处理 h2 标题（文章模式）
+        if (mode === 'article' && element.name === 'h2' && element.children) {
+          const text = element.children.map((child: any) => (child.type === 'text' ? child.data : '')).join('');
+          const id = `heading-${text
+            ?.toLowerCase()
+            .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
+            .substring(0, 50)}`;
+
+          return (
+            <h2 id={id} className="article-heading">
+              {domToReact(element.children as any, parserOptions)}
+            </h2>
+          );
+        }
+
+        // 默认返回 undefined，让解析器使用默认处理
+        return undefined;
+      },
     };
 
-    // 使用 requestAnimationFrame 确保在下一帧渲染
-    rafId = requestAnimationFrame(() => {
-      processComponents();
-    });
-
-    return () => {
-      isMounted = false;
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
-      // 异步清理，避免渲染冲突
-      if (!isProcessingRef.current) {
-        setTimeout(() => renderer.cleanup(), 100);
-      }
-    };
-  }, [
-    processedContent,
-    enableCodeHighlight,
-    enableImagePreview,
-    enableTableOfContents,
-    onImageClick,
-    tableOfContents,
-    mode,
-  ]);
-
-  // 组件卸载时清理
-  useEffect(() => {
-    return () => {
-      rendererRef.current.cleanup();
-    };
-  }, []);
+    try {
+      return parse(processedContent, parserOptions);
+    } catch (error) {
+      console.error('解析 HTML 失败:', error);
+      return <div>内容解析失败</div>;
+    }
+  }, [processedContent, enableCodeHighlight, enableImagePreview, onImageClick, mode]);
 
   return (
-    <RichTextContainer className={className} ref={containerRef}>
+    <RichTextContainer className={className} data-mode={mode}>
       {/* 目录 */}
       {enableTableOfContents && tableOfContents.length > 0 && (
         <div
@@ -669,7 +466,7 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
       )}
 
       {/* 主要内容 */}
-      <div dangerouslySetInnerHTML={{ __html: processedContent }} />
+      {parsedContent}
     </RichTextContainer>
   );
 };

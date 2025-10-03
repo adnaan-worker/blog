@@ -9,6 +9,7 @@
     "build:type-check": "tsc --noEmit && vite build",
     "build:no-type-check": "node ./scripts/build-no-type-check.js",
     "lint": "eslint .",
+    "format:all": "prettier --write \"src/**/*.{js,ts,tsx,html,css}\"",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "axios": "^1.8.4",
     "colorjs.io": "^0.5.2",
     "framer-motion": "^12.7.4",
+    "html-react-parser": "^5.2.6",
     "live2d-widget": "^3.1.4",
     "lucide-react": "^0.503.0",
     "react": "^19.0.0",
@@ -47,6 +49,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "prettier": "^3.6.2",
     "rollup-plugin-visualizer": "^5.14.0",
     "terser": "^5.39.0",
     "typescript": "~5.7.2",

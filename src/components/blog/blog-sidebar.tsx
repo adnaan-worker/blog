@@ -186,19 +186,14 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
   onSortClick,
   sortOptions,
   viewMode = 'timeline',
-  onViewModeChange
+  onViewModeChange,
 }) => {
   return (
     <SidebarContainer>
       <SidebarCard>
         <h3>搜索文章</h3>
         <div style={{ position: 'relative' }}>
-          <SearchInput
-            type="text"
-            placeholder="搜索文章..."
-            value={searchQuery}
-            onChange={onSearchChange}
-          />
+          <SearchInput type="text" placeholder="搜索文章..." value={searchQuery} onChange={onSearchChange} />
           <FiSearch
             style={{
               position: 'absolute',
@@ -216,16 +211,10 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
         <SidebarCard>
           <h3>查看方式</h3>
           <ViewToggleContainer>
-            <ViewToggleButton
-              active={viewMode === 'timeline'}
-              onClick={() => onViewModeChange('timeline')}
-            >
+            <ViewToggleButton active={viewMode === 'timeline'} onClick={() => onViewModeChange('timeline')}>
               时间线视图
             </ViewToggleButton>
-            <ViewToggleButton
-              active={viewMode === 'card'}
-              onClick={() => onViewModeChange('card')}
-            >
+            <ViewToggleButton active={viewMode === 'card'} onClick={() => onViewModeChange('card')}>
               卡片视图
             </ViewToggleButton>
           </ViewToggleContainer>
@@ -252,11 +241,7 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
         <h3>热门标签</h3>
         <TagCloud>
           {tags.map((tag) => (
-            <TagItem
-              key={tag}
-              active={selectedTag === tag}
-              onClick={() => onTagClick(tag)}
-            >
+            <TagItem key={tag} active={selectedTag === tag} onClick={() => onTagClick(tag)}>
               {tag}
             </TagItem>
           ))}
@@ -267,11 +252,7 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
         <h3>排序方式</h3>
         <CategoryList>
           {sortOptions.map((option) => (
-            <CategoryItem
-              key={option}
-              active={sortBy === option}
-              onClick={() => onSortClick(option)}
-            >
+            <CategoryItem key={option} active={sortBy === option} onClick={() => onSortClick(option)}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <FiBarChart2 size={14} /> {option}
               </span>
@@ -283,4 +264,4 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
   );
 };
 
-export default BlogSidebar; 
+export default BlogSidebar;

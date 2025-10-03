@@ -13,50 +13,50 @@ export const createNoiseBackground = (accentColor: string = '#5183f5'): string =
     // 创建离屏canvas
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
+
     if (!ctx) {
       console.error('无法创建Canvas上下文');
       return 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")';
     }
-    
+
     // 设置画布尺寸
     canvas.width = 300;
     canvas.height = 300;
-    
+
     // 解析主题色
     const r = parseInt(accentColor.slice(1, 3), 16);
     const g = parseInt(accentColor.slice(3, 5), 16);
     const b = parseInt(accentColor.slice(5, 7), 16);
-    
+
     console.log('噪点生成使用颜色:', { accentColor, r, g, b });
-    
+
     // 填充白色背景
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // 创建彩色噪点
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
-    
+
     // 定义噪点颜色列表 - 包含主题色和一些固定颜色
     const colors = [
       // 主题色系列
       [r, g, b],
       [r * 0.8, g * 0.8, b * 0.8],
-      
+
       // 青色系
       [0, 180, 200],
       [0, 210, 230],
-      
+
       // 桃红色系
       [255, 50, 150],
       [255, 80, 180],
-      
+
       // 绿色系
       [20, 180, 120],
-      [60, 210, 150]
+      [60, 210, 150],
     ];
-    
+
     // 生成随机噪点
     for (let i = 0; i < data.length; i += 4) {
       // 只有约5%的像素会有噪点
@@ -64,7 +64,7 @@ export const createNoiseBackground = (accentColor: string = '#5183f5'): string =
         // 随机选择一种颜色
         const colorIndex = Math.floor(Math.random() * colors.length);
         const [pr, pg, pb] = colors[colorIndex];
-        
+
         // 应用颜色
         data[i] = pr;
         data[i + 1] = pg;
@@ -78,10 +78,10 @@ export const createNoiseBackground = (accentColor: string = '#5183f5'): string =
         data[i + 3] = 255;
       }
     }
-    
+
     // 将处理后的图像数据放回画布
     ctx.putImageData(imageData, 0, 0);
-    
+
     // 返回data URL
     const dataUrl = canvas.toDataURL('image/png', 1.0);
     return `url("${dataUrl}")`;

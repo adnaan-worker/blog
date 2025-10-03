@@ -29,10 +29,10 @@ const ToastItem = styled(motion.div)<{ type: string }>`
       type === 'success'
         ? 'var(--success-color)'
         : type === 'info'
-        ? 'var(--accent-color)'
-        : type === 'warning'
-        ? '#FFA726'
-        : 'var(--error-color)'};
+          ? 'var(--accent-color)'
+          : type === 'warning'
+            ? '#FFA726'
+            : 'var(--error-color)'};
   width: 100%;
 
   [data-theme='dark'] & {
@@ -49,10 +49,10 @@ const ToastIconWrapper = styled.div<{ type: string }>`
     type === 'success'
       ? 'var(--success-color)'
       : type === 'info'
-      ? 'var(--accent-color)'
-      : type === 'warning'
-      ? '#FFA726'
-      : 'var(--error-color)'};
+        ? 'var(--accent-color)'
+        : type === 'warning'
+          ? '#FFA726'
+          : 'var(--error-color)'};
 `;
 
 const ToastContent = styled.div`

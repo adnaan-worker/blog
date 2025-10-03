@@ -711,7 +711,10 @@ export const API = {
      * @param sessionId 会话ID
      * @returns Promise<ApiResponse<{ message: string; sessionId: string; timestamp: string }>>
      */
-    chat: (message: string, sessionId?: string): Promise<ApiResponse<{ message: string; sessionId: string; timestamp: string }>> => {
+    chat: (
+      message: string,
+      sessionId?: string,
+    ): Promise<ApiResponse<{ message: string; sessionId: string; timestamp: string }>> => {
       return http.post('/ai/chat', { message, sessionId });
     },
 
@@ -722,11 +725,7 @@ export const API = {
      * @param onChunk 流式数据回调
      * @returns Promise<string>
      */
-    streamChat: async (
-      message: string, 
-      sessionId?: string, 
-      onChunk?: (chunk: string) => void
-    ): Promise<string> => {
+    streamChat: async (message: string, sessionId?: string, onChunk?: (chunk: string) => void): Promise<string> => {
       return await http.streamPost('/ai/stream-chat', { message, sessionId }, onChunk);
     },
 
@@ -735,7 +734,9 @@ export const API = {
      * @param params 生成参数
      * @returns Promise<ApiResponse<{ type: string; content: string; timestamp: string }>>
      */
-    generate: (params: AIGenerateParams): Promise<ApiResponse<{ type: string; content: string; timestamp: string }>> => {
+    generate: (
+      params: AIGenerateParams,
+    ): Promise<ApiResponse<{ type: string; content: string; timestamp: string }>> => {
       return http.post('/ai/generate', params);
     },
 
@@ -744,7 +745,9 @@ export const API = {
      * @param params 写作助手参数
      * @returns Promise<ApiResponse<{ taskId: string; status: string; message: string }>>
      */
-    writingAssistant: (params: AIWritingParams): Promise<ApiResponse<{ taskId: string; status: string; message: string }>> => {
+    writingAssistant: (
+      params: AIWritingParams,
+    ): Promise<ApiResponse<{ taskId: string; status: string; message: string }>> => {
       return http.post('/ai/writing-assistant', params);
     },
 
@@ -753,7 +756,9 @@ export const API = {
      * @param tasks 任务列表
      * @returns Promise<ApiResponse<{ taskId: string; status: string; message: string }>>
      */
-    batchGenerate: (tasks: AIGenerateParams[]): Promise<ApiResponse<{ taskId: string; status: string; message: string }>> => {
+    batchGenerate: (
+      tasks: AIGenerateParams[],
+    ): Promise<ApiResponse<{ taskId: string; status: string; message: string }>> => {
       return http.post('/ai/batch-generate', { tasks });
     },
 
@@ -771,7 +776,10 @@ export const API = {
      * @param params 查询参数
      * @returns Promise<ApiResponse<PaginationResult<AITaskStatus>>>
      */
-    getUserTasks: (params?: { page?: number; limit?: number }): Promise<ApiResponse<PaginationResult<AITaskStatus>>> => {
+    getUserTasks: (params?: {
+      page?: number;
+      limit?: number;
+    }): Promise<ApiResponse<PaginationResult<AITaskStatus>>> => {
       return http.get('/ai/tasks', params);
     },
 

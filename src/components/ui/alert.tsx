@@ -17,19 +17,19 @@ const AlertContainer = styled(motion.div)<{ type: string }>`
     type === 'success'
       ? 'rgba(67, 160, 71, 0.1)'
       : type === 'info'
-      ? 'rgba(81, 131, 245, 0.1)'
-      : type === 'warning'
-      ? 'rgba(255, 167, 38, 0.1)'
-      : 'rgba(229, 57, 53, 0.1)'};
+        ? 'rgba(81, 131, 245, 0.1)'
+        : type === 'warning'
+          ? 'rgba(255, 167, 38, 0.1)'
+          : 'rgba(229, 57, 53, 0.1)'};
   border-left: 4px solid
     ${({ type }) =>
       type === 'success'
         ? 'var(--success-color)'
         : type === 'info'
-        ? 'var(--accent-color)'
-        : type === 'warning'
-        ? '#FFA726'
-        : 'var(--error-color)'};
+          ? 'var(--accent-color)'
+          : type === 'warning'
+            ? '#FFA726'
+            : 'var(--error-color)'};
   color: var(--text-primary);
 `;
 
@@ -42,10 +42,10 @@ const AlertIconWrapper = styled.div<{ type: string }>`
     type === 'success'
       ? 'var(--success-color)'
       : type === 'info'
-      ? 'var(--accent-color)'
-      : type === 'warning'
-      ? '#FFA726'
-      : 'var(--error-color)'};
+        ? 'var(--accent-color)'
+        : type === 'warning'
+          ? '#FFA726'
+          : 'var(--error-color)'};
 `;
 
 const AlertContent = styled.div`
@@ -172,4 +172,4 @@ export const Alert: React.FC<AlertProps> = ({
   );
 };
 
-export default Alert; 
+export default Alert;

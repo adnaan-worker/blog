@@ -201,7 +201,7 @@ const NotesPage: React.FC = () => {
   const renderNoteItem = (note: Note, index: number) => (
     <Link to={`/notes/${note.id}`} style={{ textDecoration: 'none' }}>
       <NoteItem>
-                          <NoteDate>{formatDateUtil(note.createdAt, 'MM-DD')}</NoteDate>
+        <NoteDate>{formatDateUtil(note.createdAt, 'MM-DD')}</NoteDate>
         <NoteTitle>{note.title || '生活随记'}</NoteTitle>
         {note.tags && note.tags.length > 0 && (
           <TagList>

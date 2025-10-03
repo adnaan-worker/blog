@@ -50,4 +50,4 @@ export default counterSlice.reducer;
 // 导出选择器
 export const selectCount = (state: { counter: CounterState }) => state.counter.value;
 export const selectStatus = (state: { counter: CounterState }) => state.counter.status;
-export const selectLastUpdated = (state: { counter: CounterState }) => state.counter.lastUpdated; 
+export const selectLastUpdated = (state: { counter: CounterState }) => state.counter.lastUpdated;

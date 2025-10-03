@@ -327,14 +327,8 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, src, alt }
   if (!isOpen) return null;
 
   return (
-        <ModalBackdrop 
-      isOpen={isOpen} 
-      onClick={onClose} 
-      onWheel={handleWheel}
-    >
-      <ModalContent 
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalBackdrop isOpen={isOpen} onClick={onClose} onWheel={handleWheel}>
+      <ModalContent onClick={(e) => e.stopPropagation()}>
         <PreviewImage
           src={src}
           alt={alt}

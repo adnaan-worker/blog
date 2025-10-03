@@ -59,39 +59,39 @@ const ToolbarButton = styled(motion.button)`
 
 // 返回顶部按钮的动画变体
 const scrollTopVariants = {
-  hidden: { 
-    opacity: 0, 
+  hidden: {
+    opacity: 0,
     y: 20,
     scale: 0.8,
     transition: {
       duration: 0.2,
-      ease: [0.4, 0, 0.2, 1]
-    }
+      ease: [0.4, 0, 0.2, 1],
+    },
   },
-  visible: { 
-    opacity: 0.9, 
+  visible: {
+    opacity: 0.9,
     y: 0,
     scale: 1,
     transition: {
       duration: 0.3,
-      ease: [0.4, 0, 0.2, 1]
-    }
+      ease: [0.4, 0, 0.2, 1],
+    },
   },
   hover: {
     scale: 1.05,
     opacity: 1,
     transition: {
       duration: 0.2,
-      ease: [0.4, 0, 0.2, 1]
-    }
+      ease: [0.4, 0, 0.2, 1],
+    },
   },
   tap: {
     scale: 0.95,
     transition: {
       duration: 0.1,
-      ease: [0.4, 0, 0.2, 1]
-    }
-  }
+      ease: [0.4, 0, 0.2, 1],
+    },
+  },
 };
 
 interface FloatingToolbarProps {
@@ -128,7 +128,7 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
   const handleLyricComplete = () => {
     setCurrentLyric(null);
   };
-  
+
   const handleLyricBubbleToggle = (isEnabled: boolean) => {
     setIsLyricBubbleEnabled(isEnabled);
     if (!isEnabled) {
@@ -164,23 +164,16 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
         </ToolbarButton>
       </ToolbarContainer>
 
-      <MusicPlayer 
-        isOpen={isMusicPlayerOpen} 
+      <MusicPlayer
+        isOpen={isMusicPlayerOpen}
         onClose={() => setIsMusicPlayerOpen(false)}
         onLyricChange={handleLyricChange}
         onLyricBubbleToggle={handleLyricBubbleToggle}
       />
 
-      {currentLyric && (
-        <LyricBubble
-          text={currentLyric}
-          duration={3000}
-          onComplete={handleLyricComplete}
-        />
-      )}
+      {currentLyric && <LyricBubble text={currentLyric} duration={3000} onComplete={handleLyricComplete} />}
     </>
   );
 };
 
 export default FloatingToolbar;
-

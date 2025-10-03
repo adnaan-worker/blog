@@ -87,7 +87,7 @@ const ProjectCard = styled(motion.div)`
 
   [data-theme='dark'] & {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    
+
     &:hover {
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
     }
@@ -347,12 +347,11 @@ const allCategories = ['全部', ...new Set(DUMMY_PROJECTS.map((project) => proj
 const Projects: React.FC = () => {
   // 过滤器状态
   const [activeFilter, setActiveFilter] = useState<string>('全部');
-  
+
   // 根据过滤器筛选项目
-  const filteredProjects = activeFilter === '全部' 
-    ? DUMMY_PROJECTS 
-    : DUMMY_PROJECTS.filter(project => project.category === activeFilter);
-  
+  const filteredProjects =
+    activeFilter === '全部' ? DUMMY_PROJECTS : DUMMY_PROJECTS.filter((project) => project.category === activeFilter);
+
   // 处理过滤器变化
   const handleFilterChange = (category: string) => {
     setActiveFilter(category);
@@ -362,41 +361,33 @@ const Projects: React.FC = () => {
     <PageContainer>
       <motion.div variants={pageVariants} initial="initial" animate="animate">
         <PageTitle>我的项目</PageTitle>
-        <PageSubtitle>探索我近期完成的各类项目作品，包括Web应用、移动应用、人工智能和数据可视化等不同领域的实践。</PageSubtitle>
-        
+        <PageSubtitle>
+          探索我近期完成的各类项目作品，包括Web应用、移动应用、人工智能和数据可视化等不同领域的实践。
+        </PageSubtitle>
+
         {/* 分类过滤器 */}
         <FilterContainer>
           {allCategories.map((category) => (
-            <FilterTag 
-              key={category} 
-              active={activeFilter === category} 
-              onClick={() => handleFilterChange(category)}
-            >
+            <FilterTag key={category} active={activeFilter === category} onClick={() => handleFilterChange(category)}>
               {category}
             </FilterTag>
           ))}
         </FilterContainer>
-        
+
         {/* 项目网格 */}
         <ProjectGrid>
           {filteredProjects.map((project, index) => (
-            <ProjectCard 
-              key={project.id}
-              variants={cardVariants}
-              initial="initial"
-              animate="animate"
-              custom={index}
-            >
+            <ProjectCard key={project.id} variants={cardVariants} initial="initial" animate="animate" custom={index}>
               <ProjectImage style={{ backgroundImage: `url(${project.image})` }}>
                 <CategoryBadge>
                   <FiFolder size={14} />
                   {project.category}
                 </CategoryBadge>
               </ProjectImage>
-              
+
               <ProjectContent>
                 <ProjectTitle>{project.title}</ProjectTitle>
-                
+
                 <ProjectMeta>
                   <span>
                     <FiCalendar size={14} />
@@ -407,9 +398,9 @@ const Projects: React.FC = () => {
                     {project.category}
                   </span>
                 </ProjectMeta>
-                
+
                 <ProjectDescription>{project.description}</ProjectDescription>
-                
+
                 <TechTagsContainer>
                   {project.technologies.map((tech) => (
                     <TechTag key={tech}>
@@ -418,12 +409,15 @@ const Projects: React.FC = () => {
                     </TechTag>
                   ))}
                 </TechTagsContainer>
-                
+
                 <ProjectFooter>
-                  <Link to={`/projects/${project.id}`} style={{ color: 'var(--accent-color)', fontWeight: 500, fontSize: '0.9rem' }}>
+                  <Link
+                    to={`/projects/${project.id}`}
+                    style={{ color: 'var(--accent-color)', fontWeight: 500, fontSize: '0.9rem' }}
+                  >
                     查看详情
                   </Link>
-                  
+
                   <ProjectLinks>
                     {project.demoLink && (
                       <LinkButton href={project.demoLink} target="_blank" rel="noopener noreferrer">
@@ -441,22 +435,18 @@ const Projects: React.FC = () => {
             </ProjectCard>
           ))}
         </ProjectGrid>
-        
+
         {/* 分页 - 简单版 */}
         <Pagination>
-          <PaginationButton disabled>
-            &laquo;
-          </PaginationButton>
+          <PaginationButton disabled>&laquo;</PaginationButton>
           <PaginationButton active>1</PaginationButton>
           <PaginationButton>2</PaginationButton>
           <PaginationButton>3</PaginationButton>
-          <PaginationButton disabled>
-            &raquo;
-          </PaginationButton>
+          <PaginationButton disabled>&raquo;</PaginationButton>
         </Pagination>
       </motion.div>
     </PageContainer>
   );
 };
 
-export default Projects; 
+export default Projects;

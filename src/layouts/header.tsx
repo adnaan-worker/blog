@@ -169,7 +169,9 @@ const LogoTooltip = styled.div<{ visible: boolean }>`
   opacity: ${(props) => (props.visible ? 1 : 0)};
   pointer-events: ${(props) => (props.visible ? 'auto' : 'none')};
   z-index: 100;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
   transform: translateY(${(props) => (props.visible ? '0' : '10px')});
   animation: ${(props) => (props.visible ? fadeIn : 'none')} 0.3s ease forwards;
   border: 1px solid var(--border-color);

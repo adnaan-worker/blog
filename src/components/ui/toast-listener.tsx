@@ -41,4 +41,4 @@ const ToastListener: React.FC = () => {
   return null;
 };
 
-export default ToastListener; 
+export default ToastListener;

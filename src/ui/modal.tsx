@@ -85,7 +85,9 @@ const ModalContainer = styled(motion.div)<{ $size: ModalSize; centerContent?: bo
   background: var(--bg-primary);
   border-radius: 16px;
   position: relative;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   margin: auto;
   max-height: calc(100vh - 2rem);
   overflow: hidden;
@@ -94,7 +96,9 @@ const ModalContainer = styled(motion.div)<{ $size: ModalSize; centerContent?: bo
 
   [data-theme='dark'] & {
     background: var(--bg-secondary);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.3),
+      0 10px 10px -5px rgba(0, 0, 0, 0.2);
   }
 
   ${({ $size }) => {

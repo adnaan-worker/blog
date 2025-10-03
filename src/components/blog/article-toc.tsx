@@ -56,7 +56,7 @@ const ProgressBar = styled.div<{ progress: number }>`
   top: 0;
   left: 0;
   height: 100%;
-  width: ${props => `${props.progress}%`};
+  width: ${(props) => `${props.progress}%`};
   background: linear-gradient(90deg, var(--accent-color-light), var(--accent-color));
   border-radius: 4px;
   transition: width 0.3s ease;
@@ -84,7 +84,7 @@ const TocItem = styled.div<{ active: boolean }>`
   margin-bottom: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   /* 选中状态时显示短线 */
   &:before {
     content: '';
@@ -92,7 +92,7 @@ const TocItem = styled.div<{ active: boolean }>`
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: ${props => props.active ? '8px' : '0'};
+    width: ${(props) => (props.active ? '8px' : '0')};
     height: 2px;
     background-color: var(--accent-color);
     transition: width 0.2s ease;
@@ -245,79 +245,65 @@ interface ArticleTocProps {
 }
 
 // 使用memo优化TOC组件
-const ArticleToc: React.FC<ArticleTocProps> = memo(({
-  headings,
-  activeHeading,
-  readingProgress,
-  onHeadingClick,
-  liked,
-  bookmarked,
-  onLike,
-  onBookmark,
-  onShare,
-}) => {
-  // 使用useMemo优化渲染
-  const renderedHeadings = useMemo(() => {
-    if (headings.length === 0) {
-      return (
-        <div style={{ padding: '4px 0 4px 16px', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
-          文章暂无目录
-        </div>
-      );
-    }
-    
-    return headings.map((heading) => (
-      <TocItem
-        key={heading.id}
-        active={activeHeading === heading.id}
-        onClick={() => onHeadingClick(heading.id)}
-      >
-        <span>{heading.text}</span>
-      </TocItem>
-    ));
-  }, [headings, activeHeading, onHeadingClick]);
-  
-  return (
-    <TocContainer>
-      {/* 阅读进度条 */}
-      <ProgressContainer>
-        <ProgressBar progress={readingProgress} />
-      </ProgressContainer>
-      <ProgressText>{readingProgress}% 已阅读</ProgressText>
-      
-      <TocList>
-        {renderedHeadings}
-      </TocList>
-
-      {/* 社交分享按钮 */}
-      <SocialActionContainer>
-        <ActionButton active={liked} onClick={onLike} aria-label="喜欢">
-          <div className="icon-wrapper">
-            <FiHeart size={18} />
-            {liked && <CountBadge active>1</CountBadge>}
+const ArticleToc: React.FC<ArticleTocProps> = memo(
+  ({ headings, activeHeading, readingProgress, onHeadingClick, liked, bookmarked, onLike, onBookmark, onShare }) => {
+    // 使用useMemo优化渲染
+    const renderedHeadings = useMemo(() => {
+      if (headings.length === 0) {
+        return (
+          <div style={{ padding: '4px 0 4px 16px', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
+            文章暂无目录
           </div>
-          <span>喜欢</span>
-        </ActionButton>
+        );
+      }
 
-        <ActionButton active={bookmarked} onClick={onBookmark} aria-label="收藏">
-          <div className="icon-wrapper">
-            <FiBookmark size={18} />
-          </div>
-          <span>收藏</span>
-        </ActionButton>
+      return headings.map((heading) => (
+        <TocItem key={heading.id} active={activeHeading === heading.id} onClick={() => onHeadingClick(heading.id)}>
+          <span>{heading.text}</span>
+        </TocItem>
+      ));
+    }, [headings, activeHeading, onHeadingClick]);
 
-        <ActionButton onClick={onShare} aria-label="分享">
-          <div className="icon-wrapper">
-            <FiShare2 size={18} />
-          </div>
-          <span>分享</span>
-        </ActionButton>
-      </SocialActionContainer>
-    </TocContainer>
-  );
-});
+    return (
+      <TocContainer>
+        {/* 阅读进度条 */}
+        <ProgressContainer>
+          <ProgressBar progress={readingProgress} />
+        </ProgressContainer>
+        <ProgressText>{readingProgress}% 已阅读</ProgressText>
+
+        <TocList>{renderedHeadings}</TocList>
+
+        {/* 社交分享按钮 */}
+        <SocialActionContainer>
+          <ActionButton active={liked} onClick={onLike} aria-label="喜欢">
+            <div className="icon-wrapper">
+              <FiHeart size={18} />
+              {liked && <CountBadge active>1</CountBadge>}
+            </div>
+            <span>喜欢</span>
+          </ActionButton>
+
+          <ActionButton active={bookmarked} onClick={onBookmark} aria-label="收藏">
+            <div className="icon-wrapper">
+              <FiBookmark size={18} />
+            </div>
+            <span>收藏</span>
+          </ActionButton>
+
+          <ActionButton onClick={onShare} aria-label="分享">
+            <div className="icon-wrapper">
+              <FiShare2 size={18} />
+            </div>
+            <span>分享</span>
+          </ActionButton>
+        </SocialActionContainer>
+      </TocContainer>
+    );
+  },
+);
 
 // 添加显示名称以便于调试
 ArticleToc.displayName = 'ArticleToc';
 
-export default ArticleToc; 
+export default ArticleToc;

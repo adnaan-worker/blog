@@ -38,4 +38,4 @@ export interface TooltipOptions {
   placement?: TooltipPlacement;
   maxWidth?: string;
   duration?: number;
-} 
+}

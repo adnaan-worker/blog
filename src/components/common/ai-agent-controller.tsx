@@ -209,8 +209,8 @@ const AIAgentController: React.FC<AIAgentControllerProps> = ({ content, onConten
   const currentStatus = isProcessing
     ? 'processing'
     : tasks.some((t) => t.status === 'completed')
-    ? 'completed'
-    : 'idle';
+      ? 'completed'
+      : 'idle';
 
   // 通知状态变化
   useEffect(() => {

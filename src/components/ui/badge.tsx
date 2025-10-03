@@ -20,12 +20,12 @@ const BadgeContainer = styled.span<{ type: string; dot?: boolean }>`
     type === 'success'
       ? 'var(--success-color)'
       : type === 'info'
-      ? 'var(--accent-color)'
-      : type === 'warning'
-      ? '#FFA726'
-      : type === 'error'
-      ? 'var(--error-color)'
-      : 'var(--text-tertiary)'};
+        ? 'var(--accent-color)'
+        : type === 'warning'
+          ? '#FFA726'
+          : type === 'error'
+            ? 'var(--error-color)'
+            : 'var(--text-tertiary)'};
 `;
 
 // 组件接口
@@ -60,4 +60,4 @@ export const Badge: React.FC<BadgeProps> = ({
   );
 };
 
-export default Badge; 
+export default Badge;

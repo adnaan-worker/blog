@@ -717,4 +717,4 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
   );
 };
 
-export default ArticleManagement; 
+export default ArticleManagement;

@@ -40,7 +40,7 @@ const removeAlert = (id: string) => {
         alertInfo.root.unmount();
         alertContainer?.removeChild(alertInfo.element);
         alertRoots.delete(id);
-        
+
         // 如果没有更多Alert，则移除容器
         if (alertRoots.size === 0 && alertContainer) {
           document.body.removeChild(alertContainer);
@@ -56,19 +56,19 @@ const removeAlert = (id: string) => {
 // 创建Alert
 const createAlert = (options: AlertOptions) => {
   const { type, title, message, duration = 3000, closable = true } = options;
-  
+
   const container = getAlertContainer();
   const alertElement = document.createElement('div');
   alertElement.style.pointerEvents = 'auto';
   container.appendChild(alertElement);
-  
+
   const id = generateId();
   const root = createRoot(alertElement);
-  
+
   alertRoots.set(id, { root, element: alertElement });
-  
+
   const handleClose = () => removeAlert(id);
-  
+
   root.render(
     React.createElement(Alert, {
       type: type,
@@ -76,10 +76,10 @@ const createAlert = (options: AlertOptions) => {
       message: message,
       closable: closable,
       duration: duration,
-      onClose: handleClose
-    })
+      onClose: handleClose,
+    }),
   );
-  
+
   return id;
 };
 
@@ -88,28 +88,28 @@ const alert = {
   success: (message: string, title?: string, duration?: number) => {
     return createAlert({ type: 'success', message, title, duration });
   },
-  
+
   error: (message: string, title?: string, duration?: number) => {
     return createAlert({ type: 'error', message, title, duration });
   },
-  
+
   info: (message: string, title?: string, duration?: number) => {
     return createAlert({ type: 'info', message, title, duration });
   },
-  
+
   warning: (message: string, title?: string, duration?: number) => {
     return createAlert({ type: 'warning', message, title, duration });
   },
-  
+
   // 显示自定义配置的Alert
   show: (options: AlertOptions) => {
     return createAlert(options);
   },
-  
+
   // 手动关闭某个Alert
   close: (id: string) => {
     removeAlert(id);
-  }
+  },
 };
 
-export default alert; 
+export default alert;

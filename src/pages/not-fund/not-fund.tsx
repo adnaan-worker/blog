@@ -26,7 +26,8 @@ const Container = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    background:
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
       radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
       radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
     opacity: 0.1;
@@ -327,12 +328,15 @@ drwxr-xr-x 12 user user 4096 Dec 12 22:58 ..
 
   // 逐步推进输出，追加到 logs
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (currentStep < steps.length - 1) {
-        setLogs((prev) => [...prev, steps[currentStep + 1] as any]);
-        setCurrentStep(currentStep + 1);
-      }
-    }, 1000 + currentStep * 500);
+    const timer = setTimeout(
+      () => {
+        if (currentStep < steps.length - 1) {
+          setLogs((prev) => [...prev, steps[currentStep + 1] as any]);
+          setCurrentStep(currentStep + 1);
+        }
+      },
+      1000 + currentStep * 500,
+    );
 
     return () => clearTimeout(timer);
   }, [currentStep, steps]);

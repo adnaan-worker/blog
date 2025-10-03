@@ -1,6 +1,17 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { FiEdit, FiSettings, FiDownload, FiPlus, FiBarChart, FiHelpCircle, FiLogOut, FiBookOpen, FiFileText, FiGlobe } from 'react-icons/fi';
+import {
+  FiEdit,
+  FiSettings,
+  FiDownload,
+  FiPlus,
+  FiBarChart,
+  FiHelpCircle,
+  FiLogOut,
+  FiBookOpen,
+  FiFileText,
+  FiGlobe,
+} from 'react-icons/fi';
 import { Button } from '@/components/ui';
 import { storage } from '@/utils';
 
@@ -87,13 +98,17 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ actions, onAction })
       variant: 'outline',
     },
     // 仅管理员可见
-    ...(isAdmin ? [{
-      id: 'edit-site-settings',
-      label: '网站设置',
-      icon: <FiGlobe size={16} />,
-      onClick: () => handleAction('edit-site-settings'),
-      variant: 'outline' as const,
-    }] : []),
+    ...(isAdmin
+      ? [
+          {
+            id: 'edit-site-settings',
+            label: '网站设置',
+            icon: <FiGlobe size={16} />,
+            onClick: () => handleAction('edit-site-settings'),
+            variant: 'outline' as const,
+          },
+        ]
+      : []),
   ];
 
   const bottomActions: QuickAction[] = [

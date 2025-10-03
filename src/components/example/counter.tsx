@@ -1,13 +1,13 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { 
-  increment, 
-  decrement, 
+import {
+  increment,
+  decrement,
   setValue,
   selectCount,
   selectStatus,
-  selectLastUpdated
+  selectLastUpdated,
 } from '../../store/modules/counterSlice';
 
 const CounterContainer = styled.div`
@@ -95,12 +95,14 @@ const Counter: React.FC = () => {
         </Button>
       </ButtonGroup>
       <StatusText>
-        {status === 'loading' ? '加载中...' : 
-         lastUpdated ? `最后更新: ${new Date(lastUpdated).toLocaleString()}` : 
-         '准备就绪'}
+        {status === 'loading'
+          ? '加载中...'
+          : lastUpdated
+            ? `最后更新: ${new Date(lastUpdated).toLocaleString()}`
+            : '准备就绪'}
       </StatusText>
     </CounterContainer>
   );
 };
 
-export default Counter; 
+export default Counter;

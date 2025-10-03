@@ -250,7 +250,6 @@ const NoArticles = styled(motion.div)`
 
 // 时间线文章组件
 export const TimelineArticleComponent: React.FC<{ article: Article }> = ({ article }) => {
-
   const readTime = Math.ceil((article.content?.length || 0) / 200);
 
   return (
@@ -292,9 +291,7 @@ export const BlogCardComponent: React.FC<{ article: Article }> = ({ article }) =
   };
 
   const readTime = Math.ceil((article.content?.length || 0) / 200);
-  const imageUrl = article.coverImage 
-    ? `/api/uploads/${article.coverImage}`
-    : ImageError;
+  const imageUrl = article.coverImage ? `/api/uploads/${article.coverImage}` : ImageError;
 
   return (
     <ArticleCard whileHover={{ y: -5 }}>
@@ -341,11 +338,7 @@ interface ArticleListProps {
 const ArticleList: React.FC<ArticleListProps> = ({ articles, viewMode = 'timeline' }) => {
   if (articles.length === 0) {
     return (
-      <NoArticles
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
+      <NoArticles initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>😕</div>
         <h3>没有找到匹配的文章</h3>
         <p>尝试修改搜索条件或查看其他分类</p>
@@ -376,4 +369,4 @@ const ArticleList: React.FC<ArticleListProps> = ({ articles, viewMode = 'timelin
   );
 };
 
-export default ArticleList; 
+export default ArticleList;

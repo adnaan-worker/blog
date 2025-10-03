@@ -495,9 +495,9 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
             try {
               const lyricsContent = await fetchLyrics(songInfo.lrc);
               lyrics = lyricsContent;
-              setCurrentTrack(prev => ({
+              setCurrentTrack((prev) => ({
                 ...prev,
-                lyrics: lyricsContent
+                lyrics: lyricsContent,
               }));
             } catch (error) {
               console.error('获取歌词失败:', error);
@@ -563,7 +563,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
       const audioElement = e.target as HTMLAudioElement;
       const error = audioElement.error;
       let errorMessage = '音频加载失败，请重试';
-      
+
       if (error) {
         switch (error.code) {
           case MediaError.MEDIA_ERR_ABORTED:
@@ -582,14 +582,14 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
             errorMessage = `音频加载失败 (错误代码: ${error.code})`;
         }
       }
-      
+
       console.error('音频加载错误:', {
         error,
         currentSrc: audioElement.currentSrc,
         readyState: audioElement.readyState,
         networkState: audioElement.networkState,
       });
-      
+
       setIsLoading(false);
       setIsPlaying(false);
       setErrorMessage(errorMessage);
@@ -662,17 +662,17 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
     try {
       setIsLoading(true);
       setIsPlaying(false);
-      
+
       // 获取最新的音频URL
       const audioUrl = await loadSongInfo(track);
-      
+
       if (!audioUrl) {
         throw new Error('无效的音频URL');
       }
 
       // 创建新的音频元素
       const newAudio = createAudioElement(audioUrl);
-      
+
       // 设置事件监听器
       const cleanup = setupAudioEventListeners(newAudio);
 
@@ -688,10 +688,14 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
         };
 
         newAudio.addEventListener('canplay', handleLoad, { once: true });
-        newAudio.addEventListener('error', (e) => {
-          clearTimeout(loadTimeout);
-          reject(e);
-        }, { once: true });
+        newAudio.addEventListener(
+          'error',
+          (e) => {
+            clearTimeout(loadTimeout);
+            reject(e);
+          },
+          { once: true },
+        );
       });
 
       // 替换旧的音频元素
@@ -752,10 +756,10 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
       }
 
       setIsLoading(true);
-      
+
       // 获取最新的音频URL
       const audioUrl = await loadSongInfo(currentTrack);
-      
+
       if (!audioUrl) {
         throw new Error('无效的音频URL');
       }
@@ -764,7 +768,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
       if (audioRef.current.src !== audioUrl || !audioRef.current.src) {
         // 创建新的音频元素
         const newAudio = createAudioElement(audioUrl);
-        
+
         // 设置事件监听器
         setupAudioEventListeners(newAudio);
 
@@ -780,10 +784,14 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
           };
 
           newAudio.addEventListener('canplay', handleLoad, { once: true });
-          newAudio.addEventListener('error', (e) => {
-            clearTimeout(loadTimeout);
-            reject(e);
-          }, { once: true });
+          newAudio.addEventListener(
+            'error',
+            (e) => {
+              clearTimeout(loadTimeout);
+              reject(e);
+            },
+            { once: true },
+          );
         });
 
         // 替换旧的音频元素
@@ -960,8 +968,8 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
             </LyricsContainer>
           )}
 
-          <ProgressBar 
-            progress={duration && !isNaN(duration) ? (currentTime / duration) * 100 : 0} 
+          <ProgressBar
+            progress={duration && !isNaN(duration) ? (currentTime / duration) * 100 : 0}
             onClick={handleProgressClick}
           />
           <TimeDisplay>

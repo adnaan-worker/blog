@@ -23,7 +23,9 @@ const TooltipContent = styled.div<{ placement: TooltipPlacement }>`
   pointer-events: none;
   max-width: 300px;
   word-wrap: break-word;
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
   opacity: 1;
   transform: scale(1);
 
@@ -90,13 +92,13 @@ const TooltipArrow = styled.div<{ placement: TooltipPlacement }>`
 const calculatePosition = (
   targetRect: DOMRect,
   tooltipRect: DOMRect,
-  placement: TooltipPlacement
+  placement: TooltipPlacement,
 ): { top: number; left: number } => {
   let top = 0;
   let left = 0;
-  
+
   const gap = 8; // 提示框与目标元素的间距
-  
+
   switch (placement) {
     case 'top':
       top = targetRect.top - tooltipRect.height - gap;
@@ -115,17 +117,17 @@ const calculatePosition = (
       left = targetRect.right + gap;
       break;
   }
-  
+
   // 确保提示框不超出屏幕边界
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
-  
+
   // 水平限制
   left = Math.max(gap, Math.min(left, viewportWidth - tooltipRect.width - gap));
-  
+
   // 垂直限制
   top = Math.max(gap, Math.min(top, viewportHeight - tooltipRect.height - gap));
-  
+
   return { top, left };
 };
 
@@ -178,23 +180,18 @@ const TooltipPortal: React.FC<{
       style={{
         top: position.top,
         left: position.left,
-        visibility: isReady ? 'visible' : 'hidden'
+        visibility: isReady ? 'visible' : 'hidden',
       }}
     >
       {content}
       <TooltipArrow placement={placement} />
     </TooltipContent>,
-    document.body
+    document.body,
   );
 };
 
 // Tooltip组件
-export const Tooltip: React.FC<TooltipProps> = ({
-  content,
-  placement = 'top',
-  children,
-  delay = 300,
-}) => {
+export const Tooltip: React.FC<TooltipProps> = ({ content, placement = 'top', children, delay = 300 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -203,7 +200,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
   // 显示提示框
   const showTooltip = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    
+
     if (wrapperRef.current) {
       const rect = wrapperRef.current.getBoundingClientRect();
 
@@ -211,7 +208,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         setTargetRect(rect);
         setIsVisible(true);
       };
-      
+
       if (delay) {
         timeoutRef.current = setTimeout(showFn, delay);
       } else {
@@ -242,7 +239,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
       window.addEventListener('scroll', handlePositionUpdate, true);
       window.addEventListener('resize', handlePositionUpdate);
     }
-    
+
     return () => {
       window.removeEventListener('scroll', handlePositionUpdate, true);
       window.removeEventListener('resize', handlePositionUpdate);
@@ -261,14 +258,9 @@ export const Tooltip: React.FC<TooltipProps> = ({
         {children}
       </TooltipWrapper>
 
-      <TooltipPortal
-        content={content}
-        targetRect={targetRect}
-        placement={placement}
-        isVisible={isVisible}
-      />
+      <TooltipPortal content={content} targetRect={targetRect} placement={placement} isVisible={isVisible} />
     </>
   );
 };
 
-export default Tooltip; 
+export default Tooltip;

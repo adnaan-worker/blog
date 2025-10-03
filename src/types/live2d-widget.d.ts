@@ -86,4 +86,4 @@ declare module 'live2d-widget' {
   const L2Dwidget: L2DWidgetInterface;
   export { L2Dwidget };
   export default L2Dwidget;
-} 
+}

@@ -86,4 +86,4 @@ export const initializeTheme = () => (dispatch: any) => {
   }
 };
 
-export default themeSlice.reducer; 
+export default themeSlice.reducer;

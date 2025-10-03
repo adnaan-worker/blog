@@ -1749,7 +1749,9 @@ const Home = () => {
                     <ArticleContent>
                       <ArticleTitle>{article.title}</ArticleTitle>
                     </ArticleContent>
-                    <ArticleTime>{formatDate(article.publishedAt || article.createdAt, 'YYYY-MM-DD') || article.date}</ArticleTime>
+                    <ArticleTime>
+                      {formatDate(article.publishedAt || article.createdAt, 'YYYY-MM-DD') || article.date}
+                    </ArticleTime>
                   </ArticleLink>
                 ))}
               </ArticleGrid>

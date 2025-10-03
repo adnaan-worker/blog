@@ -70,13 +70,7 @@ export interface TabsProps {
 }
 
 // Tabs组件
-export const Tabs: React.FC<TabsProps> = ({ 
-  items, 
-  defaultActiveKey, 
-  onChange, 
-  className, 
-  style 
-}) => {
+export const Tabs: React.FC<TabsProps> = ({ items, defaultActiveKey, onChange, className, style }) => {
   const [activeKey, setActiveKey] = useState(defaultActiveKey || (items.length > 0 ? items[0].key : ''));
 
   useEffect(() => {
@@ -115,4 +109,4 @@ export const Tabs: React.FC<TabsProps> = ({
   );
 };
 
-export default Tabs; 
+export default Tabs;

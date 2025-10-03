@@ -568,14 +568,17 @@ export function getAllComponentDocs(): ComponentDoc[] {
 
 // 按分类分组组件
 export function groupComponentsByCategory(docs: ComponentDoc[]): Record<string, ComponentDoc[]> {
-  return docs.reduce((groups, doc) => {
-    const category = doc.category;
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(doc);
-    return groups;
-  }, {} as Record<string, ComponentDoc[]>);
+  return docs.reduce(
+    (groups, doc) => {
+      const category = doc.category;
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(doc);
+      return groups;
+    },
+    {} as Record<string, ComponentDoc[]>,
+  );
 }
 
 // 分类信息

@@ -60,4 +60,4 @@ const LyricBubble: React.FC<LyricBubbleProps> = ({ text, duration = 3000, onComp
   );
 };
 
-export default LyricBubble; 
+export default LyricBubble;

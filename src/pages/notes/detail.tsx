@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiCalendar, FiTag, FiMapPin, FiCloud, FiHeart, FiEdit3, FiClock } from 'react-icons/fi';
@@ -153,7 +153,7 @@ const InfoItem = styled.li`
     padding-bottom: 0;
   }
 
-  &:first-child {
+  &:first-of-type {
     padding-top: 0;
   }
 `;
@@ -362,6 +362,9 @@ const NoteDetail: React.FC = () => {
     loadNote();
     // 滚动到页面顶部
     window.scrollTo(0, 0);
+
+    // 确保 body 可以滚动
+    document.body.style.overflow = '';
   }, [id]);
 
   const loadNote = async () => {
@@ -378,6 +381,11 @@ const NoteDetail: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  // 使用 useCallback 包装图片点击处理，避免重复渲染
+  const handleImageClick = useCallback((src: string) => {
+    setPreviewImage(src);
+  }, []);
 
   // 加载中状态
   if (isLoading) {
@@ -433,7 +441,7 @@ const NoteDetail: React.FC = () => {
               enableCodeHighlight={true}
               enableImagePreview={true}
               enableTableOfContents={false}
-              onImageClick={(src) => setPreviewImage(src)}
+              onImageClick={handleImageClick}
             />
 
             {/* 相关手记 */}

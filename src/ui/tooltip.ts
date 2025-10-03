@@ -4,15 +4,15 @@ import { TooltipOptions, TooltipPlacement } from './common-types';
 
 // 计算提示框位置
 const calculatePosition = (
-  targetRect: DOMRect, 
-  tooltipRect: DOMRect, 
-  placement: TooltipPlacement
+  targetRect: DOMRect,
+  tooltipRect: DOMRect,
+  placement: TooltipPlacement,
 ): { x: number; y: number } => {
   let x = 0;
   let y = 0;
-  
+
   const gap = 8; // 提示框与目标元素的间距
-  
+
   switch (placement) {
     case 'top':
       x = targetRect.left + targetRect.width / 2 - tooltipRect.width / 2;
@@ -34,17 +34,17 @@ const calculatePosition = (
       x = targetRect.left + targetRect.width / 2 - tooltipRect.width / 2;
       y = targetRect.top - tooltipRect.height - gap;
   }
-  
+
   // 确保提示框不超出屏幕边界
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
-  
+
   // 水平限制
   x = Math.max(gap, Math.min(x, viewportWidth - tooltipRect.width - gap));
-  
+
   // 垂直限制
   y = Math.max(gap, Math.min(y, viewportHeight - tooltipRect.height - gap));
-  
+
   return { x, y };
 };
 
@@ -57,7 +57,7 @@ const TooltipComponent = (props: {
   onClose: () => void;
 }) => {
   const { content, style, placement, maxWidth = '200px' } = props;
-  
+
   // 计算箭头样式
   let arrowStyle: React.CSSProperties = {
     position: 'absolute',
@@ -66,7 +66,7 @@ const TooltipComponent = (props: {
     backgroundColor: 'var(--bg-primary)',
     transform: 'rotate(45deg)',
   };
-  
+
   switch (placement) {
     case 'top':
       arrowStyle = { ...arrowStyle, bottom: '-4px', left: '50%', marginLeft: '-4px' };
@@ -81,7 +81,7 @@ const TooltipComponent = (props: {
       arrowStyle = { ...arrowStyle, left: '-4px', top: '50%', marginTop: '-4px' };
       break;
   }
-  
+
   // 主容器样式
   const containerStyle: React.CSSProperties = {
     position: 'fixed',
@@ -95,9 +95,9 @@ const TooltipComponent = (props: {
     maxWidth,
     wordWrap: 'break-word',
     pointerEvents: 'none',
-    ...style
+    ...style,
   };
-  
+
   // 自动关闭
   React.useEffect(() => {
     if (props.onClose) {
@@ -105,20 +105,16 @@ const TooltipComponent = (props: {
       return () => clearTimeout(timer);
     }
   }, [props.onClose]);
-  
-  return React.createElement(
-    'div',
-    { style: containerStyle },
-    [
-      content,
-      React.createElement('div', { key: 'arrow', style: arrowStyle })
-    ]
-  );
+
+  return React.createElement('div', { style: containerStyle }, [
+    content,
+    React.createElement('div', { key: 'arrow', style: arrowStyle }),
+  ]);
 };
 
 // 管理提示框容器与实例
-let activeTooltip: { 
-  root: ReturnType<typeof createRoot>; 
+let activeTooltip: {
+  root: ReturnType<typeof createRoot>;
   container: HTMLDivElement;
   timerId?: NodeJS.Timeout;
 } | null = null;
@@ -131,8 +127,8 @@ export const showTooltip = (
     placement?: TooltipPlacement;
     maxWidth?: string;
     duration?: number;
-  }
-): () => void => {
+  },
+): (() => void) => {
   // 先移除之前的提示框
   if (activeTooltip) {
     if (activeTooltip.timerId) {
@@ -144,14 +140,14 @@ export const showTooltip = (
     }
     activeTooltip = null;
   }
-  
+
   // 创建新的提示框容器
   const container = document.createElement('div');
   document.body.appendChild(container);
-  
+
   // 创建React根
   const root = createRoot(container);
-  
+
   // 关闭函数
   const close = () => {
     if (activeTooltip) {
@@ -162,10 +158,10 @@ export const showTooltip = (
       activeTooltip = null;
     }
   };
-  
+
   // 获取元素位置
   const targetRect = element.getBoundingClientRect();
-  
+
   // 创建一个临时元素来获取tooltip的大小
   const tempTooltip = document.createElement('div');
   tempTooltip.style.position = 'absolute';
@@ -176,10 +172,10 @@ export const showTooltip = (
   document.body.appendChild(tempTooltip);
   const tooltipRect = tempTooltip.getBoundingClientRect();
   document.body.removeChild(tempTooltip);
-  
+
   // 计算位置
   const position = calculatePosition(targetRect, tooltipRect, options?.placement || 'top');
-  
+
   // 渲染提示框
   root.render(
     React.createElement(TooltipComponent, {
@@ -187,18 +183,18 @@ export const showTooltip = (
       placement: options?.placement || 'top',
       maxWidth: options?.maxWidth,
       style: { left: position.x, top: position.y },
-      onClose: close
-    })
+      onClose: close,
+    }),
   );
-  
+
   // 存储活动提示框信息
   const duration = options?.duration === undefined ? 3000 : options.duration;
-  activeTooltip = { 
-    root, 
+  activeTooltip = {
+    root,
     container,
-    timerId: duration !== 0 ? setTimeout(close, duration) : undefined
+    timerId: duration !== 0 ? setTimeout(close, duration) : undefined,
   };
-  
+
   // 返回关闭函数
   return close;
 };
@@ -206,7 +202,7 @@ export const showTooltip = (
 // 在元素上显示提示
 const tooltip = {
   show: showTooltip,
-  
+
   hide: () => {
     if (activeTooltip) {
       if (activeTooltip.timerId) {
@@ -218,7 +214,7 @@ const tooltip = {
       }
       activeTooltip = null;
     }
-  }
+  },
 };
 
-export default tooltip; 
+export default tooltip;

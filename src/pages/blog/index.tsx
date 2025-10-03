@@ -144,7 +144,7 @@ const Blog: React.FC = () => {
 
     // 应用标签筛选
     if (selectedTag) {
-      result = result.filter((article) => article.tags?.some(tag => tag.name === selectedTag));
+      result = result.filter((article) => article.tags?.some((tag) => tag.name === selectedTag));
     }
 
     // 应用搜索筛选

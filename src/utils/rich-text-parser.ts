@@ -6,21 +6,43 @@ export class RichTextParser {
   // 系统支持的HTML标签白名单
   private static readonly ALLOWED_TAGS = [
     // 基础结构标签
-    'div', 'p', 'span', 'br',
+    'div',
+    'p',
+    'span',
+    'br',
     // 标题标签
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
     // 列表标签
-    'ul', 'ol', 'li',
+    'ul',
+    'ol',
+    'li',
     // 文本格式标签
-    'strong', 'b', 'em', 'i', 'u',
+    'strong',
+    'b',
+    'em',
+    'i',
+    'u',
     // 引用和代码标签
-    'blockquote', 'code', 'pre',
+    'blockquote',
+    'code',
+    'pre',
     // 链接和图片标签
-    'a', 'img',
+    'a',
+    'img',
     // 表格标签
-    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
     // 分割线
-    'hr'
+    'hr',
   ];
 
   // 系统支持的CSS类名白名单
@@ -32,7 +54,7 @@ export class RichTextParser {
     'rich-text-link',
     'rich-text-image',
     'rich-text-table-wrapper',
-    'rich-text-table'
+    'rich-text-table',
   ];
 
   /**
@@ -51,14 +73,14 @@ export class RichTextParser {
     const tagRegex = /<(\/?)([\w-]+)([^>]*)>/gi;
     cleanHtml = cleanHtml.replace(tagRegex, (match, closing, tagName, attributes) => {
       const tag = tagName.toLowerCase();
-      
+
       // 如果是支持的标签，保留
       if (this.ALLOWED_TAGS.includes(tag)) {
         // 清理属性，只保留安全的属性
         const cleanAttributes = this.cleanAttributes(attributes, tag);
         return `<${closing}${tag}${cleanAttributes}>`;
       }
-      
+
       // 不支持的标签，移除标签但保留内容
       return '';
     });
@@ -76,15 +98,15 @@ export class RichTextParser {
     if (!attributes) return '';
 
     const allowedAttributes: Record<string, string[]> = {
-      'div': ['class', 'data-language'],
-      'a': ['href', 'target', 'rel', 'class'],
-      'img': ['src', 'alt', 'loading', 'class'],
-      'code': ['class'],
-      'pre': ['class'],
-      'blockquote': ['class'],
-      'table': ['class'],
-      'th': ['colspan', 'rowspan'],
-      'td': ['colspan', 'rowspan']
+      div: ['class', 'data-language'],
+      a: ['href', 'target', 'rel', 'class'],
+      img: ['src', 'alt', 'loading', 'class'],
+      code: ['class'],
+      pre: ['class'],
+      blockquote: ['class'],
+      table: ['class'],
+      th: ['colspan', 'rowspan'],
+      td: ['colspan', 'rowspan'],
     };
 
     const allowed = allowedAttributes[tagName] || ['class'];
@@ -94,13 +116,13 @@ export class RichTextParser {
 
     while ((match = attrRegex.exec(attributes)) !== null) {
       const [, attrName, attrValue] = match;
-      
+
       if (allowed.includes(attrName)) {
         // 特殊处理class属性
         if (attrName === 'class') {
           const cleanClasses = attrValue
             .split(' ')
-            .filter(cls => this.ALLOWED_CLASSES.includes(cls) || cls.startsWith('language-'))
+            .filter((cls) => this.ALLOWED_CLASSES.includes(cls) || cls.startsWith('language-'))
             .join(' ');
           if (cleanClasses) {
             cleanAttrs.push(`class="${cleanClasses}"`);
@@ -125,16 +147,16 @@ export class RichTextParser {
    */
   private static isValidUrl(url: string): boolean {
     if (!url) return false;
-    
+
     // 允许的协议
     const allowedProtocols = ['http:', 'https:', 'data:', '/'];
-    
+
     try {
       // 相对路径
       if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) {
         return true;
       }
-      
+
       // 绝对URL
       const urlObj = new URL(url);
       return allowedProtocols.includes(urlObj.protocol);
@@ -237,122 +259,149 @@ export class RichTextParser {
       return '';
     }
 
-    let html = markdown;
-
-    // 处理代码块（优先处理，避免与其他语法冲突）
-    html = html.replace(/```(\w+)?\s*\n([\s\S]*?)\n```/g, (match, language, code) => {
+    // 使用占位符保护代码块内容，避免被其他规则处理
+    const codeBlocks: string[] = [];
+    let html = markdown.replace(/```(\w+)?\s*\n([\s\S]*?)\n```/g, (match, language, code) => {
+      const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
       const lang = language || 'text';
-      // 确保代码内容被正确转义并包装在pre>code结构中
-      const escapedCode = code.trim()
+      const escapedCode = code
+        .trim()
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
-      return `<div class="rich-text-code-block" data-language="${lang}"><pre><code>${escapedCode}</code></pre></div>`;
+      codeBlocks.push(
+        `<div class="rich-text-code-block" data-language="${lang}"><pre><code>${escapedCode}</code></pre></div>`,
+      );
+      return placeholder;
     });
 
-    // 处理标题 (# ## ### ####)
-    html = html.replace(/^(#{1,4})\s+(.+)$/gm, (match, hashes, title) => {
-      const level = hashes.length;
-      return `<h${level}>${title.trim()}</h${level}>`;
+    // 保护内联代码
+    const inlineCodes: string[] = [];
+    html = html.replace(/`([^`\n]+)`/g, (match, code) => {
+      const placeholder = `__INLINE_CODE_${inlineCodes.length}__`;
+      inlineCodes.push(`<code class="rich-text-inline-code">${code}</code>`);
+      return placeholder;
     });
 
-    // 处理分割线
-    html = html.replace(/^(---|\*\*\*)\s*$/gm, '<hr>');
-
-    // 处理引用
-    html = html.replace(/^>\s+(.+)$/gm, '<blockquote class="rich-text-quote">$1</blockquote>');
-
-    // 处理有序列表
-    html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-    // 将连续的<li>包装在<ol>中
-    html = html.replace(/(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs, (match) => {
-      // 避免重复包装
-      if (match.includes('<ol>') || match.includes('<ul>')) return match;
-      return `<ol>${match}</ol>`;
+    // 处理图片（在链接之前处理）
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+      if (this.isValidUrl(src)) {
+        return `<img class="rich-text-image" src="${src}" alt="${alt}" loading="lazy">`;
+      }
+      return '';
     });
-
-    // 处理无序列表
-    html = html.replace(/^[-*+]\s+(.+)$/gm, '<li>$1</li>');
-    // 将剩余的连续<li>包装在<ul>中
-    html = html.replace(/(<li>.*?<\/li>(?:\s*<li>.*?<\/li>)*)/gs, (match) => {
-      // 避免重复包装已经在ol中的li
-      if (match.includes('<ol>') || match.includes('<ul>')) return match;
-      return `<ul>${match}</ul>`;
-    });
-
-    // 处理内联代码
-    html = html.replace(/`([^`]+)`/g, '<code class="rich-text-inline-code">$1</code>');
-
-    // 处理粗体
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-    // 处理斜体
-    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
     // 处理链接
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
       if (this.isValidUrl(url)) {
         return `<a class="rich-text-link" href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
       }
-      return text; // 如果URL无效，只保留文本
+      return text;
     });
 
-    // 处理图片
-    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
-      if (this.isValidUrl(src)) {
-        return `<img class="rich-text-image" src="${src}" alt="${alt}" loading="lazy">`;
-      }
-      return ''; // 如果URL无效，移除图片
+    // 处理粗体（使用更精确的正则）
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+    // 处理斜体
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+    // 处理标题
+    html = html.replace(/^(#{1,6})\s+(.+)$/gm, (match, hashes, title) => {
+      const level = hashes.length;
+      return `<h${level}>${title.trim()}</h${level}>`;
     });
 
-    // 处理表格（简单的表格支持）
-    const tableRegex = /^\|(.+)\|\s*\n\|[-\s|:]+\|\s*\n((?:\|.+\|\s*\n?)+)/gm;
-    html = html.replace(tableRegex, (match, header, rows) => {
-      const headerCells = header.split('|').map((cell: string) => `<th>${cell.trim()}</th>`).join('');
-      const bodyRows = rows.trim().split('\n').map((row: string) => {
-        const cells = row.split('|').slice(1, -1).map((cell: string) => `<td>${cell.trim()}</td>`).join('');
-        return `<tr>${cells}</tr>`;
-      }).join('');
-      
-      return `<div class="rich-text-table-wrapper">
-        <table class="rich-text-table">
-          <thead><tr>${headerCells}</tr></thead>
-          <tbody>${bodyRows}</tbody>
-        </table>
-      </div>`;
-    });
+    // 处理分割线
+    html = html.replace(/^(---|___|\*\*\*)\s*$/gm, '<hr>');
 
-    // 处理段落（将连续的非HTML行包装为段落）
+    // 处理引用
+    html = html.replace(/^>\s+(.+)$/gm, '<blockquote class="rich-text-quote">$1</blockquote>');
+
+    // 处理列表（改进的逻辑）
     const lines = html.split('\n');
     const processedLines: string[] = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      // 检测有序列表
+      if (/^\d+\.\s+/.test(trimmed)) {
+        const items: string[] = [];
+        while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
+          items.push(`<li>${lines[i].trim().replace(/^\d+\.\s+/, '')}</li>`);
+          i++;
+        }
+        processedLines.push(`<ol>${items.join('')}</ol>`);
+        continue;
+      }
+
+      // 检测无序列表
+      if (/^[-*+]\s+/.test(trimmed)) {
+        const items: string[] = [];
+        while (i < lines.length && /^[-*+]\s+/.test(lines[i].trim())) {
+          items.push(`<li>${lines[i].trim().replace(/^[-*+]\s+/, '')}</li>`);
+          i++;
+        }
+        processedLines.push(`<ul>${items.join('')}</ul>`);
+        continue;
+      }
+
+      // 其他行
+      processedLines.push(line);
+      i++;
+    }
+
+    html = processedLines.join('\n');
+
+    // 处理段落
+    const finalLines = html.split('\n');
+    const result: string[] = [];
     let currentParagraph: string[] = [];
 
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      
-      // 如果是空行或HTML标签行，结束当前段落
-      if (!trimmedLine || trimmedLine.startsWith('<')) {
+    for (const line of finalLines) {
+      const trimmed = line.trim();
+
+      // 块级元素或空行
+      if (
+        !trimmed ||
+        /^<(div|h[1-6]|ul|ol|blockquote|hr|table|pre|img)/.test(trimmed) ||
+        trimmed.startsWith('__CODE_BLOCK_')
+      ) {
         if (currentParagraph.length > 0) {
-          processedLines.push(`<p>${currentParagraph.join(' ')}</p>`);
+          result.push(`<p>${currentParagraph.join(' ')}</p>`);
           currentParagraph = [];
         }
-        if (trimmedLine) {
-          processedLines.push(trimmedLine);
+        if (trimmed) {
+          result.push(trimmed);
         }
       } else {
-        // 普通文本行，添加到当前段落
-        currentParagraph.push(trimmedLine);
+        currentParagraph.push(trimmed);
       }
     }
 
-    // 处理最后一个段落
     if (currentParagraph.length > 0) {
-      processedLines.push(`<p>${currentParagraph.join(' ')}</p>`);
+      result.push(`<p>${currentParagraph.join(' ')}</p>`);
     }
 
-    return processedLines.join('\n');
+    html = result.join('\n');
+
+    // 恢复代码块
+    codeBlocks.forEach((block, index) => {
+      html = html.replace(`__CODE_BLOCK_${index}__`, block);
+    });
+
+    // 恢复内联代码
+    inlineCodes.forEach((code, index) => {
+      html = html.replace(`__INLINE_CODE_${index}__`, code);
+    });
+
+    return html;
   }
 
   /**
@@ -361,135 +410,86 @@ export class RichTextParser {
    * @returns 带有样式类的HTML
    */
   static addContentStyles(html: string): string {
+    if (!html) return '<div class="rich-text-content"></div>';
+
     let styledHtml = html;
 
     // 如果输入看起来像Markdown，先转换为HTML
     if (this.isMarkdown(html)) {
       styledHtml = this.markdownToHtml(html);
+      // Markdown转换后已经包含了正确的类名，直接返回
+      return `<div class="rich-text-content">${this.validateAndCleanHtml(styledHtml)}</div>`;
     }
 
-    // 检查是否已经有处理过的代码块（避免重复处理）
-    const existingCodeBlocks = styledHtml.match(/<div class="rich-text-code-block"[^>]*>/g);
-
-    // 只有在没有已处理的代码块时，才处理Markdown风格的代码块
-    if (!existingCodeBlocks || existingCodeBlocks.length === 0) {
-      styledHtml = styledHtml.replace(
-        /```(\w+)?\s*\n([\s\S]*?)\n```/g,
-        (match, language, code) => {
-          const lang = language || 'text';
-          // 确保代码内容被正确转义
-          const escapedCode = code
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-          return `<div class="rich-text-code-block" data-language="${lang}"><pre><code>${escapedCode}</code></pre></div>`;
-        }
-      );
-    }
-
-    // 为代码块添加特殊类名，支持语言检测 (先处理嵌套的pre+code)
+    // 处理已有的HTML内容，添加必要的类名
+    // 处理代码块（pre > code结构）
     styledHtml = styledHtml.replace(
-      /<pre[^>]*>\s*<code(?:\s+class="language-([^"]*)")?[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi,
-      (match, language, code) => {
-        // 跳过已经被处理过的内容
+      /<pre([^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi,
+      (match, preAttr, codeAttr, code) => {
+        // 跳过已经包装的代码块
         if (match.includes('rich-text-code-block')) {
           return match;
         }
-        
-        // 解码HTML实体
-        const decodedCode = code
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&amp;/g, '&')
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'");
-        
-        const lang = language || 'text';
+
+        // 提取语言
+        const langMatch = (preAttr + codeAttr).match(/(?:class|data-language)=["'](?:language-)?([^"']*)['"]/);
+        const lang = langMatch ? langMatch[1] : 'text';
+
         return `<div class="rich-text-code-block" data-language="${lang}"><pre><code>${code}</code></pre></div>`;
-      }
+      },
     );
 
-    // 处理没有嵌套code标签的pre标签 (确保不会重复处理已经转换的内容)
+    // 处理独立的code标签（内联代码）
+    styledHtml = styledHtml.replace(/<code(?![^>]*class="rich-text)([^>]*)>(.*?)<\/code>/gi, (match, attr, content) => {
+      // 检查是否在已处理的代码块中
+      return `<code class="rich-text-inline-code"${attr}>${content}</code>`;
+    });
+
+    // 为blockquote添加类名
     styledHtml = styledHtml.replace(
-      /<pre(?:\s+class="language-([^"]*)")?(?:\s+[^>]*)?>(?!\s*<code)([\s\S]*?)<\/pre>/gi,
-      (match, language, code) => {
-        // 跳过已经被处理过的内容
-        if (match.includes('rich-text-code-block')) {
-          return match;
-        }
-        
-        // 解码HTML实体
-        const decodedCode = code
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&amp;/g, '&')
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'");
-        
-        const lang = language || 'text';
-        return `<div class="rich-text-code-block" data-language="${lang}"><pre><code>${code}</code></pre></div>`;
-      }
+      /<blockquote(?![^>]*class="rich-text-quote")([^>]*)>/gi,
+      '<blockquote class="rich-text-quote"$1>',
     );
 
-    // 为内联代码添加类名（排除已经处理的代码块）
+    // 为img添加类名和懒加载
     styledHtml = styledHtml.replace(
-      /<code(?![^>]*class="rich-text-code-block")([^>]*)>(.*?)<\/code>/gi, 
-      '<code class="rich-text-inline-code"$1>$2</code>'
-    );
-
-    // 为引用块添加类名
-    styledHtml = styledHtml.replace(
-      /<blockquote([^>]*)>([\s\S]*?)<\/blockquote>/gi,
-      '<blockquote class="rich-text-quote"$1>$2</blockquote>',
-    );
-
-    // 为图片添加类名和懒加载
-    styledHtml = styledHtml.replace(
-      /<img([^>]*?)src="([^"]*)"([^>]*?)>/gi,
+      /<img(?![^>]*class="rich-text-image")([^>]*?)src="([^"]*)"([^>]*?)>/gi,
       (match, before, src, after) => {
         if (this.isValidUrl(src)) {
-          // 检查是否已经有class属性
-          const hasClass = /class\s*=/.test(before + after);
-          const classAttr = hasClass ? '' : ' class="rich-text-image"';
           const loadingAttr = /loading\s*=/.test(before + after) ? '' : ' loading="lazy"';
-          return `<img${classAttr}${loadingAttr} src="${src}"${before}${after}>`;
+          return `<img class="rich-text-image"${loadingAttr} src="${src}"${before}${after}>`;
         }
-        return ''; // 移除无效的图片标签
-      }
+        return '';
+      },
     );
 
-    // 为链接添加安全属性
+    // 为a标签添加类名和安全属性
     styledHtml = styledHtml.replace(
-      /<a([^>]*?)href="([^"]*)"([^>]*?)>/gi,
+      /<a(?![^>]*class="rich-text-link")([^>]*?)href="([^"]*)"([^>]*?)>/gi,
       (match, before, href, after) => {
         if (this.isValidUrl(href)) {
-          // 检查是否已经有必要的属性
-          const hasClass = /class\s*=/.test(before + after);
           const hasTarget = /target\s*=/.test(before + after);
           const hasRel = /rel\s*=/.test(before + after);
-          
-          const classAttr = hasClass ? '' : ' class="rich-text-link"';
           const targetAttr = hasTarget ? '' : ' target="_blank"';
           const relAttr = hasRel ? '' : ' rel="noopener noreferrer"';
-          
-          return `<a${classAttr} href="${href}"${targetAttr}${relAttr}${before}${after}>`;
+          return `<a class="rich-text-link" href="${href}"${targetAttr}${relAttr}${before}${after}>`;
         }
-        return ''; // 移除无效的链接标签
-      }
+        return '';
+      },
     );
 
-    // 为表格添加类名
-    styledHtml = styledHtml.replace(
-      /<table([^>]*)>/gi,
-      '<div class="rich-text-table-wrapper"><table class="rich-text-table"$1>',
-    );
-    styledHtml = styledHtml.replace(/<\/table>/gi, '</table></div>');
+    // 为table添加wrapper
+    if (!styledHtml.includes('rich-text-table-wrapper')) {
+      styledHtml = styledHtml.replace(
+        /<table([^>]*)>/gi,
+        '<div class="rich-text-table-wrapper"><table class="rich-text-table"$1>',
+      );
+      styledHtml = styledHtml.replace(/<\/table>/gi, '</table></div>');
+    }
 
-    // 最后进行完整的安全验证和清理
+    // 最后进行安全验证和清理
     const finalHtml = this.validateAndCleanHtml(styledHtml);
-    
+
     return `<div class="rich-text-content">${finalHtml}</div>`;
   }
 
@@ -500,29 +500,29 @@ export class RichTextParser {
    */
   private static isMarkdown(content: string): boolean {
     if (!content) return false;
-    
+
     // 检查Markdown特征
     const markdownPatterns = [
-      /^#{1,6}\s+/m,           // 标题
-      /\*\*[^*]+\*\*/,         // 粗体 (移除行首限制)
-      /\*[^*\n]+\*/,           // 斜体 (移除行首限制，避免与列表冲突)
-      /^[-*+]\s+/m,            // 无序列表
-      /^\d+\.\s+/m,            // 有序列表
-      /^>\s+/m,                // 引用
-      /```[\s\S]*?```/,        // 代码块
-      /`[^`\n]+`/,             // 内联代码
-      /\[.+?\]\(.+?\)/,        // 链接 (使用非贪婪匹配)
-      /!\[.*?\]\(.+?\)/,       // 图片 (使用非贪婪匹配)
+      /^#{1,6}\s+/m, // 标题
+      /\*\*[^*]+\*\*/, // 粗体 (移除行首限制)
+      /\*[^*\n]+\*/, // 斜体 (移除行首限制，避免与列表冲突)
+      /^[-*+]\s+/m, // 无序列表
+      /^\d+\.\s+/m, // 有序列表
+      /^>\s+/m, // 引用
+      /```[\s\S]*?```/, // 代码块
+      /`[^`\n]+`/, // 内联代码
+      /\[.+?\]\(.+?\)/, // 链接 (使用非贪婪匹配)
+      /!\[.*?\]\(.+?\)/, // 图片 (使用非贪婪匹配)
     ];
-    
+
     // 检查匹配的特征
-    const matches = markdownPatterns.filter(pattern => pattern.test(content));
-    
+    const matches = markdownPatterns.filter((pattern) => pattern.test(content));
+
     // 如果包含代码块，直接认为是Markdown
     if (/```[\s\S]*?```/.test(content)) {
       return true;
     }
-    
+
     // 至少匹配1个特征就认为是Markdown (降低阈值)
     return matches.length >= 1;
   }
@@ -643,9 +643,9 @@ export const testRichTextParser = (content: string) => {
   console.log('=== 富文本解析器测试 ===');
   console.log('原始内容:', content);
   console.log('是否为Markdown:', RichTextParser['isMarkdown'](content));
-  
+
   const processed = RichTextParser.addContentStyles(content);
   console.log('处理后的HTML:', processed);
-  
+
   return processed;
 };

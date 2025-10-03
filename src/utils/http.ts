@@ -295,11 +295,7 @@ class HttpRequest {
    * @param onChunk - 流数据回调
    * @returns Promise<string> - 完整响应内容
    */
-  public async streamPost(
-    url: string,
-    data?: any,
-    onChunk?: (chunk: string) => void
-  ): Promise<string> {
+  public async streamPost(url: string, data?: any, onChunk?: (chunk: string) => void): Promise<string> {
     // 获取token
     const userInfo = storage.local.get('user') as any;
     const token = userInfo?.token;
@@ -308,7 +304,7 @@ class HttpRequest {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify(data),
     });
@@ -336,7 +332,7 @@ class HttpRequest {
         if (line.startsWith('data: ')) {
           try {
             const data = JSON.parse(line.slice(6));
-            
+
             if (data.type === 'chunk') {
               result += data.chunk;
               onChunk?.(data.chunk);

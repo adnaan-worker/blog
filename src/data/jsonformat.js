@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 const originalData = [
-    {
+  {
     name: '愿与愁',
     artist: '林俊杰',
     url: 'https://meting.qjqq.cn/?server=netease&type=url&id=2041026502',
@@ -2997,22 +2997,22 @@ const originalData = [
     pic: 'https://meting.qjqq.cn/?server=netease&type=pic&id=109951166118743043',
     lrc: 'https://meting.qjqq.cn/?server=netease&type=lrc&id=108810',
   },
-  ];
+];
 
-  function processData(data) {
-    return data.map((item, index) => {
-        const songId = item.url.match(/id=(\d+)/)[1];
-        return {
-            id: index + 1,
-            songId: songId,
-            title: item.name,
-            artist: item.artist,
-            url: item.url,
-            pic: item.pic,
-            lrc: item.lrc,
+function processData(data) {
+  return data.map((item, index) => {
+    const songId = item.url.match(/id=(\d+)/)[1];
+    return {
+      id: index + 1,
+      songId: songId,
+      title: item.name,
+      artist: item.artist,
+      url: item.url,
+      pic: item.pic,
+      lrc: item.lrc,
       lyrics: [{ time: 0, text: '【点击播放加载歌词】' }],
-        };
-    });
+    };
+  });
 }
 
 const processedData = processData(originalData);
@@ -3020,10 +3020,9 @@ const processedData = processData(originalData);
 
 // 将处理后的数据写入 JSON 文件
 fs.writeFile('musicList.json', JSON.stringify(processedData, null, 2), (err) => {
-    if (err) {
-        console.error('写入文件时出错:', err);
-    } else {
+  if (err) {
+    console.error('写入文件时出错:', err);
+  } else {
     // console.log('数据已成功写入 musicList.json');
-    }
-});   
-    
+  }
+});

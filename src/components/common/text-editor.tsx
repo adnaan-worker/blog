@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { EditorProvider, useCurrentEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui';
 import RichTextRenderer from './rich-text-renderer';
 import RichTextStats from './rich-text-stats';
 import AIAgentController from './ai-agent-controller';
+import CodeBlock from './code-block';
 import {
   FiBold,
   FiItalic,
@@ -31,7 +32,149 @@ import {
   FiSave,
   FiX,
   FiCpu,
+  FiChevronDown,
 } from 'react-icons/fi';
+
+// 代码块语言选择器组件
+const CodeBlockLanguageSelector: React.FC<{ editor: any }> = ({ editor }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 常用编程语言列表
+  const languages = [
+    { value: '', label: '纯文本' },
+    { value: 'javascript', label: 'JavaScript' },
+    { value: 'typescript', label: 'TypeScript' },
+    { value: 'python', label: 'Python' },
+    { value: 'java', label: 'Java' },
+    { value: 'cpp', label: 'C++' },
+    { value: 'c', label: 'C' },
+    { value: 'csharp', label: 'C#' },
+    { value: 'php', label: 'PHP' },
+    { value: 'ruby', label: 'Ruby' },
+    { value: 'go', label: 'Go' },
+    { value: 'rust', label: 'Rust' },
+    { value: 'swift', label: 'Swift' },
+    { value: 'kotlin', label: 'Kotlin' },
+    { value: 'html', label: 'HTML' },
+    { value: 'css', label: 'CSS' },
+    { value: 'scss', label: 'SCSS' },
+    { value: 'json', label: 'JSON' },
+    { value: 'xml', label: 'XML' },
+    { value: 'yaml', label: 'YAML' },
+    { value: 'sql', label: 'SQL' },
+    { value: 'bash', label: 'Bash' },
+    { value: 'powershell', label: 'PowerShell' },
+    { value: 'markdown', label: 'Markdown' },
+  ];
+
+  // 获取当前代码块的语言
+  useEffect(() => {
+    if (editor.isActive('codeBlock')) {
+      const { node } = editor.getAttributes('codeBlock');
+      const language = node?.attrs?.language || '';
+      setCurrentLanguage(language);
+    }
+  }, [editor]);
+
+  // 点击外部关闭下拉菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // 设置代码块语言
+  const setLanguage = (language: string) => {
+    if (editor.isActive('codeBlock')) {
+      // 更新代码块的 language 属性
+      editor.chain().focus().updateAttributes('codeBlock', { language }).run();
+      setCurrentLanguage(language);
+      setIsOpen(false);
+    }
+  };
+
+  const currentLabel = languages.find((lang) => lang.value === currentLanguage)?.label || '纯文本';
+
+  return (
+    <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          ...editorStyles.toolbarButton,
+          marginLeft: '4px',
+          fontSize: '12px',
+          minWidth: '80px',
+          justifyContent: 'space-between',
+        }}
+        title="选择语言"
+      >
+        <span>{currentLabel}</span>
+        <FiChevronDown size={12} />
+      </button>
+
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '6px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            zIndex: 1000,
+            maxHeight: '200px',
+            overflowY: 'auto',
+            marginTop: '4px',
+          }}
+        >
+          {languages.map((lang) => (
+            <button
+              key={lang.value}
+              onClick={() => setLanguage(lang.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: 'none',
+                background: currentLanguage === lang.value ? 'var(--bg-secondary)' : 'transparent',
+                color: 'var(--text-primary)',
+                textAlign: 'left',
+                cursor: 'pointer',
+                fontSize: '12px',
+                borderBottom: '1px solid var(--border-color)',
+              }}
+              onMouseEnter={(e) => {
+                if (currentLanguage !== lang.value) {
+                  e.currentTarget.style.background = 'var(--bg-secondary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentLanguage !== lang.value) {
+                  e.currentTarget.style.background = 'transparent';
+                }
+              }}
+            >
+              {lang.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // 定义扩展数组
 const extensions = [
@@ -40,6 +183,7 @@ const extensions = [
       HTMLAttributes: {
         class: 'tiptap-code-block',
       },
+      languageClassPrefix: 'language-',
     },
   }),
   Placeholder.configure({
@@ -394,6 +538,7 @@ const MenuBar = ({ mode = 'full' }: { mode?: 'full' | 'simple' }) => {
         >
           <FiCode size={16} />
         </button>
+        {editor.isActive('codeBlock') && <CodeBlockLanguageSelector editor={editor} />}
       </div>
 
       <div style={editorStyles.toolbarGroup}>
@@ -434,77 +579,15 @@ const MenuBar = ({ mode = 'full' }: { mode?: 'full' | 'simple' }) => {
 
 // 编辑器样式
 const getCustomStyles = (minHeight: string) => `
-  .tiptap-editor {
+  .rich-text-content {
     outline: none;
     width: 100%;
     min-height: ${minHeight};
     padding: 1rem;
   }
   
-  /* 对应BlogDetail中的文章内容样式 */
-  .tiptap-editor h2 {
-    font-size: 1.6rem;
-    font-weight: 600;
-    margin: 2.5rem 0 1rem;
-    position: relative;
-    padding-bottom: 0.5rem;
-  }
-  
-  .tiptap-editor h2::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 40px;
-    height: 3px;
-    background: var(--accent-color);
-    border-radius: 2px;
-  }
-  
-  .tiptap-editor h3 {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin: 2rem 0 1rem;
-  }
-  
-  .tiptap-editor p {
-    margin-bottom: 1.5rem;
-  }
-  
-  .tiptap-editor ul, .tiptap-editor ol {
-    margin-bottom: 1.5rem;
-    padding-left: 1.5rem;
-  }
-  
-  .tiptap-editor li {
-    margin-bottom: 0.5rem;
-  }
-  
-  .tiptap-editor blockquote {
-    margin: 1.5rem 0;
-    padding: 1rem 1.5rem;
-    border-left: 4px solid var(--accent-color);
-    background: var(--bg-secondary);
-    border-radius: 0 8px 8px 0;
-    font-style: italic;
-  }
-  
-  .tiptap-editor blockquote p {
-    margin-bottom: 0;
-  }
-  
-  .tiptap-editor code {
-    font-family: var(--font-code);
-    background: var(--bg-secondary);
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    font-size: 0.9em;
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-  }
-  
-  /* TipTap代码块样式 */
-  .tiptap-editor .tiptap-code-block {
+  /* 编辑器中的代码块样式 */
+  .rich-text-content pre {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -517,7 +600,7 @@ const getCustomStyles = (minHeight: string) => `
     position: relative;
   }
   
-  .tiptap-editor .tiptap-code-block code {
+  .rich-text-content pre code {
     background: transparent;
     padding: 0;
     border: none;
@@ -525,31 +608,8 @@ const getCustomStyles = (minHeight: string) => `
     color: var(--text-primary);
   }
   
-  /* 普通代码块样式 */
-  .tiptap-editor pre {
-    background: var(--bg-secondary);
-    padding: 1rem;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin: 1.5rem 0;
-    border: 1px solid var(--border-color);
-    position: relative;
-    font-family: var(--font-code);
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-  
-  .tiptap-editor pre code {
-    background: transparent;
-    padding: 0;
-    border-radius: 0;
-    border: none;
-    font-family: var(--font-code);
-    color: var(--text-primary);
-  }
-  
-  /* 为代码块添加语言标识 */
-  .tiptap-editor pre[data-language]::before {
+  /* 代码块语言标签 */
+  .rich-text-content pre[data-language]::before {
     content: attr(data-language);
     position: absolute;
     top: 0.5rem;
@@ -561,69 +621,6 @@ const getCustomStyles = (minHeight: string) => `
     font-size: 0.75rem;
     font-weight: 500;
     text-transform: uppercase;
-  }
-  
-  /* 富文本代码块样式 */
-  .tiptap-editor .rich-text-code-block {
-    margin: 1.5rem 0;
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-  }
-  
-  .tiptap-editor .rich-text-code-block pre {
-    margin: 0;
-    background: transparent;
-    border: none;
-  }
-  
-  .tiptap-editor img {
-    max-width: 100%;
-    border-radius: 8px;
-    margin: 1.5rem 0;
-  }
-  
-  /* 链接样式 */
-  .tiptap-editor a {
-    color: var(--accent-color);
-    text-decoration: none;
-    border-bottom: 1px solid transparent;
-    transition: all 0.2s ease;
-  }
-  
-  .tiptap-editor a:hover {
-    border-bottom-color: var(--accent-color);
-  }
-  
-  /* 表格样式 */
-  .tiptap-editor table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1.5rem 0;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  
-  .tiptap-editor th,
-  .tiptap-editor td {
-    padding: 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-  }
-  
-  .tiptap-editor th {
-    background: var(--bg-secondary);
-    font-weight: 600;
-  }
-  
-  /* 分割线样式 */
-  .tiptap-editor hr {
-    border: none;
-    height: 1px;
-    background: var(--border-color);
-    margin: 2rem 0;
   }
 `;
 
@@ -642,10 +639,12 @@ const TextEditor: React.FC<TextEditorProps> = ({
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [showStatsPanel, setShowStatsPanel] = useState(false);
   const [showAIAgent, setShowAIAgent] = useState(false);
-  const [editorKey, setEditorKey] = useState(0); // 用于强制重新渲染编辑器
+  const [editorKey, setEditorKey] = useState(0);
+  const lastExternalContentRef = useRef(content || '');
+  const isInternalUpdateRef = useRef(false);
 
   // 验证并清理内容格式
-  const sanitizeContent = (inputContent: any): string => {
+  const sanitizeContent = useCallback((inputContent: any): string => {
     // 如果是字符串，直接返回
     if (typeof inputContent === 'string') {
       return inputContent;
@@ -670,105 +669,83 @@ const TextEditor: React.FC<TextEditorProps> = ({
 
     // 其他类型转换为字符串
     return String(inputContent || '');
-  };
+  }, []);
 
-  // 预处理内容，将Markdown转换为HTML以便在TipTap中显示
-  const preprocessContent = (content: string): string => {
-    if (!content) return '';
+  // 准备给编辑器的内容（缓存以避免不必要的重渲染）
+  const editorContent = useMemo(() => {
+    if (!value) return '';
 
-    // 如果内容看起来像Markdown，进行基本转换
-    let processedContent = content;
+    // 将 rich-text-code-block 转换为标准的 pre>code 结构
+    let processedHtml = value.replace(
+      /<div[^>]*class="rich-text-code-block"[^>]*data-language="([^"]*)"[^>]*><pre><code>([\s\S]*?)<\/code><\/pre><\/div>/gi,
+      (match, language, code) => {
+        // TipTap 的 codeBlock 使用 pre 标签包裹 code，同时保留 data-language 属性
+        return `<pre data-language="${language}"><code class="language-${language}">${code}</code></pre>`;
+      },
+    );
 
-    // 处理代码块
-    processedContent = processedContent.replace(/```(\w+)?\s*\n([\s\S]*?)\n```/g, (match, language, code) => {
-      const lang = language || 'text';
-      return `<pre class="tiptap-code-block" data-language="${lang}"><code>${code.trim()}</code></pre>`;
-    });
+    // 移除外层的 rich-text-content wrapper（如果存在）
+    processedHtml = processedHtml.replace(/<div class="rich-text-content">([\s\S]*?)<\/div>$/, '$1');
 
-    // 处理内联代码
-    processedContent = processedContent.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return processedHtml;
+  }, [value]);
 
-    // 处理粗体
-    processedContent = processedContent.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-    // 处理斜体
-    processedContent = processedContent.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-    // 处理标题
-    processedContent = processedContent.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    processedContent = processedContent.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    processedContent = processedContent.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-
-    // 处理链接
-    processedContent = processedContent.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-
-    // 处理段落（将连续的非HTML行包装为段落）
-    const lines = processedContent.split('\n');
-    const processedLines: string[] = [];
-    let currentParagraph: string[] = [];
-
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-
-      // 如果是空行或HTML标签行，结束当前段落
-      if (!trimmedLine || trimmedLine.startsWith('<')) {
-        if (currentParagraph.length > 0) {
-          processedLines.push(`<p>${currentParagraph.join(' ')}</p>`);
-          currentParagraph = [];
-        }
-        if (trimmedLine) {
-          processedLines.push(trimmedLine);
-        }
-      } else {
-        // 普通文本行，添加到当前段落
-        currentParagraph.push(trimmedLine);
-      }
-    }
-
-    // 处理最后一个段落
-    if (currentParagraph.length > 0) {
-      processedLines.push(`<p>${currentParagraph.join(' ')}</p>`);
-    }
-
-    return processedLines.join('\n');
-  };
-
-  // 监听外部 content 变化 - 修复无限循环问题
+  // 监听外部 content 变化
   useEffect(() => {
-    if (content !== undefined) {
+    if (content !== undefined && !isInternalUpdateRef.current) {
       const sanitizedContent = sanitizeContent(content);
-      // 只有当内容真正不同时才更新
-      if (sanitizedContent !== value) {
+      // 只有当外部内容真正变化时才更新
+      if (sanitizedContent !== lastExternalContentRef.current) {
+        lastExternalContentRef.current = sanitizedContent;
         setValue(sanitizedContent);
-        // 强制重新渲染编辑器以确保内容同步
+        // 强制编辑器重新渲染以显示新内容
         setEditorKey((prev) => prev + 1);
       }
     }
-  }, [content]); // 移除 value 依赖，避免无限循环
+    // 重置内部更新标记
+    isInternalUpdateRef.current = false;
+  }, [content, sanitizeContent]);
 
-  const handleUpdate = ({ editor }: { editor: any }) => {
-    const html = editor.getHTML();
+  const handleUpdate = useCallback(
+    ({ editor }: { editor: any }) => {
+      let html = editor.getHTML();
 
-    // 防止不必要的更新
-    if (html !== value) {
-      setValue(html);
+      // 将编辑器的 pre>code 结构转换回 rich-text-code-block 格式
+      html = html.replace(
+        /<pre[^>]*data-language="([^"]*)"[^>]*>\s*<code[^>]*class="language-[^"]*"[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi,
+        (match: string, language: string, code: string) => {
+          return `<div class="rich-text-code-block" data-language="${language}"><pre><code>${code}</code></pre></div>`;
+        },
+      );
 
-      if (onChange) {
-        onChange(html);
+      // 防止不必要的更新
+      if (html !== value) {
+        isInternalUpdateRef.current = true;
+        lastExternalContentRef.current = html;
+        setValue(html);
+
+        if (onChange) {
+          onChange(html);
+        }
       }
-    }
-  };
+    },
+    [value, onChange],
+  );
 
   // 处理AI内容更新
-  const handleAIContentUpdate = (newContent: string) => {
-    const sanitizedContent = sanitizeContent(newContent);
-    setValue(sanitizedContent);
-    setEditorKey((prev) => prev + 1); // 强制重新渲染编辑器
+  const handleAIContentUpdate = useCallback(
+    (newContent: string) => {
+      const sanitizedContent = sanitizeContent(newContent);
+      isInternalUpdateRef.current = true;
+      lastExternalContentRef.current = sanitizedContent;
+      setValue(sanitizedContent);
 
-    if (onChange) {
-      onChange(sanitizedContent);
-    }
-  };
+      if (onChange) {
+        onChange(sanitizedContent);
+      }
+    },
+    [sanitizeContent, onChange],
+  );
 
   // 额外的工具栏（预览切换、统计、操作按钮）
   const ExtraToolbar = () => {
@@ -891,13 +868,13 @@ const TextEditor: React.FC<TextEditorProps> = ({
 
         {viewMode === 'edit' ? (
           <EditorProvider
-            key={editorKey} // 使用独立的key来控制重新渲染
+            key={editorKey}
             extensions={extensions}
-            content={preprocessContent(sanitizeContent(value)) || ''}
+            content={editorContent || ''}
             onUpdate={handleUpdate}
             editorProps={{
               attributes: {
-                class: 'tiptap-editor',
+                class: 'rich-text-content',
               },
             }}
             slotBefore={<MenuBar mode={mode} />}

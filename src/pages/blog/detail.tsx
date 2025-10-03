@@ -280,24 +280,30 @@ const BlogDetail: React.FC = () => {
 
           // 加载相关文章（同分类或同标签）
           const related = allArticles
-            .filter(
-              (a) =>
-                a.id !== apiArticle.id &&
-                (a.category?.id === apiArticle.category?.id || 
-                 a.tags?.some((tag) => apiArticle.tags?.some(t => t.id === tag.id))),
-            )
+            .filter((a) => {
+              if (a.id === apiArticle.id) return false;
+
+              // 同分类
+              if (a.category?.id === apiArticle.category?.id) return true;
+
+              // 同标签
+              if (Array.isArray(a.tags) && Array.isArray(apiArticle.tags)) {
+                return a.tags.some((tag: any) =>
+                  apiArticle.tags?.some((t: any) => (tag?.id && t?.id && tag.id === t.id) || tag === t),
+                );
+              }
+
+              return false;
+            })
             .slice(0, 2);
           setRelatedArticles(related);
         }
 
         // 加载评论
         const commentsResponse = await API.comment.getCommentsByPost(articleId);
-        console.log('评论响应数据:', commentsResponse); // 调试日志
         if (commentsResponse.success && commentsResponse.data) {
-          // 后端已经返回了前端期望的格式，直接使用
           const responseData = commentsResponse.data as any;
           const commentsList = responseData.comments || [];
-          console.log('处理后的评论列表:', commentsList); // 调试日志
           setComments(commentsList);
         }
 
@@ -482,14 +488,29 @@ const BlogDetail: React.FC = () => {
     };
   }, [article, showDebugInfo, activeHeading, setViewportInfo]);
 
-  // 设置标题和观察器
+  // 设置标题和观察器 - 监听富文本渲染完成事件
   useEffect(() => {
-    // 延迟执行，确保DOM已完全加载
-    const timer = setTimeout(() => {
-      setupHeadingsAndObserver();
-    }, 300);
+    if (!articleRef.current) return;
 
-    return () => clearTimeout(timer);
+    // 监听富文本渲染完成事件
+    const handleRichTextRendered = () => {
+      setTimeout(() => {
+        setupHeadingsAndObserver();
+      }, 150);
+    };
+
+    const articleElement = articleRef.current;
+    articleElement.addEventListener('richTextRendered', handleRichTextRendered as EventListener);
+
+    // 兜底：如果事件没触发，延迟执行
+    const fallbackTimer = setTimeout(() => {
+      setupHeadingsAndObserver();
+    }, 800);
+
+    return () => {
+      articleElement.removeEventListener('richTextRendered', handleRichTextRendered as EventListener);
+      clearTimeout(fallbackTimer);
+    };
   }, [setupHeadingsAndObserver]);
 
   // 处理目录点击 - 使用useCallback

@@ -44,12 +44,12 @@ const CommentForm = styled.form`
 // 评论输入框组
 const InputGroup = styled.div`
   margin-bottom: 1rem;
-  
+
   &.half {
     @media (min-width: 768px) {
       display: flex;
       gap: 1rem;
-      
+
       > div {
         flex: 1;
       }
@@ -131,7 +131,7 @@ const SubmitButton = styled.button`
   &:hover {
     background: var(--accent-color-hover);
   }
-  
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -208,12 +208,12 @@ const CommentSection: React.FC<CommentSectionProps> = ({ comments = [] }) => {
     if (!name.trim() || !email.trim() || !commentText.trim()) return;
 
     setIsSubmitting(true);
-    
+
     // 模拟评论提交
     setTimeout(() => {
       // 这里可以添加实际的评论提交逻辑
       alert(`评论已提交: ${commentText}`);
-      
+
       // 重置表单
       setName('');
       setEmail('');
@@ -300,4 +300,4 @@ const CommentSection: React.FC<CommentSectionProps> = ({ comments = [] }) => {
   );
 };
 
-export default CommentSection; 
+export default CommentSection;

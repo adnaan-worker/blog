@@ -183,27 +183,7 @@ const ArticleContentWrapper = styled.div`
     }
   }
 
-  code {
-    font-family: var(--font-code);
-    background: var(--bg-secondary);
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    font-size: 0.9em;
-  }
-
-  pre {
-    background: var(--bg-secondary);
-    padding: 1rem;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin-bottom: 1.5rem;
-
-    code {
-      background: transparent;
-      padding: 0;
-      border-radius: 0;
-    }
-  }
+  /* 这些样式已经在 RichTextRenderer 中处理，这里不需要重复定义 */
 
   img {
     max-width: 100%;

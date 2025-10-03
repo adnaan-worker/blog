@@ -33,7 +33,7 @@ const ProjectLayout = styled.div`
   display: grid;
   grid-template-columns: 1fr 320px;
   gap: 3rem;
-  
+
   @media (max-width: 860px) {
     grid-template-columns: 1fr;
   }
@@ -56,7 +56,7 @@ const ProjectTitle = styled.h1`
   font-weight: 700;
   margin-bottom: 1rem;
   color: var(--text-primary);
-  
+
   @media (max-width: 640px) {
     font-size: 2rem;
   }
@@ -68,7 +68,7 @@ const ProjectMeta = styled.div`
   align-items: center;
   gap: 1.5rem;
   margin-bottom: 2rem;
-  
+
   span {
     display: flex;
     align-items: center;
@@ -94,7 +94,7 @@ const ProjectOverviewCard = styled.div`
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border-color);
   margin-bottom: 2rem;
-  
+
   [data-theme='dark'] & {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   }
@@ -121,13 +121,13 @@ const InfoItem = styled.li`
   display: flex;
   align-items: flex-start;
   border-bottom: 1px solid var(--border-color);
-  
+
   &:last-child {
     border-bottom: none;
     padding-bottom: 0;
   }
-  
-  &:first-child {
+
+  &:first-of-type {
     padding-top: 0;
   }
 `;
@@ -164,16 +164,16 @@ const LinkButton = styled.a`
   transition: all 0.2s ease;
   margin-right: 1rem;
   margin-bottom: 1rem;
-  
+
   &:hover {
     background: var(--accent-color-dark);
     transform: translateY(-3px);
   }
-  
+
   &.secondary {
     background: var(--bg-secondary);
     color: var(--text-secondary);
-    
+
     &:hover {
       background: var(--bg-tertiary);
     }
@@ -207,7 +207,7 @@ const SectionTitle = styled.h2`
   color: var(--text-primary);
   position: relative;
   padding-left: 1rem;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -224,7 +224,7 @@ const SectionTitle = styled.h2`
 const FeatureList = styled.ul`
   padding-left: 1.5rem;
   margin-bottom: 2rem;
-  
+
   li {
     margin-bottom: 0.75rem;
     color: var(--text-secondary);
@@ -249,7 +249,7 @@ const ProjectImage = styled.div`
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  
+
   &:hover {
     transform: scale(1.02);
   }
@@ -267,8 +267,8 @@ const ModalBackdrop = styled.div<{ isOpen: boolean }>`
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  opacity: ${props => props.isOpen ? 1 : 0};
-  visibility: ${props => props.isOpen ? 'visible' : 'hidden'};
+  opacity: ${(props) => (props.isOpen ? 1 : 0)};
+  visibility: ${(props) => (props.isOpen ? 'visible' : 'hidden')};
   transition: all 0.3s ease;
   backdrop-filter: blur(5px);
 `;
@@ -316,20 +316,20 @@ const RelatedCard = styled(Link)`
   background: var(--bg-secondary);
   margin-bottom: 1rem;
   transition: all 0.2s ease;
-  
+
   h4 {
     font-size: 1.1rem;
     font-weight: 500;
     margin-bottom: 0.5rem;
     color: var(--text-primary);
   }
-  
+
   p {
     font-size: 0.9rem;
     color: var(--text-secondary);
     margin: 0;
   }
-  
+
   &:hover {
     background: var(--bg-tertiary);
     transform: translateX(5px);
@@ -351,7 +351,8 @@ const DUMMY_PROJECTS = [
     id: 1,
     title: '智能客服助手',
     description: '基于自然语言处理的智能客服系统，支持多轮对话和知识库问答，大幅提升客服效率。',
-    longDescription: '智能客服助手是一款基于最新自然语言处理技术的客服系统，能够理解客户复杂的问题，并提供精准的回答。系统通过深度学习模型分析用户意图，结合企业知识库提供个性化的回复，同时支持多轮对话，让交流更加自然流畅。系统还具备情感分析功能，能够识别客户情绪，适时调整回复的语气和内容，提高客户满意度。',
+    longDescription:
+      '智能客服助手是一款基于最新自然语言处理技术的客服系统，能够理解客户复杂的问题，并提供精准的回答。系统通过深度学习模型分析用户意图，结合企业知识库提供个性化的回复，同时支持多轮对话，让交流更加自然流畅。系统还具备情感分析功能，能够识别客户情绪，适时调整回复的语气和内容，提高客户满意度。',
     image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=1470&auto=format&fit=crop',
     category: '人工智能',
     date: '2025-03',
@@ -381,7 +382,8 @@ const DUMMY_PROJECTS = [
     id: 2,
     title: '企业级数据可视化平台',
     description: '为企业提供实时数据监控和分析的可视化平台，支持多种图表类型和数据源集成。',
-    longDescription: '企业级数据可视化平台是一个强大的数据分析工具，帮助企业快速理解复杂数据，做出明智决策。平台提供丰富的可视化组件，从基础柱状图、折线图到高级散点图、热力图，满足不同分析需求。系统支持实时数据监控，当关键指标达到预设阈值时，及时发出警报。企业可以自定义仪表盘，关注最重要的业务指标，也可以创建详细的数据报告，分享给团队成员。',
+    longDescription:
+      '企业级数据可视化平台是一个强大的数据分析工具，帮助企业快速理解复杂数据，做出明智决策。平台提供丰富的可视化组件，从基础柱状图、折线图到高级散点图、热力图，满足不同分析需求。系统支持实时数据监控，当关键指标达到预设阈值时，及时发出警报。企业可以自定义仪表盘，关注最重要的业务指标，也可以创建详细的数据报告，分享给团队成员。',
     image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1470&auto=format&fit=crop',
     category: '数据可视化',
     date: '2024-12',
@@ -415,40 +417,39 @@ const ProjectDetail: React.FC = () => {
   const [project, setProject] = useState<any>(null);
   const [relatedProjects, setRelatedProjects] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  
+
   useEffect(() => {
     // 在实际应用中，这里应该从API获取数据
-    const foundProject = DUMMY_PROJECTS.find(
-      (project) => project.id === Number(id)
-    );
+    const foundProject = DUMMY_PROJECTS.find((project) => project.id === Number(id));
     setProject(foundProject || null);
-    
+
     // 获取相关项目（同类别或技术相似的项目）
     if (foundProject) {
       const related = DUMMY_PROJECTS.filter(
-        (p) => p.id !== foundProject.id && 
-        (p.category === foundProject.category || 
-         p.technologies.some((tech: string) => foundProject.technologies.includes(tech)))
+        (p) =>
+          p.id !== foundProject.id &&
+          (p.category === foundProject.category ||
+            p.technologies.some((tech: string) => foundProject.technologies.includes(tech))),
       ).slice(0, 2);
       setRelatedProjects(related);
     }
-    
+
     // 滚动到页面顶部
     window.scrollTo(0, 0);
   }, [id]);
-  
+
   // 打开图片预览
   const openImagePreview = (image: string) => {
     setSelectedImage(image);
     document.body.style.overflow = 'hidden';
   };
-  
+
   // 关闭图片预览
   const closeImagePreview = () => {
     setSelectedImage(null);
     document.body.style.overflow = 'auto';
   };
-  
+
   // 项目未找到
   if (!project) {
     return (
@@ -463,19 +464,19 @@ const ProjectDetail: React.FC = () => {
       </PageContainer>
     );
   }
-  
+
   return (
     <PageContainer>
       <motion.div variants={pageVariants} initial="initial" animate="animate">
         <BackLink to="/projects">
           <FiArrowLeft /> 返回项目列表
         </BackLink>
-        
+
         <ProjectLayout>
           {/* 主内容区 */}
           <ProjectMain>
             <ProjectTitle>{project.title}</ProjectTitle>
-            
+
             <ProjectMeta>
               <span>
                 <FiCalendar size={16} /> {project.date}
@@ -484,11 +485,9 @@ const ProjectDetail: React.FC = () => {
                 <FiTag size={16} /> {project.category}
               </span>
             </ProjectMeta>
-            
-            <ProjectDescription>
-              {project.longDescription || project.description}
-            </ProjectDescription>
-            
+
+            <ProjectDescription>{project.longDescription || project.description}</ProjectDescription>
+
             {/* 项目链接 */}
             <div style={{ marginBottom: '2rem' }}>
               {project.demoLink && (
@@ -507,7 +506,7 @@ const ProjectDetail: React.FC = () => {
                 </LinkButton>
               )}
             </div>
-            
+
             {/* 功能特点 */}
             <ContentSection>
               <SectionTitle>功能特点</SectionTitle>
@@ -517,7 +516,7 @@ const ProjectDetail: React.FC = () => {
                 ))}
               </FeatureList>
             </ContentSection>
-            
+
             {/* 项目截图 */}
             <ContentSection>
               <SectionTitle>项目截图</SectionTitle>
@@ -531,7 +530,7 @@ const ProjectDetail: React.FC = () => {
                 ))}
               </ImageGrid>
             </ContentSection>
-            
+
             {/* 相关项目 */}
             {relatedProjects.length > 0 && (
               <RelatedProjects>
@@ -545,7 +544,7 @@ const ProjectDetail: React.FC = () => {
               </RelatedProjects>
             )}
           </ProjectMain>
-          
+
           {/* 侧边栏 */}
           <ProjectSidebar>
             <ProjectOverviewCard>
@@ -585,7 +584,7 @@ const ProjectDetail: React.FC = () => {
                 )}
               </InfoList>
             </ProjectOverviewCard>
-            
+
             {/* 技术栈 */}
             <div>
               <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>技术栈</h3>
@@ -600,7 +599,7 @@ const ProjectDetail: React.FC = () => {
             </div>
           </ProjectSidebar>
         </ProjectLayout>
-        
+
         {/* 图片预览模态框 */}
         <ModalBackdrop isOpen={!!selectedImage} onClick={closeImagePreview}>
           {selectedImage && <ModalImage src={selectedImage} alt="项目截图" />}
@@ -610,4 +609,4 @@ const ProjectDetail: React.FC = () => {
   );
 };
 
-export default ProjectDetail; 
+export default ProjectDetail;

@@ -28,7 +28,7 @@ export class AIWritingHelper {
       wordCount?: number;
       style?: string;
       tone?: string;
-    } = {}
+    } = {},
   ): Promise<string> {
     const params: AIGenerateParams = {
       type: 'article',
@@ -104,7 +104,7 @@ export class AIWritingHelper {
    */
   async polishText(
     content: string,
-    style: string = '更加流畅和专业'
+    style: string = '更加流畅和专业',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
     const params: AIWritingParams = {
       action: 'polish',
@@ -132,7 +132,7 @@ export class AIWritingHelper {
    */
   async improveText(
     content: string,
-    improvements: string = '提高可读性和逻辑性'
+    improvements: string = '提高可读性和逻辑性',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
     const params: AIWritingParams = {
       action: 'improve',
@@ -160,7 +160,7 @@ export class AIWritingHelper {
    */
   async expandContent(
     content: string,
-    length: 'short' | 'medium' | 'long' = 'medium'
+    length: 'short' | 'medium' | 'long' = 'medium',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
     const params: AIWritingParams = {
       action: 'expand',
@@ -188,7 +188,7 @@ export class AIWritingHelper {
    */
   async translateContent(
     content: string,
-    targetLang: string = '英文'
+    targetLang: string = '英文',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
     const params: AIWritingParams = {
       action: 'translate',
@@ -216,7 +216,7 @@ export class AIWritingHelper {
    */
   async summarizeContent(
     content: string,
-    length: 'short' | 'medium' | 'long' = 'medium'
+    length: 'short' | 'medium' | 'long' = 'medium',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
     const params: AIWritingParams = {
       action: 'summarize',
@@ -243,11 +243,7 @@ export class AIWritingHelper {
    * @param onChunk 流式数据回调
    * @param sessionId 会话ID
    */
-  async streamWritingChat(
-    message: string,
-    onChunk: (chunk: string) => void,
-    sessionId?: string
-  ): Promise<string> {
+  async streamWritingChat(message: string, onChunk: (chunk: string) => void, sessionId?: string): Promise<string> {
     return await API.ai.streamChat(message, sessionId, onChunk);
   }
 
@@ -261,9 +257,9 @@ export class AIWritingHelper {
       content?: string;
       title?: string;
       keywords?: string[];
-    }>
+    }>,
   ): Promise<{ taskId: string; onComplete: (callback: (results: any[]) => void) => void }> {
-    const aiTasks: AIGenerateParams[] = tasks.map(task => ({
+    const aiTasks: AIGenerateParams[] = tasks.map((task) => ({
       type: task.type,
       params: {
         title: task.title,
@@ -292,7 +288,7 @@ export class AIWritingHelper {
   private async pollTaskResult(
     taskId: string,
     callback: (result: any) => void,
-    maxAttempts: number = 60
+    maxAttempts: number = 60,
   ): Promise<void> {
     let attempts = 0;
 
@@ -304,20 +300,20 @@ export class AIWritingHelper {
 
         if (task.status === 'completed') {
           this.clearTaskPolling(taskId);
-          
+
           // 修复：正确处理返回的结果格式
           let finalResult = task.result;
-          
+
           // 如果返回的是对象格式（包含action, originalContent, result, params）
           if (finalResult && typeof finalResult === 'object' && finalResult.result) {
             finalResult = finalResult.result;
           }
-          
+
           // 如果返回的是批量生成结果
           if (finalResult && typeof finalResult === 'object' && finalResult.results) {
             finalResult = finalResult.results;
           }
-          
+
           callback(finalResult);
         } else if (task.status === 'failed') {
           this.clearTaskPolling(taskId);
@@ -403,7 +399,7 @@ export const AI_WRITING_TEMPLATES = {
       keywords: ['分析', '研究', '报告'],
     },
   },
-  
+
   // 润色风格模板
   polish: {
     professional: '使文本更加专业和正式',
@@ -411,7 +407,7 @@ export const AI_WRITING_TEMPLATES = {
     academic: '使文本符合学术写作规范',
     creative: '增加文本的创意和吸引力',
   },
-  
+
   // 改进方向模板
   improve: {
     clarity: '提高文本的清晰度和可读性',
@@ -421,4 +417,4 @@ export const AI_WRITING_TEMPLATES = {
   },
 };
 
-export default aiWritingHelper; 
+export default aiWritingHelper;

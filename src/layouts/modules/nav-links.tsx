@@ -109,7 +109,13 @@ interface NavLinksProps {
   dropdownRef: React.RefObject<HTMLDivElement>;
 }
 
-const NavLinks: React.FC<NavLinksProps> = ({ mainNavItems, onLinkClick, moreDropdownOpen, toggleMoreDropdown, dropdownRef }) => {
+const NavLinks: React.FC<NavLinksProps> = ({
+  mainNavItems,
+  onLinkClick,
+  moreDropdownOpen,
+  toggleMoreDropdown,
+  dropdownRef,
+}) => {
   const location = useLocation();
 
   // 检查菜单项是否激活
@@ -117,11 +123,11 @@ const NavLinks: React.FC<NavLinksProps> = ({ mainNavItems, onLinkClick, moreDrop
     if (item.path === '/') {
       return location.pathname === '/';
     }
-    
+
     if (item.isDropdown && item.children) {
-      return item.children.some(child => location.pathname.includes(child.path));
+      return item.children.some((child) => location.pathname.includes(child.path));
     }
-    
+
     return location.pathname.includes(item.path);
   };
 
@@ -134,7 +140,7 @@ const NavLinks: React.FC<NavLinksProps> = ({ mainNavItems, onLinkClick, moreDrop
           return (
             <div key={item.path} ref={dropdownRef} style={{ position: 'relative' }}>
               <NavLinkWithHover
-                to='javascript:void(0)'
+                to="javascript:void(0)"
                 active={isItemActive(item)}
                 onClick={toggleMoreDropdown}
                 icon={item.icon}
@@ -145,11 +151,7 @@ const NavLinks: React.FC<NavLinksProps> = ({ mainNavItems, onLinkClick, moreDrop
               {moreDropdownOpen && (
                 <DropdownContent>
                   {item.children.map((childItem) => (
-                    <DropdownItem 
-                      key={childItem.path} 
-                      to={childItem.path} 
-                      onClick={onLinkClick}
-                    >
+                    <DropdownItem key={childItem.path} to={childItem.path} onClick={onLinkClick}>
                       {childItem.icon}
                       {childItem.title}
                     </DropdownItem>
@@ -161,11 +163,11 @@ const NavLinks: React.FC<NavLinksProps> = ({ mainNavItems, onLinkClick, moreDrop
         } else {
           // 渲染普通菜单项
           return (
-            <NavLinkWithHover 
+            <NavLinkWithHover
               key={item.path}
-              to={item.path} 
-              active={isItemActive(item)} 
-              onClick={onLinkClick} 
+              to={item.path}
+              active={isItemActive(item)}
+              onClick={onLinkClick}
               icon={item.icon}
             >
               {item.title}
@@ -176,6 +178,5 @@ const NavLinks: React.FC<NavLinksProps> = ({ mainNavItems, onLinkClick, moreDrop
     </>
   );
 };
-
 
 export default NavLinks;

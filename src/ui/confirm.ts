@@ -9,13 +9,13 @@ export const confirm = (options: ConfirmOptions): Promise<boolean> => {
     // 创建容器元素
     const container = document.createElement('div');
     document.body.appendChild(container);
-    
+
     // 创建React根
     const root = createRoot(container);
-    
+
     // 状态值
     let isOpen = true;
-    
+
     // 处理确认
     const handleConfirm = () => {
       isOpen = false;
@@ -24,10 +24,10 @@ export const confirm = (options: ConfirmOptions): Promise<boolean> => {
           ...options,
           open: false,
           onConfirm: handleConfirm,
-          onCancel: handleCancel
-        })
+          onCancel: handleCancel,
+        }),
       );
-      
+
       // 延迟移除DOM
       setTimeout(() => {
         root.unmount();
@@ -37,7 +37,7 @@ export const confirm = (options: ConfirmOptions): Promise<boolean> => {
         resolve(true);
       }, 300);
     };
-    
+
     // 处理取消
     const handleCancel = () => {
       isOpen = false;
@@ -46,10 +46,10 @@ export const confirm = (options: ConfirmOptions): Promise<boolean> => {
           ...options,
           open: false,
           onConfirm: handleConfirm,
-          onCancel: handleCancel
-        })
+          onCancel: handleCancel,
+        }),
       );
-      
+
       // 延迟移除DOM
       setTimeout(() => {
         root.unmount();
@@ -59,15 +59,15 @@ export const confirm = (options: ConfirmOptions): Promise<boolean> => {
         resolve(false);
       }, 300);
     };
-    
+
     // 渲染确认对话框
     root.render(
       React.createElement(ConfirmDialog, {
         ...options,
         open: isOpen,
         onConfirm: handleConfirm,
-        onCancel: handleCancel
-      })
+        onCancel: handleCancel,
+      }),
     );
   });
 };
@@ -81,10 +81,10 @@ export const confirmDialog = {
       message,
       confirmText,
       cancelText,
-      confirmVariant: 'primary'
+      confirmVariant: 'primary',
     });
   },
-  
+
   // 删除确认
   delete: (message: React.ReactNode = '此操作将永久删除该数据，是否继续？', title = '确认删除') => {
     return confirm({
@@ -92,10 +92,10 @@ export const confirmDialog = {
       message,
       confirmText: '删除',
       cancelText: '取消',
-      confirmVariant: 'danger'
+      confirmVariant: 'danger',
     });
   },
-  
+
   // 保存确认
   save: (message: React.ReactNode = '确认保存更改？', title = '保存确认') => {
     return confirm({
@@ -103,14 +103,14 @@ export const confirmDialog = {
       message,
       confirmText: '保存',
       cancelText: '取消',
-      confirmVariant: 'primary'
+      confirmVariant: 'primary',
     });
   },
-  
+
   // 自定义确认对话框
   custom: (options: ConfirmOptions) => {
     return confirm(options);
-  }
+  },
 };
 
-export default confirmDialog; 
+export default confirmDialog;

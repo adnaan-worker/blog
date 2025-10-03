@@ -365,4 +365,4 @@ export const EditSiteSettingsModal: React.FC<EditSiteSettingsModalProps> = ({
       </ModalContent>
     </Modal>
   );
-}; 
+};

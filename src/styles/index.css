@@ -8,7 +8,8 @@
 :root {
   /* 字体系统 */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-code: 'JetBrainsMono', 'Fira code Retina', 'Fira code', Consolas, Monaco, 'Hannotate SC', monospace, -apple-system;
+  --font-code:
+    'JetBrainsMono', 'Fira code Retina', 'Fira code', Consolas, Monaco, 'Hannotate SC', monospace, -apple-system;
 
   /* 颜色系统 - 亮色模式 */
   --text-primary: #252525; /* 主文本颜色 */
@@ -18,17 +19,19 @@
   --bg-secondary: #f7f9fb; /* 次背景颜色 */
   --bg-tertiary: #efefef; /* 三级背景颜色 */
   --accent-color: var(--accent-color-light); /* 主题主色 */
-  --accent-bg-color:var(--accent-bg-color-light); /* 主题背景色 */
+  --accent-bg-color: var(--accent-bg-color-light); /* 主题背景色 */
   --accent-color-assistant: var(--accent-color-light-assistant); /* 辅助色 */
   --accent-color-hover: var(--accent-color-light-hover); /* 悬停色 */
   --accent-color-alpha: var(--accent-color-light-alpha); /* 透明色 */
   --tw-gradient-from-position: 0%; /* 渐变起始位置 */
   --tw-gradient-to-position: 100%; /* 渐变结束位置 */
   --tw-gradient-via-position: 50%; /* 渐变中间位置 */
-  --tw-gradient-from: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-from-position); /* 渐变起始颜色 */
-  --tw-gradient-to: var(--fallback-a,oklch(var(--a)/0)) var(--tw-gradient-to-position); /* 渐变结束颜色 */
-  --spotlight-color: oklch(var(--a)/0.12); /* 高亮颜色 */
-  --underline-bg: var(--tw-gradient-from),var(--fallback-a,oklch(var(--a)/0.7)) var(--tw-gradient-via-position),var(--tw-gradient-to); /* 下划线背景 */
+  --tw-gradient-from: var(--fallback-a, oklch(var(--a) / 0)) var(--tw-gradient-from-position); /* 渐变起始颜色 */
+  --tw-gradient-to: var(--fallback-a, oklch(var(--a) / 0)) var(--tw-gradient-to-position); /* 渐变结束颜色 */
+  --spotlight-color: oklch(var(--a) / 0.12); /* 高亮颜色 */
+  --underline-bg:
+    var(--tw-gradient-from), var(--fallback-a, oklch(var(--a) / 0.7)) var(--tw-gradient-via-position),
+    var(--tw-gradient-to); /* 下划线背景 */
   --error-color: #e53935; /* 错误颜色 */
   --error-hover: #c62828; /* 错误悬停色 */
   --success-color: #43a047; /* 成功颜色 */
@@ -84,7 +87,7 @@
   --accent-color: var(--accent-color-dark); /* 主色 */
   --accent-bg-color: var(--accent-bg-color-dark); /* 背景色 */
   --accent-color-assistant: var(--accent-color-dark-assistant); /* 辅助色 */
-  --accent-color-hover: var(--accent-color-dark-hover,rgba(81, 131, 245, 0.2)); /* 悬停色 */
+  --accent-color-hover: var(--accent-color-dark-hover, rgba(81, 131, 245, 0.2)); /* 悬停色 */
   --accent-color-alpha: var(--accent-color-dark-alpha, rgba(81, 131, 245, 0.1)); /* 透明色 */
 }
 
@@ -92,7 +95,11 @@
  * 主题过渡效果
  */
 .theme-transition {
-  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 /**
@@ -111,7 +118,9 @@ body {
   font-family: var(--font-sans);
   /* background-color: var(--bg-primary); */
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 15px;
@@ -225,14 +234,17 @@ pre,
   transform: translateX(-50%);
   width: 70px;
   height: 2px;
-  background: linear-gradient(to right,var(--underline-bg));
+  background: linear-gradient(to right, var(--underline-bg));
   opacity: 1;
   transition: all 0.2s ease;
 }
 
 .header.scrolled {
   background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgb(0 0 0/0.05);
+  box-shadow:
+    0 0 #0000,
+    0 0 #0000,
+    0 1px 2px 0 rgb(0 0 0/0.05);
   backdrop-filter: saturate(180%) blur(20px);
   box-shadow: 0 6px 32px 0 rgba(81, 131, 245, 0.1);
 }
@@ -354,7 +366,9 @@ pre,
   border-radius: 16px;
   box-shadow: var(--shadow-md);
   overflow: hidden;
-  transition: transform 0.2s var(--bezier-accelerate), box-shadow 0.2s var(--bezier-accelerate);
+  transition:
+    transform 0.2s var(--bezier-accelerate),
+    box-shadow 0.2s var(--bezier-accelerate);
 }
 
 .card:hover {
@@ -424,7 +438,9 @@ pre,
 .page-transition-enter-active {
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 0.3s, transform 0.3s;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
 }
 
 .page-transition-exit {
@@ -435,7 +451,9 @@ pre,
 .page-transition-exit-active {
   opacity: 0;
   transform: translateY(10px);
-  transition: opacity 0.3s, transform 0.3s;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
 }
 
 .fade-in {
@@ -548,8 +566,12 @@ pre,
 
 /* 手记页面专用样式 */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fadeInUp {
@@ -576,29 +598,30 @@ pre,
 .notes-timeline {
   /* 时间线渐变效果 */
   .timeline-gradient::before {
-    background: linear-gradient(180deg, 
-      transparent 0%, 
-      var(--accent-color) 10%, 
-      var(--accent-color) 90%, 
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      var(--accent-color) 10%,
+      var(--accent-color) 90%,
       transparent 100%
     );
   }
-  
+
   /* 手记卡片悬浮效果 */
   .note-card {
     transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
-  
+
   .note-card:hover {
     transform: translateY(-4px) scale(1.01);
   }
-  
+
   /* 标签悬浮效果 */
   .note-tag {
     position: relative;
     overflow: hidden;
   }
-  
+
   .note-tag::before {
     content: '';
     position: absolute;
@@ -606,19 +629,19 @@ pre,
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     transition: left 0.5s;
   }
-  
+
   .note-tag:hover::before {
     left: 100%;
   }
-  
+
   /* 元信息图标动画 */
   .meta-icon {
     transition: transform 0.2s ease;
   }
-  
+
   .meta-icon:hover {
     transform: scale(1.2) rotate(5deg);
   }
@@ -629,7 +652,7 @@ pre,
   .notes-timeline .timeline-item {
     padding-left: 50px;
   }
-  
+
   .notes-timeline .timeline-dot {
     left: 10px;
     width: 8px;
@@ -638,12 +661,12 @@ pre,
 }
 
 /* 深色模式优化 */
-[data-theme="dark"] {
+[data-theme='dark'] {
   .notes-timeline .note-card {
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
     border-color: #404040;
   }
-  
+
   .notes-timeline .note-card:hover {
     background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
   }

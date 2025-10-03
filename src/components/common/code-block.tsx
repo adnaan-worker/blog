@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import styled from '@emotion/styled';
 import { FiCopy, FiCheck, FiCode, FiMaximize2, FiMinimize2 } from 'react-icons/fi';
 
@@ -262,23 +262,6 @@ const LineNumbers = styled.div`
   }
 `;
 
-const CopyToast = styled.div<{ show: boolean }>`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  padding: 0.5rem 1rem;
-  background: var(--success-color, #28a745);
-  color: white;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  opacity: ${(props) => (props.show ? 1 : 0)};
-  transform: translateY(${(props) => (props.show ? 0 : -10)}px);
-  transition: all 0.3s ease;
-  pointer-events: none;
-  z-index: 10;
-`;
-
 // 组件接口
 interface CodeBlockProps {
   code: string;
@@ -302,143 +285,126 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   className,
 }) => {
   const [copied, setCopied] = useState(false);
-  const [showCopyToast, setShowCopyToast] = useState(false);
   const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isReady, setIsReady] = useState(false);
+  const copyTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 检测语言
-  const detectedLanguage = providedLanguage || detectLanguage(code);
-  const languageInfo = getLanguageInfo(detectedLanguage);
-  const lines = code.split('\n');
-
-  // 确保组件完全准备好后再显示
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 10);
-
-    return () => clearTimeout(timer);
-  }, []);
+  // 检测语言 - 使用useMemo缓存
+  const detectedLanguage = useMemo(() => providedLanguage || detectLanguage(code), [providedLanguage, code]);
+  const languageInfo = useMemo(() => getLanguageInfo(detectedLanguage), [detectedLanguage]);
+  const lines = useMemo(() => code.split('\n'), [code]);
 
   // 复制功能
-  const handleCopy = async () => {
-    if (!allowCopy) return;
+  const handleCopy = useCallback(async () => {
+    if (!allowCopy || copied) return;
 
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
-      setShowCopyToast(true);
 
-      setTimeout(() => {
+      // 清除之前的定时器
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+
+      copyTimerRef.current = setTimeout(() => {
         setCopied(false);
-        setShowCopyToast(false);
+        copyTimerRef.current = null;
       }, 2000);
     } catch (err) {
       console.error('复制失败:', err);
     }
-  };
+  }, [code, allowCopy, copied]);
 
   // 全屏切换
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!allowFullscreen) return;
-    setIsFullscreen(!isFullscreen);
-  };
+    setIsFullscreen((prev) => !prev);
+  }, [allowFullscreen]);
 
   // ESC键退出全屏
   useEffect(() => {
+    if (!isFullscreen) {
+      // 确保非全屏时不会影响 body overflow
+      return;
+    }
+
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreen) {
+      if (e.key === 'Escape') {
         setIsFullscreen(false);
       }
     };
 
-    if (isFullscreen) {
-      document.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    // 保存原始的 overflow 值
+    const originalOverflow = document.body.style.overflow;
+
+    document.addEventListener('keydown', handleEsc);
+    document.body.style.overflow = 'hidden';
 
     return () => {
       document.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = '';
+      // 恢复原始值，而不是直接设置为空字符串
+      document.body.style.overflow = originalOverflow;
     };
   }, [isFullscreen]);
 
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <Container isFullscreen={isFullscreen} className={className}>
-      <CopyToast show={showCopyToast}>代码已复制到剪贴板</CopyToast>
+      <Header>
+        <LanguageTag>
+          <span className="icon">{languageInfo.icon}</span>
+          <span>{title || languageInfo.name}</span>
+          {!providedLanguage && <span className="auto-detected">(自动检测)</span>}
+        </LanguageTag>
 
-      {isReady ? (
-        <>
-          <Header>
-            <LanguageTag>
-              <span className="icon">{languageInfo.icon}</span>
-              <span>{title || languageInfo.name}</span>
-              {!providedLanguage && <span className="auto-detected">(自动检测)</span>}
-            </LanguageTag>
+        <Actions>
+          <ActionButton onClick={() => setShowLineNumbers(!showLineNumbers)} active={showLineNumbers} title="切换行号">
+            <FiCode size={14} />
+          </ActionButton>
 
-            <Actions>
-              <ActionButton
-                onClick={() => setShowLineNumbers(!showLineNumbers)}
-                active={showLineNumbers}
-                title="切换行号"
-              >
-                <FiCode size={14} />
-              </ActionButton>
+          {allowCopy && (
+            <ActionButton onClick={handleCopy} title={copied ? '已复制!' : '复制代码'} active={copied}>
+              {copied ? <FiCheck size={14} /> : <FiCopy size={14} />}
+            </ActionButton>
+          )}
 
-              {allowCopy && (
-                <ActionButton onClick={handleCopy} title="复制代码">
-                  {copied ? <FiCheck size={14} /> : <FiCopy size={14} />}
-                </ActionButton>
-              )}
+          {allowFullscreen && (
+            <ActionButton onClick={toggleFullscreen} title={isFullscreen ? '退出全屏' : '全屏查看'}>
+              {isFullscreen ? <FiMinimize2 size={14} /> : <FiMaximize2 size={14} />}
+            </ActionButton>
+          )}
+        </Actions>
+      </Header>
 
-              {allowFullscreen && (
-                <ActionButton onClick={toggleFullscreen} title="全屏查看">
-                  {isFullscreen ? <FiMinimize2 size={14} /> : <FiMaximize2 size={14} />}
-                </ActionButton>
-              )}
-            </Actions>
-          </Header>
-
-          <Content showLineNumbers={showLineNumbers} isFullscreen={isFullscreen}>
-            <pre>
-              {showLineNumbers && (
-                <LineNumbers>
-                  {lines.map((_, index) => (
-                    <div key={index} className={`line ${highlightLines.includes(index + 1) ? 'highlight' : ''}`}>
-                      {index + 1}
-                    </div>
-                  ))}
-                </LineNumbers>
-              )}
-              <code>
-                {lines.map((line, index) => (
-                  <div key={index} className={`code-line ${highlightLines.includes(index + 1) ? 'highlight' : ''}`}>
-                    {line}
-                  </div>
-                ))}
-              </code>
-            </pre>
-          </Content>
-        </>
-      ) : (
-        // 加载状态
-        <div
-          style={{
-            padding: '1rem',
-            textAlign: 'center',
-            color: 'var(--text-secondary)',
-            minHeight: '100px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          正在加载代码块...
-        </div>
-      )}
+      <Content showLineNumbers={showLineNumbers} isFullscreen={isFullscreen}>
+        <pre>
+          {showLineNumbers && (
+            <LineNumbers>
+              {lines.map((_, index) => (
+                <div key={index} className={`line ${highlightLines.includes(index + 1) ? 'highlight' : ''}`}>
+                  {index + 1}
+                </div>
+              ))}
+            </LineNumbers>
+          )}
+          <code>
+            {lines.map((line, index) => (
+              <div key={index} className={`code-line ${highlightLines.includes(index + 1) ? 'highlight' : ''}`}>
+                {line || ' '}
+              </div>
+            ))}
+          </code>
+        </pre>
+      </Content>
     </Container>
   );
 };
