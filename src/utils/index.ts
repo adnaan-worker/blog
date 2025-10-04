@@ -21,6 +21,9 @@ export type { ViewportInfo, HeadingInfo } from './debug';
 // 导出Sticky调试工具
 export { StickyDebugger, useStickyDebug } from './sticky-debug';
 
+// 导出滚动锁定工具
+export { default as scrollLock } from './scroll-lock';
+
 // 导出一些常用的工具函数
 export const formatDate = (date: Date | string | number, format: string = 'YYYY-MM-DD HH:mm:ss'): string => {
   const d = new Date(date);
