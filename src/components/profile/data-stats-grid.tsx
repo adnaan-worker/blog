@@ -98,7 +98,7 @@ const StatTrend = styled.div<{ direction: 'up' | 'down' }>`
   align-items: center;
   gap: 0.25rem;
   font-size: 0.75rem;
-  color: ${(props) => (props.direction === 'up' ? '#10b981' : '#ef4444')};
+  color: ${(props) => (props.direction === 'up' ? 'var(--success-color)' : 'var(--error-color)')};
 
   svg {
     font-size: 0.875rem;

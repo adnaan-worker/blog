@@ -285,8 +285,8 @@ const PrivacyBadge = styled.div<{ isPrivate?: boolean }>`
   border-radius: 12px;
   font-size: 0.7rem;
   font-weight: 500;
-  background: ${(props) => (props.isPrivate ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)')};
-  color: ${(props) => (props.isPrivate ? '#ef4444' : '#22c55e')};
+  background: ${(props) => (props.isPrivate ? 'var(--error-bg)' : 'var(--success-bg)')};
+  color: ${(props) => (props.isPrivate ? 'var(--error-color)' : 'var(--success-color)')};
 `;
 
 const TagsContainer = styled.div`

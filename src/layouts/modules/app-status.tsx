@@ -139,7 +139,7 @@ const StatusIndicator = styled.div<{ connected: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: ${(props) => (props.connected ? '#10B981' : '#F59E0B')};
+  background: ${(props) => (props.connected ? 'var(--success-color)' : 'var(--warning-color)')};
   border: 1px solid var(--bg-primary);
 
   ${(props) =>

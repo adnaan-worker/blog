@@ -400,7 +400,7 @@ const Footer = () => {
             <span>© {new Date().getFullYear()}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               Design by adnaan.
-              <FiHeart style={{ color: '#ff6b6b' }} size={12} />
+              <FiHeart style={{ color: 'var(--error-color)' }} size={12} />
             </span>
           </Copyright>
 

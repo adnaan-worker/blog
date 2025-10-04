@@ -8,6 +8,7 @@ import { toast } from '@/ui';
 import RichTextRenderer from '@/components/common/rich-text-renderer';
 import RichTextStats from '@/components/common/rich-text-stats';
 import ImagePreview from '@/components/common/image-preview';
+import PageLoading from '@/components/common/page-loading';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -495,16 +496,7 @@ const NoteDetail: React.FC = () => {
 
   // 加载中状态
   if (isLoading) {
-    return (
-      <PageContainer>
-        <BackLink to="/notes">
-          <FiArrowLeft /> 返回手记列表
-        </BackLink>
-        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <div>正在加载手记...</div>
-        </div>
-      </PageContainer>
-    );
+    return <PageLoading message="加载手记中" />;
   }
 
   // 手记未找到

@@ -50,7 +50,7 @@ const PlayerPanel = styled(motion.div)`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--accent-color), var(--accent-color-hover, #4a76e8));
+    background: linear-gradient(90deg, var(--accent-color), var(--accent-color-hover));
   }
 `;
 
@@ -217,7 +217,7 @@ const PlayerControls = styled.div`
       color: white;
 
       &:hover {
-        background-color: var(--accent-color-hover, #4a76e8);
+        background-color: var(--accent-color-hover);
       }
 
       .loading-spinner {
@@ -981,11 +981,11 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
             <div
               style={{
                 textAlign: 'center',
-                color: 'var(--error-color, #e53935)',
+                color: 'var(--error-color)',
                 margin: '0.5rem 0',
                 fontSize: '0.9rem',
                 padding: '0.5rem',
-                backgroundColor: 'rgba(229, 57, 53, 0.05)',
+                backgroundColor: 'var(--error-bg)',
                 borderRadius: '4px',
               }}
             >

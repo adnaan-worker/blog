@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback, useTransition, useRef } from 'react';
 import styled from '@emotion/styled';
 import Header from './header';
@@ -8,7 +8,7 @@ import Live2DModel from './live2d-model';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ToastProvider } from '@/components/ui/toast';
 import ToastListener from '@/components/ui/toast-listener';
-import PageLoading from './page-loading';
+import PageLoading from '@/components/common/page-loading';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -68,7 +68,6 @@ const RootLayout = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const location = useLocation();
-  const navigationType = useNavigationType();
   const [isPending, startTransition] = useTransition();
 
   // 用于控制加载指示器的完整显示
@@ -103,16 +102,12 @@ const RootLayout = () => {
         clearTimeout(loaderTimeoutRef.current);
         loaderTimeoutRef.current = null;
       }
-
-      // 添加调试日志
-      console.log('加载状态激活:', { isPending, isLoading, pathname: location.pathname });
     } else {
-      // 当加载完成时，不要立即隐藏加载器，等待动画完成
+      // 加载完成时，等待动画完成后隐藏
       if (!loaderAnimationCompleted.current) {
         loaderTimeoutRef.current = setTimeout(() => {
           setShowLoader(false);
-          console.log('加载完成，隐藏指示器');
-        }, 500); // 确保加载动画有足够时间完成
+        }, 500);
       }
     }
 
@@ -140,31 +135,25 @@ const RootLayout = () => {
     return () => clearTimeout(minDisplayTimer);
   }, [isLoading, isPending, location.pathname]);
 
-  // 路由切换时处理加载状态 - 简化逻辑，确保可靠触发
+  // 路由切换时处理加载状态
   useEffect(() => {
     // 检查路径是否变化
     const isPathChanged = previousPathRef.current !== location.pathname;
 
-    // 只在路径真正变化时触发加载状态
     if (isPathChanged) {
-      console.log('路径变化，触发加载指示器:', { from: previousPathRef.current, to: location.pathname });
-
-      // 直接设置加载状态，确保指示器显示
+      // 设置加载状态
       setIsLoading(true);
 
-      // 确保加载状态持续足够长的时间
-      const minLoadingTime = 800; // 毫秒
+      // 最小加载时间
+      const minLoadingTime = 800;
       const loadingStartTime = Date.now();
 
-      // 使用React 18的并发特性处理加载状态
+      // 使用 React 18 并发特性处理加载
       startTransition(() => {
-        // 模拟资源加载完成
         const loadResources = async () => {
           try {
-            // 预加载当前路由所需的资源
             await Promise.all([
               new Promise<void>((resolve) => {
-                // 监听页面加载完成事件
                 if (document.readyState === 'complete') {
                   resolve();
                 } else {
@@ -173,31 +162,22 @@ const RootLayout = () => {
               }),
             ]);
           } finally {
-            // 计算已经过去的时间
             const elapsedTime = Date.now() - loadingStartTime;
-            // 如果加载时间不够最小加载时间，则等待剩余时间
             const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
 
-            // 延迟结束加载状态，确保加载指示器有足够的显示时间
             setTimeout(() => {
               setIsLoading(false);
-              console.log('加载完成，结束加载状态');
             }, remainingTime);
           }
         };
 
         loadResources();
       });
-
-      // 滚动到页面顶部
-      if (navigationType !== 'POP') {
-        window.scrollTo(0, 0);
-      }
     }
 
-    // 更新上一次的路径
+    // 更新路径引用
     previousPathRef.current = location.pathname;
-  }, [location.pathname, navigationType]);
+  }, [location.pathname]);
 
   // 创建防抖的滚动监听函数
   const handleScroll = useCallback(() => {

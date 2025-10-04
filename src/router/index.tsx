@@ -1,7 +1,24 @@
-import { createHashRouter } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { createHashRouter, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
 import RootLayout from '@/layouts';
-import PageLoading from '@/layouts/page-loading';
+import PageLoading from '@/components/common/page-loading';
+
+/**
+ * 滚动恢复组件
+ * 监听路由变化，每次路径变化时自动滚动到页面顶部
+ */
+const ScrollToTop = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    // 使用三种方式确保跨浏览器兼容
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [location.pathname]);
+
+  return null;
+};
 
 // 使用 React.lazy 懒加载组件
 const Home = lazy(() => import('@/pages/index/home'));
@@ -28,12 +45,17 @@ const UIDocsPage = lazy(() => import('@/pages/ui-docs'));
 const router = createHashRouter([
   {
     path: '/',
-    element: <RootLayout />,
+    element: (
+      <>
+        <ScrollToTop />
+        <RootLayout />
+      </>
+    ),
     children: [
       {
         index: true,
         element: (
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<PageLoading fullScreen />}>
             <Home />
           </Suspense>
         ),
@@ -41,7 +63,7 @@ const router = createHashRouter([
       {
         path: '/code',
         element: (
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<PageLoading fullScreen />}>
             <Code />
           </Suspense>
         ),
@@ -49,7 +71,7 @@ const router = createHashRouter([
       {
         path: '/blog',
         element: (
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<PageLoading fullScreen />}>
             <Blog />
           </Suspense>
         ),
@@ -57,7 +79,7 @@ const router = createHashRouter([
       {
         path: '/blog/:id',
         element: (
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<PageLoading fullScreen />}>
             <BlogDetail />
           </Suspense>
         ),
@@ -65,7 +87,7 @@ const router = createHashRouter([
       {
         path: '/notes',
         element: (
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<PageLoading fullScreen />}>
             <Notes />
           </Suspense>
         ),
@@ -73,7 +95,7 @@ const router = createHashRouter([
       {
         path: '/notes/:id',
         element: (
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<PageLoading fullScreen />}>
             <NoteDetail />
           </Suspense>
         ),
@@ -82,7 +104,7 @@ const router = createHashRouter([
       {
         path: '/projects',
         element: (
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<PageLoading fullScreen />}>
             <Projects />
           </Suspense>
         ),
@@ -90,7 +112,7 @@ const router = createHashRouter([
       {
         path: '/projects/:id',
         element: (
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<PageLoading fullScreen />}>
             <ProjectDetail />
           </Suspense>
         ),
@@ -99,7 +121,7 @@ const router = createHashRouter([
       {
         path: '/profile',
         element: (
-          <Suspense fallback={<PageLoading />}>
+          <Suspense fallback={<PageLoading fullScreen />}>
             <Profile />
           </Suspense>
         ),
@@ -110,7 +132,7 @@ const router = createHashRouter([
   {
     path: '/editor/article',
     element: (
-      <Suspense fallback={<PageLoading />}>
+      <Suspense fallback={<PageLoading fullScreen />}>
         <ArticleEditor />
       </Suspense>
     ),
@@ -118,7 +140,7 @@ const router = createHashRouter([
   {
     path: '/editor/note',
     element: (
-      <Suspense fallback={<PageLoading />}>
+      <Suspense fallback={<PageLoading fullScreen />}>
         <NoteEditor />
       </Suspense>
     ),
@@ -127,7 +149,7 @@ const router = createHashRouter([
   {
     path: '/ui-docs',
     element: (
-      <Suspense fallback={<PageLoading />}>
+      <Suspense fallback={<PageLoading fullScreen />}>
         <UIDocsPage />
       </Suspense>
     ),
@@ -135,11 +157,16 @@ const router = createHashRouter([
   {
     path: '*',
     element: (
-      <Suspense fallback={<PageLoading />}>
+      <Suspense fallback={<PageLoading fullScreen />}>
         <NotFound />
       </Suspense>
     ),
   },
 ]);
+
+// 禁用浏览器的自动滚动恢复功能
+if ('scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual';
+}
 
 export default router;

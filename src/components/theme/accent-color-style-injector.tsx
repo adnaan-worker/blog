@@ -119,6 +119,10 @@ const AccentColorStyleInjector: React.FC = () => {
       const [hl, sl, ll] = colorUtils.hexToOklchString(currentLightColor);
       const [hd, sd, ld] = colorUtils.hexToOklchString(currentDarkColor);
 
+      // 生成主题色的 RGB 字符串（用于 rgba）
+      const lightRgb = colorUtils.hexToRgbString(currentLightColor);
+      const darkRgb = colorUtils.hexToRgbString(currentDarkColor);
+
       // 返回生成的CSS
       return `
         [data-theme='dark'] {
@@ -127,6 +131,7 @@ const AccentColorStyleInjector: React.FC = () => {
           --accent-color-dark-assistant: ${darkColorAssistant};
           --accent-color-dark-hover: ${darkColorHover};
           --accent-color-dark-alpha: ${darkColorAlpha};
+          --accent-rgb: ${darkRgb}; /* RGB 格式用于 rgba() */
           --a: ${`${hd} ${sd} ${ld}`};
           --gradient-from: ${darkGradient.from};
           --gradient-to: ${darkGradient.to};
@@ -137,6 +142,7 @@ const AccentColorStyleInjector: React.FC = () => {
           --accent-color-light-assistant: ${lightColorAssistant};
           --accent-color-light-hover: ${lightColorHover};
           --accent-color-light-alpha: ${lightColorAlpha};
+          --accent-rgb: ${lightRgb}; /* RGB 格式用于 rgba() */
           --a: ${`${hl} ${sl} ${ll}`};
           --gradient-from: ${lightGradient.from};
           --gradient-to: ${lightGradient.to};

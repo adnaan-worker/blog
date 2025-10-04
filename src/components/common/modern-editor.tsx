@@ -722,7 +722,7 @@ const ToolbarButton = styled.button<ToolbarButtonProps>`
   height: 32px;
   border: none;
   background: ${(props) => (props.active ? 'var(--accent-color)' : 'transparent')};
-  color: ${(props) => (props.active ? '#fff' : 'var(--text-primary)')};
+  color: ${(props) => (props.active ? 'var(--text-on-accent)' : 'var(--text-primary)')};
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
@@ -731,7 +731,7 @@ const ToolbarButton = styled.button<ToolbarButtonProps>`
 
   &:hover {
     background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
-    color: ${(props) => (props.active ? '#ffffff' : 'var(--text-primary)')};
+    color: ${(props) => (props.active ? 'var(--text-on-accent)' : 'var(--text-primary)')};
   }
 
   &:active {
@@ -814,7 +814,7 @@ const InputPanel = styled.div`
     border: none;
     border-radius: 4px;
     background: var(--accent-color);
-    color: #ffffff;
+    color: var(--text-on-accent);
     cursor: pointer;
     font-size: 14px;
     transition: opacity 0.2s;

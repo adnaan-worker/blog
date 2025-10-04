@@ -23,7 +23,7 @@ const PetHouse = styled(motion.div)`
   bottom: 10px;
   width: 60px;
   height: 60px;
-  background-color: var(--accent-color, #ff56aa);
+  background-color: var(--accent-color);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: flex;
@@ -138,7 +138,7 @@ const MessageBubble = styled(motion.div)`
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   pointer-events: none;
   z-index: 103;
 
@@ -283,7 +283,7 @@ export const Live2DModel = () => {
             opacity: 0,
             fontSize: 14,
             fontColor: '#000000',
-            backgroundColor: '#ffffff',
+            backgroundColor: 'var(--bg-primary)',
             borderColor: '#000000',
             borderWidth: 1,
             borderRadius: 5,

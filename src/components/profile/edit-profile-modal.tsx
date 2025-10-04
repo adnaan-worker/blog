@@ -129,7 +129,7 @@ const TextArea = styled.textarea`
 `;
 
 const ErrorMessage = styled.div`
-  color: #ef4444;
+  color: var(--error-color);
   font-size: 0.75rem;
   margin-top: 0.25rem;
 `;

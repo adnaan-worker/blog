@@ -15,6 +15,7 @@
   --text-primary: #252525; /* 主文本颜色 */
   --text-secondary: #606060; /* 次文本颜色 */
   --text-tertiary: #767676; /* 三级文本颜色 */
+  --text-on-accent: #ffffff; /* 主题色上的文本颜色 */
   --bg-primary: #ffffff; /* 主背景颜色 */
   --bg-secondary: #f7f9fb; /* 次背景颜色 */
   --bg-tertiary: #efefef; /* 三级背景颜色 */
@@ -66,7 +67,7 @@
   --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.08); /* 中阴影 */
   --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.08); /* 大阴影 */
   --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.12); /* 超大阴影 */
-  --card-shadow: 0 8px 30px rgba(81, 131, 245, 0.08); /* 卡片阴影 */
+  --card-shadow: 0 8px 30px rgba(var(--accent-rgb), 0.08); /* 卡片阴影 */
 
   /* 圆角 */
   --radius-small: 8px; /* 小圆角 */
@@ -97,6 +98,7 @@
   --text-primary: #e8e8e8; /* 主文本颜色 - 更柔和的白色 */
   --text-secondary: #b0b0b0; /* 次文本颜色 - 提高对比度 */
   --text-tertiary: #909090; /* 三级文本颜色 */
+  --text-on-accent: #ffffff; /* 主题色上的文本颜色 */
 
   /* 背景颜色 - 使用更现代的深色调色板 */
   --bg-primary: #0f0f0f; /* 主背景 - 纯黑偏灰 */
@@ -117,8 +119,8 @@
   --accent-color: var(--accent-color-dark);
   --accent-bg-color: var(--accent-bg-color-dark);
   --accent-color-assistant: var(--accent-color-dark-assistant);
-  --accent-color-hover: var(--accent-color-dark-hover, rgba(81, 131, 245, 0.25));
-  --accent-color-alpha: var(--accent-color-dark-alpha, rgba(81, 131, 245, 0.15));
+  --accent-color-hover: var(--accent-color-dark-hover);
+  --accent-color-alpha: var(--accent-color-dark-alpha);
 
   /* 高亮和聚光灯效果 */
   --spotlight-color: oklch(var(--a) / 0.18); /* 增强高亮效果 */
@@ -281,7 +283,7 @@ pre,
 }
 
 ::selection {
-  background: rgba(81, 131, 245, 0.2);
+  background: rgba(var(--accent-rgb), 0.2);
   color: var(--accent-color);
 }
 
@@ -319,7 +321,7 @@ pre,
     0 0 #0000,
     0 1px 2px 0 rgb(0 0 0/0.05);
   backdrop-filter: saturate(180%) blur(20px);
-  box-shadow: 0 6px 32px 0 rgba(81, 131, 245, 0.1);
+  box-shadow: 0 6px 32px 0 rgba(var(--accent-rgb), 0.1);
 }
 
 [data-theme='dark'] .header.scrolled {
@@ -328,7 +330,7 @@ pre,
   box-shadow:
     0 6px 24px 0 rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 2px 8px 0 rgba(81, 131, 245, 0.2); /* 多层阴影 + 发光效果 */
+    0 2px 8px 0 rgba(var(--accent-rgb), 0.2); /* 多层阴影 + 发光效果 */
 }
 
 .nav-card {
@@ -342,7 +344,7 @@ pre,
   position: relative;
   z-index: 60;
   background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 8px 24px 0 rgba(81, 131, 245, 0.2);
+  box-shadow: 0 8px 24px 0 rgba(var(--accent-rgb), 0.2);
   backdrop-filter: blur(16px);
   margin-left: auto;
 }
@@ -352,7 +354,7 @@ pre,
   box-shadow:
     0 8px 32px 0 rgba(0, 0, 0, 0.6),
     0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 4px 16px 0 rgba(81, 131, 245, 0.25); /* 增强发光效果 */
+    0 4px 16px 0 rgba(var(--accent-rgb), 0.25); /* 增强发光效果 */
 }
 
 .header.scrolled .nav-card {
@@ -467,7 +469,7 @@ pre,
   box-shadow:
     var(--shadow-lg),
     0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 0 24px rgba(var(--accent-color-rgb, 81, 131, 245), 0.3),
+    0 0 24px rgba(var(--accent-rgb), 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1); /* 悬停发光 */
 }
 
@@ -569,68 +571,169 @@ pre,
 }
 
 /**
- * 10. 滚动条样式
+ * 10. 滚动条样式 - 覆盖式滚动条，不占用布局空间
  */
+
+/* 使用 overlay scrollbar - 滚动条浮动在内容之上 */
+html {
+  overflow: overlay; /* 滚动条覆盖模式 */
+}
+
+/* Webkit 浏览器 (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
-  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(81, 131, 245, 0.2);
+  background: transparent;
   border-radius: 10px;
-  transition: all 0.3s ease;
-  opacity: 0;
+  border: 3px solid transparent; /* 内边距效果 */
+  background-clip: padding-box; /* 边框不显示背景 */
+  transition: background 0.3s ease;
+}
+
+/* 鼠标悬停或滚动时显示滚动条 */
+*:hover::-webkit-scrollbar-thumb,
+*:focus::-webkit-scrollbar-thumb,
+*:active::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-rgb), 0.3);
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(81, 131, 245, 0.6);
+  background: rgba(var(--accent-rgb), 0.6);
+  background-clip: padding-box;
 }
 
-/* 只在滚动时显示滚动条 */
-*:hover::-webkit-scrollbar-thumb {
-  opacity: 1;
-}
-
-/* 火狐浏览器滚动条 */
+/* Firefox 浏览器 - 覆盖式滚动条 */
 * {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
+  /* scrollbar-gutter: stable; 移除，避免预留空间导致的缝隙 */
 }
 
-*:hover {
-  scrollbar-color: rgba(81, 131, 245, 0.2) transparent;
+*:hover,
+*:focus,
+*:active {
+  scrollbar-color: rgba(var(--accent-rgb), 0.3) transparent;
 }
 
-/* 深色模式滚动条 - 优化 */
+/* body 级别的滚动条 - 浮动在最上层 */
+body {
+  overflow: overlay;
+  /* scrollbar-gutter: stable; 移除，使用 overlay 模式不需要预留 */
+  scrollbar-color: transparent transparent;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: transparent;
+  background-clip: padding-box;
+}
+
+body:hover::-webkit-scrollbar-thumb,
+body:focus-within::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-rgb), 0.4);
+  background-clip: padding-box;
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.3); /* 添加发光效果 */
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb), 0.7);
+  background-clip: padding-box;
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.5);
+}
+
+body:hover,
+body:focus-within {
+  scrollbar-color: rgba(var(--accent-rgb), 0.4) transparent;
+}
+
+/* 深色模式滚动条 - 覆盖式，不占布局 */
+[data-theme='dark'] html {
+  overflow: overlay;
+  /* scrollbar-gutter: stable; 移除 */
+}
+
 [data-theme='dark'] ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 5px;
+  height: 5px;
 }
 
 [data-theme='dark'] ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
+  background: transparent;
 }
 
 [data-theme='dark'] ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: transparent;
   border-radius: 10px;
-  border: 2px solid rgba(15, 15, 15, 0.8); /* 创建内边距效果 */
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  transition:
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+[data-theme='dark'] *:hover::-webkit-scrollbar-thumb,
+[data-theme='dark'] *:focus::-webkit-scrollbar-thumb,
+[data-theme='dark'] *:active::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  background-clip: padding-box;
 }
 
 [data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(81, 131, 245, 0.6);
-  border-color: rgba(15, 15, 15, 0.6);
+  background: rgba(var(--accent-rgb), 0.6);
+  background-clip: padding-box;
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
 }
 
-[data-theme='dark'] *:hover {
-  scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.03);
+[data-theme='dark'] * {
+  scrollbar-color: transparent transparent;
+  /* scrollbar-gutter: stable; 移除 */
+}
+
+[data-theme='dark'] *:hover,
+[data-theme='dark'] *:focus,
+[data-theme='dark'] *:active {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+/* 深色模式 body 滚动条 - 浮动效果 */
+[data-theme='dark'] body {
+  overflow: overlay;
+  /* scrollbar-gutter: stable; 移除 */
+}
+
+[data-theme='dark'] body::-webkit-scrollbar-thumb {
+  background: transparent;
+  background-clip: padding-box;
+}
+
+[data-theme='dark'] body:hover::-webkit-scrollbar-thumb,
+[data-theme='dark'] body:focus-within::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
+  box-shadow:
+    0 0 12px rgba(var(--accent-rgb), 0.4),
+    inset 0 0 6px rgba(var(--accent-rgb), 0.2); /* 内外发光 */
+}
+
+[data-theme='dark'] body::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb), 0.6);
+  background-clip: padding-box;
+  box-shadow:
+    0 0 16px rgba(var(--accent-rgb), 0.6),
+    inset 0 0 8px rgba(var(--accent-rgb), 0.3);
+}
+
+[data-theme='dark'] body:hover,
+[data-theme='dark'] body:focus-within {
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 @media (max-width: 768px) {
@@ -647,16 +750,16 @@ pre,
 /* 添加文章标题高亮效果 */
 @keyframes highlightHeading {
   0% {
-    background-color: rgba(81, 131, 245, 0);
+    background-color: rgba(var(--accent-rgb), 0);
   }
   30% {
-    background-color: rgba(81, 131, 245, 0.15);
+    background-color: rgba(var(--accent-rgb), 0.15);
   }
   70% {
-    background-color: rgba(81, 131, 245, 0.15);
+    background-color: rgba(var(--accent-rgb), 0.15);
   }
   100% {
-    background-color: rgba(81, 131, 245, 0);
+    background-color: rgba(var(--accent-rgb), 0);
   }
 }
 
@@ -780,7 +883,7 @@ pre,
     box-shadow:
       0 8px 24px rgba(0, 0, 0, 0.5),
       0 0 0 1px rgba(255, 255, 255, 0.1),
-      0 0 16px rgba(var(--accent-color-rgb, 81, 131, 245), 0.3),
+      0 0 16px rgba(var(--accent-rgb), 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 }

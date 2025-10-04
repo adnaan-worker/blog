@@ -8,6 +8,7 @@ import { API } from '@/utils/api';
 import { Button, Input } from '@/components/ui';
 import { ToastProvider } from '@/components/ui/toast';
 import ToastListener from '@/components/ui/toast-listener';
+import PageLoading from '@/components/common/page-loading';
 
 interface Article {
   id: number;
@@ -239,9 +240,10 @@ const ArticleEditorPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <LoadingContainer>
-        <div>加载中...</div>
-      </LoadingContainer>
+      <ToastProvider>
+        <ToastListener />
+        <PageLoading message="加载文章编辑器" fullScreen />
+      </ToastProvider>
     );
   }
 
@@ -376,16 +378,6 @@ const EditorContainer = styled.div`
   flex-direction: column;
   background: var(--bg-primary);
   overflow: hidden;
-`;
-
-const LoadingContainer = styled.div`
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-primary);
-  color: var(--text-primary);
 `;
 
 const TopBar = styled.div`

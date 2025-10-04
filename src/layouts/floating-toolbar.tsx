@@ -36,7 +36,7 @@ const ToolbarButton = styled(motion.button)`
   opacity: 0.9;
 
   &:hover {
-    background-color: var(--accent-color-hover, #4a76e8);
+    background-color: var(--accent-color-hover);
     transform: scale(1.05);
     opacity: 1;
   }
