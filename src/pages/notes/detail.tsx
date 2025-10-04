@@ -13,11 +13,9 @@ import PageLoading from '@/components/common/page-loading';
 // 页面容器
 const PageContainer = styled.div`
   width: 100%;
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 50px 1rem;
-  position: relative;
-  z-index: 3;
+  padding-top: 50px;
 `;
 
 // 返回链接
@@ -38,23 +36,38 @@ const BackLink = styled(Link)`
 
 // 手记布局
 const NoteLayout = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 3rem;
+  display: flex;
+  gap: 2.5rem;
+  position: relative;
+  z-index: 3;
 
   @media (max-width: 860px) {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 `;
 
 // 手记主内容
-const NoteMain = styled.div``;
+const NoteMain = styled.div`
+  flex: 1;
+  min-width: 0;
 
-// 手记侧边栏
-const NoteSidebar = styled.div`
   @media (max-width: 860px) {
-    grid-row: 1;
-    margin-bottom: 2rem;
+    margin-right: 0;
+  }
+`;
+
+// 手记侧边栏 - 使用 sticky 定位
+const NoteSidebar = styled.div`
+  position: sticky;
+  position: -webkit-sticky;
+  top: 150px;
+  width: 280px;
+  height: fit-content;
+  align-self: flex-start;
+  margin-top: 40px;
+
+  @media (max-width: 860px) {
+    display: none;
   }
 `;
 
@@ -309,7 +322,7 @@ const RelatedCard = styled(Link)`
   }
 `;
 
-// 页面头部渐变背景 - 保留原有效果
+// 页面头部渐变背景
 const PageHeadGradient = styled.div`
   pointer-events: none;
   position: fixed;
@@ -318,16 +331,10 @@ const PageHeadGradient = styled.div`
   top: 0;
   height: 500px;
   width: 100%;
-  background: linear-gradient(to right, rgb(var(--gradient-from) / 0.3) 0, rgb(var(--gradient-to) / 0.3) 100%);
+  background: linear-gradient(to right, rgba(var(--gradient-from), 0.3) 0%, rgba(var(--gradient-to), 0.3) 100%);
   mask-image: linear-gradient(#000, #ffffff00 70%);
   animation: fade-in 1s ease 0.2s both;
   z-index: 2;
-
-  /* 暗黑模式下隐藏 */
-  [data-theme='dark'] & {
-    display: none;
-  }
-
   @keyframes fade-in {
     0% {
       opacity: 0;
@@ -369,7 +376,7 @@ const PaperBackground = styled.div`
   [data-theme='dark'] & {
     background:
       /* 主题色光晕效果 */
-      radial-gradient(ellipse 1000px 800px at 50% 0%, rgb(var(--gradient-from) / 0.06), transparent 60%),
+      radial-gradient(ellipse 1000px 800px at 50% 0%, rgba(var(--gradient-from), 0.06), transparent 60%),
       /* 深色纸张基底 */ linear-gradient(180deg, #1a1a1a 0%, #151515 50%, #121212 100%);
 
     /* 添加主题色噪点纹理 */
@@ -383,15 +390,15 @@ const PaperBackground = styled.div`
           0deg,
           transparent,
           transparent 3px,
-          rgb(var(--gradient-from) / 0.02) 3px,
-          rgb(var(--gradient-from) / 0.02) 4px
+          rgba(var(--gradient-from), 0.02) 3px,
+          rgba(var(--gradient-from), 0.02) 4px
         ),
         repeating-linear-gradient(
           90deg,
           transparent,
           transparent 3px,
-          rgb(var(--gradient-to) / 0.02) 3px,
-          rgb(var(--gradient-to) / 0.02) 4px
+          rgba(var(--gradient-to), 0.02) 3px,
+          rgba(var(--gradient-to), 0.02) 4px
         );
       opacity: 0.4;
     }
@@ -402,8 +409,8 @@ const PaperBackground = styled.div`
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(circle at 20% 30%, rgb(var(--gradient-from) / 0.03), transparent 40%),
-        radial-gradient(circle at 80% 60%, rgb(var(--gradient-to) / 0.03), transparent 40%);
+        radial-gradient(circle at 20% 30%, rgba(var(--gradient-from), 0.03), transparent 40%),
+        radial-gradient(circle at 80% 60%, rgba(var(--gradient-to), 0.03), transparent 40%);
     }
   }
 

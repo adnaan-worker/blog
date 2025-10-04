@@ -594,12 +594,6 @@ pre,
 /**
  * 10. 滚动条样式 - 覆盖式滚动条，不占用布局空间
  */
-
-/* 使用 overlay scrollbar - 滚动条浮动在内容之上 */
-html {
-  overflow: overlay; /* 滚动条覆盖模式 */
-}
-
 /* Webkit 浏览器 (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 5px;
@@ -647,8 +641,6 @@ html {
 
 /* body 级别的滚动条 - 浮动在最上层 */
 body {
-  overflow: overlay;
-  /* scrollbar-gutter: stable; 移除，使用 overlay 模式不需要预留 */
   scrollbar-color: transparent transparent;
 }
 
@@ -673,12 +665,6 @@ body::-webkit-scrollbar-thumb:hover {
 body:hover,
 body:focus-within {
   scrollbar-color: rgba(var(--accent-rgb), 0.4) transparent;
-}
-
-/* 深色模式滚动条 - 覆盖式，不占布局 */
-[data-theme='dark'] html {
-  overflow: overlay;
-  /* scrollbar-gutter: stable; 移除 */
 }
 
 [data-theme='dark'] ::-webkit-scrollbar {
@@ -724,11 +710,6 @@ body:focus-within {
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
-/* 深色模式 body 滚动条 - 浮动效果 */
-[data-theme='dark'] body {
-  overflow: overlay;
-  /* scrollbar-gutter: stable; 移除 */
-}
 
 [data-theme='dark'] body::-webkit-scrollbar-thumb {
   background: transparent;
