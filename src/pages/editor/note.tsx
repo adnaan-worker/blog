@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { FiSave, FiX, FiLock, FiUnlock, FiMapPin, FiCloud, FiSmile, FiTag, FiX as FiClose } from 'react-icons/fi';
+import {
+  FiSave,
+  FiX,
+  FiLock,
+  FiUnlock,
+  FiMapPin,
+  FiCloud,
+  FiSmile,
+  FiTag,
+  FiX as FiClose,
+  FiCpu,
+} from 'react-icons/fi';
 import ModernEditor from '@/components/common/modern-editor';
+import EditorAIAssistant from '@/components/common/editor-ai-assistant';
 import { API } from '@/utils/api';
 import { Button, Input } from '@/components/ui';
+import { ToastProvider } from '@/components/ui/toast';
+import ToastListener from '@/components/ui/toast-listener';
 
 interface Note {
   id: number;
@@ -32,6 +46,44 @@ const NoteEditorPage: React.FC = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalData, setOriginalData] = useState({
+    title: '',
+    content: '',
+    mood: '',
+    weather: '',
+    location: '',
+    tags: [] as string[],
+    isPrivate: false,
+  });
+
+  // 监听内容变化
+  useEffect(() => {
+    const hasChanges =
+      title !== originalData.title ||
+      content !== originalData.content ||
+      mood !== originalData.mood ||
+      weather !== originalData.weather ||
+      location !== originalData.location ||
+      JSON.stringify(tags) !== JSON.stringify(originalData.tags) ||
+      isPrivate !== originalData.isPrivate;
+
+    setHasUnsavedChanges(hasChanges);
+  }, [title, content, mood, weather, location, tags, isPrivate, originalData]);
+
+  // 阻止页面关闭提示
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // 加载手记数据（如果是编辑模式）
   useEffect(() => {
@@ -43,13 +95,24 @@ const NoteEditorPage: React.FC = () => {
         const response = await API.note.getNoteDetail(Number(noteId));
         const note = response.data;
 
-        setTitle(note.title || '');
-        setContent(note.content);
-        setMood(note.mood || '');
-        setWeather(note.weather || '');
-        setLocation(note.location || '');
-        setTags(note.tags || []);
-        setIsPrivate(note.isPrivate || false);
+        const loadedData = {
+          title: note.title || '',
+          content: note.content,
+          mood: note.mood || '',
+          weather: note.weather || '',
+          location: note.location || '',
+          tags: note.tags || [],
+          isPrivate: note.isPrivate || false,
+        };
+
+        setTitle(loadedData.title);
+        setContent(loadedData.content);
+        setMood(loadedData.mood);
+        setWeather(loadedData.weather);
+        setLocation(loadedData.location);
+        setTags(loadedData.tags);
+        setIsPrivate(loadedData.isPrivate);
+        setOriginalData(loadedData);
       } catch (error: any) {
         window.UI.toast.error(error.message || '加载手记失败');
         navigate('/profile');
@@ -88,13 +151,37 @@ const NoteEditorPage: React.FC = () => {
 
       if (noteId) {
         await API.note.updateNote(Number(noteId), noteData);
-        window.UI.toast.success('手记更新成功');
+        window.UI.toast.success('手记更新成功！', '保存成功', 3000);
       } else {
         await API.note.createNote(noteData);
-        window.UI.toast.success('手记创建成功');
+        window.UI.toast.success('手记创建成功！', '保存成功', 3000);
       }
 
-      navigate('/profile');
+      // 重置未保存状态
+      setHasUnsavedChanges(false);
+      setOriginalData({
+        title: title.trim(),
+        content,
+        mood: mood.trim(),
+        weather: weather.trim(),
+        location: location.trim(),
+        tags,
+        isPrivate,
+      });
+
+      // 保存成功后，延迟关闭，让用户看到成功提示
+      setTimeout(() => {
+        try {
+          window.close();
+        } catch (error) {
+          // 如果无法关闭窗口，则返回上一页
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            navigate('/profile');
+          }
+        }
+      }, 3500); // 给用户3.5秒时间看到成功提示
     } catch (error: any) {
       window.UI.toast.error(error.message || '保存失败');
     } finally {
@@ -115,6 +202,32 @@ const NoteEditorPage: React.FC = () => {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
+  // 处理退出
+  const handleExit = async () => {
+    if (hasUnsavedChanges) {
+      const confirmed = await window.UI.confirm({
+        title: '确认退出',
+        message: '您有未保存的修改，确定要退出吗？',
+        confirmText: '退出',
+        cancelText: '取消',
+        confirmVariant: 'danger',
+      });
+      if (!confirmed) return;
+    }
+
+    // 尝试关闭当前窗口，如果无法关闭则返回上一页
+    try {
+      window.close();
+    } catch (error) {
+      // 如果无法关闭窗口（比如不是通过window.open打开的），则返回上一页
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        navigate('/profile');
+      }
+    }
+  };
+
   // 心情选项
   const moodOptions = ['😊 开心', '😢 难过', '😡 愤怒', '😌 平静', '😴 困倦', '🤔 思考'];
   const weatherOptions = ['☀️ 晴天', '☁️ 多云', '🌧️ 雨天', '❄️ 下雪', '🌈 彩虹'];
@@ -128,131 +241,154 @@ const NoteEditorPage: React.FC = () => {
   }
 
   return (
-    <EditorContainer>
-      {/* 顶部工具栏 */}
-      <TopBar>
-        <LeftSection>
-          <BackButton onClick={() => navigate('/profile')}>
-            <FiX />
-            <span>退出</span>
-          </BackButton>
-          <Title>
-            <input
-              type="text"
-              placeholder="请输入手记标题..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </Title>
-        </LeftSection>
+    <ToastProvider>
+      <ToastListener />
+      <EditorContainer>
+        {/* 顶部工具栏 */}
+        <TopBar>
+          <LeftSection>
+            <BackButton onClick={handleExit}>
+              <FiX />
+              <span>退出</span>
+            </BackButton>
+            <Title>
+              <input
+                type="text"
+                placeholder="请输入手记标题..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </Title>
+          </LeftSection>
 
-        <RightSection>
-          <Button variant={isPrivate ? 'outline' : 'outline'} size="small" onClick={() => setIsPrivate(!isPrivate)}>
-            {isPrivate ? <FiLock /> : <FiUnlock />}
-            <span>{isPrivate ? '私密' : '公开'}</span>
-          </Button>
-          <Button variant="primary" size="small" onClick={handleSave} disabled={isSaving}>
-            <FiSave />
-            <span>保存</span>
-          </Button>
-        </RightSection>
-      </TopBar>
+          <RightSection>
+            <Button
+              variant={showAIAssistant ? 'primary' : 'outline'}
+              size="small"
+              onClick={() => setShowAIAssistant(!showAIAssistant)}
+            >
+              <FiCpu />
+              <span>AI助手</span>
+            </Button>
+            <Button variant={isPrivate ? 'outline' : 'outline'} size="small" onClick={() => setIsPrivate(!isPrivate)}>
+              {isPrivate ? <FiLock /> : <FiUnlock />}
+              <span>{isPrivate ? '私密' : '公开'}</span>
+            </Button>
+            <Button variant="primary" size="small" onClick={handleSave} disabled={isSaving}>
+              <FiSave />
+              <span>保存</span>
+            </Button>
+          </RightSection>
+        </TopBar>
 
-      {/* 主编辑区 */}
-      <MainContent>
-        {/* 编辑器 */}
-        <EditorSection>
-          <ModernEditor content={content} onChange={setContent} placeholder="记录此刻的心情..." />
-        </EditorSection>
+        {/* 主编辑区 */}
+        <MainContent>
+          {/* 编辑器 */}
+          <EditorSection>
+            <ModernEditor content={content} onChange={setContent} placeholder="记录此刻的心情..." />
+          </EditorSection>
 
-        {/* 右侧边栏 */}
-        <Sidebar>
-          <SidebarSection>
-            <SectionTitle>手记属性</SectionTitle>
+          {/* AI助手面板 */}
+          {showAIAssistant && (
+            <AIAssistantPanel>
+              <EditorAIAssistant
+                content={content}
+                onContentUpdate={setContent}
+                isVisible={showAIAssistant}
+                onToggle={() => setShowAIAssistant(false)}
+              />
+            </AIAssistantPanel>
+          )}
 
-            {/* 心情 */}
-            <Field>
-              <Label>
-                <FiSmile />
-                <span>心情</span>
-              </Label>
-              <MoodGrid>
-                {moodOptions.map((option) => (
-                  <MoodItem
-                    key={option}
-                    selected={mood === option}
-                    onClick={() => setMood(mood === option ? '' : option)}
-                  >
-                    {option}
-                  </MoodItem>
-                ))}
-              </MoodGrid>
-            </Field>
+          {/* 右侧边栏 */}
+          <Sidebar>
+            <SidebarSection>
+              <SectionTitle>手记属性</SectionTitle>
 
-            {/* 天气 */}
-            <Field>
-              <Label>
-                <FiCloud />
-                <span>天气</span>
-              </Label>
-              <WeatherGrid>
-                {weatherOptions.map((option) => (
-                  <WeatherItem
-                    key={option}
-                    selected={weather === option}
-                    onClick={() => setWeather(weather === option ? '' : option)}
-                  >
-                    {option}
-                  </WeatherItem>
-                ))}
-              </WeatherGrid>
-            </Field>
+              {/* 心情 */}
+              <Field>
+                <Label>
+                  <FiSmile />
+                  <span>心情</span>
+                </Label>
+                <MoodGrid>
+                  {moodOptions.map((option) => (
+                    <MoodItem
+                      key={option}
+                      selected={mood === option}
+                      onClick={() => setMood(mood === option ? '' : option)}
+                    >
+                      {option}
+                    </MoodItem>
+                  ))}
+                </MoodGrid>
+              </Field>
 
-            {/* 位置 */}
-            <Field>
-              <Label>
-                <FiMapPin />
-                <span>位置</span>
-              </Label>
-              <Input placeholder="记录当前位置..." value={location} onChange={(e) => setLocation(e.target.value)} />
-            </Field>
+              {/* 天气 */}
+              <Field>
+                <Label>
+                  <FiCloud />
+                  <span>天气</span>
+                </Label>
+                <WeatherGrid>
+                  {weatherOptions.map((option) => (
+                    <WeatherItem
+                      key={option}
+                      selected={weather === option}
+                      onClick={() => setWeather(weather === option ? '' : option)}
+                    >
+                      {option}
+                    </WeatherItem>
+                  ))}
+                </WeatherGrid>
+              </Field>
 
-            {/* 标签 */}
-            <Field>
-              <Label>
-                <FiTag />
-                <span>标签</span>
-              </Label>
-              <TagInput>
-                <input
-                  type="text"
-                  placeholder="添加标签..."
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
-                  }}
-                />
-                <button onClick={handleAddTag}>添加</button>
-              </TagInput>
-              <TagsList>
-                {tags.map((tag) => (
-                  <TagItem key={tag}>
-                    <span>{tag}</span>
-                    <button onClick={() => handleRemoveTag(tag)}>
-                      <FiClose />
-                    </button>
-                  </TagItem>
-                ))}
-              </TagsList>
-            </Field>
-          </SidebarSection>
-        </Sidebar>
-      </MainContent>
-    </EditorContainer>
+              {/* 位置 */}
+              <Field>
+                <Label>
+                  <FiMapPin />
+                  <span>位置</span>
+                </Label>
+                <Input placeholder="记录当前位置..." value={location} onChange={(e) => setLocation(e.target.value)} />
+              </Field>
+
+              {/* 标签 */}
+              <Field>
+                <Label>
+                  <FiTag />
+                  <span>标签</span>
+                </Label>
+                <TagInput>
+                  <input
+                    type="text"
+                    placeholder="添加标签..."
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag();
+                      }
+                    }}
+                  />
+                  <button onClick={handleAddTag}>添加</button>
+                </TagInput>
+                <TagsList>
+                  {tags.map((tag) => (
+                    <TagItem key={tag}>
+                      <span>{tag}</span>
+                      <button onClick={() => handleRemoveTag(tag)}>
+                        <FiClose />
+                      </button>
+                    </TagItem>
+                  ))}
+                </TagsList>
+              </Field>
+            </SidebarSection>
+          </Sidebar>
+        </MainContent>
+      </EditorContainer>
+    </ToastProvider>
   );
 };
 
@@ -364,6 +500,30 @@ const EditorSection = styled.div`
   flex: 1;
   overflow-y: auto;
   background: var(--bg-primary);
+`;
+
+const AIAssistantPanel = styled.div`
+  width: 320px;
+  border-left: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  overflow-y: auto;
+
+  @media (max-width: 1280px) {
+    width: 280px;
+  }
+
+  @media (max-width: 1024px) {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 100;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const Sidebar = styled.div`

@@ -110,7 +110,7 @@ type ToastContextType =
   | undefined;
 
 // Toast上下文
-const ToastContext = createContext<ToastContextType>(undefined);
+export const ToastContext = createContext<ToastContextType>(undefined);
 
 // 生成唯一ID
 const generateId = () => Math.random().toString(36).substring(2, 9);

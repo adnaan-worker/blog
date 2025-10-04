@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { FiSave, FiX, FiEye, FiUpload } from 'react-icons/fi';
+import { FiSave, FiX, FiEye, FiUpload, FiCpu } from 'react-icons/fi';
 import ModernEditor from '@/components/common/modern-editor';
+import EditorAIAssistant from '@/components/common/editor-ai-assistant';
 import { API } from '@/utils/api';
 import { Button, Input } from '@/components/ui';
+import { ToastProvider } from '@/components/ui/toast';
+import ToastListener from '@/components/ui/toast-listener';
 
 interface Article {
   id: number;
@@ -43,6 +46,42 @@ const ArticleEditorPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [originalData, setOriginalData] = useState({
+    title: '',
+    content: '',
+    summary: '',
+    coverImage: '',
+    categoryId: null as number | null,
+    selectedTagIds: [] as number[],
+  });
+
+  // 监听内容变化
+  useEffect(() => {
+    const hasChanges =
+      title !== originalData.title ||
+      content !== originalData.content ||
+      summary !== originalData.summary ||
+      coverImage !== originalData.coverImage ||
+      categoryId !== originalData.categoryId ||
+      JSON.stringify(selectedTagIds) !== JSON.stringify(originalData.selectedTagIds);
+
+    setHasUnsavedChanges(hasChanges);
+  }, [title, content, summary, coverImage, categoryId, selectedTagIds, originalData]);
+
+  // 阻止页面关闭提示
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // 加载文章数据（如果是编辑模式）
   useEffect(() => {
@@ -54,13 +93,23 @@ const ArticleEditorPage: React.FC = () => {
         const response = await API.article.getArticleDetail(Number(articleId));
         const article = response.data;
 
-        setTitle(article.title);
-        setContent(article.content);
-        setSummary(article.summary || '');
-        setCoverImage(article.coverImage || '');
-        setCategoryId(article.typeId || null);
-        setSelectedTagIds(article.tagIds || []);
+        const loadedData = {
+          title: article.title,
+          content: article.content,
+          summary: article.summary || '',
+          coverImage: article.coverImage || '',
+          categoryId: article.typeId || null,
+          selectedTagIds: article.tagIds || [],
+        };
+
+        setTitle(loadedData.title);
+        setContent(loadedData.content);
+        setSummary(loadedData.summary);
+        setCoverImage(loadedData.coverImage);
+        setCategoryId(loadedData.categoryId);
+        setSelectedTagIds(loadedData.selectedTagIds);
         setStatus(article.status || 0);
+        setOriginalData(loadedData);
       } catch (error: any) {
         window.UI.toast.error(error.message || '加载文章失败');
         navigate('/profile');
@@ -120,13 +169,36 @@ const ArticleEditorPage: React.FC = () => {
 
       if (articleId) {
         await API.article.updateArticle(Number(articleId), articleData);
-        window.UI.toast.success('文章更新成功');
+        window.UI.toast.success('文章更新成功！', '保存成功', 3000);
       } else {
         await API.article.createArticle(articleData as any);
-        window.UI.toast.success('文章创建成功');
+        window.UI.toast.success('文章创建成功！', '保存成功', 3000);
       }
 
-      navigate('/profile');
+      // 重置未保存状态
+      setHasUnsavedChanges(false);
+      setOriginalData({
+        title: title.trim(),
+        content,
+        summary: summary.trim(),
+        coverImage: coverImage.trim(),
+        categoryId,
+        selectedTagIds,
+      });
+
+      // 保存成功后，延迟关闭，让用户看到成功提示
+      setTimeout(() => {
+        try {
+          window.close();
+        } catch (error) {
+          // 如果无法关闭窗口，则返回上一页
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            navigate('/profile');
+          }
+        }
+      }, 3500); // 给用户3.5秒时间看到成功提示
     } catch (error: any) {
       window.UI.toast.error(error.message || '保存失败');
     } finally {
@@ -139,6 +211,32 @@ const ArticleEditorPage: React.FC = () => {
     setSelectedTagIds((prev) => (prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]));
   };
 
+  // 处理退出
+  const handleExit = async () => {
+    if (hasUnsavedChanges) {
+      const confirmed = await window.UI.confirm({
+        title: '确认退出',
+        message: '您有未保存的修改，确定要退出吗？',
+        confirmText: '退出',
+        cancelText: '取消',
+        confirmVariant: 'danger',
+      });
+      if (!confirmed) return;
+    }
+
+    // 尝试关闭当前窗口，如果无法关闭则返回上一页
+    try {
+      window.close();
+    } catch (error) {
+      // 如果无法关闭窗口（比如不是通过window.open打开的），则返回上一页
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        navigate('/profile');
+      }
+    }
+  };
+
   if (isLoading) {
     return (
       <LoadingContainer>
@@ -148,102 +246,125 @@ const ArticleEditorPage: React.FC = () => {
   }
 
   return (
-    <EditorContainer>
-      {/* 顶部工具栏 */}
-      <TopBar>
-        <LeftSection>
-          <BackButton onClick={() => navigate('/profile')}>
-            <FiX />
-            <span>退出</span>
-          </BackButton>
-          <Title>
-            <input
-              type="text"
-              placeholder="请输入文章标题..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </Title>
-        </LeftSection>
-
-        <RightSection>
-          <Button variant="outline" size="small" onClick={() => handleSave(true)} disabled={isSaving}>
-            <FiSave />
-            <span>保存草稿</span>
-          </Button>
-          <Button variant="primary" size="small" onClick={() => handleSave(false)} disabled={isSaving}>
-            <FiUpload />
-            <span>发布</span>
-          </Button>
-        </RightSection>
-      </TopBar>
-
-      {/* 主编辑区 */}
-      <MainContent>
-        {/* 编辑器 */}
-        <EditorSection>
-          <ModernEditor content={content} onChange={setContent} placeholder="开始编写你的文章..." />
-        </EditorSection>
-
-        {/* 右侧边栏 */}
-        <Sidebar>
-          <SidebarSection>
-            <SectionTitle>文章设置</SectionTitle>
-
-            {/* 摘要 */}
-            <Field>
-              <Label>摘要</Label>
-              <textarea
-                placeholder="请输入文章摘要..."
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                rows={3}
+    <ToastProvider>
+      <ToastListener />
+      <EditorContainer>
+        {/* 顶部工具栏 */}
+        <TopBar>
+          <LeftSection>
+            <BackButton onClick={handleExit}>
+              <FiX />
+              <span>退出</span>
+            </BackButton>
+            <Title>
+              <input
+                type="text"
+                placeholder="请输入文章标题..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
               />
-            </Field>
+            </Title>
+          </LeftSection>
 
-            {/* 封面图 */}
-            <Field>
-              <Label>封面图</Label>
-              <Input
-                placeholder="请输入封面图地址..."
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
+          <RightSection>
+            <Button
+              variant={showAIAssistant ? 'primary' : 'outline'}
+              size="small"
+              onClick={() => setShowAIAssistant(!showAIAssistant)}
+            >
+              <FiCpu />
+              <span>AI助手</span>
+            </Button>
+            <Button variant="outline" size="small" onClick={() => handleSave(true)} disabled={isSaving}>
+              <FiSave />
+              <span>保存草稿</span>
+            </Button>
+            <Button variant="primary" size="small" onClick={() => handleSave(false)} disabled={isSaving}>
+              <FiUpload />
+              <span>发布</span>
+            </Button>
+          </RightSection>
+        </TopBar>
+
+        {/* 主编辑区 */}
+        <MainContent>
+          {/* 编辑器 */}
+          <EditorSection>
+            <ModernEditor content={content} onChange={setContent} placeholder="开始编写你的文章..." />
+          </EditorSection>
+
+          {/* AI助手面板 */}
+          {showAIAssistant && (
+            <AIAssistantPanel>
+              <EditorAIAssistant
+                content={content}
+                onContentUpdate={setContent}
+                isVisible={showAIAssistant}
+                onToggle={() => setShowAIAssistant(false)}
               />
-              {coverImage && (
-                <CoverPreview>
-                  <img src={coverImage} alt="封面预览" />
-                </CoverPreview>
-              )}
-            </Field>
+            </AIAssistantPanel>
+          )}
 
-            {/* 分类 */}
-            <Field>
-              <Label>分类</Label>
-              <select value={categoryId || ''} onChange={(e) => setCategoryId(Number(e.target.value) || null)}>
-                <option value="">请选择分类</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
+          {/* 右侧边栏 */}
+          <Sidebar>
+            <SidebarSection>
+              <SectionTitle>文章设置</SectionTitle>
 
-            {/* 标签 */}
-            <Field>
-              <Label>标签</Label>
-              <TagsList>
-                {tags.map((tag) => (
-                  <TagItem key={tag.id} selected={selectedTagIds.includes(tag.id)} onClick={() => toggleTag(tag.id)}>
-                    {tag.name}
-                  </TagItem>
-                ))}
-              </TagsList>
-            </Field>
-          </SidebarSection>
-        </Sidebar>
-      </MainContent>
-    </EditorContainer>
+              {/* 摘要 */}
+              <Field>
+                <Label>摘要</Label>
+                <textarea
+                  placeholder="请输入文章摘要..."
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  rows={3}
+                />
+              </Field>
+
+              {/* 封面图 */}
+              <Field>
+                <Label>封面图</Label>
+                <Input
+                  placeholder="请输入封面图地址..."
+                  value={coverImage}
+                  onChange={(e) => setCoverImage(e.target.value)}
+                />
+                {coverImage && (
+                  <CoverPreview>
+                    <img src={coverImage} alt="封面预览" />
+                  </CoverPreview>
+                )}
+              </Field>
+
+              {/* 分类 */}
+              <Field>
+                <Label>分类</Label>
+                <select value={categoryId || ''} onChange={(e) => setCategoryId(Number(e.target.value) || null)}>
+                  <option value="">请选择分类</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              {/* 标签 */}
+              <Field>
+                <Label>标签</Label>
+                <TagsList>
+                  {tags.map((tag) => (
+                    <TagItem key={tag.id} selected={selectedTagIds.includes(tag.id)} onClick={() => toggleTag(tag.id)}>
+                      {tag.name}
+                    </TagItem>
+                  ))}
+                </TagsList>
+              </Field>
+            </SidebarSection>
+          </Sidebar>
+        </MainContent>
+      </EditorContainer>
+    </ToastProvider>
   );
 };
 
@@ -355,6 +476,30 @@ const EditorSection = styled.div`
   flex: 1;
   overflow-y: auto;
   background: var(--bg-primary);
+`;
+
+const AIAssistantPanel = styled.div`
+  width: 320px;
+  border-left: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  overflow-y: auto;
+
+  @media (max-width: 1280px) {
+    width: 280px;
+  }
+
+  @media (max-width: 1024px) {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 100;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const Sidebar = styled.div`

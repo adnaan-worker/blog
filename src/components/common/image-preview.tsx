@@ -60,6 +60,9 @@ const PreviewOverlay = styled.span`
     border-radius: 50%;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 `;
 
@@ -122,7 +125,7 @@ const PreviewImage = styled.img<{
 
 // 控制栏
 const ControlBar = styled.div`
-  position: absolute;
+  position: fixed;
   top: 20px;
   right: 20px;
   display: flex;
