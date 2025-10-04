@@ -23,10 +23,11 @@ interface UserState {
 // 从本地存储获取用户信息初始化状态
 const getUserFromStorage = () => {
   const userData = storage.local.get('user');
-  if (userData && userData.user && userData.token) {
+  const tokenData = storage.local.get('token');
+  if (userData && tokenData) {
     return {
-      user: userData.user,
-      token: userData.token,
+      user: userData as any,
+      token: tokenData as string,
       isLoggedIn: true,
       loading: false,
       error: null,
@@ -77,8 +78,9 @@ export const login = (username: string, password: string) => async (dispatch: an
 
     const response = await API.user.login({ username, password });
     if (response.code === 200) {
-      dispatch(setUser(response.data));
-      storage.local.set('user', response.data);
+      dispatch(setUser(response.data.user as any));
+      storage.local.set('user', response.data.user);
+      storage.local.set('token', response.data.token);
       toast.success('登录成功', '欢迎回来');
     } else {
       dispatch(setError(response.message || '登录失败'));
@@ -100,6 +102,7 @@ export const logoutUser = () => async (dispatch: any) => {
     await API.user.logout();
     // 清除本地存储中的用户信息
     storage.local.remove('user');
+    storage.local.remove('token');
     dispatch(logout());
     // 使用全局Toast显示登出成功
     toast.info('您已成功退出登录', '再见');

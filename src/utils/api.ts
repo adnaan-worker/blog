@@ -22,7 +22,7 @@ export interface LoginParams {
 
 export interface LoginResponse {
   token: string;
-  userInfo: UserInfo;
+  user: UserInfo;
 }
 
 export interface RegisterParams {

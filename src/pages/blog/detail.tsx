@@ -456,7 +456,9 @@ const BlogDetail: React.FC = () => {
 
     // 查找所有 h2-h6 标题
     const headingElements = Array.from(
-      articleElement.querySelectorAll('h2.article-heading, h3.article-heading, h4.article-heading, h5.article-heading, h6.article-heading')
+      articleElement.querySelectorAll(
+        'h2.article-heading, h3.article-heading, h4.article-heading, h5.article-heading, h6.article-heading',
+      ),
     );
 
     if (headingElements.length === 0) return;
@@ -490,7 +492,7 @@ const BlogDetail: React.FC = () => {
 
       // 找到所有已经滚过阈值的标题（在阈值上方的）
       const passedHeadings: { element: Element; top: number }[] = [];
-      
+
       headingElements.forEach((heading) => {
         const rect = heading.getBoundingClientRect();
         // 标题的顶部已经超过阈值（在阈值上方）
@@ -578,7 +580,7 @@ const BlogDetail: React.FC = () => {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      
+
       // 清理动画帧
       if (scrollHandlerRef.current) {
         window.cancelAnimationFrame(scrollHandlerRef.current);

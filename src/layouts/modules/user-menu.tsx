@@ -6,6 +6,7 @@ import { FiUser, FiSettings, FiFileText, FiHeart, FiLogOut, FiEdit, FiMonitor } 
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
+import { getRoleDisplayName, getRoleColor } from '@/utils/role-helper';
 
 // 用户头像样式
 const Avatar = styled.div<{ hasImage?: boolean }>`
@@ -86,9 +87,10 @@ const UserName = styled.div`
   font-size: 0.95rem;
 `;
 
-const UserRole = styled.div`
+const UserRole = styled.div<{ roleColor?: string }>`
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: ${(props) => props.roleColor || 'var(--text-secondary)'};
+  font-weight: 500;
 `;
 
 const UserDropdownItem = styled(Link)`
@@ -217,7 +219,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
                 </Avatar>
                 <UserInfo>
                   <UserName>{user?.username}</UserName>
-                  <UserRole>普通用户</UserRole>
+                  <UserRole roleColor={getRoleColor(user?.role)}>{getRoleDisplayName(user?.role)}</UserRole>
                 </UserInfo>
               </UserDropdownHeader>
 

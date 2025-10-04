@@ -502,9 +502,9 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
             ?.toLowerCase()
             .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
             .substring(0, 50)}`;
-          
+
           const HeadingTag = element.name as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-          
+
           return (
             <HeadingTag id={id} className="article-heading">
               {domToReact(element.children as any, parserOptions)}

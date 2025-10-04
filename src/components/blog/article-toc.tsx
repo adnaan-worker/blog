@@ -9,7 +9,7 @@ const SidebarWrapper = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-  
+
   @media (max-width: 860px) {
     width: 100%;
   }
@@ -55,7 +55,7 @@ const ToolbarContainer = styled.div<{ isBottom: boolean }>`
   transform: ${(props) => (props.isBottom ? 'rotate(-90deg)' : 'rotate(0deg)')};
   transform-origin: 20px 20px; /* 以第一个按钮中心（40px/2 = 20px）为旋转点 */
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   @media (max-width: 860px) {
     flex-direction: row;
     justify-content: center;
@@ -78,7 +78,7 @@ const CircularProgressContainer = styled.div`
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
-  padding: 4px 0 4px 16px
+  padding: 4px 0 4px 16px;
 `;
 
 // 环形进度条 SVG
@@ -203,7 +203,7 @@ const TocItem = styled.div<{ active: boolean; level: number }>`
     width: ${(props) => (props.active ? '8px' : '0')};
     height: 2px;
     background-color: var(--accent-color);
-    transition: 
+    transition:
       width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       opacity 0.3s ease;
     opacity: ${(props) => (props.active ? '1' : '0')};
@@ -216,10 +216,11 @@ const TocItem = styled.div<{ active: boolean; level: number }>`
   }
 
   span {
-    font-size: ${(props) => (props.level === 2 ? '0.85rem' : props.level === 3 ? '0.82rem' : '0.8rem')}; /* 不同层级不同字号 */
+    font-size: ${(props) =>
+      props.level === 2 ? '0.85rem' : props.level === 3 ? '0.82rem' : '0.8rem'}; /* 不同层级不同字号 */
     color: ${(props) => (props.active ? 'var(--text-primary)' : 'var(--text-secondary)')};
     font-weight: ${(props) => (props.active ? '500' : props.level === 2 ? '500' : 'normal')}; /* h2 加粗 */
-    transition: 
+    transition:
       color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       transform 0.2s ease,
       opacity 0.3s ease;
@@ -236,7 +237,6 @@ const TocItem = styled.div<{ active: boolean; level: number }>`
     opacity: 1;
   }
 `;
-
 
 interface ArticleTocProps {
   headings: { id: string; text: string; level: number }[];
@@ -311,14 +311,7 @@ const ArticleToc: React.FC<ArticleTocProps> = memo(
         <CircularProgressContainer>
           <CircularProgress>
             {/* 背景圆 */}
-            <circle
-              cx="7"
-              cy="7"
-              r={radius}
-              fill="none"
-              stroke="var(--bg-secondary)"
-              strokeWidth="1.5"
-            />
+            <circle cx="7" cy="7" r={radius} fill="none" stroke="var(--bg-secondary)" strokeWidth="1.5" />
             {/* 进度圆 */}
             <circle
               cx="7"

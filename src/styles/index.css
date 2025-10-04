@@ -724,7 +724,6 @@ body:focus-within {
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
-
 [data-theme='dark'] body::-webkit-scrollbar-thumb {
   background: transparent;
   background-clip: padding-box;

@@ -40,9 +40,8 @@ class HttpRequest {
     // 请求拦截器
     this.instance.interceptors.request.use(
       (reqConfig: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-        // 从 localStorage 获取用户信息和token
-        const userInfo = storage.local.get('user') as any;
-        const token = userInfo?.token;
+        // 从 localStorage 获取token
+        const token = storage.local.get('token');
         if (token) {
           reqConfig.headers.set('Authorization', `Bearer ${token}`);
         }
@@ -297,8 +296,7 @@ class HttpRequest {
    */
   public async streamPost(url: string, data?: any, onChunk?: (chunk: string) => void): Promise<string> {
     // 获取token
-    const userInfo = storage.local.get('user') as any;
-    const token = userInfo?.token;
+    const token = storage.local.get('token');
 
     const response = await fetch(`${this.baseConfig.baseURL}${url}`, {
       method: 'POST',

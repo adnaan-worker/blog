@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMessageSquare, FiSend, FiCornerDownRight, FiThumbsUp, FiTrash2, FiLoader } from 'react-icons/fi';
+import { Button, Input, Textarea } from '@/components/ui';
 import { API, Comment as CommentType } from '@/utils/api';
 import { storage } from '@/utils';
 import { formatDate } from '@/utils';
@@ -60,28 +61,6 @@ const CommentForm = styled.form`
   }
 `;
 
-// 评论输入框
-const CommentTextarea = styled.textarea`
-  width: 100%;
-  padding: 1rem;
-  border: none;
-  background: transparent;
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  resize: vertical;
-  min-height: 100px;
-  font-family: inherit;
-  line-height: 1.6;
-
-  &:focus {
-    outline: none;
-  }
-
-  &::placeholder {
-    color: var(--text-tertiary);
-  }
-`;
-
 // 表单底部
 const FormFooter = styled.div`
   display: flex;
@@ -103,30 +82,11 @@ const FormInfo = styled.div`
   color: var(--text-tertiary);
 `;
 
-// 提交按钮
-const SubmitButton = styled.button<{ disabled?: boolean }>`
+// 操作按钮容器
+const ActionButtonContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  background: ${(props) => (props.disabled ? 'var(--bg-secondary)' : 'var(--accent-color)')};
-  color: white;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border: none;
-  cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-
-  &:hover:not(:disabled) {
-    background: var(--accent-color-hover);
-    transform: translateY(-1px);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
 `;
 
 // 评论列表
@@ -145,7 +105,7 @@ const CommentItem = styled.div<{ isReply?: boolean }>`
   gap: 1rem;
   padding: ${(props) => (props.isReply ? '1rem 0 1rem 3rem' : '1.25rem 0')};
   border-bottom: 1px solid var(--border-color);
-  
+
   &:last-child {
     border-bottom: none;
   }
@@ -199,16 +159,6 @@ const CommentDate = styled.div`
   font-size: 0.85rem;
 `;
 
-// 管理员标签
-const AdminBadge = styled.span`
-  padding: 0.125rem 0.5rem;
-  background: var(--accent-color-alpha);
-  color: var(--accent-color);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-`;
-
 // 评论文本
 const CommentText = styled.p`
   line-height: 1.7;
@@ -225,28 +175,14 @@ const CommentActions = styled.div`
   gap: 1rem;
 `;
 
-// 操作按钮
-const ActionButton = styled.button<{ active?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.75rem;
-  border-radius: 6px;
-  background: ${(props) => (props.active ? 'var(--accent-color-alpha)' : 'transparent')};
-  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-tertiary)')};
-  font-size: 0.85rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-
-  &:hover {
-    background: var(--accent-color-alpha);
-    color: var(--accent-color);
-  }
-
-  svg {
-    font-size: 0.9rem;
-  }
+// 管理员标签样式
+const AdminBadgeStyled = styled.span`
+  padding: 0.125rem 0.5rem;
+  background: var(--accent-color-alpha);
+  color: var(--accent-color);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
 `;
 
 // 回复表单容器
@@ -310,7 +246,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
-  
+
   const user = storage.local.get('user');
   const token = storage.local.get('token');
   const isLoggedIn = !!token;
@@ -321,7 +257,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       setLoading(true);
       const response = await API.comment.getCommentsByPost(postId, { page: 1, limit: 50 });
       if (response.code === 200 && response.data) {
-        setComments(response.data.data || []);
+        setComments(response.data.comments || []);
         setTotal(response.data.total || 0);
       }
     } catch (error) {
@@ -342,7 +278,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    
+
     if (!isLoggedIn) {
       window.UI?.toast?.error('请先登录');
       return;
@@ -354,7 +290,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         content: commentText,
         postId,
       });
-      
+
       window.UI?.toast?.success('评论发布成功');
       setCommentText('');
       await fetchComments();
@@ -368,7 +304,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   // 提交回复
   const handleReply = async (parentId: number) => {
     if (!replyText.trim()) return;
-    
+
     if (!isLoggedIn) {
       window.UI?.toast?.error('请先登录');
       return;
@@ -380,7 +316,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         postId,
         parentId,
       });
-      
+
       window.UI?.toast?.success('回复发布成功');
       setReplyText('');
       setReplyingTo(null);
@@ -392,10 +328,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
   // 删除评论
   const handleDelete = async (id: number) => {
-    const confirmed = window.UI?.confirm 
+    const confirmed = window.UI?.confirm
       ? await window.UI.confirm({ title: '确认删除', message: '确定要删除这条评论吗？' })
       : window.confirm('确定要删除这条评论吗？');
-    
+
     if (!confirmed) return;
 
     try {
@@ -416,27 +352,37 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       transition={{ duration: 0.3 }}
     >
       <CommentItem isReply={isReply}>
-        <Avatar>{typeof comment.author === 'string' && comment.author ? comment.author[0]?.toUpperCase() || '?' : '?'}</Avatar>
+        <Avatar>
+          {typeof comment.author === 'string' && comment.author ? comment.author[0]?.toUpperCase() || '?' : '?'}
+        </Avatar>
         <CommentContent>
           <CommentContentHeader>
             <CommentAuthor>{typeof comment.author === 'string' ? comment.author : '匿名用户'}</CommentAuthor>
-            {comment.originalData?.author?.role === 'admin' && <AdminBadge>管理员</AdminBadge>}
+            {comment.originalData?.author?.role === 'admin' && <AdminBadgeStyled>管理员</AdminBadgeStyled>}
             <CommentDate>{formatDate(comment.date || comment.originalData?.createdAt, 'YYYY-MM-DD HH:mm')}</CommentDate>
           </CommentContentHeader>
           <CommentText>{comment.content}</CommentText>
           <CommentActions>
             {isLoggedIn && !isReply && (
-              <ActionButton onClick={() => setReplyingTo(replyingTo === Number(comment.id) ? null : Number(comment.id))}>
+              <Button
+                variant="ghost"
+                size="small"
+                onClick={() => setReplyingTo(replyingTo === Number(comment.id) ? null : Number(comment.id))}
+              >
                 <FiCornerDownRight />
                 回复
-              </ActionButton>
+              </Button>
             )}
-            {isLoggedIn && typeof user === 'object' && user && 'id' in user && user.id === comment.originalData?.userId && (
-              <ActionButton onClick={() => handleDelete(Number(comment.id))}>
-                <FiTrash2 />
-                删除
-              </ActionButton>
-            )}
+            {isLoggedIn &&
+              typeof user === 'object' &&
+              user &&
+              'id' in user &&
+              user.id === comment.originalData?.userId && (
+                <Button variant="ghost" size="small" onClick={() => handleDelete(Number(comment.id))}>
+                  <FiTrash2 />
+                  删除
+                </Button>
+              )}
           </CommentActions>
 
           {/* 回复表单 */}
@@ -448,23 +394,31 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <CommentForm onSubmit={(e) => { e.preventDefault(); handleReply(Number(comment.id)); }}>
-                  <CommentTextarea
+                <CommentForm
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleReply(Number(comment.id));
+                  }}
+                >
+                  <Textarea
                     placeholder={`回复 ${comment.author}...`}
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     rows={3}
-                    autoFocus
+                    size="small"
+                    fullWidth
                   />
                   <FormFooter>
                     <FormInfo>Ctrl + Enter 快速发送</FormInfo>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <ActionButton onClick={() => setReplyingTo(null)}>取消</ActionButton>
-                      <SubmitButton type="submit" disabled={!replyText.trim()}>
+                    <ActionButtonContainer>
+                      <Button variant="ghost" onClick={() => setReplyingTo(null)}>
+                        取消
+                      </Button>
+                      <Button type="submit" disabled={!replyText.trim()} variant="primary">
                         <FiSend size={16} />
                         发送
-                      </SubmitButton>
-                    </div>
+                      </Button>
+                    </ActionButtonContainer>
                   </FormFooter>
                 </CommentForm>
               </ReplyFormContainer>
@@ -475,9 +429,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
       {/* 递归渲染回复 */}
       {comment.replies && comment.replies.length > 0 && (
-        <div>
-          {comment.replies.map((reply) => renderComment(reply, true))}
-        </div>
+        <div>{comment.replies.map((reply) => renderComment(reply, true))}</div>
       )}
     </CommentItemWrapper>
   );
@@ -495,18 +447,24 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       {/* 评论表单 */}
       {isLoggedIn ? (
         <CommentForm onSubmit={handleSubmit}>
-          <CommentTextarea
+          <Textarea
             placeholder="写下你的评论..."
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             rows={4}
+            size="medium"
+            fullWidth
           />
           <FormFooter>
             <FormInfo>支持 Markdown 语法</FormInfo>
-            <SubmitButton type="submit" disabled={!commentText.trim() || isSubmitting}>
-              {isSubmitting ? <FiLoader size={16} /> : <FiSend size={16} />}
+            <Button
+              type="submit"
+              disabled={!commentText.trim() || isSubmitting}
+              isLoading={isSubmitting}
+              variant="primary"
+            >
               {isSubmitting ? '发送中...' : '发送评论'}
-            </SubmitButton>
+            </Button>
           </FormFooter>
         </CommentForm>
       ) : (

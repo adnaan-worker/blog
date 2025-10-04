@@ -79,7 +79,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ actions, onAction })
 
   // 获取用户信息检查是否是管理员
   const userInfo = storage.local.get<any>('user');
-  const isAdmin = userInfo?.user.role === 'admin';
+  const isAdmin = userInfo?.role === 'admin';
 
   // 默认操作列表
   const defaultActions: QuickAction[] = [

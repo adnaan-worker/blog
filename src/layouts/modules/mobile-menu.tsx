@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { FiLogOut, FiX } from 'react-icons/fi';
 import type { RootState } from '@/store';
 import { scrollLock } from '@/utils/scroll-lock';
+import { getRoleDisplayName, getRoleColor } from '@/utils/role-helper';
 
 // 修改移动端菜单样式
 const MobileMenuContainer = styled(motion.div)`
@@ -363,10 +364,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                     <div
                       style={{
                         fontSize: '0.8rem',
-                        color: 'var(--text-secondary)',
+                        color: getRoleColor(user?.role),
+                        fontWeight: '500',
                       }}
                     >
-                      普通用户
+                      {getRoleDisplayName(user?.role)}
                     </div>
                   </div>
                 </div>
