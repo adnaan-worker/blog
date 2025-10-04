@@ -147,7 +147,7 @@ const CodePreview: React.FC<CodePreviewProps> = ({
         )}
 
         <CodeArea visible={activeTab === 'code'}>
-          <CodeBlock code={code} language={language} showLineNumbers={true} allowCopy={true} allowFullscreen={false} />
+          <CodeBlock code={code} language={language} showLineNumbers={true} allowCopy={true} />
         </CodeArea>
       </PreviewContent>
     </PreviewContainer>

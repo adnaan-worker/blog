@@ -225,8 +225,8 @@ export class RichTextParser {
     // 处理代码块（优先处理）
     html = html.replace(/```(\w+)?\s*\n([\s\S]*?)\n```/g, (match, language, code) => {
       const lang = language || 'text';
+      // 注意：不要 trim()，保留原始的空白和换行
       const escapedCode = code
-        .trim()
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')

@@ -1,6 +1,6 @@
 /* 富文本内容全局样式 */
 :root {
-  /* 富文本颜色变量 */
+  /* 富文本颜色变量 - 浅色模式 */
   --rich-text-primary: #1a1a1a;
   --rich-text-secondary: #4a5568;
   --rich-text-accent: #3182ce;
@@ -10,20 +10,20 @@
   --rich-text-code-bg: #f8f9fa;
   --rich-text-quote-border: #3182ce;
 
-  /* 深色主题 */
-  [data-theme='dark'] & {
-    --rich-text-primary: #f7fafc;
-    --rich-text-secondary: #a0aec0;
-    --rich-text-accent: #63b3ed;
-    --rich-text-background: #1a202c;
-    --rich-text-background-secondary: #2d3748;
-    --rich-text-border: #4a5568;
-    --rich-text-code-bg: #2d3748;
-    --rich-text-quote-border: #63b3ed;
-  }
-
   /* 字体变量 */
   --font-code: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* 深色主题颜色变量 */
+[data-theme='dark'] {
+  --rich-text-primary: #e8e8e8;
+  --rich-text-secondary: #b8b8b8;
+  --rich-text-accent: #63b3ed;
+  --rich-text-background: #1a202c;
+  --rich-text-background-secondary: #2d3748;
+  --rich-text-border: #4a5568;
+  --rich-text-code-bg: #2d3748;
+  --rich-text-quote-border: #63b3ed;
 }
 
 /* 富文本内容专用样式 - 同时应用于显示(.rich-text-content)和编辑(.ProseMirror) */
@@ -41,8 +41,13 @@
   hyphens: auto;
 }
 
-/* 代码块样式 */
-.rich-text-content pre,
+/* 深色模式富文本容器增强 */
+[data-theme='dark'] .rich-text-content,
+[data-theme='dark'] .ProseMirror {
+  color: #e8e8e8;
+}
+
+/* 代码块样式 - 仅用于编辑器 (ProseMirror) */
 .ProseMirror pre {
   background: var(--rich-text-code-bg);
   border: 1px solid var(--rich-text-border);
@@ -53,9 +58,9 @@
   font-family: var(--font-code);
   font-size: 14px;
   line-height: 1.5;
+  white-space: pre;
 }
 
-.rich-text-content pre code,
 .ProseMirror pre code {
   background: none;
   padding: 0;
@@ -63,19 +68,22 @@
   font-size: inherit;
   font-family: inherit;
   color: var(--rich-text-primary);
+  white-space: pre;
+  display: inline;
 }
 
-/* 确保 highlight.js 的语法高亮样式正确应用 */
-.rich-text-content pre code.hljs,
-.ProseMirror pre code.hljs {
-  background: transparent !important;
-  color: inherit !important;
+/* 深色模式 - 编辑器代码块 */
+[data-theme='dark'] .ProseMirror pre {
+  background: #1e1e1e;
+  border-color: #3e3e3e;
 }
 
-/* 支持 highlight.js 的语法高亮类 */
-.rich-text-content pre code .hljs,
-.ProseMirror pre code .hljs {
-  background: transparent !important;
+[data-theme='dark'] .ProseMirror pre code {
+  color: #abb2bf !important;
+}
+
+[data-theme='dark'] .ProseMirror pre code * {
+  color: #abb2bf;
 }
 
 /* 内联代码样式 */
@@ -90,6 +98,126 @@
   border: 1px solid var(--rich-text-border);
 }
 
+/* 深色模式 - 内联代码 */
+[data-theme='dark'] .rich-text-content code,
+[data-theme='dark'] .ProseMirror code {
+  background: rgba(110, 118, 129, 0.2);
+  color: #e5c07b;
+  border-color: #3e3e3e;
+}
+
+/* 语法高亮颜色 - 浅色模式（默认） */
+.hljs-keyword {
+  color: #d73a49 !important;
+}
+.hljs-string {
+  color: #032f62 !important;
+}
+.hljs-comment {
+  color: #6a737d !important;
+}
+.hljs-function {
+  color: #6f42c1 !important;
+}
+.hljs-number {
+  color: #005cc5 !important;
+}
+.hljs-title {
+  color: #6f42c1 !important;
+}
+.hljs-params {
+  color: #24292e !important;
+}
+.hljs-built_in {
+  color: #005cc5 !important;
+}
+.hljs-variable {
+  color: #e36209 !important;
+}
+.hljs-attr {
+  color: #005cc5 !important;
+}
+.hljs-property {
+  color: #005cc5 !important;
+}
+.hljs-literal {
+  color: #005cc5 !important;
+}
+.hljs-operator {
+  color: #d73a49 !important;
+}
+
+/* 语法高亮颜色 - 深色模式 */
+[data-theme='dark'] .hljs-keyword {
+  color: #c678dd !important;
+}
+[data-theme='dark'] .hljs-string {
+  color: #98c379 !important;
+}
+[data-theme='dark'] .hljs-comment {
+  color: #7f848e !important;
+}
+[data-theme='dark'] .hljs-function {
+  color: #61afef !important;
+}
+[data-theme='dark'] .hljs-number {
+  color: #d19a66 !important;
+}
+[data-theme='dark'] .hljs-title {
+  color: #61afef !important;
+}
+[data-theme='dark'] .hljs-params {
+  color: #abb2bf !important;
+}
+[data-theme='dark'] .hljs-built_in {
+  color: #e5c07b !important;
+}
+[data-theme='dark'] .hljs-variable {
+  color: #e06c75 !important;
+}
+[data-theme='dark'] .hljs-attr {
+  color: #d19a66 !important;
+}
+[data-theme='dark'] .hljs-property {
+  color: #61afef !important;
+}
+[data-theme='dark'] .hljs-literal {
+  color: #56b6c2 !important;
+}
+[data-theme='dark'] .hljs-operator {
+  color: #56b6c2 !important;
+}
+[data-theme='dark'] .hljs-type {
+  color: #e5c07b !important;
+}
+[data-theme='dark'] .hljs-name {
+  color: #e06c75 !important;
+}
+[data-theme='dark'] .hljs-tag {
+  color: #abb2bf !important;
+}
+[data-theme='dark'] .hljs-punctuation {
+  color: #abb2bf !important;
+}
+[data-theme='dark'] .hljs-subst {
+  color: #e06c75 !important;
+}
+[data-theme='dark'] .hljs-class {
+  color: #e5c07b !important;
+}
+[data-theme='dark'] .hljs-title.class_ {
+  color: #e5c07b !important;
+}
+[data-theme='dark'] .hljs-title.function_ {
+  color: #61afef !important;
+}
+[data-theme='dark'] .hljs-variable.language_ {
+  color: #e06c75 !important;
+}
+[data-theme='dark'] .hljs-variable.constant_ {
+  color: #d19a66 !important;
+}
+
 /* 引用块样式 */
 .rich-text-content blockquote,
 .ProseMirror blockquote {
@@ -101,6 +229,14 @@
   font-style: italic;
   position: relative;
   color: var(--rich-text-secondary);
+}
+
+/* 深色模式引用块优化 */
+[data-theme='dark'] .rich-text-content blockquote,
+[data-theme='dark'] .ProseMirror blockquote {
+  background: rgba(99, 179, 237, 0.1);
+  border-left-color: #63b3ed;
+  color: #a0aec0;
 }
 
 .rich-text-content blockquote p,
@@ -161,6 +297,22 @@
   margin: 2rem 0 1rem;
 }
 
+/* 深色模式标题增强 */
+[data-theme='dark'] .rich-text-content h1,
+[data-theme='dark'] .rich-text-content h2,
+[data-theme='dark'] .rich-text-content h3,
+[data-theme='dark'] .rich-text-content h4,
+[data-theme='dark'] .rich-text-content h5,
+[data-theme='dark'] .rich-text-content h6,
+[data-theme='dark'] .ProseMirror h1,
+[data-theme='dark'] .ProseMirror h2,
+[data-theme='dark'] .ProseMirror h3,
+[data-theme='dark'] .ProseMirror h4,
+[data-theme='dark'] .ProseMirror h5,
+[data-theme='dark'] .ProseMirror h6 {
+  color: #f0f0f0;
+}
+
 .rich-text-content h1,
 .ProseMirror h1 {
   font-size: 2.5em;
@@ -204,6 +356,12 @@
   margin-bottom: 0;
 }
 
+/* 深色模式段落增强 */
+[data-theme='dark'] .rich-text-content p,
+[data-theme='dark'] .ProseMirror p {
+  color: #d4d4d4;
+}
+
 /* 列表样式 */
 .rich-text-content ul,
 .rich-text-content ol,
@@ -223,6 +381,12 @@
 .rich-text-content li p,
 .ProseMirror li p {
   margin: 0.25rem 0;
+}
+
+/* 深色模式列表增强 */
+[data-theme='dark'] .rich-text-content li,
+[data-theme='dark'] .ProseMirror li {
+  color: #d4d4d4;
 }
 
 /* 分割线样式 */

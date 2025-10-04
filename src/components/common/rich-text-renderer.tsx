@@ -1,106 +1,306 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
 import parse, { HTMLReactParserOptions, Element, domToReact } from 'html-react-parser';
 import hljs from 'highlight.js';
-import 'highlight.js/styles/github.css'; // GitHub 风格的代码高亮主题
-import '@/styles/rich-text.css'; // 导入您的富文本样式
+import 'highlight.js/styles/atom-one-dark.css';
+import '@/styles/rich-text.css';
 import { RichTextParser } from '@/utils/rich-text-parser';
 import ImagePreview from './image-preview';
-import CodeBlock from './code-block';
+import { FiCopy, FiCheck, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+
+// 语法高亮颜色配置
+const SYNTAX_COLORS = {
+  dark: {
+    default: '#abb2bf',
+    keyword: '#c678dd',
+    string: '#98c379',
+    comment: '#7f848e',
+    function: '#61afef',
+    number: '#d19a66',
+    builtin: '#e5c07b',
+    variable: '#e06c75',
+    literal: '#56b6c2',
+    operator: '#56b6c2',
+  },
+  light: {
+    default: '#24292e',
+    keyword: '#d73a49',
+    string: '#032f62',
+    comment: '#6a737d',
+    function: '#6f42c1',
+    number: '#005cc5',
+    builtin: '#005cc5',
+    variable: '#e36209',
+    literal: '#005cc5',
+    operator: '#d73a49',
+  },
+};
+
+// 代码块容器
+const CodeBlockContainer = styled.div`
+  position: relative;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+
+  /* 深色模式优化 */
+  [data-theme='dark'] & {
+    background: #1e1e1e;
+    border-color: #3e3e3e;
+  }
+`;
+
+// 代码块头部
+const CodeBlockHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  ${CodeBlockContainer}:hover & {
+    opacity: 1;
+  }
+
+  /* 深色模式优化 */
+  [data-theme='dark'] & {
+    background: #161616;
+    border-bottom-color: #3e3e3e;
+  }
+`;
+
+// 语言标签
+const LanguageLabel = styled.span`
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: var(--font-code);
+  text-transform: uppercase;
+  font-weight: 600;
+`;
+
+// 复制按钮
+const CopyButton = styled.button<{ copied: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: ${(props) => (props.copied ? 'var(--accent-color)' : 'var(--bg-primary)')};
+  color: ${(props) => (props.copied ? 'white' : 'var(--text-secondary)')};
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${(props) => (props.copied ? 'var(--accent-color)' : 'var(--bg-tertiary)')};
+  }
+`;
+
+// 代码内容区域
+const CodeContent = styled.div<{ collapsed: boolean; maxHeight: number }>`
+  position: relative;
+  max-height: ${(props) => (props.collapsed ? `${props.maxHeight}px` : 'none')};
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: max-height 0.3s ease;
+
+  /* 滚动条样式 */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+  }
+
+  /* 深色模式滚动条 */
+  [data-theme='dark'] &::-webkit-scrollbar-track {
+    background: #161616;
+  }
+
+  [data-theme='dark'] &::-webkit-scrollbar-thumb {
+    background: #4e4e4e;
+  }
+
+  [data-theme='dark'] &::-webkit-scrollbar-thumb:hover {
+    background: #5e5e5e;
+  }
+
+  pre {
+    margin: 0 !important;
+    padding: 1rem !important;
+    background: var(--bg-secondary) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow-x: auto;
+    font-family: var(--font-code, 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace);
+    font-size: 0.875rem;
+    line-height: 1.6;
+
+    /* 深色模式代码背景 */
+    [data-theme='dark'] & {
+      background: #1e1e1e !important;
+    }
+
+    /* 浅色模式代码背景 */
+    [data-theme='light'] & {
+      background: #f6f8fa !important;
+    }
+
+    /* pre 内部的滚动条样式 */
+    &::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: var(--text-tertiary);
+    }
+
+    /* 深色模式横向滚动条 */
+    [data-theme='dark'] &::-webkit-scrollbar-thumb {
+      background: #4e4e4e;
+    }
+
+    [data-theme='dark'] &::-webkit-scrollbar-thumb:hover {
+      background: #5e5e5e;
+    }
+
+    code {
+      background: transparent !important;
+      padding: 0;
+      border: none;
+      font-family: inherit;
+      font-size: inherit;
+      display: block;
+      white-space: pre;
+      color: var(--rich-text-primary);
+
+      /* 移除所有装饰 */
+      * {
+        text-decoration: none !important;
+        border: none !important;
+        background: transparent !important;
+      }
+    }
+  }
+`;
+
+// 展开按钮
+const ExpandButton = styled.button`
+  width: 100%;
+  padding: 0.5rem;
+  border: none;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  /* 深色模式优化 */
+  [data-theme='dark'] & {
+    background: #161616;
+    border-top-color: #3e3e3e;
+    color: #a0a0a0;
+
+    &:hover {
+      background: #252525;
+      color: #d4d4d4;
+    }
+  }
+`;
+
+// 简化的代码块组件
+interface SimpleCodeBlockProps {
+  code: string;
+  language?: string;
+  highlightedCode: string;
+}
+
+const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = ({ code, language, highlightedCode }) => {
+  const [copied, setCopied] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // 计算代码行数
+  const lineCount = useMemo(() => code.split('\n').length, [code]);
+  const shouldShowExpand = lineCount > 20; // 超过20行显示展开按钮
+  const maxCollapsedHeight = 400; // 折叠时的最大高度
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
+  }, [code]);
+
+  return (
+    <CodeBlockContainer>
+      <CodeBlockHeader>
+        <LanguageLabel>{language || 'plaintext'}</LanguageLabel>
+        <CopyButton copied={copied} onClick={handleCopy}>
+          {copied ? <FiCheck size={12} /> : <FiCopy size={12} />}
+          {copied ? '已复制' : '复制'}
+        </CopyButton>
+      </CodeBlockHeader>
+
+      <CodeContent collapsed={!isExpanded && shouldShowExpand} maxHeight={maxCollapsedHeight}>
+        <pre>
+          <code
+            className={language ? `language-${language} hljs` : 'hljs'}
+            dangerouslySetInnerHTML={{ __html: highlightedCode }}
+          />
+        </pre>
+      </CodeContent>
+
+      {shouldShowExpand && (
+        <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+          {isExpanded ? <FiChevronUp size={14} /> : <FiChevronDown size={14} />}
+          {isExpanded ? '收起代码' : `展开全部 (${lineCount} 行)`}
+        </ExpandButton>
+      )}
+    </CodeBlockContainer>
+  );
+};
 
 // 富文本内容容器
 const RichTextContainer = styled.div`
-  /* 代码高亮样式覆盖，适配主题 */
-  .hljs {
-    background: var(--bg-secondary) !important;
-    color: var(--text-primary) !important;
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 1.5rem 0;
-    border: 1px solid var(--border-color);
-    overflow-x: auto;
-    position: relative;
-    font-family: var(--font-code, 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace);
-    font-size: 0.9rem;
-    line-height: 1.5;
-
-    &[data-language]::before {
-      content: attr(data-language);
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      background: var(--accent-color);
-      color: white;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      z-index: 1;
-    }
-
-    &[data-language='']::before {
-      display: none;
-    }
-  }
-
-  /* 内联代码样式 */
-  .hljs-inline {
-    background: var(--bg-secondary);
-    color: var(--accent-color);
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    font-size: 0.9em;
-    border: 1px solid var(--border-color);
-    font-family: var(--font-code, 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace);
-  }
-
-  /* 代码块包装器 */
-  .code-block-wrapper {
-    position: relative;
-    margin: 1.5rem 0;
-
-    /* 复制按钮 */
-    &:hover .copy-button {
-      opacity: 1 !important;
-    }
-
-    /* 代码块样式 */
-    pre {
-      position: relative;
-      background: var(--bg-secondary) !important;
-      color: var(--text-primary) !important;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 0;
-      border: 1px solid var(--border-color);
-      overflow-x: auto;
-      font-family: var(--font-code, 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace);
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-  }
-
-  .copy-button {
-    position: absolute;
-    top: 1rem;
-    right: 3rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    cursor: pointer;
-    opacity: 0;
-    transition: all 0.2s ease;
-    z-index: 2;
-    color: var(--text-primary);
-
-    &:hover {
-      background: var(--bg-secondary);
-      opacity: 1 !important;
-    }
-  }
+  /* 内联代码样式 - 由 rich-text.css 处理 */
 `;
 
 // 组件接口
@@ -123,12 +323,53 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   enableTableOfContents = false,
   onImageClick,
 }) => {
-  // 处理内容样式化和安全清理
+  // 处理内容：保护代码块不被破坏
   const processedContent = useMemo(() => {
     if (!content) return '';
 
-    // 使用统一的富文本处理工具
-    return RichTextParser.addContentStyles(content);
+    const extractedBlocks: Array<{ code: string; language: string }> = [];
+    let processed = content;
+    let index = 0;
+
+    // 1. 提取所有代码块
+    const codeBlockRegex = /<pre[^>]*>\s*<code(?:\s+class="language-(\w+)")?[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/g;
+    let match;
+
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      const language = match[1] || '';
+      let code = match[2];
+
+      // 解码HTML实体
+      code = code
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+
+      extractedBlocks.push({ code, language });
+    }
+
+    // 2. 用占位符替换代码块
+    processed = processed.replace(
+      /<pre[^>]*>\s*<code(?:\s+class="[^"]*")?[^>]*>[\s\S]*?<\/code>\s*<\/pre>/g,
+      () => `%%%CODE_BLOCK_${index++}%%%`,
+    );
+
+    // 3. 对非代码块内容应用样式
+    processed = RichTextParser.addContentStyles(processed);
+
+    // 4. 将占位符替换回代码块HTML
+    extractedBlocks.forEach((block, idx) => {
+      const codeHtml = `<pre><code class="language-${block.language || 'plaintext'}">${block.code
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')}</code></pre>`;
+      processed = processed.replace(`%%%CODE_BLOCK_${idx}%%%`, codeHtml);
+    });
+
+    return processed;
   }, [content]);
 
   // 提取目录
@@ -150,72 +391,52 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   }, [processedContent, enableTableOfContents]);
 
   // HTML 解析选项
-  const parserOptions: HTMLReactParserOptions = useMemo(
-    () => ({
+  const parserOptions: HTMLReactParserOptions = useMemo(() => {
+    return {
       replace: (domNode) => {
         if (!(domNode instanceof Element)) return;
         const element = domNode as Element;
 
-        // 处理代码块 - 使用新的 CodeBlock 组件
+        // 处理代码块 - 使用 SimpleCodeBlock 组件
         if (
           enableCodeHighlight &&
           element.name === 'pre' &&
           element.children?.some((child: any) => child.name === 'code')
         ) {
           const codeElement = element.children?.find((child: any) => child.name === 'code') as any;
-          let language = '';
 
-          // 从 pre 标签的 data-language 属性获取
-          if (element.attribs?.['data-language']) {
-            language = element.attribs['data-language'];
+          // 提取语言
+          const language = codeElement?.attribs?.class?.match(/language-(\w+)/)?.[1] || '';
+
+          // 提取代码文本（递归处理所有子节点）
+          const extractText = (node: any): string => {
+            if (node.type === 'text') return node.data || '';
+            if (node.children) return node.children.map(extractText).join('');
+            return '';
+          };
+
+          // 解码HTML实体
+          const code = (codeElement?.children?.map(extractText).join('') || '')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&nbsp;/g, ' ');
+
+          // 应用语法高亮
+          let highlightedCode = code;
+          try {
+            highlightedCode =
+              language && hljs.getLanguage(language)
+                ? hljs.highlight(code, { language }).value
+                : hljs.highlightAuto(code).value;
+          } catch (e) {
+            console.warn('语法高亮失败:', e);
+            highlightedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
           }
 
-          // 从 pre 标签的 class 中提取语言
-          if (!language && element.attribs?.class) {
-            const classMatch = element.attribs.class.match(/language-(\w+)/);
-            if (classMatch) {
-              language = classMatch[1];
-            }
-          }
-
-          // 从 code 标签的 class 中提取语言
-          if (!language && codeElement?.attribs?.class) {
-            const classMatch = codeElement.attribs.class.match(/language-(\w+)/);
-            if (classMatch) {
-              language = classMatch[1];
-            }
-          }
-
-          if (codeElement?.children) {
-            // 提取文本内容
-            const extractTextFromNode = (node: any): string => {
-              if (node.type === 'text') return node.data;
-              if (node.children) {
-                return node.children.map(extractTextFromNode).join('');
-              }
-              return '';
-            };
-
-            const code = codeElement.children.map(extractTextFromNode).join('');
-
-            // 解码 HTML 实体
-            const decodedCode = code
-              .replace(/&lt;/g, '<')
-              .replace(/&gt;/g, '>')
-              .replace(/&amp;/g, '&')
-              .replace(/&quot;/g, '"')
-              .replace(/&#39;/g, "'");
-
-            return (
-              <CodeBlock
-                code={decodedCode}
-                language={language || undefined}
-                showLineNumbers={true}
-                allowCopy={true}
-                allowFullscreen={true}
-              />
-            );
-          }
+          return <SimpleCodeBlock code={code} language={language} highlightedCode={highlightedCode} />;
         }
 
         // 处理图片
@@ -233,14 +454,13 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
           }
         }
 
-        // 处理 h2 标题（文章模式）
+        // 处理 h2 标题（文章模式 - 添加锚点）
         if (mode === 'article' && element.name === 'h2' && element.children) {
           const text = element.children.map((child: any) => (child.type === 'text' ? child.data : '')).join('');
           const id = `heading-${text
             ?.toLowerCase()
             .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
             .substring(0, 50)}`;
-
           return (
             <h2 id={id} className="article-heading">
               {domToReact(element.children as any, parserOptions)}
@@ -248,28 +468,11 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
           );
         }
 
-        // 处理内联代码
-        if (element.name === 'code' && element.attribs?.class?.includes('rich-text-inline-code')) {
-          const text = element.children?.map((child: any) => (child.type === 'text' ? child.data : '')).join('') || '';
-          return <code className="hljs-inline">{text}</code>;
-        }
-
-        // 处理删除线
-        if (element.name === 's' || element.name === 'del') {
-          return <s>{domToReact(element.children as any, parserOptions)}</s>;
-        }
-
-        // 处理高亮
-        if (element.name === 'mark') {
-          return <mark>{domToReact(element.children as any, parserOptions)}</mark>;
-        }
-
         // 默认返回 undefined，让解析器使用默认处理
         return undefined;
       },
-    }),
-    [enableCodeHighlight, enableImagePreview, onImageClick, mode],
-  );
+    };
+  }, [enableCodeHighlight, enableImagePreview, onImageClick, mode]);
 
   // 解析 HTML 为 React 元素
   const parsedContent = useMemo(() => {
