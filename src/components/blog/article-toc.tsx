@@ -242,7 +242,7 @@ interface ArticleTocProps {
   headings: { id: string; text: string; level: number }[];
   activeHeading: string;
   readingProgress: number;
-  onHeadingClick: (id: string) => void;
+  onHeadingClick?: (id: string) => void;
   liked: boolean;
   bookmarked: boolean;
   onLike: () => void;
@@ -290,7 +290,7 @@ const ArticleToc: React.FC<ArticleTocProps> = memo(
           key={heading.id}
           active={activeHeading === heading.id}
           level={heading.level}
-          onClick={() => onHeadingClick(heading.id)}
+          onClick={() => onHeadingClick?.(heading.id)}
         >
           <span>{heading.text}</span>
         </TocItem>

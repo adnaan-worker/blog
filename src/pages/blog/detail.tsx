@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, RefObject, useCallback, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiArrowLeft, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiArrowLeft, FiChevronLeft, FiChevronRight, FiHeart, FiBookmark, FiShare2 } from 'react-icons/fi';
 import ArticleContent from '@/components/blog/article-content';
 import ArticleToc from '@/components/blog/article-toc';
 import CommentSection from '@/components/blog/comment-section';
@@ -147,6 +147,244 @@ const ArticleSidebar = styled.div`
 
   @media (max-width: 860px) {
     display: none;
+  }
+`;
+
+// 移动端 TOC 书签容器 - 左侧书签式导航
+const MobileTocBookmarks = styled.div`
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  z-index: 50;
+  padding: 1rem 0;
+  max-height: 70vh;
+  overflow-y: auto;
+
+  @media (max-width: 860px) {
+    display: flex;
+  }
+
+  /* 隐藏滚动条 */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  scrollbar-width: none;
+`;
+
+// 书签列表容器
+const BookmarksListWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+`;
+
+// 单个书签条容器
+const BookmarkTabWrapper = styled.div<{ $isActive: boolean }>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+`;
+
+const BookmarkTab = styled(motion.div)<{ $isActive: boolean; $level: number }>`
+  position: relative;
+  left: ${(props) => (props.$isActive ? '0' : '-8px')};
+  width: ${(props) => {
+    if (props.$isActive) {
+      return props.$level === 2 ? '48px' : '40px';
+    }
+    return props.$level === 2 ? '32px' : '24px';
+  }};
+  height: ${(props) => (props.$level === 2 ? '4px' : '3px')};
+  border-radius: 0 8px 8px 0;
+  background: ${(props) => (props.$isActive ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.2)')};
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: ${(props) => (props.$isActive ? '2px 2px 8px rgba(var(--accent-rgb), 0.3)' : 'none')};
+  overflow: visible;
+  flex-shrink: 0;
+
+  /* 发光效果 */
+  ${(props) =>
+    props.$isActive &&
+    `
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      background: var(--accent-color);
+      border-radius: 0 8px 8px 0;
+      filter: blur(6px);
+      opacity: 0.4;
+      z-index: -1;
+    }
+  `}
+`;
+
+// 书签标题文本 - 在书签条下方
+const BookmarkTitle = styled(motion.div)<{ $isActive: boolean }>`
+  font-size: 9px;
+  color: var(--accent-color);
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: ${(props) => (props.$isActive ? 0.9 : 0)};
+  height: ${(props) => (props.$isActive ? 'auto' : '0')};
+  transition: all 0.3s ease;
+  font-weight: 600;
+  padding-left: 4px;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  pointer-events: none;
+
+  @media (max-width: 768px) {
+    font-size: 8px;
+    max-width: 100px;
+  }
+`;
+
+// 操作工具栏 - 竖着排列在书签区域下方
+const BookmarkActions = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 4px;
+  background: rgba(var(--accent-rgb), 0.05);
+  border-radius: 0 12px 12px 0;
+  border-left: 2px solid var(--accent-color);
+
+  button {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+
+    &:hover {
+      background: var(--accent-color-alpha);
+      color: var(--accent-color);
+      border-color: var(--accent-color);
+      transform: translateX(4px);
+    }
+
+    &:active {
+      transform: translateX(2px);
+    }
+
+    &.active {
+      background: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
+    }
+  }
+
+  @media (max-width: 768px) {
+    gap: 6px;
+    margin-top: 12px;
+    padding: 6px 3px;
+
+    button {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
+  }
+
+  [data-theme='dark'] & {
+    background: rgba(var(--accent-rgb), 0.08);
+  }
+`;
+
+// 移动端 TOC 抽屉遮罩
+const MobileTocOverlay = styled(motion.div)`
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 60;
+
+  @media (max-width: 860px) {
+    display: block;
+  }
+`;
+
+// 移动端 TOC 抽屉
+const MobileTocDrawer = styled(motion.div)`
+  display: none;
+  position: fixed;
+  top: var(--header-height);
+  right: 0;
+  bottom: 0;
+  width: 85%;
+  max-width: 380px;
+  background: var(--bg-primary);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: 70;
+  overflow-y: auto;
+  padding: 1.5rem;
+
+  @media (max-width: 860px) {
+    display: block;
+  }
+
+  [data-theme='dark'] & {
+    background: var(--bg-secondary);
+    box-shadow: -4px 0 32px rgba(0, 0, 0, 0.5);
+  }
+`;
+
+// 移动端 TOC 头部
+const MobileTocHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  button {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: var(--accent-color-alpha);
+      color: var(--accent-color);
+    }
   }
 `;
 
@@ -335,6 +573,9 @@ const BlogDetail: React.FC = () => {
   const [headings, setHeadings] = useState<DetailPageHeading[]>([]);
   const [activeHeading, setActiveHeading] = useState<string>('');
   const [readingProgress, setReadingProgress] = useState<number>(0);
+
+  // 移动端 TOC 书签显示状态（滚动时显示）
+  const [showMobileTocButton, setShowMobileTocButton] = useState(false);
 
   // 引用
   const articleRef = useRef<HTMLDivElement>(null);
@@ -598,37 +839,40 @@ const BlogDetail: React.FC = () => {
     return () => clearTimeout(timer);
   }, [setupHeadingsAndScroll]);
 
-  // 处理目录点击 - 使用useCallback
-  const handleTocClick = useCallback(
-    (headingId: string) => {
-      const heading = headings.find((h) => h.id === headingId);
-      if (!heading) return;
+  // 滚动时显示书签，停止滚动后隐藏
+  useEffect(() => {
+    let isScrolling = false;
+    let hideTimer: NodeJS.Timeout | null = null;
 
-      // 设置活动标题
-      setActiveHeading(headingId);
+    const handleScroll = () => {
+      // 显示书签
+      if (!isScrolling) {
+        setShowMobileTocButton(true);
+        isScrolling = true;
+      }
 
-      // 获取目标元素的位置信息
-      const rect = heading.element.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      // 清除之前的定时器
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
 
-      // 计算目标位置（考虑固定头部的高度）
-      const headerOffset = 100; // 增加偏移量，确保标题不会被遮挡
-      const targetPosition = rect.top + scrollTop - headerOffset;
+      // 设置新的定时器：1.5秒后隐藏
+      hideTimer = setTimeout(() => {
+        setShowMobileTocButton(false);
+        isScrolling = false;
+      }, 1500);
+    };
 
-      // 平滑滚动到目标位置
-      window.scrollTo({
-        top: targetPosition,
-        behavior: 'smooth',
-      });
+    // 监听滚动事件
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
-      // 添加视觉反馈
-      heading.element.classList.add('target-highlight');
-      setTimeout(() => {
-        heading.element.classList.remove('target-highlight');
-      }, 1000);
-    },
-    [headings],
-  );
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+      }
+    };
+  }, []);
 
   // 点赞、收藏和分享功能 - 使用useCallback优化
   const handleLike = useCallback(() => {
@@ -681,29 +925,47 @@ const BlogDetail: React.FC = () => {
     }
   }, [article]);
 
+  // 处理目录项点击 - 平滑滚动到对应标题
+  const handleHeadingClick = useCallback(
+    (headingId: string) => {
+      const heading = headings.find((h) => h.id === headingId);
+      if (heading?.element) {
+        const headerOffset = 100; // 距离顶部的偏移量
+        const elementPosition = heading.element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        });
+      }
+    },
+    [headings],
+  );
+
   // 使用useMemo缓存TocProps
   const tocProps = useMemo(
     () => ({
       headings: headings.map((h) => ({ id: h.id, text: h.text, level: h.level })),
       activeHeading,
       readingProgress,
-      onHeadingClick: handleTocClick,
       liked,
       bookmarked,
       onLike: handleLike,
       onBookmark: handleBookmark,
       onShare: handleShare,
+      onHeadingClick: handleHeadingClick,
     }),
     [
       headings,
       activeHeading,
       readingProgress,
-      handleTocClick,
       liked,
       bookmarked,
       handleLike,
       handleBookmark,
       handleShare,
+      handleHeadingClick,
     ],
   );
 
@@ -714,21 +976,6 @@ const BlogDetail: React.FC = () => {
         <NotFoundContainer>
           <h2>加载失败</h2>
           <p>{error}</p>
-          <BackLink to="/blog">
-            <FiArrowLeft /> 返回博客列表
-          </BackLink>
-        </NotFoundContainer>
-      </PageContainer>
-    );
-  }
-
-  // 文章未找到
-  if (!article) {
-    return (
-      <PageContainer>
-        <NotFoundContainer>
-          <h2>文章未找到</h2>
-          <p>抱歉，找不到您请求的文章</p>
           <BackLink to="/blog">
             <FiArrowLeft /> 返回博客列表
           </BackLink>
@@ -820,11 +1067,58 @@ const BlogDetail: React.FC = () => {
                   {article && <CommentSection postId={Number(article.id)} />}
                 </ArticleMain>
 
-                {/* 右侧：文章目录 */}
+                {/* 右侧：文章目录 - 桌面端 */}
                 <ArticleSidebar>
                   <ArticleToc {...tocProps} />
                 </ArticleSidebar>
               </ArticleLayout>
+
+              {/* 移动端 TOC 书签式导航 - 左侧书签条（滚动时显示） */}
+              {headings.length > 0 && showMobileTocButton && (
+                <MobileTocBookmarks>
+                  {/* 书签列表 */}
+                  <BookmarksListWrapper>
+                    {headings.map((heading, index) => {
+                      const isActive = activeHeading === heading.id;
+                      return (
+                        <BookmarkTabWrapper key={heading.id} $isActive={isActive}>
+                          <BookmarkTab
+                            $isActive={isActive}
+                            $level={heading.level}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{
+                              duration: 0.3,
+                              delay: index * 0.05,
+                              ease: [0.4, 0, 0.2, 1],
+                            }}
+                          />
+                          <BookmarkTitle $isActive={isActive}>
+                            {heading.text.length > 15 ? `${heading.text.substring(0, 15)}...` : heading.text}
+                          </BookmarkTitle>
+                        </BookmarkTabWrapper>
+                      );
+                    })}
+                  </BookmarksListWrapper>
+
+                  {/* 操作工具栏 - 在所有书签下方 */}
+                  <BookmarkActions
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                  >
+                    <button className={liked ? 'active' : ''} onClick={handleLike} aria-label="点赞">
+                      <FiHeart />
+                    </button>
+                    <button className={bookmarked ? 'active' : ''} onClick={handleBookmark} aria-label="收藏">
+                      <FiBookmark />
+                    </button>
+                    <button onClick={handleShare} aria-label="分享">
+                      <FiShare2 />
+                    </button>
+                  </BookmarkActions>
+                </MobileTocBookmarks>
+              )}
             </>
           )}
         </motion.div>
