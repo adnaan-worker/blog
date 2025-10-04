@@ -230,7 +230,7 @@ body {
   scroll-behavior: smooth;
   letter-spacing: -0.01em;
   height: auto;
-  overflow: visible;
+  overflow-x: hidden;
 }
 
 #root {
