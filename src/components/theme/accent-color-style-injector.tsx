@@ -123,11 +123,11 @@ const AccentColorStyleInjector: React.FC = () => {
       const lightBgColor = colorUtils.generateBgColor(currentLightColor);
 
       // 生成暗色模式相关颜色 - 优化对比度
-      const darkColorAssistant = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.15); // 更亮的辅助色
-      const darkColorHover = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.25); // 增强悬停效果
-      const darkColorAlpha = colorUtils.generateAlphaColor(currentDarkColor, '#ffffff', 0.2, 0.15); // 提高透明色可见度
+      const darkColorAssistant = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.15);
+      const darkColorHover = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.25);
+      const darkColorAlpha = colorUtils.generateAlphaColor(currentDarkColor, '#ffffff', 0.2, 0.15);
       const darkGradient = colorUtils.generateGradientColors(currentDarkColor, true);
-      const darkBgColor = new Color(currentDarkColor).mix('#1a1a1a', 0.7).toString(); // 更深的背景色
+      const darkBgColor = new Color(currentDarkColor).mix('#1a1a1a', 0.7).toString();
 
       // 生成OKLCH值
       const [hl, sl, ll] = colorUtils.hexToOklchString(currentLightColor);
@@ -141,6 +141,10 @@ const AccentColorStyleInjector: React.FC = () => {
       const lightShadowAlpha = colorUtils.calculateShadowAlpha(currentLightColor, false);
       const darkShadowAlpha = colorUtils.calculateShadowAlpha(currentDarkColor, true);
 
+      // 生成额外的衍生颜色（供其他组件使用）
+      const lightColorSoft = colorUtils.generateAlphaColor(currentLightColor, '#ffffff', 0.6, 0.15);
+      const darkColorSoft = colorUtils.generateAlphaColor(currentDarkColor, '#ffffff', 0.3, 0.2);
+
       // 返回生成的CSS
       return `
         [data-theme='dark'] {
@@ -149,11 +153,12 @@ const AccentColorStyleInjector: React.FC = () => {
           --accent-color-dark-assistant: ${darkColorAssistant};
           --accent-color-dark-hover: ${darkColorHover};
           --accent-color-dark-alpha: ${darkColorAlpha};
+          --accent-color-dark-soft: ${darkColorSoft}; /* 柔和主题色 */
           --accent-rgb: ${darkRgb}; /* RGB 格式用于 rgba() */
           --nav-shadow-alpha: ${darkShadowAlpha.toFixed(2)}; /* 动态计算的阴影透明度 */
-          --a: ${`${hd} ${sd} ${ld}`};
-          --gradient-from: ${darkGradient.from};
-          --gradient-to: ${darkGradient.to};
+          --a: ${`${hd} ${sd} ${ld}`}; /* OKLCH 值 */
+          --gradient-from: ${darkGradient.from}; /* 渐变起点 RGB */
+          --gradient-to: ${darkGradient.to}; /* 渐变终点 RGB */
         }
         [data-theme='light'] {
           --accent-color-light: ${currentLightColor};
@@ -161,11 +166,12 @@ const AccentColorStyleInjector: React.FC = () => {
           --accent-color-light-assistant: ${lightColorAssistant};
           --accent-color-light-hover: ${lightColorHover};
           --accent-color-light-alpha: ${lightColorAlpha};
+          --accent-color-light-soft: ${lightColorSoft}; /* 柔和主题色 */
           --accent-rgb: ${lightRgb}; /* RGB 格式用于 rgba() */
           --nav-shadow-alpha: ${lightShadowAlpha.toFixed(2)}; /* 动态计算的阴影透明度 */
-          --a: ${`${hl} ${sl} ${ll}`};
-          --gradient-from: ${lightGradient.from};
-          --gradient-to: ${lightGradient.to};
+          --a: ${`${hl} ${sl} ${ll}`}; /* OKLCH 值 */
+          --gradient-from: ${lightGradient.from}; /* 渐变起点 RGB */
+          --gradient-to: ${lightGradient.to}; /* 渐变终点 RGB */
         }
       `;
     } catch (error) {

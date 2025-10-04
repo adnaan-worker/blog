@@ -65,6 +65,15 @@
 
   --border-color: rgba(0, 0, 0, 0.06); /* 默认边框颜色 */
 
+  /* 纸张背景色 - 亮色模式（羊皮纸效果） */
+  --paper-bg-light-start: #fdfbf7;
+  --paper-bg-light-mid: #faf8f3;
+  --paper-bg-light-end: #f8f6f1;
+
+  /* 遮罩和渐变色 */
+  --mask-gradient-start: #000;
+  --mask-gradient-end: #ffffff00;
+
   /* 尺寸和间距 */
   --header-height: 60px; /* 头部高度 */
   --max-width: 1120px; /* 最大宽度 */
@@ -116,6 +125,11 @@
 
   /* 边框和分隔 */
   --border-color: rgba(255, 255, 255, 0.1); /* 边框颜色 - 提高可见度 */
+
+  /* 纸张背景色 - 暗色模式 */
+  --paper-bg-dark-start: #1a1a1a;
+  --paper-bg-dark-mid: #151515;
+  --paper-bg-dark-end: #121212;
 
   /* 阴影 - 使用发光效果代替传统阴影 */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);

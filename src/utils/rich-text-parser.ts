@@ -9,7 +9,6 @@ export class RichTextParser {
     'p',
     'span',
     'br',
-    'h1',
     'h2',
     'h3',
     'h4',

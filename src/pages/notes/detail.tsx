@@ -332,7 +332,7 @@ const PageHeadGradient = styled.div`
   height: 500px;
   width: 100%;
   background: linear-gradient(to right, rgba(var(--gradient-from), 0.3) 0%, rgba(var(--gradient-to), 0.3) 100%);
-  mask-image: linear-gradient(#000, #ffffff00 70%);
+  mask-image: linear-gradient(var(--mask-gradient-start), var(--mask-gradient-end) 70%);
   animation: fade-in 1s ease 0.2s both;
   z-index: 2;
   @keyframes fade-in {
@@ -357,8 +357,12 @@ const PaperBackground = styled.div`
 
   /* 亮色模式：羊皮纸效果 */
   [data-theme='light'] & {
-    background: 
-      /* 纸张基础颜色 - 米白色 */ linear-gradient(180deg, #fdfbf7 0%, #faf8f3 50%, #f8f6f1 100%);
+    background: linear-gradient(
+      180deg,
+      var(--paper-bg-light-start) 0%,
+      var(--paper-bg-light-mid) 50%,
+      var(--paper-bg-light-end) 100%
+    );
 
     /* 添加细微噪点 */
     &::before {
@@ -377,14 +381,20 @@ const PaperBackground = styled.div`
     background:
       /* 主题色光晕效果 */
       radial-gradient(ellipse 1000px 800px at 50% 0%, rgba(var(--gradient-from), 0.06), transparent 60%),
-      /* 深色纸张基底 */ linear-gradient(180deg, #1a1a1a 0%, #151515 50%, #121212 100%);
+      /* 深色纸张基底 */
+        linear-gradient(
+          180deg,
+          var(--paper-bg-dark-start) 0%,
+          var(--paper-bg-dark-mid) 50%,
+          var(--paper-bg-dark-end) 100%
+        );
 
     /* 添加主题色噪点纹理 */
     &::before {
       content: '';
       position: absolute;
       inset: 0;
-      background-image: 
+      background-image:
         /* 细微的主题色网格 */
         repeating-linear-gradient(
           0deg,

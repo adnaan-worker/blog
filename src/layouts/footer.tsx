@@ -14,6 +14,7 @@ const FooterContainer = styled(MotionFooter)`
   margin-top: 3rem;
   position: relative;
   border-top: 1px solid var(--border-color);
+  z-index: 4;
 `;
 
 const FooterContent = styled.div`
