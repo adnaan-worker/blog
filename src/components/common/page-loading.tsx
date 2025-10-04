@@ -120,7 +120,7 @@ const LoadingText = styled(motion.div)`
 `;
 
 // 进度点容器
-const DotsContainer = styled.div`
+const DotsContainer = styled(motion.div)`
   display: flex;
   gap: 8px;
   align-items: center;

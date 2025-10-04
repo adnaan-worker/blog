@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { FiSave, FiX, FiEye, FiUpload, FiCpu } from 'react-icons/fi';
+import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiSettings } from 'react-icons/fi';
 import ModernEditor from '@/components/common/modern-editor';
 import EditorAIAssistant from '@/components/common/editor-ai-assistant';
 import { API } from '@/utils/api';
@@ -48,6 +48,7 @@ const ArticleEditorPage: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalData, setOriginalData] = useState({
     title: '',
@@ -270,6 +271,15 @@ const ArticleEditorPage: React.FC = () => {
 
           <RightSection>
             <Button
+              variant={showSidebar ? 'primary' : 'outline'}
+              size="small"
+              onClick={() => setShowSidebar(!showSidebar)}
+              title={showSidebar ? '隐藏设置面板' : '显示设置面板'}
+            >
+              <FiSettings />
+              <span>设置</span>
+            </Button>
+            <Button
               variant={showAIAssistant ? 'primary' : 'outline'}
               size="small"
               onClick={() => setShowAIAssistant(!showAIAssistant)}
@@ -307,63 +317,69 @@ const ArticleEditorPage: React.FC = () => {
             </AIAssistantPanel>
           )}
 
-          {/* 右侧边栏 */}
-          <Sidebar>
-            <SidebarSection>
-              <SectionTitle>文章设置</SectionTitle>
+          {/* 右侧边栏 - 可折叠 */}
+          {showSidebar && (
+            <Sidebar>
+              <SidebarSection>
+                <SectionTitle>文章设置</SectionTitle>
 
-              {/* 摘要 */}
-              <Field>
-                <Label>摘要</Label>
-                <textarea
-                  placeholder="请输入文章摘要..."
-                  value={summary}
-                  onChange={(e) => setSummary(e.target.value)}
-                  rows={3}
-                />
-              </Field>
+                {/* 摘要 */}
+                <Field>
+                  <Label>摘要</Label>
+                  <textarea
+                    placeholder="请输入文章摘要..."
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
+                    rows={3}
+                  />
+                </Field>
 
-              {/* 封面图 */}
-              <Field>
-                <Label>封面图</Label>
-                <Input
-                  placeholder="请输入封面图地址..."
-                  value={coverImage}
-                  onChange={(e) => setCoverImage(e.target.value)}
-                />
-                {coverImage && (
-                  <CoverPreview>
-                    <img src={coverImage} alt="封面预览" />
-                  </CoverPreview>
-                )}
-              </Field>
+                {/* 封面图 */}
+                <Field>
+                  <Label>封面图</Label>
+                  <Input
+                    placeholder="请输入封面图地址..."
+                    value={coverImage}
+                    onChange={(e) => setCoverImage(e.target.value)}
+                  />
+                  {coverImage && (
+                    <CoverPreview>
+                      <img src={coverImage} alt="封面预览" />
+                    </CoverPreview>
+                  )}
+                </Field>
 
-              {/* 分类 */}
-              <Field>
-                <Label>分类</Label>
-                <select value={categoryId || ''} onChange={(e) => setCategoryId(Number(e.target.value) || null)}>
-                  <option value="">请选择分类</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+                {/* 分类 */}
+                <Field>
+                  <Label>分类</Label>
+                  <select value={categoryId || ''} onChange={(e) => setCategoryId(Number(e.target.value) || null)}>
+                    <option value="">请选择分类</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
 
-              {/* 标签 */}
-              <Field>
-                <Label>标签</Label>
-                <TagsList>
-                  {tags.map((tag) => (
-                    <TagItem key={tag.id} selected={selectedTagIds.includes(tag.id)} onClick={() => toggleTag(tag.id)}>
-                      {tag.name}
-                    </TagItem>
-                  ))}
-                </TagsList>
-              </Field>
-            </SidebarSection>
-          </Sidebar>
+                {/* 标签 */}
+                <Field>
+                  <Label>标签</Label>
+                  <TagsList>
+                    {tags.map((tag) => (
+                      <TagItem
+                        key={tag.id}
+                        selected={selectedTagIds.includes(tag.id)}
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        {tag.name}
+                      </TagItem>
+                    ))}
+                  </TagsList>
+                </Field>
+              </SidebarSection>
+            </Sidebar>
+          )}
         </MainContent>
       </EditorContainer>
     </ToastProvider>
@@ -388,6 +404,11 @@ const TopBar = styled.div`
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-primary);
   gap: 16px;
+
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
 `;
 
 const LeftSection = styled.div`
@@ -456,18 +477,42 @@ const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+
+    /* 在小屏幕上隐藏按钮文字，只显示图标 */
+    button span {
+      display: none;
+    }
+
+    button {
+      min-width: auto;
+      padding: 8px 12px;
+    }
+  }
 `;
 
 const MainContent = styled.div`
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+  }
 `;
 
 const EditorSection = styled.div`
   flex: 1;
-  overflow-y: auto;
   background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 0;
+  overflow: hidden; /* 避免创建新的滚动上下文 */
 `;
 
 const AIAssistantPanel = styled.div`
@@ -475,6 +520,7 @@ const AIAssistantPanel = styled.div`
   border-left: 1px solid var(--border-color);
   background: var(--bg-secondary);
   overflow-y: auto;
+  flex-shrink: 0;
 
   @media (max-width: 1280px) {
     width: 280px;
@@ -485,12 +531,15 @@ const AIAssistantPanel = styled.div`
     right: 0;
     top: 0;
     height: 100vh;
-    z-index: 100;
-    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+    width: 360px;
+    z-index: 1000;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    border-left: 1px solid var(--border-color);
   }
 
   @media (max-width: 768px) {
     width: 100%;
+    max-width: 100vw;
   }
 `;
 
@@ -500,13 +549,47 @@ const Sidebar = styled.div`
   background: var(--bg-secondary);
   overflow-y: auto;
   padding: 24px;
+  flex-shrink: 0;
+  animation: slideInRight 0.2s ease-out;
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @media (max-width: 1280px) {
+    width: 280px;
+    padding: 20px;
+  }
 
   @media (max-width: 1024px) {
-    width: 280px;
+    width: 100%;
+    max-height: 40vh;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    padding: 16px;
+    animation: slideInBottom 0.2s ease-out;
+
+    @keyframes slideInBottom {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   }
 
   @media (max-width: 768px) {
-    display: none;
+    max-height: 50vh;
   }
 `;
 

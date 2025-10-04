@@ -40,15 +40,30 @@ const SYNTAX_COLORS = {
 const CodeBlockContainer = styled.div`
   position: relative;
   margin: 1.5rem 0;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
 
   /* 深色模式优化 */
   [data-theme='dark'] & {
     background: var(--bg-secondary);
     border-color: var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  /* 悬停效果 */
+  &:hover {
+    border-color: rgba(var(--accent-rgb), 0.3);
+    box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.1);
+
+    [data-theme='dark'] & {
+      box-shadow:
+        0 6px 20px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(var(--accent-rgb), 0.2);
+    }
   }
 `;
 
@@ -57,48 +72,74 @@ const CodeBlockHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
-  background: var(--bg-primary);
+  padding: 0.75rem 1rem;
+  background: linear-gradient(to bottom, var(--bg-primary), rgba(var(--accent-rgb), 0.02));
   border-bottom: 1px solid var(--border-color);
-  opacity: 0;
-  transition: opacity 0.2s;
-
-  ${CodeBlockContainer}:hover & {
-    opacity: 1;
-  }
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
 
   /* 深色模式优化 */
   [data-theme='dark'] & {
-    background: var(--bg-primary);
+    background: linear-gradient(to bottom, var(--bg-primary), rgba(var(--accent-rgb), 0.03));
     border-bottom-color: var(--border-color);
+  }
+
+  /* 悬停时的视觉反馈 */
+  ${CodeBlockContainer}:hover & {
+    background: linear-gradient(to bottom, var(--bg-primary), rgba(var(--accent-rgb), 0.04));
   }
 `;
 
 // 语言标签
 const LanguageLabel = styled.span`
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  color: var(--accent-color);
   font-family: var(--font-code);
   text-transform: uppercase;
   font-weight: 600;
+  letter-spacing: 0.5px;
+  background: rgba(var(--accent-rgb), 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
 `;
 
 // 复制按钮
 const CopyButton = styled.button<{ copied: boolean }>`
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  background: ${(props) => (props.copied ? 'var(--accent-color)' : 'var(--bg-primary)')};
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid ${(props) => (props.copied ? 'var(--accent-color)' : 'var(--border-color)')};
+  border-radius: 6px;
+  background: ${(props) => (props.copied ? 'var(--accent-color)' : 'var(--bg-secondary)')};
   color: ${(props) => (props.copied ? 'white' : 'var(--text-secondary)')};
   font-size: 0.75rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: ${(props) => (props.copied ? '0 2px 8px rgba(var(--accent-rgb), 0.3)' : 'none')};
+
+  svg {
+    transition: transform 0.2s ease;
+  }
 
   &:hover {
     background: ${(props) => (props.copied ? 'var(--accent-color)' : 'var(--bg-tertiary)')};
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.2);
+
+    svg {
+      transform: scale(1.1);
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(var(--accent-rgb), 0.2);
   }
 `;
 

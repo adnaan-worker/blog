@@ -354,8 +354,17 @@
   margin-top: 0;
   margin-bottom: 1.5rem;
   color: var(--rich-text-secondary);
-  min-height: 1.5em;
   line-height: 1.8;
+}
+
+/* 只有编辑器中的段落需要最小高度，避免光标定位问题 */
+.ProseMirror p {
+  min-height: 1.5em;
+}
+
+/* 空段落不占用空间 */
+.rich-text-content p:empty {
+  display: none;
 }
 
 .rich-text-content p:last-child,

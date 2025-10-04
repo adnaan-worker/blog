@@ -7,25 +7,25 @@ interface AccentColorConfig {
   dark: string[];
 }
 
-// 预设颜色方案
+// 预设颜色方案 - 优化版（更协调柔和）
 const ACCENT_COLORS: AccentColorConfig = {
   light: [
-    '#33A6B8', // 浅葱 (淡蓝绿色)
-    '#26A69A', // 薄荷绿
-    '#69a6cc', // 天蓝
-    '#FFB74D', // 明亮橙
-    '#BA68C8', // 浅紫
-    '#4FC3F7', // 亮天蓝
-    '#AED581', // 淡黄绿
+    '#5183f5', // 标准蓝 - 默认主题色
+    '#26A69A', // 青绿色 - 清新
+    '#66a6d8', // 柔和天蓝 - 舒适
+    '#FF9066', // 珊瑚橙 - 温暖
+    '#9C7FB8', // 柔和紫 - 优雅（之前是#BA68C8太鲜艳）
+    '#4FB8E8', // 湖蓝 - 清爽
+    '#95C956', // 草绿 - 活力
   ],
   dark: [
-    '#8B95C9', // 柔和紫蓝 - 提高饱和度
-    '#7FC8C0', // 青绿 - 更鲜明
-    '#7B88D8', // 亮蓝紫 - 增强可见度
-    '#F4C430', // 金黄 - 更温暖
-    '#B39DDB', // 薰衣草紫 - 提高对比度
-    '#81D4FA', // 天蓝 - 更亮
-    '#C5E1A5', // 嫩绿 - 更清新
+    '#7B88D8', // 亮蓝紫 - 易读
+    '#6BC9BE', // 青绿 - 柔和
+    '#8B95C9', // 柔和紫蓝 - 舒适
+    '#E6B84D', // 柔和金黄 - 温暖（之前太亮）
+    '#A89FD8', // 淡紫 - 优雅（调整对比度）
+    '#7DC5F0', // 天蓝 - 清晰
+    '#B8D890', // 柔和绿 - 护眼
   ],
 };
 // 颜色生成工具函数
@@ -43,11 +43,25 @@ const colorUtils = {
     return new Color(baseColor).mix(new Color(mixColor), mixRatio).toString({ format: 'rgba', alpha });
   },
 
-  // 将十六进制颜色转换为RGB字符串，例如: "255 0 0"
+  // 将十六进制颜色转换为RGB字符串，例如: "255, 0, 0"（用于rgba）
   hexToRgbString: (hex: string) => {
     const color = new Color(hex);
     const { r, g, b } = color.srgb;
-    return `${Math.round(r * 255)} ${Math.round(g * 255)} ${Math.round(b * 255)}`;
+    return `${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}`;
+  },
+
+  // 计算颜色的亮度（0-1），用于判断颜色是否太淡
+  calculateLightness: (hex: string) => {
+    const color = new Color(hex);
+    return color.oklch.l; // 返回 OKLCH 的 L 值（亮度）
+  },
+
+  // 计算阴影透明度 - 使用固定较高值确保可见性
+  calculateShadowAlpha: (hex: string, isDark: boolean = false) => {
+    // 直接返回较高的固定值，确保阴影始终可见
+    // 之前的 #5183f533 相当于 alpha = 0.2，但视觉效果很好
+    // 这里我们使用更高的值确保所有颜色都清晰
+    return isDark ? 0.5 : 0.5;
   },
 
   // 生成渐变色
@@ -123,6 +137,10 @@ const AccentColorStyleInjector: React.FC = () => {
       const lightRgb = colorUtils.hexToRgbString(currentLightColor);
       const darkRgb = colorUtils.hexToRgbString(currentDarkColor);
 
+      // 计算动态阴影透明度
+      const lightShadowAlpha = colorUtils.calculateShadowAlpha(currentLightColor, false);
+      const darkShadowAlpha = colorUtils.calculateShadowAlpha(currentDarkColor, true);
+
       // 返回生成的CSS
       return `
         [data-theme='dark'] {
@@ -132,6 +150,7 @@ const AccentColorStyleInjector: React.FC = () => {
           --accent-color-dark-hover: ${darkColorHover};
           --accent-color-dark-alpha: ${darkColorAlpha};
           --accent-rgb: ${darkRgb}; /* RGB 格式用于 rgba() */
+          --nav-shadow-alpha: ${darkShadowAlpha.toFixed(2)}; /* 动态计算的阴影透明度 */
           --a: ${`${hd} ${sd} ${ld}`};
           --gradient-from: ${darkGradient.from};
           --gradient-to: ${darkGradient.to};
@@ -143,6 +162,7 @@ const AccentColorStyleInjector: React.FC = () => {
           --accent-color-light-hover: ${lightColorHover};
           --accent-color-light-alpha: ${lightColorAlpha};
           --accent-rgb: ${lightRgb}; /* RGB 格式用于 rgba() */
+          --nav-shadow-alpha: ${lightShadowAlpha.toFixed(2)}; /* 动态计算的阴影透明度 */
           --a: ${`${hl} ${sl} ${ll}`};
           --gradient-from: ${lightGradient.from};
           --gradient-to: ${lightGradient.to};

@@ -140,7 +140,63 @@ export class RichTextParser {
       return '';
     });
 
+    // 清理空标签（包括只包含空白的标签）
+    cleanHtml = this.removeEmptyTags(cleanHtml);
+
     return cleanHtml;
+  }
+
+  /**
+   * 移除空标签和只包含空白的标签
+   */
+  private static removeEmptyTags(html: string): string {
+    let cleaned = html;
+    let previousLength;
+
+    // 多次迭代，直到没有更多的空标签被移除
+    do {
+      previousLength = cleaned.length;
+
+      // 移除空的标签（包括只包含空白、换行、&nbsp; 的标签）
+      cleaned = cleaned.replace(/<(\w+)([^>]*)>\s*<\/\1>/gi, '');
+      cleaned = cleaned.replace(/<(\w+)([^>]*)>(&nbsp;|\s)*<\/\1>/gi, '');
+
+      // 移除多余的连续空白
+      cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n');
+    } while (cleaned.length < previousLength);
+
+    return cleaned;
+  }
+
+  /**
+   * 清理标签之间的多余空白和换行符（保留pre/code标签内的内容）
+   */
+  private static cleanWhitespaceBetweenTags(html: string): string {
+    // 1. 先提取并保护 pre/code 标签的内容
+    const protectedBlocks: string[] = [];
+    let processed = html;
+
+    // 提取 pre>code 块
+    processed = processed.replace(/<pre[^>]*>\s*<code[^>]*>[\s\S]*?<\/code>\s*<\/pre>/gi, (match) => {
+      protectedBlocks.push(match);
+      return `%%%PROTECTED_BLOCK_${protectedBlocks.length - 1}%%%`;
+    });
+
+    // 2. 清理标签之间的空白
+    processed = processed
+      // 移除 > 和 < 之间的所有空白和换行（包括 \n, \r, \t, 空格）
+      .replace(/>\s+</g, '><')
+      // 移除标签内部的多余空白（但保留单个空格）
+      .replace(/\s{2,}/g, ' ')
+      // 移除开头和结尾的空白
+      .trim();
+
+    // 3. 恢复被保护的代码块
+    protectedBlocks.forEach((block, index) => {
+      processed = processed.replace(`%%%PROTECTED_BLOCK_${index}%%%`, block);
+    });
+
+    return processed;
   }
 
   /**
@@ -373,6 +429,9 @@ export class RichTextParser {
       styledHtml = this.markdownToHtml(html);
       return `<div class="rich-text-content">${this.validateAndCleanHtml(styledHtml)}</div>`;
     }
+
+    // 清理标签之间的多余换行和空白（但保留pre/code标签内的空白）
+    styledHtml = this.cleanWhitespaceBetweenTags(styledHtml);
 
     // 处理已有的HTML内容，添加必要的类名
     // 处理代码块 - 保持原始格式，只添加必要的类名

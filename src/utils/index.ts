@@ -18,6 +18,9 @@ export * from './types';
 export { useDebugTool, DebugTool, initialViewportInfo } from './debug';
 export type { ViewportInfo, HeadingInfo } from './debug';
 
+// 导出Sticky调试工具
+export { StickyDebugger, useStickyDebug } from './sticky-debug';
+
 // 导出一些常用的工具函数
 export const formatDate = (date: Date | string | number, format: string = 'YYYY-MM-DD HH:mm:ss'): string => {
   const d = new Date(date);

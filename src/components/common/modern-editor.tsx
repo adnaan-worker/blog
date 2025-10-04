@@ -654,12 +654,13 @@ const EditorWrapper = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow-y: auto; /* 滚动容器在这里，让 sticky 生效 */
 
   /* 编辑器内容区样式 - 只添加编辑器特有的 */
   .ProseMirror {
     flex: 1;
-    overflow-y: auto;
     min-height: 100%;
+    padding: 2rem;
 
     &:focus {
       outline: none;
@@ -692,8 +693,14 @@ const FloatingToolbar = styled.div`
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
   flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+
+  /* 确保 sticky 生效 */
+  align-self: flex-start;
+  width: 100%;
 `;
 
 const ToolbarGroup = styled.div`

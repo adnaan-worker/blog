@@ -12,6 +12,7 @@ import {
   FiTag,
   FiX as FiClose,
   FiCpu,
+  FiSettings,
 } from 'react-icons/fi';
 import ModernEditor from '@/components/common/modern-editor';
 import EditorAIAssistant from '@/components/common/editor-ai-assistant';
@@ -48,6 +49,7 @@ const NoteEditorPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalData, setOriginalData] = useState({
     title: '',
@@ -265,6 +267,15 @@ const NoteEditorPage: React.FC = () => {
 
           <RightSection>
             <Button
+              variant={showSidebar ? 'primary' : 'outline'}
+              size="small"
+              onClick={() => setShowSidebar(!showSidebar)}
+              title={showSidebar ? '隐藏属性面板' : '显示属性面板'}
+            >
+              <FiSettings />
+              <span>属性</span>
+            </Button>
+            <Button
               variant={showAIAssistant ? 'primary' : 'outline'}
               size="small"
               onClick={() => setShowAIAssistant(!showAIAssistant)}
@@ -302,92 +313,94 @@ const NoteEditorPage: React.FC = () => {
             </AIAssistantPanel>
           )}
 
-          {/* 右侧边栏 */}
-          <Sidebar>
-            <SidebarSection>
-              <SectionTitle>手记属性</SectionTitle>
+          {/* 右侧边栏 - 可折叠 */}
+          {showSidebar && (
+            <Sidebar>
+              <SidebarSection>
+                <SectionTitle>手记属性</SectionTitle>
 
-              {/* 心情 */}
-              <Field>
-                <Label>
-                  <FiSmile />
-                  <span>心情</span>
-                </Label>
-                <MoodGrid>
-                  {moodOptions.map((option) => (
-                    <MoodItem
-                      key={option}
-                      selected={mood === option}
-                      onClick={() => setMood(mood === option ? '' : option)}
-                    >
-                      {option}
-                    </MoodItem>
-                  ))}
-                </MoodGrid>
-              </Field>
+                {/* 心情 */}
+                <Field>
+                  <Label>
+                    <FiSmile />
+                    <span>心情</span>
+                  </Label>
+                  <MoodGrid>
+                    {moodOptions.map((option) => (
+                      <MoodItem
+                        key={option}
+                        selected={mood === option}
+                        onClick={() => setMood(mood === option ? '' : option)}
+                      >
+                        {option}
+                      </MoodItem>
+                    ))}
+                  </MoodGrid>
+                </Field>
 
-              {/* 天气 */}
-              <Field>
-                <Label>
-                  <FiCloud />
-                  <span>天气</span>
-                </Label>
-                <WeatherGrid>
-                  {weatherOptions.map((option) => (
-                    <WeatherItem
-                      key={option}
-                      selected={weather === option}
-                      onClick={() => setWeather(weather === option ? '' : option)}
-                    >
-                      {option}
-                    </WeatherItem>
-                  ))}
-                </WeatherGrid>
-              </Field>
+                {/* 天气 */}
+                <Field>
+                  <Label>
+                    <FiCloud />
+                    <span>天气</span>
+                  </Label>
+                  <WeatherGrid>
+                    {weatherOptions.map((option) => (
+                      <WeatherItem
+                        key={option}
+                        selected={weather === option}
+                        onClick={() => setWeather(weather === option ? '' : option)}
+                      >
+                        {option}
+                      </WeatherItem>
+                    ))}
+                  </WeatherGrid>
+                </Field>
 
-              {/* 位置 */}
-              <Field>
-                <Label>
-                  <FiMapPin />
-                  <span>位置</span>
-                </Label>
-                <Input placeholder="记录当前位置..." value={location} onChange={(e) => setLocation(e.target.value)} />
-              </Field>
+                {/* 位置 */}
+                <Field>
+                  <Label>
+                    <FiMapPin />
+                    <span>位置</span>
+                  </Label>
+                  <Input placeholder="记录当前位置..." value={location} onChange={(e) => setLocation(e.target.value)} />
+                </Field>
 
-              {/* 标签 */}
-              <Field>
-                <Label>
-                  <FiTag />
-                  <span>标签</span>
-                </Label>
-                <TagInput>
-                  <input
-                    type="text"
-                    placeholder="添加标签..."
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag();
-                      }
-                    }}
-                  />
-                  <button onClick={handleAddTag}>添加</button>
-                </TagInput>
-                <TagsList>
-                  {tags.map((tag) => (
-                    <TagItem key={tag}>
-                      <span>{tag}</span>
-                      <button onClick={() => handleRemoveTag(tag)}>
-                        <FiClose />
-                      </button>
-                    </TagItem>
-                  ))}
-                </TagsList>
-              </Field>
-            </SidebarSection>
-          </Sidebar>
+                {/* 标签 */}
+                <Field>
+                  <Label>
+                    <FiTag />
+                    <span>标签</span>
+                  </Label>
+                  <TagInput>
+                    <input
+                      type="text"
+                      placeholder="添加标签..."
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                    />
+                    <button onClick={handleAddTag}>添加</button>
+                  </TagInput>
+                  <TagsList>
+                    {tags.map((tag) => (
+                      <TagItem key={tag}>
+                        <span>{tag}</span>
+                        <button onClick={() => handleRemoveTag(tag)}>
+                          <FiClose />
+                        </button>
+                      </TagItem>
+                    ))}
+                  </TagsList>
+                </Field>
+              </SidebarSection>
+            </Sidebar>
+          )}
         </MainContent>
       </EditorContainer>
     </ToastProvider>
@@ -412,6 +425,11 @@ const TopBar = styled.div`
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-primary);
   gap: 16px;
+
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
 `;
 
 const LeftSection = styled.div`
@@ -480,18 +498,42 @@ const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+
+    /* 在小屏幕上隐藏按钮文字，只显示图标 */
+    button span {
+      display: none;
+    }
+
+    button {
+      min-width: auto;
+      padding: 8px 12px;
+    }
+  }
 `;
 
 const MainContent = styled.div`
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+  }
 `;
 
 const EditorSection = styled.div`
   flex: 1;
-  overflow-y: auto;
   background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 0;
+  overflow: hidden; /* 避免创建新的滚动上下文 */
 `;
 
 const AIAssistantPanel = styled.div`
@@ -499,6 +541,7 @@ const AIAssistantPanel = styled.div`
   border-left: 1px solid var(--border-color);
   background: var(--bg-secondary);
   overflow-y: auto;
+  flex-shrink: 0;
 
   @media (max-width: 1280px) {
     width: 280px;
@@ -509,12 +552,15 @@ const AIAssistantPanel = styled.div`
     right: 0;
     top: 0;
     height: 100vh;
-    z-index: 100;
-    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+    width: 360px;
+    z-index: 1000;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    border-left: 1px solid var(--border-color);
   }
 
   @media (max-width: 768px) {
     width: 100%;
+    max-width: 100vw;
   }
 `;
 
@@ -524,13 +570,47 @@ const Sidebar = styled.div`
   background: var(--bg-secondary);
   overflow-y: auto;
   padding: 24px;
+  flex-shrink: 0;
+  animation: slideInRight 0.2s ease-out;
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @media (max-width: 1280px) {
+    width: 280px;
+    padding: 20px;
+  }
 
   @media (max-width: 1024px) {
-    width: 280px;
+    width: 100%;
+    max-height: 40vh;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    padding: 16px;
+    animation: slideInBottom 0.2s ease-out;
+
+    @keyframes slideInBottom {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   }
 
   @media (max-width: 768px) {
-    display: none;
+    max-height: 50vh;
   }
 `;
 
