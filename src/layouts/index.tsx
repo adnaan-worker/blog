@@ -12,14 +12,13 @@ import PageLoading from '@/components/common/page-loading';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
+  width: 100vw;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-primary);
   transition: background-color 0.3s ease;
   position: relative;
-  // overflow: hidden;
-  width: 100%;
 `;
 
 // 内容区域样式

@@ -49,7 +49,7 @@ const HeaderContainer = styled.header<{ scrolled: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
+  width: 100vw;
   height: var(--header-height);
   padding: 0 5rem;
 

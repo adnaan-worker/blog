@@ -213,7 +213,6 @@ html {
   letter-spacing: -0.01em;
   height: auto;
   overflow: visible;
-  scrollbar-gutter: stable;
 }
 
 body {
