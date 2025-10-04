@@ -16,6 +16,8 @@ const PageContainer = styled.div`
   max-width: 1100px;
   margin: 0 auto;
   padding-top: 50px;
+  position: relative;
+  z-index: 3; /* 确保内容在纸张背景之上 */
 `;
 
 // 页面过渡动画
@@ -192,9 +194,10 @@ const RelatedTitle = styled.h3`
   }
 `;
 
+// 页面头部渐变背景 - 保留原有效果
 const PageHeadGradient = styled.div`
   pointer-events: none;
-  position: absolute;
+  position: fixed;
   left: 0;
   right: 0;
   top: 0;
@@ -203,7 +206,96 @@ const PageHeadGradient = styled.div`
   background: linear-gradient(to right, rgb(var(--gradient-from) / 0.3) 0, rgb(var(--gradient-to) / 0.3) 100%);
   mask-image: linear-gradient(#000, #ffffff00 70%);
   animation: fade-in 1s ease 0.2s both;
+  z-index: 2;
+
+  /* 暗黑模式下隐藏 */
+  [data-theme='dark'] & {
+    display: none;
+  }
+
   @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+`;
+
+// 纸张背景容器 - 完全基于主题系统
+const PaperBackground = styled.div`
+  pointer-events: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+
+  /* 亮色模式：羊皮纸效果 */
+  [data-theme='light'] & {
+    background: 
+      /* 纸张基础颜色 - 米白色 */ linear-gradient(180deg, #fdfbf7 0%, #faf8f3 50%, #f8f6f1 100%);
+
+    /* 添加细微噪点 */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.01) 2px, rgba(0, 0, 0, 0.01) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.01) 2px, rgba(0, 0, 0, 0.01) 4px);
+      opacity: 0.3;
+    }
+  }
+
+  /* 暗色模式：深色纸张质感 */
+  [data-theme='dark'] & {
+    background:
+      /* 主题色光晕效果 */
+      radial-gradient(ellipse 1000px 800px at 50% 0%, rgb(var(--gradient-from) / 0.06), transparent 60%),
+      /* 深色纸张基底 */ linear-gradient(180deg, #1a1a1a 0%, #151515 50%, #121212 100%);
+
+    /* 添加主题色噪点纹理 */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        /* 细微的主题色网格 */
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 3px,
+          rgb(var(--gradient-from) / 0.02) 3px,
+          rgb(var(--gradient-from) / 0.02) 4px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 3px,
+          rgb(var(--gradient-to) / 0.02) 3px,
+          rgb(var(--gradient-to) / 0.02) 4px
+        );
+      opacity: 0.4;
+    }
+
+    /* 添加主题色光斑 */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgb(var(--gradient-from) / 0.03), transparent 40%),
+        radial-gradient(circle at 80% 60%, rgb(var(--gradient-to) / 0.03), transparent 40%);
+    }
+  }
+
+  /* 淡入动画 */
+  animation: paper-fade-in 0.8s ease both;
+
+  @keyframes paper-fade-in {
     0% {
       opacity: 0;
     }
@@ -658,95 +750,99 @@ const BlogDetail: React.FC = () => {
   }
 
   return (
-    <PageContainer>
-      <motion.div variants={pageVariants} initial="initial" animate="animate">
-        {/* 调试工具组件 */}
-        {showDebugInfo && (
-          <DebugTool
-            viewportInfo={{
-              scrollY: window.scrollY,
-              viewportTop: 150,
-              viewportBottom: window.innerHeight,
-              headings: headings.map((h) => ({
-                id: h.id,
-                text: h.text,
-                top: h.element.getBoundingClientRect().top,
-                isVisible: h.element.getBoundingClientRect().top < 150,
-              })),
-              activeEl: activeHeading,
-            }}
-            readingProgress={readingProgress}
-            toggleDebugInfo={toggleDebugInfo}
-          />
-        )}
+    <>
+      <PageHeadGradient />
+      <PaperBackground />
 
-        {article && (
-          <>
-            <ArticleLayout>
-              {/* 左侧：文章内容 */}
-              <ArticleMain>
-                <ArticleContent
-                  article={{
-                    ...article,
-                    content: article?.content || '', // 确保content不为undefined
-                  }}
-                  contentRef={articleRef as RefObject<HTMLDivElement>} // 类型断言
-                />
+      <PageContainer>
+        <motion.div variants={pageVariants} initial="initial" animate="animate">
+          {/* 调试工具组件 */}
+          {showDebugInfo && (
+            <DebugTool
+              viewportInfo={{
+                scrollY: window.scrollY,
+                viewportTop: 150,
+                viewportBottom: window.innerHeight,
+                headings: headings.map((h) => ({
+                  id: h.id,
+                  text: h.text,
+                  top: h.element.getBoundingClientRect().top,
+                  isVisible: h.element.getBoundingClientRect().top < 150,
+                })),
+                activeEl: activeHeading,
+              }}
+              readingProgress={readingProgress}
+              toggleDebugInfo={toggleDebugInfo}
+            />
+          )}
 
-                {/* 上一篇/下一篇文章导航 */}
-                <ArticleNavigation>
-                  {prevArticle && (
-                    <NavButton to={`/blog/${prevArticle.id}`} className="prev">
-                      <FiChevronLeft size={20} />
-                      <div className="nav-text">
-                        <span className="label">上一篇</span>
-                        <span className="title">{prevArticle.title}</span>
-                      </div>
-                    </NavButton>
-                  )}
+          {article && (
+            <>
+              <ArticleLayout>
+                {/* 左侧：文章内容 */}
+                <ArticleMain>
+                  <ArticleContent
+                    article={{
+                      ...article,
+                      content: article?.content || '', // 确保content不为undefined
+                    }}
+                    contentRef={articleRef as RefObject<HTMLDivElement>} // 类型断言
+                  />
 
-                  {nextArticle && (
-                    <NavButton to={`/blog/${nextArticle.id}`} className="next">
-                      <div className="nav-text">
-                        <span className="label">下一篇</span>
-                        <span className="title">{nextArticle.title}</span>
-                      </div>
-                      <FiChevronRight size={20} />
-                    </NavButton>
-                  )}
-                </ArticleNavigation>
-
-                {/* 相关文章 */}
-                {relatedArticles.length > 0 && (
-                  <RelatedArticles>
-                    <RelatedTitle>相关文章</RelatedTitle>
-                    <div>
-                      {relatedArticles.map((related) => (
-                        <div key={related.id} style={{ marginBottom: '1rem' }}>
-                          <h4>
-                            <Link to={`/blog/${related.id}`}>{related.title}</Link>
-                          </h4>
-                          <p>{related.excerpt}</p>
+                  {/* 上一篇/下一篇文章导航 */}
+                  <ArticleNavigation>
+                    {prevArticle && (
+                      <NavButton to={`/blog/${prevArticle.id}`} className="prev">
+                        <FiChevronLeft size={20} />
+                        <div className="nav-text">
+                          <span className="label">上一篇</span>
+                          <span className="title">{prevArticle.title}</span>
                         </div>
-                      ))}
-                    </div>
-                  </RelatedArticles>
-                )}
+                      </NavButton>
+                    )}
 
-                {/* 评论区 */}
-                <CommentSection comments={comments} />
-              </ArticleMain>
+                    {nextArticle && (
+                      <NavButton to={`/blog/${nextArticle.id}`} className="next">
+                        <div className="nav-text">
+                          <span className="label">下一篇</span>
+                          <span className="title">{nextArticle.title}</span>
+                        </div>
+                        <FiChevronRight size={20} />
+                      </NavButton>
+                    )}
+                  </ArticleNavigation>
 
-              {/* 右侧：文章目录 */}
-              <ArticleSidebar>
-                <ArticleToc {...tocProps} />
-              </ArticleSidebar>
-            </ArticleLayout>
-          </>
-        )}
-      </motion.div>
-      <PageHeadGradient></PageHeadGradient>
-    </PageContainer>
+                  {/* 相关文章 */}
+                  {relatedArticles.length > 0 && (
+                    <RelatedArticles>
+                      <RelatedTitle>相关文章</RelatedTitle>
+                      <div>
+                        {relatedArticles.map((related) => (
+                          <div key={related.id} style={{ marginBottom: '1rem' }}>
+                            <h4>
+                              <Link to={`/blog/${related.id}`}>{related.title}</Link>
+                            </h4>
+                            <p>{related.excerpt}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </RelatedArticles>
+                  )}
+
+                  {/* 评论区 */}
+                  <CommentSection comments={comments} />
+                </ArticleMain>
+
+                {/* 右侧：文章目录 */}
+                <ArticleSidebar>
+                  <ArticleToc {...tocProps} />
+                </ArticleSidebar>
+              </ArticleLayout>
+            </>
+          )}
+        </motion.div>
+      </PageContainer>
+    </>
   );
 };
 

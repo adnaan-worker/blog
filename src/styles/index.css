@@ -167,10 +167,24 @@
   padding: 0;
 }
 
-html,
+html {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 400;
+  scroll-behavior: smooth;
+  letter-spacing: -0.01em;
+  height: auto;
+  overflow: visible;
+}
+
 body {
   font-family: var(--font-sans);
   color: var(--text-primary);
+  background-color: var(--bg-primary);
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
@@ -191,6 +205,12 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
+  background: transparent;
+
+  /* 暗黑模式下确保透明 */
+  [data-theme='dark'] & {
+    background: transparent;
+  }
 }
 
 a {

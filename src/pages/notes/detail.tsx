@@ -15,6 +15,8 @@ const PageContainer = styled.div`
   max-width: 1000px;
   margin: 0 auto;
   padding: 50px 1rem;
+  position: relative;
+  z-index: 3;
 `;
 
 // 返回链接
@@ -131,7 +133,7 @@ const NoteInfoCard = styled.div`
   margin-bottom: 2rem;
 
   [data-theme='dark'] & {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--card-shadow);
   }
 `;
 
@@ -191,7 +193,7 @@ const Tag = styled.span`
   align-items: center;
   padding: 0.3rem 0.7rem;
   border-radius: 20px;
-  background: rgba(81, 131, 245, 0.1);
+  background: var(--accent-color-alpha);
   color: var(--accent-color);
   font-size: 0.8rem;
   font-weight: 500;
@@ -217,28 +219,28 @@ const MoodIndicator = styled.div<{ mood: string }>`
     switch (props.mood) {
       case '开心':
         return `
-          background: rgba(34, 197, 94, 0.1);
-          color: #22c55e;
+          background: var(--success-bg);
+          color: var(--success-color);
         `;
       case '平静':
         return `
-          background: rgba(59, 130, 246, 0.1);
-          color: #3b82f6;
+          background: var(--info-bg);
+          color: var(--info-color);
         `;
       case '思考':
         return `
-          background: rgba(168, 85, 247, 0.1);
-          color: #a855f7;
+          background: var(--accent-color-alpha);
+          color: var(--accent-color);
         `;
       case '感慨':
         return `
-          background: rgba(245, 158, 11, 0.1);
-          color: #f59e0b;
+          background: var(--warning-bg);
+          color: var(--warning-color);
         `;
       default:
         return `
-          background: rgba(107, 114, 128, 0.1);
-          color: #6b7280;
+          background: var(--bg-tertiary);
+          color: var(--text-secondary);
         `;
     }
   }}
@@ -306,10 +308,10 @@ const RelatedCard = styled(Link)`
   }
 `;
 
-// 页面头部渐变背景
+// 页面头部渐变背景 - 保留原有效果
 const PageHeadGradient = styled.div`
   pointer-events: none;
-  position: absolute;
+  position: fixed;
   left: 0;
   right: 0;
   top: 0;
@@ -318,7 +320,96 @@ const PageHeadGradient = styled.div`
   background: linear-gradient(to right, rgb(var(--gradient-from) / 0.3) 0, rgb(var(--gradient-to) / 0.3) 100%);
   mask-image: linear-gradient(#000, #ffffff00 70%);
   animation: fade-in 1s ease 0.2s both;
+  z-index: 2;
+
+  /* 暗黑模式下隐藏 */
+  [data-theme='dark'] & {
+    display: none;
+  }
+
   @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+`;
+
+// 纸张背景容器 - 完全基于主题系统
+const PaperBackground = styled.div`
+  pointer-events: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+
+  /* 亮色模式：羊皮纸效果 */
+  [data-theme='light'] & {
+    background: 
+      /* 纸张基础颜色 - 米白色 */ linear-gradient(180deg, #fdfbf7 0%, #faf8f3 50%, #f8f6f1 100%);
+
+    /* 添加细微噪点 */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.01) 2px, rgba(0, 0, 0, 0.01) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.01) 2px, rgba(0, 0, 0, 0.01) 4px);
+      opacity: 0.3;
+    }
+  }
+
+  /* 暗色模式：深色纸张质感 */
+  [data-theme='dark'] & {
+    background:
+      /* 主题色光晕效果 */
+      radial-gradient(ellipse 1000px 800px at 50% 0%, rgb(var(--gradient-from) / 0.06), transparent 60%),
+      /* 深色纸张基底 */ linear-gradient(180deg, #1a1a1a 0%, #151515 50%, #121212 100%);
+
+    /* 添加主题色噪点纹理 */
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        /* 细微的主题色网格 */
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 3px,
+          rgb(var(--gradient-from) / 0.02) 3px,
+          rgb(var(--gradient-from) / 0.02) 4px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 3px,
+          rgb(var(--gradient-to) / 0.02) 3px,
+          rgb(var(--gradient-to) / 0.02) 4px
+        );
+      opacity: 0.4;
+    }
+
+    /* 添加主题色光斑 */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgb(var(--gradient-from) / 0.03), transparent 40%),
+        radial-gradient(circle at 80% 60%, rgb(var(--gradient-to) / 0.03), transparent 40%);
+    }
+  }
+
+  /* 淡入动画 */
+  animation: paper-fade-in 0.8s ease both;
+
+  @keyframes paper-fade-in {
     0% {
       opacity: 0;
     }
@@ -432,129 +523,133 @@ const NoteDetail: React.FC = () => {
   }
 
   return (
-    <PageContainer>
-      <motion.div variants={pageVariants} initial="initial" animate="animate">
-        <NoteLayout>
-          {/* 主内容区 */}
-          <NoteMain>
-            <NoteTitle>{note.title}</NoteTitle>
-
-            <NoteMeta>
-              <span>
-                <FiCalendar size={16} /> {formatDateUtil(note.createdAt, 'YYYY-MM-DD')}
-              </span>
-              <span>
-                <FiClock size={16} /> {formatTime(note.createdAt)}
-              </span>
-            </NoteMeta>
-
-            <RichTextStats content={note.content} showDetailed={true} />
-
-            <RichTextRenderer
-              content={note.content}
-              mode="note"
-              enableCodeHighlight={true}
-              enableImagePreview={true}
-              enableTableOfContents={false}
-              onImageClick={handleImageClick}
-            />
-
-            {/* 相关手记 */}
-            {note.relatedNotes && note.relatedNotes.length > 0 && (
-              <RelatedNotes>
-                <RelatedTitle>相关手记</RelatedTitle>
-                {note.relatedNotes.map((relatedNote) => (
-                  <RelatedCard key={relatedNote.id} to={`/notes/${relatedNote.id}`}>
-                    <h4>{relatedNote.title || '生活随记'}</h4>
-                    <p>{relatedNote.content.substring(0, 100)}...</p>
-                    <div className="date">{formatDateUtil(relatedNote.createdAt, 'YYYY-MM-DD')}</div>
-                  </RelatedCard>
-                ))}
-              </RelatedNotes>
-            )}
-          </NoteMain>
-
-          {/* 侧边栏 */}
-          <NoteSidebar>
-            <NoteInfoCard>
-              <InfoList>
-                <InfoItem>
-                  <InfoLabel>
-                    <FiCalendar size={14} />
-                    日期
-                  </InfoLabel>
-                  <InfoValue>{formatDateUtil(note.createdAt, 'YYYY-MM-DD')}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>
-                    <FiClock size={14} />
-                    时间
-                  </InfoLabel>
-                  <InfoValue>{formatTime(note.createdAt)}</InfoValue>
-                </InfoItem>
-                {note.mood && (
-                  <InfoItem>
-                    <InfoLabel>
-                      <FiHeart size={14} />
-                      心情
-                    </InfoLabel>
-                    <InfoValue>
-                      <MoodIndicator mood={note.mood}>{note.mood}</MoodIndicator>
-                    </InfoValue>
-                  </InfoItem>
-                )}
-                {note.weather && (
-                  <InfoItem>
-                    <InfoLabel>
-                      <FiCloud size={14} />
-                      天气
-                    </InfoLabel>
-                    <InfoValue>{note.weather}</InfoValue>
-                  </InfoItem>
-                )}
-                {note.location && (
-                  <InfoItem>
-                    <InfoLabel>
-                      <FiMapPin size={14} />
-                      地点
-                    </InfoLabel>
-                    <InfoValue>{note.location}</InfoValue>
-                  </InfoItem>
-                )}
-                {note.readingTime && (
-                  <InfoItem>
-                    <InfoLabel>
-                      <FiEdit3 size={14} />
-                      阅读
-                    </InfoLabel>
-                    <InfoValue>约 {note.readingTime} 分钟</InfoValue>
-                  </InfoItem>
-                )}
-                {note.tags && note.tags.length > 0 && (
-                  <InfoItem>
-                    <InfoLabel>
-                      <FiTag size={14} />
-                      标签
-                    </InfoLabel>
-                    <InfoValue>
-                      <TagsContainer>
-                        {note.tags.map((tag) => (
-                          <Tag key={tag}>{tag}</Tag>
-                        ))}
-                      </TagsContainer>
-                    </InfoValue>
-                  </InfoItem>
-                )}
-              </InfoList>
-            </NoteInfoCard>
-          </NoteSidebar>
-        </NoteLayout>
-      </motion.div>
+    <>
       <PageHeadGradient />
+      <PaperBackground />
 
-      {/* 图片预览模态框 - 使用统一的ImagePreview组件 */}
-      {previewImage && <ImagePreview src={previewImage} alt="预览" onClick={() => setPreviewImage(null)} />}
-    </PageContainer>
+      <PageContainer>
+        <motion.div variants={pageVariants} initial="initial" animate="animate">
+          <NoteLayout>
+            {/* 主内容区 */}
+            <NoteMain>
+              <NoteTitle>{note.title}</NoteTitle>
+
+              <NoteMeta>
+                <span>
+                  <FiCalendar size={16} /> {formatDateUtil(note.createdAt, 'YYYY-MM-DD')}
+                </span>
+                <span>
+                  <FiClock size={16} /> {formatTime(note.createdAt)}
+                </span>
+              </NoteMeta>
+
+              <RichTextStats content={note.content} showDetailed={true} />
+
+              <RichTextRenderer
+                content={note.content}
+                mode="note"
+                enableCodeHighlight={true}
+                enableImagePreview={true}
+                enableTableOfContents={false}
+                onImageClick={handleImageClick}
+              />
+
+              {/* 相关手记 */}
+              {note.relatedNotes && note.relatedNotes.length > 0 && (
+                <RelatedNotes>
+                  <RelatedTitle>相关手记</RelatedTitle>
+                  {note.relatedNotes.map((relatedNote) => (
+                    <RelatedCard key={relatedNote.id} to={`/notes/${relatedNote.id}`}>
+                      <h4>{relatedNote.title || '生活随记'}</h4>
+                      <p>{relatedNote.content.substring(0, 100)}...</p>
+                      <div className="date">{formatDateUtil(relatedNote.createdAt, 'YYYY-MM-DD')}</div>
+                    </RelatedCard>
+                  ))}
+                </RelatedNotes>
+              )}
+            </NoteMain>
+
+            {/* 侧边栏 */}
+            <NoteSidebar>
+              <NoteInfoCard>
+                <InfoList>
+                  <InfoItem>
+                    <InfoLabel>
+                      <FiCalendar size={14} />
+                      日期
+                    </InfoLabel>
+                    <InfoValue>{formatDateUtil(note.createdAt, 'YYYY-MM-DD')}</InfoValue>
+                  </InfoItem>
+                  <InfoItem>
+                    <InfoLabel>
+                      <FiClock size={14} />
+                      时间
+                    </InfoLabel>
+                    <InfoValue>{formatTime(note.createdAt)}</InfoValue>
+                  </InfoItem>
+                  {note.mood && (
+                    <InfoItem>
+                      <InfoLabel>
+                        <FiHeart size={14} />
+                        心情
+                      </InfoLabel>
+                      <InfoValue>
+                        <MoodIndicator mood={note.mood}>{note.mood}</MoodIndicator>
+                      </InfoValue>
+                    </InfoItem>
+                  )}
+                  {note.weather && (
+                    <InfoItem>
+                      <InfoLabel>
+                        <FiCloud size={14} />
+                        天气
+                      </InfoLabel>
+                      <InfoValue>{note.weather}</InfoValue>
+                    </InfoItem>
+                  )}
+                  {note.location && (
+                    <InfoItem>
+                      <InfoLabel>
+                        <FiMapPin size={14} />
+                        地点
+                      </InfoLabel>
+                      <InfoValue>{note.location}</InfoValue>
+                    </InfoItem>
+                  )}
+                  {note.readingTime && (
+                    <InfoItem>
+                      <InfoLabel>
+                        <FiEdit3 size={14} />
+                        阅读
+                      </InfoLabel>
+                      <InfoValue>约 {note.readingTime} 分钟</InfoValue>
+                    </InfoItem>
+                  )}
+                  {note.tags && note.tags.length > 0 && (
+                    <InfoItem>
+                      <InfoLabel>
+                        <FiTag size={14} />
+                        标签
+                      </InfoLabel>
+                      <InfoValue>
+                        <TagsContainer>
+                          {note.tags.map((tag) => (
+                            <Tag key={tag}>{tag}</Tag>
+                          ))}
+                        </TagsContainer>
+                      </InfoValue>
+                    </InfoItem>
+                  )}
+                </InfoList>
+              </NoteInfoCard>
+            </NoteSidebar>
+          </NoteLayout>
+        </motion.div>
+
+        {/* 图片预览模态框 - 使用统一的ImagePreview组件 */}
+        {previewImage && <ImagePreview src={previewImage} alt="预览" onClick={() => setPreviewImage(null)} />}
+      </PageContainer>
+    </>
   );
 };
 
