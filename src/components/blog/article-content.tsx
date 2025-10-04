@@ -8,8 +8,7 @@ import type { Article } from '@/utils/api';
 
 // 文章详情页容器
 const ArticleDetailContainer = styled.div`
-  max-width: 860px;
-  margin: 0 auto;
+  width: 100%;
   padding: 0 1rem;
 `;
 

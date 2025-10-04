@@ -495,17 +495,20 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
           }
         }
 
-        // 处理 h2 标题（文章模式 - 添加锚点）
-        if (mode === 'article' && element.name === 'h2' && element.children) {
+        // 处理 h2-h6 标题（文章模式 - 添加锚点）
+        if (mode === 'article' && ['h2', 'h3', 'h4', 'h5', 'h6'].includes(element.name) && element.children) {
           const text = element.children.map((child: any) => (child.type === 'text' ? child.data : '')).join('');
           const id = `heading-${text
             ?.toLowerCase()
             .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
             .substring(0, 50)}`;
+          
+          const HeadingTag = element.name as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+          
           return (
-            <h2 id={id} className="article-heading">
+            <HeadingTag id={id} className="article-heading">
               {domToReact(element.children as any, parserOptions)}
-            </h2>
+            </HeadingTag>
           );
         }
 

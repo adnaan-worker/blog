@@ -13,7 +13,7 @@ import { API, Article as ApiArticle } from '@/utils/api';
 // 页面容器
 const PageContainer = styled.div`
   width: 100%;
-  max-width: 1100px;
+  max-width: 1280px;
   margin: 0 auto;
   padding-top: 50px;
 `;
@@ -116,7 +116,7 @@ const NavButton = styled(Link)`
 // 文章布局容器
 const ArticleLayout = styled.div`
   display: flex;
-  gap: 2.5rem;
+  gap: 1rem;
   position: relative;
   z-index: 3;
 
@@ -141,7 +141,7 @@ const ArticleSidebar = styled.div`
   position: -webkit-sticky;
   top: 150px;
   width: 280px;
-  height: fit-content;
+  height: calc(100vh - 210px);
   align-self: flex-start;
   margin-top: 40px;
 
@@ -317,6 +317,7 @@ const NotFoundContainer = styled.div`
 interface DetailPageHeading {
   id: string;
   text: string;
+  level: number; // 标题级别 2-6
   element: HTMLElement;
 }
 
@@ -324,7 +325,6 @@ const BlogDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState<Article | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
-  const [comments, setComments] = useState<any[]>([]);
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [prevArticle, setPrevArticle] = useState<Article | null>(null);
@@ -338,9 +338,8 @@ const BlogDetail: React.FC = () => {
 
   // 引用
   const articleRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // 防抖滚动处理器引用
+  // 滚动处理器引用
   const scrollHandlerRef = useRef<number | null>(null);
 
   // 使用封装后的调试工具钩子
@@ -405,16 +404,7 @@ const BlogDetail: React.FC = () => {
           setRelatedArticles(related);
         }
 
-        // 加载评论
-        const commentsResponse = await API.comment.getCommentsByPost(articleId);
-        console.log('评论响应数据:', commentsResponse); // 调试日志
-        if (commentsResponse.success && commentsResponse.data) {
-          // 后端已经返回了前端期望的格式，直接使用
-          const responseData = commentsResponse.data as any;
-          const commentsList = responseData.comments || [];
-          console.log('处理后的评论列表:', commentsList); // 调试日志
-          setComments(commentsList);
-        }
+        // 评论现在由 CommentSection 组件自行获取
 
         // 从本地存储中读取点赞和收藏状态
         const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
@@ -428,7 +418,6 @@ const BlogDetail: React.FC = () => {
         setPrevArticle(null);
         setNextArticle(null);
         setRelatedArticles([]);
-        setComments([]);
       }
     } catch (error) {
       console.error('获取文章失败:', error);
@@ -445,12 +434,6 @@ const BlogDetail: React.FC = () => {
     setActiveHeading('');
     setReadingProgress(0);
 
-    // 清理之前的observer
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-
     // 清理滚动事件处理器
     if (scrollHandlerRef.current) {
       window.cancelAnimationFrame(scrollHandlerRef.current);
@@ -465,14 +448,16 @@ const BlogDetail: React.FC = () => {
     window.scrollTo(0, 0);
   }, [id, fetchArticle]);
 
-  // 提取文章中的标题并设置导航 - 使用useCallback优化
-  const setupHeadingsAndObserver = useCallback(() => {
+  // 提取文章中的标题并设置滚动监听 - 使用useCallback优化
+  const setupHeadingsAndScroll = useCallback(() => {
     if (!article?.content || !articleRef.current) return;
 
     const articleElement = articleRef.current;
 
-    // 查找所有h2标题
-    const headingElements = Array.from(articleElement.querySelectorAll('h2.article-heading'));
+    // 查找所有 h2-h6 标题
+    const headingElements = Array.from(
+      articleElement.querySelectorAll('h2.article-heading, h3.article-heading, h4.article-heading, h5.article-heading, h6.article-heading')
+    );
 
     if (headingElements.length === 0) return;
 
@@ -482,10 +467,13 @@ const BlogDetail: React.FC = () => {
     headingElements.forEach((element) => {
       const headingId = element.id || '';
       const headingText = element.textContent || '';
+      const tagName = element.tagName.toLowerCase();
+      const level = parseInt(tagName.substring(1)); // 提取数字部分：h2 -> 2, h3 -> 3
 
       extractedHeadings.push({
         id: headingId,
         text: headingText,
+        level,
         element: element as HTMLElement,
       });
     });
@@ -493,35 +481,50 @@ const BlogDetail: React.FC = () => {
     // 更新标题数据
     setHeadings(extractedHeadings);
 
-    // 创建 IntersectionObserver 配置
-    const observerOptions = {
-      root: null,
-      rootMargin: '-120px 0px -60% 0px',
-      threshold: [0, 0.25, 0.5, 0.75, 1], // 使用多个阈值点，提高检测精度
-    };
+    // 定义激活阈值（标题距离视口顶部的距离）
+    const ACTIVE_THRESHOLD = 100;
 
-    // 创建交叉观察器
-    const observer = new IntersectionObserver((entries) => {
-      // 筛选可见度较高的标题
-      const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+    // 更新活动标题的函数 - 统一的逻辑
+    const updateActiveHeading = () => {
+      if (headingElements.length === 0) return;
 
-      if (visibleEntries.length > 0) {
-        // 如果有多个可见标题，选择可见比例最高的
-        visibleEntries.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        setActiveHeading(visibleEntries[0].target.id);
+      // 找到所有已经滚过阈值的标题（在阈值上方的）
+      const passedHeadings: { element: Element; top: number }[] = [];
+      
+      headingElements.forEach((heading) => {
+        const rect = heading.getBoundingClientRect();
+        // 标题的顶部已经超过阈值（在阈值上方）
+        if (rect.top <= ACTIVE_THRESHOLD) {
+          passedHeadings.push({
+            element: heading,
+            top: rect.top,
+          });
+        }
+      });
+
+      // 如果有标题滚过了阈值，选择最后一个（最接近阈值的）
+      if (passedHeadings.length > 0) {
+        // 按 top 值降序排序，选择最接近阈值的（top 值最大的）
+        passedHeadings.sort((a, b) => b.top - a.top);
+        const activeElement = passedHeadings[0].element as HTMLElement;
+        if (activeElement.id) {
+          setActiveHeading(activeElement.id);
+        }
+      } else {
+        // 如果没有标题滚过阈值，选择第一个标题
+        const firstElement = headingElements[0] as HTMLElement;
+        if (firstElement.id) {
+          setActiveHeading(firstElement.id);
+        }
       }
-    }, observerOptions);
-
-    // 观察所有标题元素
-    headingElements.forEach((heading) => {
-      observer.observe(heading);
-    });
-
-    // 保存观察器以便后续清理
-    observerRef.current = observer;
+    };
 
     // 使用requestAnimationFrame优化滚动事件
     const handleScroll = () => {
+      if (scrollHandlerRef.current) {
+        window.cancelAnimationFrame(scrollHandlerRef.current);
+      }
+
       scrollHandlerRef.current = window.requestAnimationFrame(() => {
         const scrollTop = window.scrollY;
         if (!articleElement) return;
@@ -531,7 +534,6 @@ const BlogDetail: React.FC = () => {
         const clientHeight = document.documentElement.clientHeight;
         const contentRect = articleElement.getBoundingClientRect();
         const contentTop = contentRect.top + window.scrollY;
-        const contentBottom = contentTop + contentHeight;
 
         // 计算相对于内容区域的滚动位置
         const relativeScrollTop = Math.max(0, scrollTop - contentTop);
@@ -541,12 +543,14 @@ const BlogDetail: React.FC = () => {
         const progress = Math.min(100, Math.max(0, (relativeScrollTop / Math.max(1, scrollableDistance)) * 100));
         setReadingProgress(Math.round(progress));
 
+        // 更新活动标题
+        updateActiveHeading();
+
         // 如果调试开启，收集调试信息
         if (showDebugInfo) {
           const headingInfo = headingElements.map((el) => {
             const rect = el.getBoundingClientRect();
-            const viewportTop = 150; // 与滚动检测保持一致
-            const isVisible = rect.top < viewportTop && rect.bottom > 0;
+            const isVisible = rect.top < ACTIVE_THRESHOLD && rect.bottom > 0;
             return {
               id: el.id,
               text: el.textContent || '',
@@ -557,27 +561,11 @@ const BlogDetail: React.FC = () => {
 
           setViewportInfo({
             scrollY: window.scrollY,
-            viewportTop: 150, // 与观察器设置一致
+            viewportTop: ACTIVE_THRESHOLD,
             viewportBottom: window.innerHeight,
             headings: headingInfo,
             activeEl: activeHeading,
           });
-        }
-
-        // 如果没有可见的标题，手动查找当前应该激活的标题
-        if (headingElements.length === 0) return;
-
-        const scrollPosition = window.scrollY + 150; // 添加偏移量
-        const currentHeading = headingElements.find((heading, index) => {
-          const nextHeading = headingElements[index + 1];
-          const headingTop = heading.getBoundingClientRect().top + window.scrollY;
-          const nextHeadingTop = nextHeading ? nextHeading.getBoundingClientRect().top + window.scrollY : contentBottom; // 使用内容底部而不是无限
-
-          return scrollPosition >= headingTop && scrollPosition < nextHeadingTop;
-        });
-
-        if (currentHeading) {
-          setActiveHeading(currentHeading.id);
         }
       });
     };
@@ -589,23 +577,24 @@ const BlogDetail: React.FC = () => {
     handleScroll();
 
     return () => {
-      observer.disconnect();
       window.removeEventListener('scroll', handleScroll);
+      
+      // 清理动画帧
       if (scrollHandlerRef.current) {
         window.cancelAnimationFrame(scrollHandlerRef.current);
       }
     };
   }, [article, showDebugInfo, activeHeading, setViewportInfo]);
 
-  // 设置标题和观察器
+  // 设置标题和滚动监听
   useEffect(() => {
     // 延迟执行，确保DOM已完全加载
     const timer = setTimeout(() => {
-      setupHeadingsAndObserver();
+      setupHeadingsAndScroll();
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [setupHeadingsAndObserver]);
+  }, [setupHeadingsAndScroll]);
 
   // 处理目录点击 - 使用useCallback
   const handleTocClick = useCallback(
@@ -693,7 +682,7 @@ const BlogDetail: React.FC = () => {
   // 使用useMemo缓存TocProps
   const tocProps = useMemo(
     () => ({
-      headings: headings.map((h) => ({ id: h.id, text: h.text })),
+      headings: headings.map((h) => ({ id: h.id, text: h.text, level: h.level })),
       activeHeading,
       readingProgress,
       onHeadingClick: handleTocClick,
@@ -826,7 +815,7 @@ const BlogDetail: React.FC = () => {
                   )}
 
                   {/* 评论区 */}
-                  <CommentSection comments={comments} />
+                  {article && <CommentSection postId={Number(article.id)} />}
                 </ArticleMain>
 
                 {/* 右侧：文章目录 */}

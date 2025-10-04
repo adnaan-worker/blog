@@ -179,20 +179,17 @@ const RootLayout = () => {
     previousPathRef.current = location.pathname;
   }, [location.pathname]);
 
-  // 创建防抖的滚动监听函数
-  const handleScroll = useCallback(() => {
-    const currentScrollPosition = window.scrollY;
-    setScrollPosition(currentScrollPosition);
-
-    const newScrolledState = currentScrollPosition > 5;
-    // 只有状态变化时才更新
-    if (isScrolled !== newScrolledState) {
-      setIsScrolled(newScrolledState);
-    }
-  }, [isScrolled]);
-
   // 设置滚动监听
   useEffect(() => {
+    // 定义滚动处理函数
+    const handleScroll = () => {
+      const currentScrollPosition = window.scrollY;
+      setScrollPosition(currentScrollPosition);
+
+      const newScrolledState = currentScrollPosition > 5;
+      setIsScrolled(newScrolledState);
+    };
+
     // 初始检查
     handleScroll();
 
@@ -203,7 +200,7 @@ const RootLayout = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [handleScroll]);
+  }, []); // 空依赖数组，只在挂载时执行
 
   // 等待组件挂载完成
   if (!mounted) return null;
