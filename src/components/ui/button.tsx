@@ -110,13 +110,13 @@ const ButtonElement = styled.button<{
         return `
           background-color: var(--error-color);
           color: white;
-          border: 2px solid var(--error-color);
+          border: 2px solid var(--error-border);
           
           &:hover:not(:disabled) {
-            background-color: #d32f2f;
-            border-color: #d32f2f;
+            background-color: var(--error-hover);
+            border-color: var(--error-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+            box-shadow: 0 4px 12px var(--error-bg);
           }
           
           &:active {
@@ -127,13 +127,13 @@ const ButtonElement = styled.button<{
         return `
           background-color: var(--success-color);
           color: white;
-          border: 2px solid var(--success-color);
+          border: 2px solid var(--success-border);
           
           &:hover:not(:disabled) {
-            background-color: #2e7d32;
-            border-color: #2e7d32;
+            background-color: var(--success-hover);
+            border-color: var(--success-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 4px 12px var(--success-bg);
           }
           
           &:active {
@@ -142,15 +142,15 @@ const ButtonElement = styled.button<{
         `;
       case 'warning':
         return `
-          background-color: #FFA726;
+          background-color: var(--warning-color);
           color: white;
-          border: 2px solid #FFA726;
+          border: 2px solid var(--warning-border);
           
           &:hover:not(:disabled) {
-            background-color: #FB8C00;
-            border-color: #FB8C00;
+            background-color: var(--warning-hover);
+            border-color: var(--warning-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 167, 38, 0.3);
+            box-shadow: 0 4px 12px var(--warning-bg);
           }
           
           &:active {
@@ -159,15 +159,15 @@ const ButtonElement = styled.button<{
         `;
       case 'info':
         return `
-          background-color: #2196F3;
+          background-color: var(--info-color);
           color: white;
-          border: 2px solid #2196F3;
+          border: 2px solid var(--info-border);
           
           &:hover:not(:disabled) {
-            background-color: #1976D2;
-            border-color: #1976D2;
+            background-color: var(--info-hover);
+            border-color: var(--info-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+            box-shadow: 0 4px 12px var(--info-bg);
           }
           
           &:active {

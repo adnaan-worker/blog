@@ -47,8 +47,8 @@ const CodeBlockContainer = styled.div`
 
   /* 深色模式优化 */
   [data-theme='dark'] & {
-    background: #1e1e1e;
-    border-color: #3e3e3e;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
   }
 `;
 
@@ -69,8 +69,8 @@ const CodeBlockHeader = styled.div`
 
   /* 深色模式优化 */
   [data-theme='dark'] & {
-    background: #161616;
-    border-bottom-color: #3e3e3e;
+    background: var(--bg-primary);
+    border-bottom-color: var(--border-color);
   }
 `;
 
@@ -130,15 +130,15 @@ const CodeContent = styled.div<{ collapsed: boolean; maxHeight: number }>`
 
   /* 深色模式滚动条 */
   [data-theme='dark'] &::-webkit-scrollbar-track {
-    background: #161616;
+    background: var(--bg-primary);
   }
 
   [data-theme='dark'] &::-webkit-scrollbar-thumb {
-    background: #4e4e4e;
+    background: var(--border-color);
   }
 
   [data-theme='dark'] &::-webkit-scrollbar-thumb:hover {
-    background: #5e5e5e;
+    background: var(--text-tertiary);
   }
 
   pre {
@@ -154,12 +154,12 @@ const CodeContent = styled.div<{ collapsed: boolean; maxHeight: number }>`
 
     /* 深色模式代码背景 */
     [data-theme='dark'] & {
-      background: #1e1e1e !important;
+      background: var(--rich-text-code-bg) !important;
     }
 
     /* 浅色模式代码背景 */
     [data-theme='light'] & {
-      background: #f6f8fa !important;
+      background: var(--rich-text-background-secondary) !important;
     }
 
     /* pre 内部的滚动条样式 */
@@ -182,11 +182,11 @@ const CodeContent = styled.div<{ collapsed: boolean; maxHeight: number }>`
 
     /* 深色模式横向滚动条 */
     [data-theme='dark'] &::-webkit-scrollbar-thumb {
-      background: #4e4e4e;
+      background: var(--border-color);
     }
 
     [data-theme='dark'] &::-webkit-scrollbar-thumb:hover {
-      background: #5e5e5e;
+      background: var(--text-tertiary);
     }
 
     code {

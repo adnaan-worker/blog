@@ -32,11 +32,28 @@
   --underline-bg:
     var(--tw-gradient-from), var(--fallback-a, oklch(var(--a) / 0.7)) var(--tw-gradient-via-position),
     var(--tw-gradient-to); /* 下划线背景 */
-  --error-color: #e53935; /* 错误颜色 */
-  --error-hover: #c62828; /* 错误悬停色 */
-  --success-color: #43a047; /* 成功颜色 */
-  --success-hover: #388e3c; /* 成功悬停色 */
-  --border-color: rgba(0, 0, 0, 0.06); /* 边框颜色 */
+  /* 语义化颜色系统 - 亮色模式 */
+  --error-color: #e53935; /* 错误主色 */
+  --error-hover: #c62828; /* 错误悬停 */
+  --error-bg: rgba(229, 57, 53, 0.1); /* 错误背景 */
+  --error-border: #e53935; /* 错误边框 */
+
+  --success-color: #43a047; /* 成功主色 */
+  --success-hover: #388e3c; /* 成功悬停 */
+  --success-bg: rgba(67, 160, 71, 0.1); /* 成功背景 */
+  --success-border: #43a047; /* 成功边框 */
+
+  --warning-color: #fb8c00; /* 警告主色 */
+  --warning-hover: #e65100; /* 警告悬停 */
+  --warning-bg: rgba(251, 140, 0, 0.1); /* 警告背景 */
+  --warning-border: #fb8c00; /* 警告边框 */
+
+  --info-color: #1976d2; /* 信息主色 */
+  --info-hover: #1565c0; /* 信息悬停 */
+  --info-bg: rgba(25, 118, 210, 0.1); /* 信息背景 */
+  --info-border: #1976d2; /* 信息边框 */
+
+  --border-color: rgba(0, 0, 0, 0.06); /* 默认边框颜色 */
 
   /* 尺寸和间距 */
   --header-height: 60px; /* 头部高度 */
@@ -73,22 +90,59 @@
 }
 
 /**
- * 暗色主题变量
+ * 暗色主题变量 - 优化版
  */
 [data-theme='dark'] {
-  --text-primary: #f0f0f0; /* 主文本颜色 */
-  --text-secondary: #a0a0a0; /* 次文本颜色 */
-  --text-tertiary: #888; /* 三级文本颜色 */
-  --bg-primary: #121212; /* 主背景颜色 */
-  --bg-secondary: #181818; /* 次背景颜色 */
-  --bg-tertiary: #333; /* 三级背景颜色 */
-  --border-color: rgba(255, 255, 255, 0.08); /* 边框颜色 */
-  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.25); /* 卡片阴影 */
-  --accent-color: var(--accent-color-dark); /* 主色 */
-  --accent-bg-color: var(--accent-bg-color-dark); /* 背景色 */
-  --accent-color-assistant: var(--accent-color-dark-assistant); /* 辅助色 */
-  --accent-color-hover: var(--accent-color-dark-hover, rgba(81, 131, 245, 0.2)); /* 悬停色 */
-  --accent-color-alpha: var(--accent-color-dark-alpha, rgba(81, 131, 245, 0.1)); /* 透明色 */
+  /* 文本颜色 - 提高对比度和可读性 */
+  --text-primary: #e8e8e8; /* 主文本颜色 - 更柔和的白色 */
+  --text-secondary: #b0b0b0; /* 次文本颜色 - 提高对比度 */
+  --text-tertiary: #909090; /* 三级文本颜色 */
+
+  /* 背景颜色 - 使用更现代的深色调色板 */
+  --bg-primary: #0f0f0f; /* 主背景 - 纯黑偏灰 */
+  --bg-secondary: #1a1a1a; /* 次背景 - 深灰 */
+  --bg-tertiary: #2a2a2a; /* 三级背景 - 中灰 */
+
+  /* 边框和分隔 */
+  --border-color: rgba(255, 255, 255, 0.1); /* 边框颜色 - 提高可见度 */
+
+  /* 阴影 - 使用发光效果代替传统阴影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.7);
+  --shadow-xl: 0 10px 30px rgba(0, 0, 0, 0.8);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05); /* 卡片阴影 + 微光边框 */
+
+  /* 主题色 */
+  --accent-color: var(--accent-color-dark);
+  --accent-bg-color: var(--accent-bg-color-dark);
+  --accent-color-assistant: var(--accent-color-dark-assistant);
+  --accent-color-hover: var(--accent-color-dark-hover, rgba(81, 131, 245, 0.25));
+  --accent-color-alpha: var(--accent-color-dark-alpha, rgba(81, 131, 245, 0.15));
+
+  /* 高亮和聚光灯效果 */
+  --spotlight-color: oklch(var(--a) / 0.18); /* 增强高亮效果 */
+
+  /* 语义化颜色系统 - 暗色模式 */
+  --error-color: #ef5350; /* 错误主色 - 更亮 */
+  --error-hover: #f44336; /* 错误悬停 */
+  --error-bg: rgba(239, 83, 80, 0.15); /* 错误背景 */
+  --error-border: #ef5350; /* 错误边框 */
+
+  --success-color: #66bb6a; /* 成功主色 - 更亮 */
+  --success-hover: #4caf50; /* 成功悬停 */
+  --success-bg: rgba(102, 187, 106, 0.15); /* 成功背景 */
+  --success-border: #66bb6a; /* 成功边框 */
+
+  --warning-color: #ffa726; /* 警告主色 - 更亮 */
+  --warning-hover: #fb8c00; /* 警告悬停 */
+  --warning-bg: rgba(255, 167, 38, 0.15); /* 警告背景 */
+  --warning-border: #ffa726; /* 警告边框 */
+
+  --info-color: #42a5f5; /* 信息主色 - 更亮 */
+  --info-hover: #2196f3; /* 信息悬停 */
+  --info-bg: rgba(66, 165, 245, 0.15); /* 信息背景 */
+  --info-border: #42a5f5; /* 信息边框 */
 }
 
 /**
@@ -116,7 +170,6 @@
 html,
 body {
   font-family: var(--font-sans);
-  /* background-color: var(--bg-primary); */
   color: var(--text-primary);
   transition:
     background-color 0.3s ease,
@@ -250,9 +303,12 @@ pre,
 }
 
 [data-theme='dark'] .header.scrolled {
-  background: rgba(18, 18, 18, 0.92);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 6px 20px 0 rgba(81, 131, 245, 0.14);
+  background: rgba(15, 15, 15, 0.85); /* 更深的背景 */
+  backdrop-filter: saturate(180%) blur(20px); /* 增强毛玻璃效果 */
+  box-shadow:
+    0 6px 24px 0 rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 2px 8px 0 rgba(81, 131, 245, 0.2); /* 多层阴影 + 发光效果 */
 }
 
 .nav-card {
@@ -272,8 +328,11 @@ pre,
 }
 
 [data-theme='dark'] .nav-card {
-  background: rgba(30, 30, 30, 0.98);
-  box-shadow: 0 8px 24px 0 rgba(81, 131, 245, 0.2);
+  background: rgba(26, 26, 26, 0.98);
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 4px 16px 0 rgba(81, 131, 245, 0.25); /* 增强发光效果 */
 }
 
 .header.scrolled .nav-card {
@@ -378,7 +437,18 @@ pre,
 
 [data-theme='dark'] .card {
   background-color: var(--bg-secondary);
-  box-shadow: var(--shadow-md);
+  box-shadow:
+    var(--shadow-md),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08); /* 微光边框 + 内发光 */
+}
+
+[data-theme='dark'] .card:hover {
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 24px rgba(var(--accent-color-rgb, 81, 131, 245), 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1); /* 悬停发光 */
 }
 
 .card-container {
@@ -517,17 +587,30 @@ pre,
   scrollbar-color: rgba(81, 131, 245, 0.2) transparent;
 }
 
-/* 深色模式滚动条 */
+/* 深色模式滚动条 - 优化 */
+[data-theme='dark'] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+}
+
 [data-theme='dark'] ::-webkit-scrollbar-thumb {
-  background: rgba(81, 131, 245, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 15, 15, 0.8); /* 创建内边距效果 */
 }
 
 [data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(81, 131, 245, 0.7);
+  background: rgba(81, 131, 245, 0.6);
+  border-color: rgba(15, 15, 15, 0.6);
 }
 
 [data-theme='dark'] *:hover {
-  scrollbar-color: rgba(81, 131, 245, 0.3) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.03);
 }
 
 @media (max-width: 768px) {
@@ -664,10 +747,20 @@ pre,
 [data-theme='dark'] {
   .notes-timeline .note-card {
     background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    border-color: #404040;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .notes-timeline .note-card:hover {
     background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.1),
+      0 0 16px rgba(var(--accent-color-rgb, 81, 131, 245), 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 }

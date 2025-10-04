@@ -731,7 +731,7 @@ const ToolbarButton = styled.button<ToolbarButtonProps>`
 
   &:hover {
     background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
-    color: ${(props) => (props.active ? '#fff' : 'var(--text-primary)')};
+    color: ${(props) => (props.active ? '#ffffff' : 'var(--text-primary)')};
   }
 
   &:active {
@@ -743,9 +743,7 @@ const ToolbarButton = styled.button<ToolbarButtonProps>`
     props.active &&
     `
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 
-      0 2px 4px rgba(0, 0, 0, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   `}
 
   /* 深色主题下的特殊处理 */
@@ -754,9 +752,7 @@ const ToolbarButton = styled.button<ToolbarButtonProps>`
       props.active &&
       `
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     `}
   }
 `;
@@ -773,7 +769,7 @@ const HeadingMenu = styled.div`
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
   z-index: 100;
   min-width: 160px;
@@ -809,7 +805,7 @@ const InputPanel = styled.div`
 
     &:focus {
       outline: none;
-      border-color: var(--primary-color);
+      border-color: var(--accent-color);
     }
   }
 
@@ -817,8 +813,8 @@ const InputPanel = styled.div`
     padding: 8px 16px;
     border: none;
     border-radius: 4px;
-    background: var(--primary-color);
-    color: #fff;
+    background: var(--accent-color);
+    color: #ffffff;
     cursor: pointer;
     font-size: 14px;
     transition: opacity 0.2s;

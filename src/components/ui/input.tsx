@@ -88,7 +88,7 @@ const InputElement = styled.input<{
           &:focus {
             background-color: var(--bg-primary);
             border-color: ${focusBorderColor};
-            box-shadow: 0 0 0 3px ${hasError ? 'rgba(244, 67, 54, 0.1)' : 'var(--accent-color-alpha)'};
+            box-shadow: 0 0 0 3px ${hasError ? 'var(--error-bg)' : 'var(--accent-color-alpha)'};
           }
           
           &:hover:not(:focus) {
@@ -102,7 +102,7 @@ const InputElement = styled.input<{
           
           &:focus {
             border-color: ${focusBorderColor};
-            box-shadow: 0 0 0 3px ${hasError ? 'rgba(244, 67, 54, 0.1)' : 'var(--accent-color-alpha)'};
+            box-shadow: 0 0 0 3px ${hasError ? 'var(--error-bg)' : 'var(--accent-color-alpha)'};
           }
           
           &:hover:not(:focus) {
@@ -130,7 +130,7 @@ const InputElement = styled.input<{
           
           &:focus {
             border-color: ${focusBorderColor};
-            box-shadow: 0 0 0 3px ${hasError ? 'rgba(244, 67, 54, 0.1)' : 'var(--accent-color-alpha)'};
+            box-shadow: 0 0 0 3px ${hasError ? 'var(--error-bg)' : 'var(--accent-color-alpha)'};
           }
           
           &:hover:not(:focus) {

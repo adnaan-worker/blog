@@ -14,16 +14,16 @@
   --font-code: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
-/* 深色主题颜色变量 */
+/* 深色主题颜色变量 - 优化版 */
 [data-theme='dark'] {
-  --rich-text-primary: #e8e8e8;
-  --rich-text-secondary: #b8b8b8;
-  --rich-text-accent: #63b3ed;
-  --rich-text-background: #1a202c;
-  --rich-text-background-secondary: #2d3748;
-  --rich-text-border: #4a5568;
-  --rich-text-code-bg: #2d3748;
-  --rich-text-quote-border: #63b3ed;
+  --rich-text-primary: #e8e8e8; /* 主文本 */
+  --rich-text-secondary: #b0b0b0; /* 次要文本 - 提高对比度 */
+  --rich-text-accent: #81d4fa; /* 链接色 - 更亮的蓝色 */
+  --rich-text-background: #0f0f0f; /* 背景 - 与主题一致 */
+  --rich-text-background-secondary: #1a1a1a; /* 次背景 */
+  --rich-text-border: rgba(255, 255, 255, 0.1); /* 边框 */
+  --rich-text-code-bg: #1e1e1e; /* 代码块背景 */
+  --rich-text-quote-border: #81d4fa; /* 引用边框 */
 }
 
 /* 富文本内容专用样式 - 同时应用于显示(.rich-text-content)和编辑(.ProseMirror) */
@@ -72,18 +72,21 @@
   display: inline;
 }
 
-/* 深色模式 - 编辑器代码块 */
+/* 深色模式 - 编辑器代码块优化 */
 [data-theme='dark'] .ProseMirror pre {
-  background: #1e1e1e;
-  border-color: #3e3e3e;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme='dark'] .ProseMirror pre code {
-  color: #abb2bf !important;
+  color: #d4d4d4 !important; /* 更亮的默认代码色 */
 }
 
 [data-theme='dark'] .ProseMirror pre code * {
-  color: #abb2bf;
+  color: inherit;
 }
 
 /* 内联代码样式 */
@@ -98,12 +101,13 @@
   border: 1px solid var(--rich-text-border);
 }
 
-/* 深色模式 - 内联代码 */
+/* 深色模式 - 内联代码优化 */
 [data-theme='dark'] .rich-text-content code,
 [data-theme='dark'] .ProseMirror code {
-  background: rgba(110, 118, 129, 0.2);
-  color: #e5c07b;
-  border-color: #3e3e3e;
+  background: rgba(129, 212, 250, 0.12); /* 使用主题色的半透明背景 */
+  color: #81d4fa; /* 明亮的蓝色 */
+  border: 1px solid rgba(129, 212, 250, 0.2);
+  text-shadow: 0 0 8px rgba(129, 212, 250, 0.3); /* 微光效果 */
 }
 
 /* 语法高亮颜色 - 浅色模式（默认） */
@@ -234,9 +238,12 @@
 /* 深色模式引用块优化 */
 [data-theme='dark'] .rich-text-content blockquote,
 [data-theme='dark'] .ProseMirror blockquote {
-  background: rgba(99, 179, 237, 0.1);
-  border-left-color: #63b3ed;
-  color: #a0aec0;
+  background: rgba(129, 212, 250, 0.08);
+  border-left: 4px solid #81d4fa;
+  color: #b0b0b0;
+  box-shadow:
+    inset 3px 0 8px rgba(129, 212, 250, 0.15),
+    0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .rich-text-content blockquote p,
@@ -416,8 +423,10 @@
 
 [data-theme='dark'] .rich-text-content mark,
 [data-theme='dark'] .ProseMirror mark {
-  background: #fbbf24;
-  color: #000;
+  background: rgba(244, 196, 48, 0.3); /* 半透明金黄色 */
+  color: #f4c430;
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(244, 196, 48, 0.4); /* 发光效果 */
 }
 
 /* 滚动条样式 */

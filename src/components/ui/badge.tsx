@@ -20,9 +20,9 @@ const BadgeContainer = styled.span<{ type: string; dot?: boolean }>`
     type === 'success'
       ? 'var(--success-color)'
       : type === 'info'
-        ? 'var(--accent-color)'
+        ? 'var(--info-color)'
         : type === 'warning'
-          ? '#FFA726'
+          ? 'var(--warning-color)'
           : type === 'error'
             ? 'var(--error-color)'
             : 'var(--text-tertiary)'};

@@ -82,11 +82,11 @@ const Content = styled.div<{ collapsed: boolean; maxHeight: number }>`
   }
 
   [data-theme='dark'] &::-webkit-scrollbar-track {
-    background: #161616;
+    background: var(--bg-primary);
   }
 
   [data-theme='dark'] &::-webkit-scrollbar-thumb {
-    background: #4e4e4e;
+    background: var(--border-color);
   }
 
   pre {
@@ -99,17 +99,17 @@ const Content = styled.div<{ collapsed: boolean; maxHeight: number }>`
     line-height: 1.6;
 
     [data-theme='dark'] & {
-      background: #1e1e1e;
+      background: var(--rich-text-code-bg);
     }
 
     code {
       background: transparent;
-      color: #24292e;
+      color: var(--text-primary);
       white-space: pre;
       display: block;
 
       [data-theme='dark'] & {
-        color: #abb2bf;
+        color: var(--text-secondary);
       }
 
       * {
@@ -119,7 +119,7 @@ const Content = styled.div<{ collapsed: boolean; maxHeight: number }>`
       }
 
       [data-theme='dark'] & * {
-        color: #abb2bf;
+        color: inherit;
       }
     }
   }
@@ -147,11 +147,11 @@ const ExpandButton = styled.button`
   }
 
   [data-theme='dark'] & {
-    background: #161616;
-    border-top-color: #3e3e3e;
+    background: var(--bg-primary);
+    border-top-color: var(--border-color);
 
     &:hover {
-      background: #252525;
+      background: var(--bg-tertiary);
     }
   }
 `;

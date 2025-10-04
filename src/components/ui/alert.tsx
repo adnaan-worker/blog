@@ -15,21 +15,21 @@ const AlertContainer = styled(motion.div)<{ type: string }>`
   margin-bottom: 1rem;
   background-color: ${({ type }) =>
     type === 'success'
-      ? 'rgba(67, 160, 71, 0.1)'
+      ? 'var(--success-bg)'
       : type === 'info'
-        ? 'rgba(81, 131, 245, 0.1)'
+        ? 'var(--info-bg)'
         : type === 'warning'
-          ? 'rgba(255, 167, 38, 0.1)'
-          : 'rgba(229, 57, 53, 0.1)'};
+          ? 'var(--warning-bg)'
+          : 'var(--error-bg)'};
   border-left: 4px solid
     ${({ type }) =>
       type === 'success'
-        ? 'var(--success-color)'
+        ? 'var(--success-border)'
         : type === 'info'
-          ? 'var(--accent-color)'
+          ? 'var(--info-border)'
           : type === 'warning'
-            ? '#FFA726'
-            : 'var(--error-color)'};
+            ? 'var(--warning-border)'
+            : 'var(--error-border)'};
   color: var(--text-primary);
 `;
 
@@ -42,9 +42,9 @@ const AlertIconWrapper = styled.div<{ type: string }>`
     type === 'success'
       ? 'var(--success-color)'
       : type === 'info'
-        ? 'var(--accent-color)'
+        ? 'var(--info-color)'
         : type === 'warning'
-          ? '#FFA726'
+          ? 'var(--warning-color)'
           : 'var(--error-color)'};
 `;
 
@@ -79,12 +79,8 @@ const CloseButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-tertiary);
     color: var(--text-primary);
-  }
-
-  [data-theme='dark'] &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
   }
 `;
 

@@ -19,13 +19,13 @@ const ACCENT_COLORS: AccentColorConfig = {
     '#AED581', // 淡黄绿
   ],
   dark: [
-    '#A0A7D4', // 淡紫
-    '#99D8CF', // 淡绿
-    '#838BC6', // 淡蓝紫
-    '#FFD54F', // 明亮黄
-    '#D1C4E9', // 淡薰衣草紫
-    '#B3E5FC', // 极浅蓝
-    '#DCEDC8', // 极浅绿
+    '#8B95C9', // 柔和紫蓝 - 提高饱和度
+    '#7FC8C0', // 青绿 - 更鲜明
+    '#7B88D8', // 亮蓝紫 - 增强可见度
+    '#F4C430', // 金黄 - 更温暖
+    '#B39DDB', // 薰衣草紫 - 提高对比度
+    '#81D4FA', // 天蓝 - 更亮
+    '#C5E1A5', // 嫩绿 - 更清新
   ],
 };
 // 颜色生成工具函数
@@ -51,19 +51,26 @@ const colorUtils = {
   },
 
   // 生成渐变色
-  generateGradientColors: (hex: string) => {
-    // 否则根据颜色生成渐变
+  generateGradientColors: (hex: string, isDark: boolean = false) => {
     const color = new Color(hex);
 
-    // 创建一个更轻一点的颜色作为渐变起点
-    const fromColor = new Color(color).mix('white', 0.2);
-    // 创建一个更亮更淡的颜色作为渐变终点
-    const toColor = new Color(color).mix('white', 0.5);
-
-    return {
-      from: colorUtils.hexToRgbString(fromColor.toString()),
-      to: colorUtils.hexToRgbString(toColor.toString()),
-    };
+    if (isDark) {
+      // 暗色模式：使用更鲜明的渐变
+      const fromColor = new Color(color).mix('#ffffff', 0.15);
+      const toColor = new Color(color).mix('#000000', 0.2);
+      return {
+        from: colorUtils.hexToRgbString(fromColor.toString()),
+        to: colorUtils.hexToRgbString(toColor.toString()),
+      };
+    } else {
+      // 亮色模式：保持原有逻辑
+      const fromColor = new Color(color).mix('white', 0.2);
+      const toColor = new Color(color).mix('white', 0.5);
+      return {
+        from: colorUtils.hexToRgbString(fromColor.toString()),
+        to: colorUtils.hexToRgbString(toColor.toString()),
+      };
+    }
   },
 
   // 生成背景色
@@ -101,12 +108,12 @@ const AccentColorStyleInjector: React.FC = () => {
       const lightGradient = colorUtils.generateGradientColors(currentLightColor);
       const lightBgColor = colorUtils.generateBgColor(currentLightColor);
 
-      // 生成暗色模式相关颜色
-      const darkColorAssistant = colorUtils.generateAssistantColor(currentDarkColor, '#000000', 0.2);
-      const darkColorHover = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.15);
-      const darkColorAlpha = colorUtils.generateAlphaColor(currentDarkColor, '#000000', 0.45, 0.1);
-      const darkGradient = colorUtils.generateGradientColors(currentDarkColor);
-      const darkBgColor = colorUtils.generateBgColor(currentDarkColor);
+      // 生成暗色模式相关颜色 - 优化对比度
+      const darkColorAssistant = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.15); // 更亮的辅助色
+      const darkColorHover = colorUtils.generateAssistantColor(currentDarkColor, '#ffffff', 0.25); // 增强悬停效果
+      const darkColorAlpha = colorUtils.generateAlphaColor(currentDarkColor, '#ffffff', 0.2, 0.15); // 提高透明色可见度
+      const darkGradient = colorUtils.generateGradientColors(currentDarkColor, true);
+      const darkBgColor = new Color(currentDarkColor).mix('#1a1a1a', 0.7).toString(); // 更深的背景色
 
       // 生成OKLCH值
       const [hl, sl, ll] = colorUtils.hexToOklchString(currentLightColor);

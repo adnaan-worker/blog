@@ -27,16 +27,16 @@ const ToastItem = styled(motion.div)<{ type: string }>`
   border-left: 4px solid
     ${({ type }) =>
       type === 'success'
-        ? 'var(--success-color)'
+        ? 'var(--success-border)'
         : type === 'info'
-          ? 'var(--accent-color)'
+          ? 'var(--info-border)'
           : type === 'warning'
-            ? '#FFA726'
-            : 'var(--error-color)'};
+            ? 'var(--warning-border)'
+            : 'var(--error-border)'};
   width: 100%;
 
   [data-theme='dark'] & {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-lg);
   }
 `;
 
@@ -49,9 +49,9 @@ const ToastIconWrapper = styled.div<{ type: string }>`
     type === 'success'
       ? 'var(--success-color)'
       : type === 'info'
-        ? 'var(--accent-color)'
+        ? 'var(--info-color)'
         : type === 'warning'
-          ? '#FFA726'
+          ? 'var(--warning-color)'
           : 'var(--error-color)'};
 `;
 
@@ -84,12 +84,8 @@ const CloseButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-tertiary);
     color: var(--text-primary);
-  }
-
-  [data-theme='dark'] &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
   }
 `;
 
