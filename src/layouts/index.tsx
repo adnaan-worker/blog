@@ -6,8 +6,6 @@ import Footer from './footer';
 import FloatingToolbar from './floating-toolbar';
 import Live2DModel from './live2d-model';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ToastProvider } from '@/components/ui/toast';
-import ToastListener from '@/components/ui/toast-listener';
 import PageLoading from '@/components/common/page-loading';
 
 // 定义页面主体样式
@@ -205,8 +203,6 @@ const RootLayout = () => {
   if (!mounted) return null;
 
   return (
-    <ToastProvider>
-      <ToastListener />
       <MainContainer>
         {/* 加载指示器 - 使用showLoader状态 */}
         <AnimatePresence>
@@ -249,7 +245,6 @@ const RootLayout = () => {
         {/* Live2D模型 */}
         <Live2DModel />
       </MainContainer>
-    </ToastProvider>
   );
 };
 

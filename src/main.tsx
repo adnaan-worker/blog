@@ -7,6 +7,8 @@ import store, { AppDispatch } from './store';
 import { initializeTheme } from './store/modules/themeSlice';
 import './styles/index.css';
 import AccentColorStyleInjector from './components/theme/accent-color-style-injector';
+import { ToastProvider } from '@/components/ui/toast';
+import ToastListener from '@/components/ui/toast-listener';
 // 导入UI组件库并初始化
 import UI from './ui';
 // 初始化UI组件库
@@ -43,7 +45,10 @@ const init = async () => {
     <React.StrictMode>
       <AccentColorStyleInjector />
       <Provider store={store}>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <ToastListener />
+          <RouterProvider router={router} />
+        </ToastProvider>
       </Provider>
     </React.StrictMode>,
   );

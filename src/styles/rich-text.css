@@ -497,3 +497,62 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* 移动端 */
+@media (max-width: 480px) {
+  .rich-text-content,
+  .ProseMirror {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .rich-text-content h1,
+  .ProseMirror h1 {
+    font-size: 1.8em;
+  }
+
+  .rich-text-content h2,
+  .ProseMirror h2 {
+    font-size: 1.6em;
+  }
+
+  .rich-text-content h3,
+  .ProseMirror h3 {
+    font-size: 1.3em;
+  }
+
+  .rich-text-content h4,
+  .ProseMirror h4 {
+    font-size: 1.15em;
+  }
+
+  .rich-text-content h5,
+  .rich-text-content h6,
+  .ProseMirror h5,
+  .ProseMirror h6 {
+    font-size: 1em;
+  }
+
+  .rich-text-content p,
+  .ProseMirror p {
+    font-size: 15px;
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+  }
+
+  .ProseMirror pre {
+    font-size: 13px;
+  }
+
+  .rich-text-content ul,
+  .rich-text-content ol,
+  .ProseMirror ul,
+  .ProseMirror ol {
+    padding-left: 1.4em;
+  }
+
+  .rich-text-content blockquote,
+  .ProseMirror blockquote {
+    padding: 0.75rem 1rem;
+  }
+}
