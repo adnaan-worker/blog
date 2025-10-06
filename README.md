@@ -4,6 +4,7 @@
 
 ## 运行效果
 
+![输入图片说明](public/image.png)
 ![输入图片说明](public/image1.png)
 ![输入图片说明](public/image2.png)
 ![输入图片说明](public/image3.png)
@@ -60,22 +61,26 @@
 ## 安装与使用
 
 1. 克隆仓库
+
 ```bash
 git clone https://gitee.com/adnaan/blog.git
 cd blog
 ```
 
 2. 安装依赖
+
 ```bash
 npm install
 ```
 
 3. 启动开发服务器
+
 ```bash
 npm run dev
 ```
 
 4. 构建生产版本
+
 ```bash
 npm run build
 ```
@@ -96,9 +101,10 @@ npm run build
 ### 开发者字体配置
 
 代码字体优先级：
+
 ```
-OperatorMonoSSmLig Nerd Font, Cascadia Code PL, FantasqueSansMono Nerd Font, 
-operator mono, JetBrainsMono, Fira code Retina, Fira code, Consolas, Monaco, 
+OperatorMonoSSmLig Nerd Font, Cascadia Code PL, FantasqueSansMono Nerd Font,
+operator mono, JetBrainsMono, Fira code Retina, Fira code, Consolas, Monaco,
 Hannotate SC, monospace, -apple-system
 ```
 
