@@ -34,9 +34,4 @@ const config: Config = {
   appTitle: env.VITE_APP_TITLE || '博客系统',
 };
 
-// 开发环境下输出配置信息
-if (isDev) {
-  console.log('当前应用配置:', config);
-}
-
 export default config;

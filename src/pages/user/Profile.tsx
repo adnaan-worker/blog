@@ -243,7 +243,7 @@ const Profile: React.FC = () => {
       const response = await API.user.getProfile();
       setUser(response.data);
     } catch (error: any) {
-      adnaan.toast.error(error.message || '加载用户资料失败');
+      console.error('加载用户资料失败:', error);
     } finally {
       setIsUserLoading(false);
     }
@@ -261,7 +261,7 @@ const Profile: React.FC = () => {
       }));
       setUserStats(statsWithIcons);
     } catch (error: any) {
-      adnaan.toast.error(error.message || '加载统计数据失败');
+      console.error('加载统计数据失败:', error);
     } finally {
       setIsStatsLoading(false);
     }
@@ -295,7 +295,7 @@ const Profile: React.FC = () => {
       setHasMoreActivities(activitiesData.length === 10);
       setActivitiesPage(page);
     } catch (error: any) {
-      adnaan.toast.error(error.message || '加载活动记录失败');
+      console.error('加载活动记录失败:', error);
     } finally {
       setIsActivitiesLoading(false);
     }
@@ -307,7 +307,7 @@ const Profile: React.FC = () => {
       const response = await API.user.getAchievements();
       setAchievements(response.data);
     } catch (error: any) {
-      adnaan.toast.error(error.message || '加载成就数据失败');
+      console.error('加载成就数据失败:', error);
     }
   };
 

@@ -3,12 +3,12 @@ import API from '@/utils/api';
 import { storage } from '@/utils';
 
 export interface User {
-  id: number;
+  id: string | number;
   username: string;
-  email: string;
+  email?: string;
   avatar?: string;
-  role: string;
-  status: string;
+  role?: string;
+  status?: string;
 }
 
 interface UserState {
@@ -77,7 +77,7 @@ export const login = (username: string, password: string) => async (dispatch: an
 
     const response = await API.user.login({ username, password });
     if (response.code === 200) {
-      dispatch(setUser(response.data.user as any));
+      dispatch(setUser({ user: response.data.user, token: response.data.token }));
       storage.local.set('user', response.data.user);
       storage.local.set('token', response.data.token);
       adnaan.toast.success('登录成功', '欢迎回来');

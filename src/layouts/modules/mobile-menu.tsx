@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
-import { FiLogOut, FiX } from 'react-icons/fi';
+import { FiLogOut, FiX, FiUser } from 'react-icons/fi';
 import type { RootState } from '@/store';
 import { scrollLock } from '@/utils/scroll-lock';
 import { getRoleDisplayName, getRoleColor } from '@/utils/role-helper';
@@ -33,50 +33,12 @@ const MobileMenuContent = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
-  padding-top: calc(var(--header-height) + 1rem);
+  margin-top: calc(var(--header-height) + 1rem);
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 
   &::-webkit-scrollbar {
     display: none;
-  }
-`;
-
-const MobileMenuHeader = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--header-height);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1rem;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
-  z-index: 1;
-
-  [data-theme='dark'] & {
-    background: var(--bg-primary);
-  }
-`;
-
-const MobileMenuCloseButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  font-size: 1.5rem;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--bg-secondary);
   }
 `;
 
@@ -132,14 +94,14 @@ export const mobileMenuVariants = {
     x: 0,
     transition: {
       duration: 0.3,
-      ease: [0.4, 0, 0.2, 1],
+      ease: [0.4, 0, 0.2, 1] as any,
     },
   },
   exit: {
     x: '100%',
     transition: {
       duration: 0.2,
-      ease: [0.4, 0, 1, 1],
+      ease: [0.4, 0, 1, 1] as any,
     },
   },
 };
@@ -335,21 +297,26 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 >
                   <div
                     style={{
-                      width: '24px',
-                      height: '24px',
+                      width: '36px',
+                      height: '36px',
                       borderRadius: '50%',
                       overflow: 'hidden',
-                      border: '2px solid var(--accent-color-alpha)',
+                      border: user?.avatar ? '2px solid var(--accent-color-alpha)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: user?.avatar ? 'transparent' : 'var(--bg-secondary)',
                     }}
                   >
-                    <img
-                      src={
-                        user?.avatar ||
-                        'https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30'
-                      }
-                      alt="用户头像"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt="用户头像"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <FiUser size={18} color="var(--text-secondary)" />
+                    )}
                   </div>
                   <div>
                     <div
@@ -359,7 +326,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                         color: 'var(--text-primary)',
                       }}
                     >
-                      {user?.username || 'adnaan'}
+                      {user?.username || '用户'}
                     </div>
                     <div
                       style={{

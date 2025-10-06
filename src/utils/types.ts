@@ -43,6 +43,7 @@ export interface ApiResponse<T = any> {
  * 错误响应接口
  */
 export interface ErrorResponse {
+  status: number;
   success: false; // 请求失败
   code: number; // 错误码
   message: string; // 错误信息

@@ -195,7 +195,6 @@ class SocketManager {
     this.clearReconnectTimer();
 
     const delay = Math.min(SOCKET_CONFIG.reconnectDelay * Math.pow(2, this.state.reconnectAttempts), 30000);
-    console.log(`🔄 ${delay}ms后尝试重连 (第${this.state.reconnectAttempts + 1}次)`);
 
     this.reconnectTimer = setTimeout(() => {
       this.updateState({
@@ -441,7 +440,6 @@ export const useAutoConnect = (enabled: boolean = true) => {
   useEffect(() => {
     // 防止多个组件同时触发连接
     if (enabled && !isConnected && !isConnecting && !error && !connectAttemptedRef.current) {
-      console.log('🔗 自动连接Socket...');
       connectAttemptedRef.current = true;
 
       connect().finally(() => {

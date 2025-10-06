@@ -31,15 +31,6 @@ export const getSocketConfig = (): SocketConfig => {
     return DEFAULT_CONFIG;
   }
 
-  // 开发环境显示配置信息
-  if (import.meta.env.DEV) {
-    console.log('🔧 Socket配置:', {
-      url: config.url,
-      authKey: config.authKey.substring(0, 8) + '...',
-      environment: import.meta.env.MODE,
-    });
-  }
-
   return config;
 };
 

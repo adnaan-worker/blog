@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiUser, FiSettings, FiFileText, FiHeart, FiLogOut, FiEdit, FiMonitor } from 'react-icons/fi';
+import { FiUser, FiLogOut, FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
@@ -44,10 +44,6 @@ export const MobileAvatar = styled(Avatar)`
   display: none;
   margin-right: 0.5rem;
   margin-left: 0;
-
-  @media (max-width: 768px) {
-    display: block;
-  }
 `;
 
 // 用户下拉菜单样式
@@ -234,11 +230,11 @@ const UserMenu: React.FC<UserMenuProps> = ({
           ) : (
             <>
               <UserDropdownItem to="#" onClick={handleLogin}>
-                <FiUser size={16} /> 登录
+                <FiLogIn size={16} /> 登录
               </UserDropdownItem>
 
               <UserDropdownItem to="#" onClick={handleRegister}>
-                <FiUser size={16} /> 注册
+                <FiUserPlus size={16} /> 注册
               </UserDropdownItem>
             </>
           )}

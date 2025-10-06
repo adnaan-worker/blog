@@ -18,9 +18,9 @@ import {
   FiMonitor,
 } from 'react-icons/fi';
 import { keyframes } from '@emotion/react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '@/store/modules/userSlice';
-import type { AppDispatch } from '@/store';
+import type { AppDispatch, RootState } from '@/store';
 import LoginModal from './modules/login-model';
 import RegisterModal from './modules/register-modal';
 import NavLinks from './modules/nav-links';
@@ -346,21 +346,11 @@ const mainNavItems: MenuItem[] = [
   },
 ];
 
-// 定义移动端菜单分组数据
-const mobileMenuGroups: MenuGroup[] = [
+// 定义基础移动端菜单分组数据
+const getBaseMobileMenuGroups = (): MenuGroup[] => [
   {
     title: '主导航',
     items: mainNavItems,
-  },
-  {
-    title: '用户中心',
-    items: [
-      {
-        path: '/profile',
-        title: '个人中心',
-        icon: <FiUser size={16} />,
-      },
-    ],
   },
 ];
 
@@ -381,6 +371,7 @@ const accountMenuItems: MenuItem[] = [
 // Header组件
 const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { user, isLoggedIn } = useSelector((state: RootState) => state.user);
   const [internalScrolled, setInternalScrolled] = useState(scrolled);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -393,6 +384,23 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+
+  // 根据登录状态动态生成移动端菜单分组
+  const mobileMenuGroups: MenuGroup[] = isLoggedIn
+    ? [
+        ...getBaseMobileMenuGroups(),
+        {
+          title: '用户中心',
+          items: [
+            {
+              path: '/profile',
+              title: '个人中心',
+              icon: <FiUser size={16} />,
+            },
+          ],
+        },
+      ]
+    : getBaseMobileMenuGroups();
 
   // 如果scrolled属性被传入，则使用它，否则自行监听滚动
   useEffect(() => {
@@ -549,11 +557,12 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
 
         {/* 移动端菜单按钮和头像 */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <MobileAvatar onClick={(e) => toggleUserDropdown(e)}>
-            <img
-              src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar30"
-              alt="用户头像"
-            />
+          <MobileAvatar onClick={(e) => toggleUserDropdown(e)} hasImage={!!user?.avatar}>
+            {isLoggedIn && user?.avatar ? (
+              <img src={user.avatar} alt={user.username} />
+            ) : (
+              <FiUser color="var(--text-secondary)" />
+            )}
           </MobileAvatar>
 
           <MenuButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>

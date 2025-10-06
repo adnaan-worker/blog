@@ -6,6 +6,9 @@ import { storage } from './index';
 class HttpRequest {
   private instance: AxiosInstance;
   private baseConfig: AxiosRequestConfig;
+  private isRefreshing: boolean = false; // 是否正在刷新token
+  private hasShownUnauthorizedError: boolean = false; // 是否已显示401错误
+  private errorToastTimers: Map<string, number> = new Map(); // 错误提示防抖计时器
 
   constructor(axiosConfig: AxiosRequestConfig = {}) {
     // 基础配置，根据环境变量设置
@@ -25,14 +28,41 @@ class HttpRequest {
 
     // 添加拦截器
     this.setupInterceptors();
+  }
 
-    // 开发环境下输出配置信息
-    if (config.isDev) {
-      console.log('HTTP请求配置:', {
-        baseURL: this.baseConfig.baseURL,
-        timeout: this.baseConfig.timeout,
-      });
+  /**
+   * 防抖显示错误提示
+   * @param key 错误类型的唯一键
+   * @param message 错误消息
+   * @param title 错误标题
+   * @param duration 防抖时长（毫秒）
+   */
+  private showErrorToast(key: string, message: string, title: string, duration: number = 3000): void {
+    // 如果该类型错误已经显示过，则跳过
+    if (this.errorToastTimers.has(key)) {
+      return;
     }
+
+    // 显示错误提示
+    if (typeof window !== 'undefined' && (window as any).adnaan) {
+      (window as any).adnaan.toast.error(message, title);
+    }
+
+    // 设置防抖计时器
+    const timer = window.setTimeout(() => {
+      this.errorToastTimers.delete(key);
+    }, duration);
+    this.errorToastTimers.set(key, timer);
+  }
+
+  /**
+   * 清理所有错误提示计时器
+   */
+  public clearErrorToasts(): void {
+    this.errorToastTimers.forEach((timer) => {
+      window.clearTimeout(timer);
+    });
+    this.errorToastTimers.clear();
   }
 
   // 配置拦截器
@@ -90,6 +120,25 @@ class HttpRequest {
             });
           }
 
+          // 特殊处理 401 错误，避免在这里和拦截器中重复提示
+          if (data.code === 401) {
+            if (!this.hasShownUnauthorizedError) {
+              this.hasShownUnauthorizedError = true;
+
+              if (typeof window !== 'undefined' && (window as any).adnaan) {
+                (window as any).adnaan.toast.error('登录已过期，请重新登录', '身份验证失败');
+              }
+
+              storage.local.remove('user');
+              storage.local.remove('token');
+
+              setTimeout(() => {
+                window.location.href = '/';
+                this.hasShownUnauthorizedError = false;
+              }, 1500);
+            }
+          }
+
           return Promise.reject({
             success: false,
             code: data.code,
@@ -140,27 +189,71 @@ class HttpRequest {
           switch (status) {
             case 401:
               // 未授权，清除token并跳转到登录页
-              storage.local.remove('user');
-              window.location.href = '/';
+              // 只显示一次提示，避免多个请求同时失败导致多次弹窗
+              if (!this.hasShownUnauthorizedError) {
+                this.hasShownUnauthorizedError = true;
+
+                // 使用全局 toast 显示错误
+                if (typeof window !== 'undefined' && (window as any).adnaan) {
+                  (window as any).adnaan.toast.error('登录已过期，请重新登录', '身份验证失败');
+                }
+
+                // 清除用户信息
+                storage.local.remove('user');
+                storage.local.remove('token');
+
+                // 延迟跳转，让用户看到提示
+                setTimeout(() => {
+                  window.location.href = '/';
+                  // 重置标志，允许下次再显示
+                  this.hasShownUnauthorizedError = false;
+                }, 1500);
+              }
               break;
             case 403:
               // 禁止访问
-              console.error('访问被禁止');
+              if (config.isDev) {
+                console.error('访问被禁止');
+              }
+              this.showErrorToast('403', '您没有权限访问此资源', '访问被拒绝');
               break;
             case 404:
               // 资源不存在
-              console.error('请求的资源不存在');
+              if (config.isDev) {
+                console.error('请求的资源不存在');
+              }
+              // 404 通常不需要全局提示，由业务层处理
               break;
             case 500:
               // 服务器错误
-              console.error('服务器错误');
+              if (config.isDev) {
+                console.error('服务器错误');
+              }
+              this.showErrorToast('500', '服务器出现错误，请稍后重试', '服务器错误', 5000);
+              break;
+            case 502:
+            case 503:
+            case 504:
+              // 网关错误或服务不可用
+              if (config.isDev) {
+                console.error('服务不可用');
+              }
+              this.showErrorToast('5xx', '服务暂时不可用，请稍后重试', '服务异常', 5000);
               break;
             default:
-              console.error(`未预期的错误: ${status}`);
+              if (config.isDev) {
+                console.error(`未预期的错误: ${status}`);
+              }
           }
         } else {
           // 网络错误或请求被取消
-          console.error('网络错误或请求被取消');
+          if (config.isDev) {
+            console.error('网络错误或请求被取消');
+          }
+          // 只在非取消请求时显示网络错误提示
+          if (!axios.isCancel(error)) {
+            this.showErrorToast('network', '网络连接失败，请检查网络设置', '网络错误', 5000);
+          }
         }
 
         return Promise.reject(error);
@@ -302,12 +395,30 @@ class HttpRequest {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
+      // 特殊处理 401 错误
+      if (response.status === 401) {
+        if (!this.hasShownUnauthorizedError) {
+          this.hasShownUnauthorizedError = true;
+
+          if (typeof window !== 'undefined' && (window as any).adnaan) {
+            (window as any).adnaan.toast.error('登录已过期，请重新登录', '身份验证失败');
+          }
+
+          storage.local.remove('user');
+          storage.local.remove('token');
+
+          setTimeout(() => {
+            window.location.href = '/';
+            this.hasShownUnauthorizedError = false;
+          }, 1500);
+        }
+      }
       throw new Error(`流式请求失败: ${response.status} ${response.statusText}`);
     }
 
