@@ -49,6 +49,16 @@ export interface Activity {
   metadata?: any;
 }
 
+// QuickAction配置接口
+export interface QuickAction {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary' | 'outline';
+  disabled?: boolean;
+}
+
 export interface Achievement {
   id: string | number;
   name: string;
@@ -65,21 +75,7 @@ export interface Achievement {
 
 export interface EditProfileForm {
   username: string;
-  fullName: string; // 对应数据库的 full_name 字段
+  fullName: string;
   email: string;
   bio: string;
-}
-
-// 新增类型定义
-export interface ChangePasswordForm {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
-
-export interface UserPreferences {
-  theme: 'light' | 'dark' | 'auto';
-  language: 'zh-CN' | 'en-US';
-  emailNotifications: boolean;
-  pushNotifications: boolean;
 }

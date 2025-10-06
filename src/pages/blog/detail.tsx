@@ -806,7 +806,7 @@ const BlogDetail: React.FC = () => {
   // 点赞、收藏和分享功能 - 使用真实API调用
   const handleLike = useCallback(async () => {
     if (!id) return;
-    
+
     try {
       const response = await API.article.toggleLike(id);
       if (response.success) {
@@ -824,7 +824,7 @@ const BlogDetail: React.FC = () => {
 
   const handleBookmark = useCallback(async () => {
     if (!id) return;
-    
+
     try {
       const response = await API.article.toggleBookmark(id);
       if (response.success) {

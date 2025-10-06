@@ -24,8 +24,16 @@ interface QuickAction {
   disabled?: boolean;
 }
 
+interface QuickActionConfig {
+  id: string;
+  label: string;
+  icon: string;
+  description: string;
+  action: string;
+}
+
 interface QuickActionsProps {
-  actions?: QuickAction[];
+  actions?: QuickActionConfig[];
   onAction?: (actionId: string) => void;
 }
 
@@ -77,81 +85,34 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ actions, onAction })
     }
   };
 
-  // 获取用户信息检查是否是管理员
-  const userInfo = storage.local.get<any>('user');
-  const isAdmin = userInfo?.role === 'admin';
+  // 转换 QuickActionConfig 为 QuickAction
+  const convertedActions: QuickAction[] =
+    actions?.map((config) => ({
+      id: config.id,
+      label: config.label,
+      icon: <span style={{ fontSize: '1rem' }}>{config.icon}</span>,
+      onClick: () => handleAction(config.action),
+      variant: 'outline' as const,
+    })) || [];
 
-  // 默认操作列表
-  const defaultActions: QuickAction[] = [
-    {
-      id: 'view-notes',
-      label: '我的手记',
-      icon: <FiBookOpen size={16} />,
-      onClick: () => handleAction('view-notes'),
-      variant: 'outline',
-    },
-    {
-      id: 'view-articles',
-      label: '我的文章',
-      icon: <FiFileText size={16} />,
-      onClick: () => handleAction('view-articles'),
-      variant: 'outline',
-    },
-    // 仅管理员可见
-    ...(isAdmin
-      ? [
-          {
-            id: 'edit-site-settings',
-            label: '网站设置',
-            icon: <FiGlobe size={16} />,
-            onClick: () => handleAction('edit-site-settings'),
-            variant: 'outline' as const,
-          },
-        ]
-      : []),
-  ];
-
-  const bottomActions: QuickAction[] = [
-    {
-      id: 'help',
-      label: '帮助中心',
-      icon: <FiHelpCircle size={16} />,
-      onClick: () => handleAction('help'),
-      variant: 'outline',
-    },
-    {
-      id: 'logout',
-      label: '退出登录',
-      icon: <FiLogOut size={16} />,
-      onClick: () => handleAction('logout'),
-      variant: 'outline',
-    },
-  ];
-
-  const actionsToRender = actions || defaultActions;
+  // 如果没有传入actions，显示默认提示
+  if (!actions || actions.length === 0) {
+    return (
+      <Container>
+        <SectionTitle>快捷操作</SectionTitle>
+        <ActionsList>
+          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>暂无可用操作</div>
+        </ActionsList>
+      </Container>
+    );
+  }
 
   return (
     <Container>
       <SectionTitle>快捷操作</SectionTitle>
 
       <ActionsList>
-        {actionsToRender.map((action) => (
-          <ActionButton
-            key={action.id}
-            variant={action.variant || 'outline'}
-            size="small"
-            fullWidth
-            leftIcon={action.icon}
-            onClick={action.onClick}
-            disabled={action.disabled}
-          >
-            {action.label}
-          </ActionButton>
-        ))}
-
-        <Divider />
-
-        {bottomActions.map((action) => (
+        {convertedActions.map((action) => (
           <ActionButton
             key={action.id}
             variant={action.variant || 'outline'}

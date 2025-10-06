@@ -571,7 +571,9 @@ export const API = {
      * @param id 文章ID
      * @returns Promise<ApiResponse<{ liked: boolean; bookmarked: boolean; likeCount: number }>>
      */
-    getUserStatus: (id: string | number): Promise<ApiResponse<{ liked: boolean; bookmarked: boolean; likeCount: number }>> => {
+    getUserStatus: (
+      id: string | number,
+    ): Promise<ApiResponse<{ liked: boolean; bookmarked: boolean; likeCount: number }>> => {
       return http.get(`/posts/${id}/status`);
     },
   },
