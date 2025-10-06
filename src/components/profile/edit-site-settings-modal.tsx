@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { FiSave } from 'react-icons/fi';
-import { Button, Input } from '@/components/ui';
-import { Modal } from '@/ui/modal';
+import { Button, Input } from 'adnaan-ui';
+import { Modal } from 'adnaan-ui';
 import type { SiteSettings } from '@/utils/api';
 
 interface EditSiteSettingsModalProps {

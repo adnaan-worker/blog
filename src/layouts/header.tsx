@@ -328,11 +328,6 @@ const mainNavItems: MenuItem[] = [
     isDropdown: true,
     children: [
       {
-        path: '/ui-docs',
-        title: 'UI文档',
-        icon: <FiMonitor size={16} />,
-      },
-      {
         path: '/code',
         title: '开发字体',
         icon: <FiCode size={16} />,

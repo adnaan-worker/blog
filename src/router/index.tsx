@@ -38,9 +38,6 @@ const Profile = lazy(() => import('@/pages/user/Profile'));
 const ArticleEditor = lazy(() => import('@/pages/editor/article'));
 const NoteEditor = lazy(() => import('@/pages/editor/note'));
 
-// UI文档独立页面
-const UIDocsPage = lazy(() => import('@/pages/ui-docs'));
-
 // 创建路由配置
 const router = createHashRouter([
   {
@@ -142,15 +139,6 @@ const router = createHashRouter([
     element: (
       <Suspense fallback={<PageLoading fullScreen />}>
         <NoteEditor />
-      </Suspense>
-    ),
-  },
-  // UI文档独立页面路由（不继承主布局）
-  {
-    path: '/ui-docs',
-    element: (
-      <Suspense fallback={<PageLoading fullScreen />}>
-        <UIDocsPage />
       </Suspense>
     ),
   },

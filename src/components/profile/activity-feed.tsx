@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { FiRefreshCw, FiExternalLink } from 'react-icons/fi';
-import { Button } from '@/components/ui';
+import { Button } from 'adnaan-ui';
 import type { Activity } from './types';
 
 interface ActivityFeedProps {

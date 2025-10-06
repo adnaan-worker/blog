@@ -7,12 +7,9 @@ import store, { AppDispatch } from './store';
 import { initializeTheme } from './store/modules/themeSlice';
 import './styles/index.css';
 import AccentColorStyleInjector from './components/theme/accent-color-style-injector';
-import { ToastProvider } from '@/components/ui/toast';
-import ToastListener from '@/components/ui/toast-listener';
-// 导入UI组件库并初始化
-import UI from './ui';
+import { ToastProvider, ToastListener, initAdnaanUI } from 'adnaan-ui';
 // 初始化UI组件库
-UI.install();
+initAdnaanUI();
 
 // 定义标题数组
 const titles = [

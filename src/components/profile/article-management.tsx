@@ -17,11 +17,9 @@ import {
   FiFilter,
   FiRefreshCw,
 } from 'react-icons/fi';
-import { Button, Input, InfiniteScroll } from '@/components/ui';
-import { toast } from '@/ui';
+import { Button, Input, InfiniteScroll } from 'adnaan-ui';
 import { API, Article, ArticleParams } from '@/utils/api';
 import { RichTextParser } from '@/utils/rich-text-parser';
-import { confirmDialog } from '@/ui';
 
 // 样式组件
 const Container = styled.div`
@@ -490,17 +488,17 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
 
   // 处理删除文章
   const handleDeleteArticle = async (article: Article) => {
-    const confirmed = await confirmDialog.delete('确定要删除这篇文章吗？删除后无法恢复。', '删除文章');
+    const confirmed = await adnaan.confirm.delete('确定要删除这篇文章吗？删除后无法恢复。', '删除文章');
 
     if (!confirmed) return;
 
     try {
       await API.article.deleteArticle(article.id);
-      toast.success('文章删除成功');
+      adnaan.toast.success('文章删除成功');
       setArticles((prev) => prev.filter((a) => a.id !== article.id));
       calculateStats(articles.filter((a) => a.id !== article.id));
     } catch (error: any) {
-      toast.error(error.message || '删除失败');
+      adnaan.toast.error(error.message || '删除失败');
     }
   };
 

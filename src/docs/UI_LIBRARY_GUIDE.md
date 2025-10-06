@@ -48,10 +48,10 @@ UI.tooltip.show(element, '提示信息');
 
 ```typescript
 // 直接使用全局对象
-window.UI.toast.success('操作成功！');
-window.UI.alert.error('出现错误！');
-const result = await window.UI.confirm({ title: '确认删除', message: '此操作不可撤销' });
-window.UI.tooltip.show(element, '提示信息');
+adnaan.toast.success('操作成功！');
+adnaan.alert.error('出现错误！');
+const result = await adnaan.confirm({ title: '确认删除', message: '此操作不可撤销' });
+adnaan.tooltip.show(element, '提示信息');
 ```
 
 **适用场景**：非 React 代码中使用，如普通 JavaScript 函数、工具函数等
@@ -97,7 +97,7 @@ toast.show({
 
 ```typescript
 // 在任何地方使用
-window.UI.toast.success('全局提示');
+adnaan.toast.success('全局提示');
 Toast.error('简写提示');
 ```
 
@@ -130,7 +130,7 @@ const id = alert.show({
 ### 全局使用
 
 ```typescript
-window.UI.alert.success('全局Alert');
+adnaan.alert.success('全局Alert');
 Alert.error('简写Alert');
 ```
 
@@ -173,7 +173,7 @@ const confirmResult = await confirmDialog.confirm('确认操作', '您确定要�
 ### 全局使用
 
 ```typescript
-const result = await window.UI.confirm({
+const result = await adnaan.confirm({
   title: '全局确认',
   message: '这是全局确认对话框',
 });
@@ -217,7 +217,7 @@ const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
 ### 全局使用
 
 ```typescript
-window.UI.tooltip.show(element, '全局提示');
+adnaan.tooltip.show(element, '全局提示');
 Tooltip.show(element, '简写提示');
 ```
 
@@ -296,11 +296,11 @@ const MyComponent = () => {
 // utils/api.ts
 const handleApiError = (error: any) => {
   // 使用全局UI，无需导入
-  window.UI.toast.error(error.message || '请求失败');
+  adnaan.toast.error(error.message || '请求失败');
 };
 
 const deleteItem = async (id: string) => {
-  const shouldDelete = await window.UI.confirm.delete();
+  const shouldDelete = await adnaan.confirm.delete();
   if (shouldDelete) {
     try {
       await api.delete(`/items/${id}`);
@@ -320,7 +320,7 @@ const errorMiddleware: Middleware = () => (next) => (action) => {
   const result = next(action);
 
   if (action.type.endsWith('/rejected')) {
-    window.UI.toast.error('操作失败，请重试');
+    adnaan.toast.error('操作失败，请重试');
   }
 
   return result;

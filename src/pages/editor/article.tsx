@@ -5,9 +5,7 @@ import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiS
 import ModernEditor from '@/components/common/modern-editor';
 import EditorAIAssistant from '@/components/common/editor-ai-assistant';
 import { API } from '@/utils/api';
-import { Button, Input } from '@/components/ui';
-import { ToastProvider } from '@/components/ui/toast';
-import ToastListener from '@/components/ui/toast-listener';
+import { Button, Input } from 'adnaan-ui';
 import PageLoading from '@/components/common/page-loading';
 
 interface Article {
@@ -113,7 +111,7 @@ const ArticleEditorPage: React.FC = () => {
         setStatus(article.status || 0);
         setOriginalData(loadedData);
       } catch (error: any) {
-        window.UI.toast.error(error.message || '加载文章失败');
+        adnaan.toast.error(error.message || '加载文章失败');
         navigate('/profile');
       } finally {
         setIsLoading(false);
@@ -147,12 +145,12 @@ const ArticleEditorPage: React.FC = () => {
   // 保存文章
   const handleSave = async (isDraft: boolean = true) => {
     if (!title.trim()) {
-      window.UI.toast.error('请输入文章标题');
+      adnaan.toast.error('请输入文章标题');
       return;
     }
 
     if (!content.trim()) {
-      window.UI.toast.error('请输入文章内容');
+      adnaan.toast.error('请输入文章内容');
       return;
     }
 
@@ -171,10 +169,10 @@ const ArticleEditorPage: React.FC = () => {
 
       if (articleId) {
         await API.article.updateArticle(Number(articleId), articleData);
-        window.UI.toast.success('文章更新成功！', '保存成功', 3000);
+        adnaan.toast.success('文章更新成功！', '保存成功', 3000);
       } else {
         await API.article.createArticle(articleData as any);
-        window.UI.toast.success('文章创建成功！', '保存成功', 3000);
+        adnaan.toast.success('文章创建成功！', '保存成功', 3000);
       }
 
       // 重置未保存状态
@@ -202,7 +200,7 @@ const ArticleEditorPage: React.FC = () => {
         }
       }, 3500); // 给用户3.5秒时间看到成功提示
     } catch (error: any) {
-      window.UI.toast.error(error.message || '保存失败');
+      adnaan.toast.error(error.message || '保存失败');
     } finally {
       setIsSaving(false);
     }
@@ -216,7 +214,7 @@ const ArticleEditorPage: React.FC = () => {
   // 处理退出
   const handleExit = async () => {
     if (hasUnsavedChanges) {
-      const confirmed = await window.UI.confirm({
+      const confirmed = await adnaan.confirm({
         title: '确认退出',
         message: '您有未保存的修改，确定要退出吗？',
         confirmText: '退出',
@@ -240,149 +238,137 @@ const ArticleEditorPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <ToastProvider>
-        <ToastListener />
-        <PageLoading message="加载文章编辑器" fullScreen />
-      </ToastProvider>
-    );
+    return <PageLoading message="加载文章编辑器" fullScreen />;
   }
 
   return (
-    <ToastProvider>
-      <ToastListener />
-      <EditorContainer>
-        {/* 顶部工具栏 */}
-        <TopBar>
-          <LeftSection>
-            <BackButton onClick={handleExit}>
-              <FiX />
-              <span>退出</span>
-            </BackButton>
-            <Title>
-              <input
-                type="text"
-                placeholder="请输入文章标题..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </Title>
-          </LeftSection>
+    <EditorContainer>
+      {/* 顶部工具栏 */}
+      <TopBar>
+        <LeftSection>
+          <BackButton onClick={handleExit}>
+            <FiX />
+            <span>退出</span>
+          </BackButton>
+          <Title>
+            <input
+              type="text"
+              placeholder="请输入文章标题..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </Title>
+        </LeftSection>
 
-          <RightSection>
-            <Button
-              variant={showSidebar ? 'primary' : 'outline'}
-              size="small"
-              onClick={() => setShowSidebar(!showSidebar)}
-              title={showSidebar ? '隐藏设置面板' : '显示设置面板'}
-            >
-              <FiSettings />
-              <span>设置</span>
-            </Button>
-            <Button
-              variant={showAIAssistant ? 'primary' : 'outline'}
-              size="small"
-              onClick={() => setShowAIAssistant(!showAIAssistant)}
-            >
-              <FiCpu />
-              <span>AI助手</span>
-            </Button>
-            <Button variant="outline" size="small" onClick={() => handleSave(true)} disabled={isSaving}>
-              <FiSave />
-              <span>保存草稿</span>
-            </Button>
-            <Button variant="primary" size="small" onClick={() => handleSave(false)} disabled={isSaving}>
-              <FiUpload />
-              <span>发布</span>
-            </Button>
-          </RightSection>
-        </TopBar>
+        <RightSection>
+          <Button
+            variant={showSidebar ? 'primary' : 'outline'}
+            size="small"
+            onClick={() => setShowSidebar(!showSidebar)}
+            title={showSidebar ? '隐藏设置面板' : '显示设置面板'}
+          >
+            <FiSettings />
+            <span>设置</span>
+          </Button>
+          <Button
+            variant={showAIAssistant ? 'primary' : 'outline'}
+            size="small"
+            onClick={() => setShowAIAssistant(!showAIAssistant)}
+          >
+            <FiCpu />
+            <span>AI助手</span>
+          </Button>
+          <Button variant="outline" size="small" onClick={() => handleSave(true)} disabled={isSaving}>
+            <FiSave />
+            <span>保存草稿</span>
+          </Button>
+          <Button variant="primary" size="small" onClick={() => handleSave(false)} disabled={isSaving}>
+            <FiUpload />
+            <span>发布</span>
+          </Button>
+        </RightSection>
+      </TopBar>
 
-        {/* 主编辑区 */}
-        <MainContent>
-          {/* 编辑器 */}
-          <EditorSection>
-            <ModernEditor content={content} onChange={setContent} placeholder="开始编写你的文章..." />
-          </EditorSection>
+      {/* 主编辑区 */}
+      <MainContent>
+        {/* 编辑器 */}
+        <EditorSection>
+          <ModernEditor content={content} onChange={setContent} placeholder="开始编写你的文章..." />
+        </EditorSection>
 
-          {/* AI助手面板 */}
-          {showAIAssistant && (
-            <AIAssistantPanel>
-              <EditorAIAssistant
-                content={content}
-                onContentUpdate={setContent}
-                isVisible={showAIAssistant}
-                onToggle={() => setShowAIAssistant(false)}
-              />
-            </AIAssistantPanel>
-          )}
+        {/* AI助手面板 */}
+        {showAIAssistant && (
+          <AIAssistantPanel>
+            <EditorAIAssistant
+              content={content}
+              onContentUpdate={setContent}
+              isVisible={showAIAssistant}
+              onToggle={() => setShowAIAssistant(false)}
+            />
+          </AIAssistantPanel>
+        )}
 
-          {/* 右侧边栏 - 可折叠 */}
-          {showSidebar && (
-            <Sidebar>
-              <SidebarSection>
-                <SectionTitle>文章设置</SectionTitle>
+        {/* 右侧边栏 - 可折叠 */}
+        {showSidebar && (
+          <Sidebar>
+            <SidebarSection>
+              <SectionTitle>文章设置</SectionTitle>
 
-                {/* 摘要 */}
-                <Field>
-                  <Label>摘要</Label>
-                  <textarea
-                    placeholder="请输入文章摘要..."
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    rows={3}
-                  />
-                </Field>
+              {/* 摘要 */}
+              <Field>
+                <Label>摘要</Label>
+                <textarea
+                  placeholder="请输入文章摘要..."
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  rows={3}
+                />
+              </Field>
 
-                {/* 封面图 */}
-                <Field>
-                  <Label>封面图</Label>
-                  <Input
-                    placeholder="请输入封面图地址..."
-                    value={coverImage}
-                    onChange={(e) => setCoverImage(e.target.value)}
-                  />
-                  {coverImage && (
-                    <CoverPreview>
-                      <img src={coverImage} alt="封面预览" />
-                    </CoverPreview>
-                  )}
-                </Field>
+              {/* 封面图 */}
+              <Field>
+                <Label>封面图</Label>
+                <Input
+                  placeholder="请输入封面图地址..."
+                  value={coverImage}
+                  onChange={(e) => setCoverImage(e.target.value)}
+                />
+                {coverImage && (
+                  <CoverPreview>
+                    <img src={coverImage} alt="封面预览" />
+                  </CoverPreview>
+                )}
+              </Field>
 
-                {/* 分类 */}
-                <Field>
-                  <Label>分类</Label>
-                  <select value={categoryId || ''} onChange={(e) => setCategoryId(Number(e.target.value) || null)}>
-                    <option value="">请选择分类</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
+              {/* 分类 */}
+              <Field>
+                <Label>分类</Label>
+                <select value={categoryId || ''} onChange={(e) => setCategoryId(Number(e.target.value) || null)}>
+                  <option value="">请选择分类</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </Field>
 
-                {/* 标签 */}
-                <Field>
-                  <Label>标签</Label>
-                  <TagsList>
-                    {tags.map((tag) => (
-                      <TagItem
-                        key={tag.id}
-                        selected={selectedTagIds.includes(tag.id)}
-                        onClick={() => toggleTag(tag.id)}
-                      >
-                        {tag.name}
-                      </TagItem>
-                    ))}
-                  </TagsList>
-                </Field>
-              </SidebarSection>
-            </Sidebar>
-          )}
-        </MainContent>
-      </EditorContainer>
-    </ToastProvider>
+              {/* 标签 */}
+              <Field>
+                <Label>标签</Label>
+                <TagsList>
+                  {tags.map((tag) => (
+                    <TagItem key={tag.id} selected={selectedTagIds.includes(tag.id)} onClick={() => toggleTag(tag.id)}>
+                      {tag.name}
+                    </TagItem>
+                  ))}
+                </TagsList>
+              </Field>
+            </SidebarSection>
+          </Sidebar>
+        )}
+      </MainContent>
+    </EditorContainer>
   );
 };
 

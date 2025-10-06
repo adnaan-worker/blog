@@ -12,7 +12,7 @@ import {
   FiLinkedin,
   FiCamera,
 } from 'react-icons/fi';
-import { Button } from '@/components/ui';
+import { Button } from 'adnaan-ui';
 import type { UserProfile } from './types';
 
 interface UserInfoCardProps {

@@ -19,11 +19,9 @@ import {
   FiRefreshCw,
   FiMoreHorizontal,
 } from 'react-icons/fi';
-import { Button, Input, InfiniteScroll } from '@/components/ui';
-import { toast } from '@/ui';
+import { Button, Input, InfiniteScroll } from 'adnaan-ui';
 import { API, Note, NoteParams, NoteStats } from '@/utils/api';
 import { RichTextParser } from '@/utils/rich-text-parser';
-import { confirmDialog } from '@/ui';
 
 // 样式组件
 const Container = styled.div`
@@ -457,17 +455,17 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
 
   // 处理删除手记
   const handleDeleteNote = async (note: Note) => {
-    const confirmed = await confirmDialog.delete('确定要删除这篇手记吗？删除后无法恢复。', '删除手记');
+    const confirmed = await adnaan.confirm.delete('确定要删除这篇手记吗？删除后无法恢复。', '删除手记');
 
     if (!confirmed) return;
 
     try {
       await API.note.deleteNote(note.id);
-      toast.success('手记删除成功');
+      adnaan.toast.success('手记删除成功');
       setNotes((prev) => prev.filter((n) => n.id !== note.id));
       loadStats(); // 重新加载统计
     } catch (error: any) {
-      toast.error(error.message || '删除失败');
+      adnaan.toast.error(error.message || '删除失败');
     }
   };
 

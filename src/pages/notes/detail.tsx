@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiCalendar, FiTag, FiMapPin, FiCloud, FiHeart, FiEdit3, FiClock } from 'react-icons/fi';
 import styled from '@emotion/styled';
 import { API, Note } from '@/utils/api';
-import { toast } from '@/ui';
 import RichTextRenderer from '@/components/common/rich-text-renderer';
 import RichTextStats from '@/components/common/rich-text-stats';
 import ImagePreview from '@/components/common/image-preview';
@@ -630,7 +629,7 @@ const NoteDetail: React.FC = () => {
       const response = await API.note.getNoteDetail(id);
       setNote(response.data);
     } catch (error: any) {
-      toast.error(error.message || '加载手记失败');
+      adnaan.toast.error(error.message || '加载手记失败');
       setNote(null);
     } finally {
       setIsLoading(false);

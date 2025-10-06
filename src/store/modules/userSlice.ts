@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import API from '@/utils/api';
-import { toast } from '@/ui';
 import { storage } from '@/utils';
 
 export interface User {
@@ -81,17 +80,17 @@ export const login = (username: string, password: string) => async (dispatch: an
       dispatch(setUser(response.data.user as any));
       storage.local.set('user', response.data.user);
       storage.local.set('token', response.data.token);
-      toast.success('登录成功', '欢迎回来');
+      adnaan.toast.success('登录成功', '欢迎回来');
     } else {
       dispatch(setError(response.message || '登录失败'));
       // 使用全局Toast显示登录失败
-      toast.error(response.message || '登录失败', '出错了');
+      adnaan.toast.error(response.message || '登录失败', '出错了');
     }
   } catch (error) {
     const errorMessage = '登录失败，请稍后重试';
     dispatch(setError(errorMessage));
     // 使用全局Toast显示登录异常
-    toast.error(errorMessage, '出错了');
+    adnaan.toast.error(errorMessage, '出错了');
   } finally {
     dispatch(setLoading(false));
   }
@@ -105,11 +104,11 @@ export const logoutUser = () => async (dispatch: any) => {
     storage.local.remove('token');
     dispatch(logout());
     // 使用全局Toast显示登出成功
-    toast.info('您已成功退出登录', '再见');
+    adnaan.toast.info('您已成功退出登录', '再见');
   } catch (error) {
     console.error('Logout failed:', error);
     // 使用全局Toast显示登出失败
-    toast.error('退出登录失败，请稍后重试', '出错了');
+    adnaan.toast.error('退出登录失败，请稍后重试', '出错了');
   }
 };
 
@@ -146,19 +145,19 @@ export const register = (username: string, email: string, password: string) => a
 
     if (response.code === 200) {
       // 使用全局Toast显示注册成功
-      toast.success('注册成功，正在为您登录', '恭喜');
+      adnaan.toast.success('注册成功，正在为您登录', '恭喜');
       // 注册成功后自动登录
       await dispatch(login(username, password));
     } else {
       dispatch(setError(response.message || '注册失败'));
       // 使用全局Toast显示注册失败
-      toast.error(response.message || '注册失败', '出错了');
+      adnaan.toast.error(response.message || '注册失败', '出错了');
     }
   } catch (error) {
     const errorMessage = '注册失败，请稍后重试';
     dispatch(setError(errorMessage));
     // 使用全局Toast显示注册异常
-    toast.error(errorMessage, '出错了');
+    adnaan.toast.error(errorMessage, '出错了');
   } finally {
     dispatch(setLoading(false));
   }

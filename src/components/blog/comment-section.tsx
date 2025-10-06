@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMessageSquare, FiSend, FiCornerDownRight, FiThumbsUp, FiTrash2, FiLoader } from 'react-icons/fi';
-import { Button, Input, Textarea } from '@/components/ui';
+import { Button, Input, Textarea } from 'adnaan-ui';
 import { API, Comment as CommentType } from '@/utils/api';
 import { storage } from '@/utils';
 import { formatDate } from '@/utils';
@@ -262,7 +262,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       }
     } catch (error) {
       console.error('获取评论失败:', error);
-      window.UI?.toast?.error('获取评论失败');
+      adnaan?.toast?.error('获取评论失败');
     } finally {
       setLoading(false);
     }
@@ -280,7 +280,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     if (!commentText.trim()) return;
 
     if (!isLoggedIn) {
-      window.UI?.toast?.error('请先登录');
+      adnaan?.toast?.error('请先登录');
       return;
     }
 
@@ -291,11 +291,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         postId,
       });
 
-      window.UI?.toast?.success('评论发布成功');
+      adnaan?.toast?.success('评论发布成功');
       setCommentText('');
       await fetchComments();
     } catch (error: any) {
-      window.UI?.toast?.error(error.message || '评论发布失败');
+      adnaan?.toast?.error(error.message || '评论发布失败');
     } finally {
       setIsSubmitting(false);
     }
@@ -306,7 +306,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     if (!replyText.trim()) return;
 
     if (!isLoggedIn) {
-      window.UI?.toast?.error('请先登录');
+      adnaan?.toast?.error('请先登录');
       return;
     }
 
@@ -317,29 +317,29 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         parentId,
       });
 
-      window.UI?.toast?.success('回复发布成功');
+      adnaan?.toast?.success('回复发布成功');
       setReplyText('');
       setReplyingTo(null);
       await fetchComments();
     } catch (error: any) {
-      window.UI?.toast?.error(error.message || '回复发布失败');
+      adnaan?.toast?.error(error.message || '回复发布失败');
     }
   };
 
   // 删除评论
   const handleDelete = async (id: number) => {
-    const confirmed = window.UI?.confirm
-      ? await window.UI.confirm({ title: '确认删除', message: '确定要删除这条评论吗？' })
+    const confirmed = adnaan?.confirm
+      ? await adnaan.confirm({ title: '确认删除', message: '确定要删除这条评论吗？' })
       : window.confirm('确定要删除这条评论吗？');
 
     if (!confirmed) return;
 
     try {
       await API.comment.deleteComment(id);
-      window.UI?.toast?.success('评论已删除');
+      adnaan?.toast?.success('评论已删除');
       await fetchComments();
     } catch (error: any) {
-      window.UI?.toast?.error(error.message || '删除失败');
+      adnaan?.toast?.error(error.message || '删除失败');
     }
   };
 

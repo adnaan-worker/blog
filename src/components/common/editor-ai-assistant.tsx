@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { FiCpu, FiX, FiChevronDown, FiChevronUp, FiCheck, FiLoader } from 'react-icons/fi';
-import { Button } from '@/components/ui';
+import { Button } from 'adnaan-ui';
 import { aiWritingHelper } from '@/utils/ai-writing-helper';
 
 // 样式组件
@@ -297,7 +297,7 @@ const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onConten
   const executeAction = useCallback(
     async (actionType: (typeof AI_ACTIONS)[number]['type']) => {
       if (!content && ['polish', 'improve', 'expand', 'summarize'].includes(actionType)) {
-        window.UI.toast.error('请先输入内容');
+        adnaan.toast.error('请先输入内容');
         return;
       }
 
@@ -340,9 +340,9 @@ const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onConten
 
         // 更新编辑器内容
         onContentUpdate(editorContent);
-        window.UI.toast.success(`${AI_ACTIONS.find((a) => a.type === actionType)?.title || '操作'}完成`);
+        adnaan.toast.success(`${AI_ACTIONS.find((a) => a.type === actionType)?.title || '操作'}完成`);
       } catch (error: any) {
-        window.UI.toast.error(`操作失败: ${error.message}`);
+        adnaan.toast.error(`操作失败: ${error.message}`);
         console.error('AI操作失败:', error);
       } finally {
         setIsProcessing(false);

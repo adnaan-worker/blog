@@ -12,7 +12,7 @@ import {
   FiFileText,
   FiGlobe,
 } from 'react-icons/fi';
-import { Button } from '@/components/ui';
+import { Button } from 'adnaan-ui';
 import { storage } from '@/utils';
 
 interface QuickAction {

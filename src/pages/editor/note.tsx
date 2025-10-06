@@ -17,7 +17,7 @@ import {
 import ModernEditor from '@/components/common/modern-editor';
 import EditorAIAssistant from '@/components/common/editor-ai-assistant';
 import { API } from '@/utils/api';
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from 'adnaan-ui';
 import { ToastProvider } from '@/components/ui/toast';
 import ToastListener from '@/components/ui/toast-listener';
 import PageLoading from '@/components/common/page-loading';
@@ -117,7 +117,7 @@ const NoteEditorPage: React.FC = () => {
         setIsPrivate(loadedData.isPrivate);
         setOriginalData(loadedData);
       } catch (error: any) {
-        window.UI.toast.error(error.message || '加载手记失败');
+        adnaan.toast.error(error.message || '加载手记失败');
         navigate('/profile');
       } finally {
         setIsLoading(false);
@@ -130,12 +130,12 @@ const NoteEditorPage: React.FC = () => {
   // 保存手记
   const handleSave = async () => {
     if (!title.trim()) {
-      window.UI.toast.error('请输入手记标题');
+      adnaan.toast.error('请输入手记标题');
       return;
     }
 
     if (!content.trim()) {
-      window.UI.toast.error('请输入手记内容');
+      adnaan.toast.error('请输入手记内容');
       return;
     }
 
@@ -154,10 +154,10 @@ const NoteEditorPage: React.FC = () => {
 
       if (noteId) {
         await API.note.updateNote(Number(noteId), noteData);
-        window.UI.toast.success('手记更新成功！', '保存成功', 3000);
+        adnaan.toast.success('手记更新成功！', '保存成功', 3000);
       } else {
         await API.note.createNote(noteData);
-        window.UI.toast.success('手记创建成功！', '保存成功', 3000);
+        adnaan.toast.success('手记创建成功！', '保存成功', 3000);
       }
 
       // 重置未保存状态
@@ -186,7 +186,7 @@ const NoteEditorPage: React.FC = () => {
         }
       }, 3500); // 给用户3.5秒时间看到成功提示
     } catch (error: any) {
-      window.UI.toast.error(error.message || '保存失败');
+      adnaan.toast.error(error.message || '保存失败');
     } finally {
       setIsSaving(false);
     }
@@ -208,7 +208,7 @@ const NoteEditorPage: React.FC = () => {
   // 处理退出
   const handleExit = async () => {
     if (hasUnsavedChanges) {
-      const confirmed = await window.UI.confirm({
+      const confirmed = await adnaan.confirm({
         title: '确认退出',
         message: '您有未保存的修改，确定要退出吗？',
         confirmText: '退出',

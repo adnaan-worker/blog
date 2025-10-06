@@ -12,7 +12,6 @@ import {
   FiX,
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/ui';
 import { API, UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings } from '@/utils/api';
 import {
   UserInfoCard,
@@ -244,7 +243,7 @@ const Profile: React.FC = () => {
       const response = await API.user.getProfile();
       setUser(response.data);
     } catch (error: any) {
-      toast.error(error.message || '加载用户资料失败');
+      adnaan.toast.error(error.message || '加载用户资料失败');
     } finally {
       setIsUserLoading(false);
     }
@@ -262,7 +261,7 @@ const Profile: React.FC = () => {
       }));
       setUserStats(statsWithIcons);
     } catch (error: any) {
-      toast.error(error.message || '加载统计数据失败');
+      adnaan.toast.error(error.message || '加载统计数据失败');
     } finally {
       setIsStatsLoading(false);
     }
@@ -296,7 +295,7 @@ const Profile: React.FC = () => {
       setHasMoreActivities(activitiesData.length === 10);
       setActivitiesPage(page);
     } catch (error: any) {
-      toast.error(error.message || '加载活动记录失败');
+      adnaan.toast.error(error.message || '加载活动记录失败');
     } finally {
       setIsActivitiesLoading(false);
     }
@@ -308,7 +307,7 @@ const Profile: React.FC = () => {
       const response = await API.user.getAchievements();
       setAchievements(response.data);
     } catch (error: any) {
-      toast.error(error.message || '加载成就数据失败');
+      adnaan.toast.error(error.message || '加载成就数据失败');
     }
   };
 
@@ -400,10 +399,10 @@ const Profile: React.FC = () => {
           : null,
       );
 
-      toast.success('个人资料更新成功！');
+      adnaan.toast.success('个人资料更新成功！');
       setIsEditModalOpen(false);
     } catch (error: any) {
-      toast.error(error.message || '更新失败，请重试');
+      adnaan.toast.error(error.message || '更新失败，请重试');
     } finally {
       setIsUserLoading(false);
     }
@@ -426,9 +425,9 @@ const Profile: React.FC = () => {
           : null,
       );
 
-      toast.success('头像更新成功！');
+      adnaan.toast.success('头像更新成功！');
     } catch (error: any) {
-      toast.error(error.message || '头像上传失败，请重试');
+      adnaan.toast.error(error.message || '头像上传失败，请重试');
     } finally {
       setIsUserLoading(false);
     }
@@ -462,9 +461,9 @@ const Profile: React.FC = () => {
     setIsRefreshing(true);
     try {
       await loadUserActivities(1, false);
-      toast.success('活动数据已更新');
+      adnaan.toast.success('活动数据已更新');
     } catch (error) {
-      toast.error('刷新失败');
+      adnaan.toast.error('刷新失败');
     } finally {
       setIsRefreshing(false);
     }
@@ -511,17 +510,17 @@ const Profile: React.FC = () => {
     try {
       const response = await API.siteSettings.updateSiteSettings(settings);
       setSiteSettings(response.data);
-      toast.success('网站设置更新成功！');
+      adnaan.toast.success('网站设置更新成功！');
       setIsEditSiteSettingsModalOpen(false);
     } catch (error: any) {
-      toast.error(error.message || '更新失败，请重试');
+      adnaan.toast.error(error.message || '更新失败，请重试');
     } finally {
       setIsSiteSettingsLoading(false);
     }
   };
 
   const handleBadgeClick = (achievement: UserAchievement) => {
-    toast.info(`${achievement.name}: ${achievement.description}`);
+    adnaan.toast.info(`${achievement.name}: ${achievement.description}`);
   };
 
   // 标签页管理

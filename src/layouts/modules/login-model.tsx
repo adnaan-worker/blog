@@ -4,7 +4,7 @@ import { FiUser, FiLock, FiGithub, FiTwitter } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
-import { Modal } from '@/components/ui';
+import { Modal } from 'adnaan-ui';
 
 // 模态框内容容器
 const ModalContent = styled.div`

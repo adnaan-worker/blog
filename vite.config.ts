@@ -50,7 +50,7 @@ export default defineConfig(({ mode }) => {
     base: '/',
     server: {
       port: Number(env.VITE_API_PORT) || 3000,
-      open: true,
+      open: false,
       host: '0.0.0.0',
       // 根据环境变量配置代理
       proxy: {

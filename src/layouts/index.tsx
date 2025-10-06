@@ -203,48 +203,48 @@ const RootLayout = () => {
   if (!mounted) return null;
 
   return (
-      <MainContainer>
-        {/* 加载指示器 - 使用showLoader状态 */}
-        <AnimatePresence>
-          {showLoader && (
-            <LoadingIndicator
-              initial={{ width: 0 }}
-              animate={{ width: '100%' }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.5,
-                ease: 'easeInOut',
-              }}
-              onAnimationComplete={() => {
-                loaderAnimationCompleted.current = true;
-                // 确保动画完成后，如果加载已结束则隐藏指示器
-                if (!isPending && !isLoading) {
-                  setShowLoader(false);
-                }
-              }}
-            />
-          )}
-        </AnimatePresence>
-        {showLoader && <PageLoading></PageLoading>}
-        {/* 头部导航 */}
-        <Header scrolled={isScrolled} />
+    <MainContainer>
+      {/* 加载指示器 - 使用showLoader状态 */}
+      <AnimatePresence>
+        {showLoader && (
+          <LoadingIndicator
+            initial={{ width: 0 }}
+            animate={{ width: '100%' }}
+            exit={{ opacity: 0 }}
+            transition={{
+              duration: 0.5,
+              ease: 'easeInOut',
+            }}
+            onAnimationComplete={() => {
+              loaderAnimationCompleted.current = true;
+              // 确保动画完成后，如果加载已结束则隐藏指示器
+              if (!isPending && !isLoading) {
+                setShowLoader(false);
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
+      {showLoader && <PageLoading></PageLoading>}
+      {/* 头部导航 */}
+      <Header scrolled={isScrolled} />
 
-        {/* 主内容区域 - 带动画过渡 */}
-        <AnimatePresence mode="wait">
-          <Content key={location.pathname} initial="initial" animate="animate" exit="exit" variants={pageTransition}>
-            <Outlet />
-          </Content>
-        </AnimatePresence>
+      {/* 主内容区域 - 带动画过渡 */}
+      <AnimatePresence mode="wait">
+        <Content key={location.pathname} initial="initial" animate="animate" exit="exit" variants={pageTransition}>
+          <Outlet />
+        </Content>
+      </AnimatePresence>
 
-        {/* 页脚 */}
-        <Footer />
+      {/* 页脚 */}
+      <Footer />
 
-        {/* 悬浮工具栏 */}
-        <FloatingToolbar scrollPosition={scrollPosition} />
+      {/* 悬浮工具栏 */}
+      <FloatingToolbar scrollPosition={scrollPosition} />
 
-        {/* Live2D模型 */}
-        <Live2DModel />
-      </MainContainer>
+      {/* Live2D模型 */}
+      <Live2DModel />
+    </MainContainer>
   );
 };
 

@@ -4,7 +4,6 @@ import styled from '@emotion/styled';
 import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import { API, Note, NoteParams } from '@/utils/api';
-import { toast } from '@/ui';
 
 // 页面样式组件
 const PageContainer = styled.div`
@@ -177,7 +176,7 @@ const NotesPage: React.FC = () => {
       setHasMore(pagination.page < pagination.totalPages);
       setPage(pageNum);
     } catch (error: any) {
-      toast.error(error.message || '加载手记失败');
+      adnaan.toast.error(error.message || '加载手记失败');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
