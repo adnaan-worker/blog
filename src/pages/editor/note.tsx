@@ -18,8 +18,6 @@ import ModernEditor from '@/components/common/modern-editor';
 import EditorAIAssistant from '@/components/common/editor-ai-assistant';
 import { API } from '@/utils/api';
 import { Button, Input } from 'adnaan-ui';
-import { ToastProvider } from '@/components/ui/toast';
-import ToastListener from '@/components/ui/toast-listener';
 import PageLoading from '@/components/common/page-loading';
 
 interface Note {
@@ -236,174 +234,166 @@ const NoteEditorPage: React.FC = () => {
   const weatherOptions = ['☀️ 晴天', '☁️ 多云', '🌧️ 雨天', '❄️ 下雪', '🌈 彩虹'];
 
   if (isLoading) {
-    return (
-      <ToastProvider>
-        <ToastListener />
-        <PageLoading message="加载手记编辑器" fullScreen />
-      </ToastProvider>
-    );
+    return <PageLoading message="加载手记编辑器" fullScreen />;
   }
 
   return (
-    <ToastProvider>
-      <ToastListener />
-      <EditorContainer>
-        {/* 顶部工具栏 */}
-        <TopBar>
-          <LeftSection>
-            <BackButton onClick={handleExit}>
-              <FiX />
-              <span>退出</span>
-            </BackButton>
-            <Title>
-              <input
-                type="text"
-                placeholder="请输入手记标题..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </Title>
-          </LeftSection>
+    <EditorContainer>
+      {/* 顶部工具栏 */}
+      <TopBar>
+        <LeftSection>
+          <BackButton onClick={handleExit}>
+            <FiX />
+            <span>退出</span>
+          </BackButton>
+          <Title>
+            <input
+              type="text"
+              placeholder="请输入手记标题..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </Title>
+        </LeftSection>
 
-          <RightSection>
-            <Button
-              variant={showSidebar ? 'primary' : 'outline'}
-              size="small"
-              onClick={() => setShowSidebar(!showSidebar)}
-              title={showSidebar ? '隐藏属性面板' : '显示属性面板'}
-            >
-              <FiSettings />
-              <span>属性</span>
-            </Button>
-            <Button
-              variant={showAIAssistant ? 'primary' : 'outline'}
-              size="small"
-              onClick={() => setShowAIAssistant(!showAIAssistant)}
-            >
-              <FiCpu />
-              <span>AI助手</span>
-            </Button>
-            <Button variant={isPrivate ? 'outline' : 'outline'} size="small" onClick={() => setIsPrivate(!isPrivate)}>
-              {isPrivate ? <FiLock /> : <FiUnlock />}
-              <span>{isPrivate ? '私密' : '公开'}</span>
-            </Button>
-            <Button variant="primary" size="small" onClick={handleSave} disabled={isSaving}>
-              <FiSave />
-              <span>保存</span>
-            </Button>
-          </RightSection>
-        </TopBar>
+        <RightSection>
+          <Button
+            variant={showSidebar ? 'primary' : 'outline'}
+            size="small"
+            onClick={() => setShowSidebar(!showSidebar)}
+            title={showSidebar ? '隐藏属性面板' : '显示属性面板'}
+          >
+            <FiSettings />
+            <span>属性</span>
+          </Button>
+          <Button
+            variant={showAIAssistant ? 'primary' : 'outline'}
+            size="small"
+            onClick={() => setShowAIAssistant(!showAIAssistant)}
+          >
+            <FiCpu />
+            <span>AI助手</span>
+          </Button>
+          <Button variant={isPrivate ? 'outline' : 'outline'} size="small" onClick={() => setIsPrivate(!isPrivate)}>
+            {isPrivate ? <FiLock /> : <FiUnlock />}
+            <span>{isPrivate ? '私密' : '公开'}</span>
+          </Button>
+          <Button variant="primary" size="small" onClick={handleSave} disabled={isSaving}>
+            <FiSave />
+            <span>保存</span>
+          </Button>
+        </RightSection>
+      </TopBar>
 
-        {/* 主编辑区 */}
-        <MainContent>
-          {/* 编辑器 */}
-          <EditorSection>
-            <ModernEditor content={content} onChange={setContent} placeholder="记录此刻的心情..." />
-          </EditorSection>
+      {/* 主编辑区 */}
+      <MainContent>
+        {/* 编辑器 */}
+        <EditorSection>
+          <ModernEditor content={content} onChange={setContent} placeholder="记录此刻的心情..." />
+        </EditorSection>
 
-          {/* AI助手面板 */}
-          {showAIAssistant && (
-            <AIAssistantPanel>
-              <EditorAIAssistant
-                content={content}
-                onContentUpdate={setContent}
-                isVisible={showAIAssistant}
-                onToggle={() => setShowAIAssistant(false)}
-              />
-            </AIAssistantPanel>
-          )}
+        {/* AI助手面板 */}
+        {showAIAssistant && (
+          <AIAssistantPanel>
+            <EditorAIAssistant
+              content={content}
+              onContentUpdate={setContent}
+              isVisible={showAIAssistant}
+              onToggle={() => setShowAIAssistant(false)}
+            />
+          </AIAssistantPanel>
+        )}
 
-          {/* 右侧边栏 - 可折叠 */}
-          {showSidebar && (
-            <Sidebar>
-              <SidebarSection>
-                <SectionTitle>手记属性</SectionTitle>
+        {/* 右侧边栏 - 可折叠 */}
+        {showSidebar && (
+          <Sidebar>
+            <SidebarSection>
+              <SectionTitle>手记属性</SectionTitle>
 
-                {/* 心情 */}
-                <Field>
-                  <Label>
-                    <FiSmile />
-                    <span>心情</span>
-                  </Label>
-                  <MoodGrid>
-                    {moodOptions.map((option) => (
-                      <MoodItem
-                        key={option}
-                        selected={mood === option}
-                        onClick={() => setMood(mood === option ? '' : option)}
-                      >
-                        {option}
-                      </MoodItem>
-                    ))}
-                  </MoodGrid>
-                </Field>
+              {/* 心情 */}
+              <Field>
+                <Label>
+                  <FiSmile />
+                  <span>心情</span>
+                </Label>
+                <MoodGrid>
+                  {moodOptions.map((option) => (
+                    <MoodItem
+                      key={option}
+                      selected={mood === option}
+                      onClick={() => setMood(mood === option ? '' : option)}
+                    >
+                      {option}
+                    </MoodItem>
+                  ))}
+                </MoodGrid>
+              </Field>
 
-                {/* 天气 */}
-                <Field>
-                  <Label>
-                    <FiCloud />
-                    <span>天气</span>
-                  </Label>
-                  <WeatherGrid>
-                    {weatherOptions.map((option) => (
-                      <WeatherItem
-                        key={option}
-                        selected={weather === option}
-                        onClick={() => setWeather(weather === option ? '' : option)}
-                      >
-                        {option}
-                      </WeatherItem>
-                    ))}
-                  </WeatherGrid>
-                </Field>
+              {/* 天气 */}
+              <Field>
+                <Label>
+                  <FiCloud />
+                  <span>天气</span>
+                </Label>
+                <WeatherGrid>
+                  {weatherOptions.map((option) => (
+                    <WeatherItem
+                      key={option}
+                      selected={weather === option}
+                      onClick={() => setWeather(weather === option ? '' : option)}
+                    >
+                      {option}
+                    </WeatherItem>
+                  ))}
+                </WeatherGrid>
+              </Field>
 
-                {/* 位置 */}
-                <Field>
-                  <Label>
-                    <FiMapPin />
-                    <span>位置</span>
-                  </Label>
-                  <Input placeholder="记录当前位置..." value={location} onChange={(e) => setLocation(e.target.value)} />
-                </Field>
+              {/* 位置 */}
+              <Field>
+                <Label>
+                  <FiMapPin />
+                  <span>位置</span>
+                </Label>
+                <Input placeholder="记录当前位置..." value={location} onChange={(e) => setLocation(e.target.value)} />
+              </Field>
 
-                {/* 标签 */}
-                <Field>
-                  <Label>
-                    <FiTag />
-                    <span>标签</span>
-                  </Label>
-                  <TagInput>
-                    <input
-                      type="text"
-                      placeholder="添加标签..."
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddTag();
-                        }
-                      }}
-                    />
-                    <button onClick={handleAddTag}>添加</button>
-                  </TagInput>
-                  <TagsList>
-                    {tags.map((tag) => (
-                      <TagItem key={tag}>
-                        <span>{tag}</span>
-                        <button onClick={() => handleRemoveTag(tag)}>
-                          <FiClose />
-                        </button>
-                      </TagItem>
-                    ))}
-                  </TagsList>
-                </Field>
-              </SidebarSection>
-            </Sidebar>
-          )}
-        </MainContent>
-      </EditorContainer>
-    </ToastProvider>
+              {/* 标签 */}
+              <Field>
+                <Label>
+                  <FiTag />
+                  <span>标签</span>
+                </Label>
+                <TagInput>
+                  <input
+                    type="text"
+                    placeholder="添加标签..."
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag();
+                      }
+                    }}
+                  />
+                  <button onClick={handleAddTag}>添加</button>
+                </TagInput>
+                <TagsList>
+                  {tags.map((tag) => (
+                    <TagItem key={tag}>
+                      <span>{tag}</span>
+                      <button onClick={() => handleRemoveTag(tag)}>
+                        <FiClose />
+                      </button>
+                    </TagItem>
+                  ))}
+                </TagsList>
+              </Field>
+            </SidebarSection>
+          </Sidebar>
+        )}
+      </MainContent>
+    </EditorContainer>
   );
 };
 

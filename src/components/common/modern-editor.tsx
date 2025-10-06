@@ -100,6 +100,8 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showCommandMenu, setShowCommandMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [languageMenuPosition, setLanguageMenuPosition] = useState({ top: 0, left: 0 });
+  const [isInCodeBlock, setIsInCodeBlock] = useState(false);
 
   const [commandMenuPosition, setCommandMenuPosition] = useState({ top: 0, left: 0 });
   const [commandSearch, setCommandSearch] = useState('');
@@ -131,10 +133,29 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
           return false;
         }
 
-        // ESC 关闭命令菜单
-        if (event.key === 'Escape' && showCommandMenu) {
-          setShowCommandMenu(false);
-          return true;
+        // ESC 关闭菜单
+        if (event.key === 'Escape') {
+          if (showCommandMenu) {
+            setShowCommandMenu(false);
+            return true;
+          }
+          if (showLanguageMenu) {
+            setShowLanguageMenu(false);
+            return true;
+          }
+        }
+
+        return false;
+      },
+      handleClick: (view, pos, event) => {
+        // 如果不在代码块中，关闭语言菜单
+        const { state } = view;
+        const { selection } = state;
+        const { $from } = selection;
+
+        const codeBlock = $from.parent.type.name === 'codeBlock';
+        if (!codeBlock && showLanguageMenu) {
+          setShowLanguageMenu(false);
         }
 
         return false;
@@ -155,6 +176,14 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
         setCommandSearch(commandText);
       }
     },
+    onSelectionUpdate: ({ editor }) => {
+      // 检测是否在代码块中
+      const { state } = editor;
+      const { selection } = state;
+      const { $from } = selection;
+      const isCodeBlock = $from.parent.type.name === 'codeBlock';
+      setIsInCodeBlock(isCodeBlock);
+    },
   });
 
   // 同步外部内容变化
@@ -163,14 +192,32 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
       // 确保内容被正确解析
       const trimmedContent = content.trim();
       if (trimmedContent && trimmedContent !== '<p></p>') {
-        editor.commands.setContent(trimmedContent, false);
+        editor.commands.setContent(trimmedContent);
       }
     }
   }, [content, editor]);
 
-  // 点击外部关闭命令菜单
+  // 初始状态检查
+  useEffect(() => {
+    if (editor) {
+      const { state } = editor;
+      const { selection } = state;
+      const { $from } = selection;
+      const isCodeBlock = $from.parent.type.name === 'codeBlock';
+      setIsInCodeBlock(isCodeBlock);
+    }
+  }, [editor]);
+
+  // 点击外部关闭菜单
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element;
+
+      // 检查是否点击在编辑器内部
+      if (editorRef.current && editorRef.current.contains(target)) {
+        return;
+      }
+
       if (showCommandMenu) {
         setShowCommandMenu(false);
       }
@@ -180,8 +227,15 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
     };
 
     if (showCommandMenu || showLanguageMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      // 延迟添加事件监听器，避免立即触发
+      const timer = setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('click', handleClickOutside);
+      };
     }
   }, [showCommandMenu, showLanguageMenu]);
 
@@ -330,12 +384,29 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
   const toggleBulletList = () => editor?.chain().focus().toggleBulletList().run();
   const toggleOrderedList = () => editor?.chain().focus().toggleOrderedList().run();
   const toggleBlockquote = () => editor?.chain().focus().toggleBlockquote().run();
-  const toggleCodeBlock = () => editor?.chain().focus().toggleCodeBlock().run();
+  const toggleCodeBlock = () => {
+    editor?.chain().focus().toggleCodeBlock().run();
+  };
 
   const setCodeBlockLanguage = (language: string) => {
     // 使用 CodeBlockLowlight 的正确方法设置语言
     editor?.chain().focus().updateAttributes('codeBlock', { language }).run();
     setShowLanguageMenu(false);
+  };
+
+  // 获取当前代码块的语言
+  const getCurrentCodeBlockLanguage = () => {
+    if (!editor) return 'text';
+
+    const { state } = editor;
+    const { selection } = state;
+    const { $from } = selection;
+
+    if ($from.parent.type.name === 'codeBlock') {
+      return $from.parent.attrs.language || 'text';
+    }
+
+    return 'text';
   };
 
   const setAlignment = (align: 'left' | 'center' | 'right' | 'justify') => {
@@ -479,12 +550,12 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
           <ToolbarButton onClick={() => setShowImageInput(!showImageInput)} title="插入图片">
             <FiImage />
           </ToolbarButton>
-          <ToolbarButton onClick={toggleCodeBlock} active={editor.isActive('codeBlock')} title="代码块">
+          <ToolbarButton onClick={toggleCodeBlock} active={isInCodeBlock} title="代码块">
             <FiCode />
           </ToolbarButton>
 
           {/* 语言选择按钮 - 只在代码块中显示 */}
-          {editor.isActive('codeBlock') && (
+          {isInCodeBlock && (
             <ToolbarButton
               onClick={(e) => {
                 e.stopPropagation(); // 阻止事件冒泡
@@ -496,35 +567,17 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
             </ToolbarButton>
           )}
 
-          {/* 语言选择菜单 */}
+          {/* 语言选择菜单 - 固定在工具栏下方 */}
           {showLanguageMenu && (
-            <div
+            <LanguageMenu
               style={{
                 position: 'absolute',
                 top: '100%',
                 left: 0,
-                background: 'var(--bg-primary)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                zIndex: 9999,
-                minWidth: '200px',
-                maxHeight: '300px',
-                overflowY: 'auto',
                 marginTop: '4px',
               }}
             >
-              <div
-                style={{
-                  padding: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: 'var(--text-secondary)',
-                  borderBottom: '1px solid var(--border-color)',
-                }}
-              >
-                选择语言
-              </div>
+              <LanguageMenuTitle>选择语言</LanguageMenuTitle>
               {[
                 { key: 'javascript', name: 'JavaScript' },
                 { key: 'typescript', name: 'TypeScript' },
@@ -540,34 +593,18 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
                 { key: 'markdown', name: 'Markdown' },
                 { key: 'text', name: '纯文本' },
               ].map((lang) => (
-                <button
+                <LanguageMenuItem
                   key={lang.key}
                   onClick={(e) => {
-                    e.stopPropagation(); // 阻止事件冒泡
+                    e.stopPropagation();
                     setCodeBlockLanguage(lang.key);
                   }}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    border: 'none',
-                    background: 'transparent',
-                    color: 'var(--text-primary)',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    transition: 'background-color 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-secondary)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                  }}
+                  active={getCurrentCodeBlockLanguage() === lang.key}
                 >
                   {lang.name}
-                </button>
+                </LanguageMenuItem>
               ))}
-            </div>
+            </LanguageMenu>
           )}
         </ToolbarGroup>
       </FloatingToolbar>
@@ -904,6 +941,56 @@ const NoResults = styled.div`
   text-align: center;
   color: var(--text-secondary);
   font-size: 14px;
+`;
+
+const LanguageMenu = styled.div`
+  position: absolute;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 4px;
+`;
+
+const LanguageMenuTitle = styled.div`
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-color);
+`;
+
+interface LanguageMenuItemProps {
+  active?: boolean;
+}
+
+const LanguageMenuItem = styled.div<LanguageMenuItemProps>`
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: ${(props) => (props.active ? 'var(--accent-color)' : 'transparent')};
+  color: ${(props) => (props.active ? 'var(--text-on-accent)' : 'var(--text-primary)')};
+
+  &:hover {
+    background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
+  }
+
+  &:first-of-type {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+
+  &:last-of-type {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
 `;
 
 export default ModernEditor;
