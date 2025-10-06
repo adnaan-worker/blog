@@ -24,7 +24,7 @@ const pageVariants = {
   animate: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: 'easeOut' },
+    transition: { duration: 0.3 },
   },
   exit: {
     opacity: 0,
@@ -569,14 +569,19 @@ const BlogDetail: React.FC = () => {
           setRelatedArticles(related);
         }
 
-        // 评论现在由 CommentSection 组件自行获取
-
-        // 从本地存储中读取点赞和收藏状态
-        const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
-        const bookmarkedArticles = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]');
-
-        setLiked(likedArticles.includes(Number(articleId)));
-        setBookmarked(bookmarkedArticles.includes(Number(articleId)));
+        // 获取用户的点赞和收藏状态
+        try {
+          const statusResponse = await API.article.getUserStatus(articleId);
+          if (statusResponse.success) {
+            setLiked(statusResponse.data.liked);
+            setBookmarked(statusResponse.data.bookmarked);
+          }
+        } catch (error) {
+          console.error('获取用户状态失败:', error);
+          // 如果获取状态失败，保持默认值
+          setLiked(false);
+          setBookmarked(false);
+        }
       } else {
         setError('文章不存在或已被删除');
         setArticle(null);
@@ -798,39 +803,38 @@ const BlogDetail: React.FC = () => {
     };
   }, []);
 
-  // 点赞、收藏和分享功能 - 使用useCallback优化
-  const handleLike = useCallback(() => {
-    const newLikedState = !liked;
-    setLiked(newLikedState);
-
-    // 持久化到本地存储
-    const likedArticles = JSON.parse(localStorage.getItem('likedArticles') || '[]');
-    const articleId = Number(id);
-
-    if (newLikedState) {
-      localStorage.setItem('likedArticles', JSON.stringify([...likedArticles, articleId]));
-    } else {
-      localStorage.setItem('likedArticles', JSON.stringify(likedArticles.filter((id: number) => id !== articleId)));
+  // 点赞、收藏和分享功能 - 使用真实API调用
+  const handleLike = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      const response = await API.article.toggleLike(id);
+      if (response.success) {
+        setLiked(response.data.liked);
+        // 这里可以更新文章的点赞数显示
+        if (article) {
+          setArticle({ ...article, likeCount: response.data.likeCount });
+        }
+      }
+    } catch (error) {
+      console.error('点赞失败:', error);
+      adnaan.toast.error('点赞失败，请稍后重试');
     }
-  }, [liked, id]);
+  }, [id, article]);
 
-  const handleBookmark = useCallback(() => {
-    const newBookmarkState = !bookmarked;
-    setBookmarked(newBookmarkState);
-
-    // 持久化到本地存储
-    const bookmarkedArticles = JSON.parse(localStorage.getItem('bookmarkedArticles') || '[]');
-    const articleId = Number(id);
-
-    if (newBookmarkState) {
-      localStorage.setItem('bookmarkedArticles', JSON.stringify([...bookmarkedArticles, articleId]));
-    } else {
-      localStorage.setItem(
-        'bookmarkedArticles',
-        JSON.stringify(bookmarkedArticles.filter((id: number) => id !== articleId)),
-      );
+  const handleBookmark = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      const response = await API.article.toggleBookmark(id);
+      if (response.success) {
+        setBookmarked(response.data.bookmarked);
+      }
+    } catch (error) {
+      console.error('收藏失败:', error);
+      adnaan.toast.error('收藏失败，请稍后重试');
     }
-  }, [bookmarked, id]);
+  }, [id]);
 
   const handleShare = useCallback(() => {
     if (navigator.share) {

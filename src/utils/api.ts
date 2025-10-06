@@ -547,6 +547,33 @@ export const API = {
     deleteArticle: (id: string | number): Promise<ApiResponse<null>> => {
       return http.delete(`/posts/${id}`);
     },
+
+    /**
+     * 切换文章点赞状态
+     * @param id 文章ID
+     * @returns Promise<ApiResponse<{ liked: boolean; likeCount: number }>>
+     */
+    toggleLike: (id: string | number): Promise<ApiResponse<{ liked: boolean; likeCount: number }>> => {
+      return http.post(`/posts/${id}/like`);
+    },
+
+    /**
+     * 切换文章收藏状态
+     * @param id 文章ID
+     * @returns Promise<ApiResponse<{ bookmarked: boolean }>>
+     */
+    toggleBookmark: (id: string | number): Promise<ApiResponse<{ bookmarked: boolean }>> => {
+      return http.post(`/posts/${id}/bookmark`);
+    },
+
+    /**
+     * 获取用户对文章的点赞和收藏状态
+     * @param id 文章ID
+     * @returns Promise<ApiResponse<{ liked: boolean; bookmarked: boolean; likeCount: number }>>
+     */
+    getUserStatus: (id: string | number): Promise<ApiResponse<{ liked: boolean; bookmarked: boolean; likeCount: number }>> => {
+      return http.get(`/posts/${id}/status`);
+    },
   },
 
   // 分类相关
