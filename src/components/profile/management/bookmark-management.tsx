@@ -265,16 +265,19 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
       setIsLoading(true);
       setError(null);
 
-      // TODO: 实现API调用
-      // const response = await API.user.getBookmarks({
-      //   page: page + 1,
-      //   pageSize: 10,
-      //   keyword: searchQuery || undefined,
-      // });
+      const response = await API.article.getUserBookmarks({
+        page: page + 1,
+        pageSize: 10,
+        search: searchQuery || undefined,
+      });
 
-      // 临时使用空数据
-      setBookmarks([]);
-      setHasMore(false);
+      const newBookmarks = response.data || [];
+      setBookmarks((prev) => [...prev, ...newBookmarks]);
+      setPage((prev) => prev + 1);
+
+      // 检查是否还有更多数据
+      const totalPages = response.meta?.pagination?.totalPages || 1;
+      setHasMore(page + 1 < totalPages);
     } catch (err: any) {
       console.error('加载收藏失败:', err);
       setError(new Error(err.message || '加载失败，请重试'));
@@ -291,12 +294,21 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
       setPage(1);
       setHasMore(true);
 
-      // TODO: 实现API调用
-      setBookmarks([]);
-      setHasMore(false);
+      const response = await API.article.getUserBookmarks({
+        page: 1,
+        pageSize: 10,
+        search: searchQuery || undefined,
+      });
+
+      const newBookmarks = response.data || [];
+      setBookmarks(newBookmarks);
+
+      // 检查是否还有更多数据
+      const totalPages = response.meta?.pagination?.totalPages || 1;
+      setHasMore(1 < totalPages);
 
       // 计算统计数据
-      calculateStats([]);
+      calculateStats(newBookmarks);
     } catch (err: any) {
       console.error('加载收藏失败:', err);
       setError(new Error(err.message || '加载失败，请重试'));
@@ -338,12 +350,12 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
     if (!confirmed) return;
 
     try {
-      // TODO: 实现API调用
-      // await API.post.removeBookmark(bookmark.post_id);
+      await API.article.toggleBookmark(bookmark.post_id);
 
       adnaan.toast.success('取消收藏成功');
-      setBookmarks((prev) => prev.filter((b) => b.id !== bookmark.id));
-      calculateStats(bookmarks.filter((b) => b.id !== bookmark.id));
+      const updatedBookmarks = bookmarks.filter((b) => b.id !== bookmark.id);
+      setBookmarks(updatedBookmarks);
+      calculateStats(updatedBookmarks);
     } catch (error: any) {
       adnaan.toast.error(error.message || '取消收藏失败');
     }

@@ -244,16 +244,19 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
       setIsLoading(true);
       setError(null);
 
-      // TODO: 实现API调用
-      // const response = await API.user.getLikes({
-      //   page: page + 1,
-      //   pageSize: 10,
-      //   keyword: searchQuery || undefined,
-      // });
+      const response = await API.article.getUserLikes({
+        page: page + 1,
+        pageSize: 10,
+        search: searchQuery || undefined,
+      });
 
-      // 临时使用空数据
-      setLikes([]);
-      setHasMore(false);
+      const newLikes = response.data || [];
+      setLikes((prev) => [...prev, ...newLikes]);
+      setPage((prev) => prev + 1);
+
+      // 检查是否还有更多数据
+      const totalPages = response.meta?.pagination?.totalPages || 1;
+      setHasMore(page + 1 < totalPages);
     } catch (err: any) {
       console.error('加载点赞失败:', err);
       setError(new Error(err.message || '加载失败，请重试'));
@@ -270,12 +273,21 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
       setPage(1);
       setHasMore(true);
 
-      // TODO: 实现API调用
-      setLikes([]);
-      setHasMore(false);
+      const response = await API.article.getUserLikes({
+        page: 1,
+        pageSize: 10,
+        search: searchQuery || undefined,
+      });
+
+      const newLikes = response.data || [];
+      setLikes(newLikes);
+
+      // 检查是否还有更多数据
+      const totalPages = response.meta?.pagination?.totalPages || 1;
+      setHasMore(1 < totalPages);
 
       // 计算统计数据
-      calculateStats([]);
+      calculateStats(newLikes);
     } catch (err: any) {
       console.error('加载点赞失败:', err);
       setError(new Error(err.message || '加载失败，请重试'));

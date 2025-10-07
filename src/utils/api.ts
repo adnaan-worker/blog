@@ -597,6 +597,32 @@ export const API = {
     ): Promise<ApiResponse<{ liked: boolean; bookmarked: boolean; likeCount: number }>> => {
       return http.get(`/posts/${id}/status`);
     },
+
+    /**
+     * 获取用户收藏列表
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<Bookmark>>>
+     */
+    getUserBookmarks: (params?: {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+    }): Promise<ApiResponse<PaginationResult<any>>> => {
+      return http.get('/posts/user/bookmarks', params);
+    },
+
+    /**
+     * 获取用户点赞列表
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<Like>>>
+     */
+    getUserLikes: (params?: {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+    }): Promise<ApiResponse<PaginationResult<any>>> => {
+      return http.get('/posts/user/likes', params);
+    },
   },
 
   // 分类相关
