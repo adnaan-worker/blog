@@ -368,11 +368,11 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
         orderDirection: 'DESC',
       };
 
-      const response = await API.note.getMyNotes(params);
-      const newNotes = response.data.data;
+      const response = await API.note.getNotes(params);
+      const newNotes = response.data;
 
       setNotes((prev) => [...prev, ...newNotes]);
-      setHasMore(page + 1 < response.data.pagination.totalPages);
+      setHasMore(page + 1 < (response.meta?.pagination?.totalPages || 1));
       setPage(page + 1);
       setTotalItems((prev) => prev + newNotes.length);
     } catch (err: any) {
@@ -401,11 +401,11 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
         orderDirection: 'DESC',
       };
 
-      const response = await API.note.getMyNotes(params);
-      const newNotes = response.data.data;
+      const response = await API.note.getNotes(params);
+      const newNotes = response.data;
 
       setNotes(newNotes);
-      setHasMore(1 < response.data.pagination.totalPages);
+      setHasMore(1 < (response.meta?.pagination?.totalPages || 1));
       setTotalItems(newNotes.length);
     } catch (err: any) {
       console.error('加载手记失败:', err);

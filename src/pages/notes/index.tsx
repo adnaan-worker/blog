@@ -163,7 +163,7 @@ const NotesPage: React.FC = () => {
       };
 
       const response = await API.note.getNotes(params);
-      const apiNotes = response.data.data || response.data.list || [];
+      const apiNotes = response.data || [];
       const newNotes = apiNotes.map(convertNoteToTimelineItem);
 
       if (append) {
@@ -172,7 +172,7 @@ const NotesPage: React.FC = () => {
         setNotes(newNotes);
       }
 
-      const pagination = response.data.pagination || { page: pageNum, totalPages: 1 };
+      const pagination = response.meta?.pagination || { page: pageNum, totalPages: 1 };
       setHasMore(pagination.page < pagination.totalPages);
       setPage(pageNum);
     } catch (error: any) {

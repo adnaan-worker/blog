@@ -112,7 +112,7 @@ const Blog: React.FC = () => {
       try {
         setError(null);
         const response = await API.article.getArticles({ page: 1, pageSize: 100 });
-        const articleList = response.data.data || [];
+        const articleList = response.data || [];
 
         if (articleList.length > 0) {
           setArticles(articleList);

@@ -36,6 +36,9 @@ import {
   CommentManagement,
   BookmarkManagement,
   LikeManagement,
+  UserManagement,
+  CategoryManagement,
+  TagManagement,
 } from '@/components/profile';
 import type { EditProfileForm } from '@/components/profile/types';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -1267,15 +1270,15 @@ const Profile: React.FC = () => {
 
       case 'users':
         if (!isAdmin) return <div>无权限访问</div>;
-        return <div>用户管理功能正在开发中...</div>;
+        return <UserManagement />;
 
       case 'categories':
         if (!isAdmin) return <div>无权限访问</div>;
-        return <div>分类管理功能正在开发中...</div>;
+        return <CategoryManagement />;
 
       case 'tags':
         if (!isAdmin) return <div>无权限访问</div>;
-        return <div>标签管理功能正在开发中...</div>;
+        return <TagManagement />;
 
       default:
         return <div>页面未找到</div>;

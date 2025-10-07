@@ -1360,7 +1360,7 @@ const Home = () => {
     const loadArticles = async () => {
       try {
         const response = await API.article.getArticles({ page: 1, pageSize: 3 });
-        setArticles(response.data.data || []);
+        setArticles(response.data || []);
       } catch (error) {
         console.error('加载文章失败:', error);
       }
@@ -1374,7 +1374,7 @@ const Home = () => {
     const loadNotes = async () => {
       try {
         const response = await API.note.getNotes({ page: 1, pageSize: 5, isPrivate: false });
-        setNotes(response.data.data || []);
+        setNotes(response.data || []);
       } catch (error) {
         console.error('加载手记失败:', error);
       }

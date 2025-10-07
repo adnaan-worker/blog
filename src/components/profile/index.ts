@@ -1,15 +1,26 @@
+// Dashboard Components
 export { UserInfoCard } from './user-info-card';
 export { DataStatsGrid } from './data-stats-grid';
 export { ActivityFeed } from './activity-feed';
 export { QuickActions } from './quick-actions';
 export { AchievementBadges } from './achievement-badges';
-export { EditProfileModal } from './edit-profile-modal';
-export { EditSiteSettingsModal } from './edit-site-settings-modal';
-export { default as NoteManagement } from './note-management';
-export { default as ArticleManagement } from './article-management';
-export { default as CommentManagement } from './comment-management';
-export { default as BookmarkManagement } from './bookmark-management';
-export { default as LikeManagement } from './like-management';
+
+// Modals
+export { EditProfileModal } from './modals/edit-profile-modal';
+export { EditSiteSettingsModal } from './modals/edit-site-settings-modal';
+
+// Common Components
+export { default as ManagementLayout } from './common/management-layout';
+
+// Management Pages
+export { default as NoteManagement } from './management/note-management';
+export { default as ArticleManagement } from './management/article-management';
+export { default as CommentManagement } from './management/comment-management';
+export { default as BookmarkManagement } from './management/bookmark-management';
+export { default as LikeManagement } from './management/like-management';
+export { default as UserManagement } from './management/user-management';
+export { default as CategoryManagement } from './management/category-management';
+export { default as TagManagement } from './management/tag-management';
 
 // Types
 export type { UserProfile, UserStats, Activity, Achievement } from './types';

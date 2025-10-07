@@ -3,23 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiPlus,
-  FiEdit3,
+  FiMessageSquare,
   FiTrash2,
-  FiEye,
-  FiFileText,
-  FiHeart,
-  FiCalendar,
+  FiExternalLink,
   FiClock,
-  FiFolder,
-  FiTag,
   FiSearch,
   FiFilter,
   FiRefreshCw,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiXCircle,
 } from 'react-icons/fi';
 import { Button, Input, InfiniteScroll } from 'adnaan-ui';
-import { API, Article, ArticleParams } from '@/utils/api';
-import { RichTextParser } from '@/utils/rich-text-parser';
+import { API, type Comment } from '@/utils/api';
+import { formatDate } from '@/utils';
 
 // 样式组件
 const Container = styled.div`
@@ -36,6 +33,18 @@ const Header = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+`;
+
+const HeaderTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const HeaderLeft = styled.div`
@@ -74,19 +83,6 @@ const StatItem = styled.div`
   }
 `;
 
-const HeaderTop = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-`;
-
 const HeaderRight = styled.div`
   display: flex;
   align-items: center;
@@ -95,12 +91,6 @@ const HeaderRight = styled.div`
 
   @media (max-width: 768px) {
     justify-content: space-between;
-  }
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
   }
 `;
 
@@ -175,18 +165,17 @@ const FilterTag = styled.button<{ active?: boolean }>`
   }
 `;
 
-const ArticlesList = styled.div`
+const CommentsList = styled.div`
   padding: 1rem;
 `;
 
-const ArticleCard = styled(motion.div)`
+const CommentCard = styled(motion.div)`
   background: var(--bg-secondary);
   border-radius: 8px;
   padding: 1.25rem;
   margin-bottom: 1rem;
   border: 1px solid var(--border-color);
   transition: all 0.2s ease;
-  cursor: pointer;
 
   &:hover {
     border-color: var(--accent-color);
@@ -199,7 +188,7 @@ const ArticleCard = styled(motion.div)`
   }
 `;
 
-const ArticleHeader = styled.div`
+const CommentHeader = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -207,23 +196,40 @@ const ArticleHeader = styled.div`
   gap: 1rem;
 `;
 
-const ArticleTitle = styled.h3`
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
+const PostInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
   flex: 1;
-  line-height: 1.4;
 `;
 
-const ArticleActions = styled.div`
+const PostLink = styled.a`
+  color: var(--accent-color);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+const CommentActions = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
   opacity: 0;
   transition: opacity 0.2s ease;
 
-  ${ArticleCard}:hover & {
+  ${CommentCard}:hover & {
     opacity: 1;
   }
 `;
@@ -242,23 +248,20 @@ const ActionButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: var(--accent-color);
+    background: var(--error-color);
     color: white;
   }
 `;
 
-const ArticleContent = styled.div`
-  color: var(--text-secondary);
+const CommentContent = styled.div`
+  color: var(--text-primary);
   font-size: 0.9rem;
   line-height: 1.6;
   margin-bottom: 1rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  word-break: break-word;
 `;
 
-const ArticleMeta = styled.div`
+const CommentMeta = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -283,9 +286,11 @@ const StatusBadge = styled.div<{ status?: string }>`
   font-weight: 500;
   background: ${(props) => {
     switch (props.status) {
-      case 'published':
+      case 'approved':
         return 'rgba(34, 197, 94, 0.1)';
-      case 'draft':
+      case 'pending':
+        return 'rgba(251, 191, 36, 0.1)';
+      case 'spam':
         return 'rgba(239, 68, 68, 0.1)';
       default:
         return 'rgba(107, 114, 128, 0.1)';
@@ -293,35 +298,16 @@ const StatusBadge = styled.div<{ status?: string }>`
   }};
   color: ${(props) => {
     switch (props.status) {
-      case 'published':
+      case 'approved':
         return '#22c55e';
-      case 'draft':
+      case 'pending':
+        return '#fbbf24';
+      case 'spam':
         return '#ef4444';
       default:
         return '#6b7280';
     }
   }};
-`;
-
-const TagsContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-top: 0.5rem;
-`;
-
-const Tag = styled.span`
-  padding: 0.2rem 0.5rem;
-  background: rgba(var(--accent-color-rgb), 0.1);
-  color: var(--accent-color);
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 500;
-
-  &::before {
-    content: '#';
-    opacity: 0.6;
-  }
 `;
 
 const EmptyState = styled.div`
@@ -338,165 +324,150 @@ const EmptyState = styled.div`
 
   p {
     font-size: 0.9rem;
-    margin-bottom: 2rem;
     opacity: 0.8;
   }
 `;
 
 // 组件接口
-interface ArticleManagementProps {
+interface CommentManagementProps {
   className?: string;
+  isAdmin?: boolean; // 是否为管理员
 }
 
 // 统计数据接口
-interface ArticleStats {
-  totalArticles: number;
-  totalViews: number;
-  totalLikes: number;
-  publishedArticles: number;
-  draftArticles: number;
+interface CommentStats {
+  totalComments: number;
+  approvedComments: number;
+  pendingComments: number;
+  spamComments: number;
 }
 
-const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
+const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmin = false }) => {
   const navigate = useNavigate();
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [stats, setStats] = useState<ArticleStats>({
-    totalArticles: 0,
-    totalViews: 0,
-    totalLikes: 0,
-    publishedArticles: 0,
-    draftArticles: 0,
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [stats, setStats] = useState<CommentStats>({
+    totalComments: 0,
+    approvedComments: 0,
+    pendingComments: 0,
+    spamComments: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
-  const [error, setError] = useState<Error | null>(null);
   const [totalItems, setTotalItems] = useState(0);
+  const [error, setError] = useState<Error | null>(null);
 
   // 筛选和搜索状态
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
-  const [selectedCategory, setSelectedCategory] = useState<number | undefined>(undefined);
+  const [selectedStatus, setSelectedStatus] = useState<'approved' | 'pending' | 'spam' | ''>('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // 编辑器状态
-
   // 加载更多数据
-  const loadMoreArticles = useCallback(async () => {
+  const loadMoreComments = useCallback(async () => {
     if (isLoading || !hasMore || error) return;
 
     try {
       setIsLoading(true);
       setError(null);
 
-      const params: ArticleParams = {
-        page: page + 1,
-        pageSize: 10,
-        keyword: searchQuery || undefined,
-        categoryId: selectedCategory,
+      const params = {
+        page,
+        limit: 10,
+        status: selectedStatus || undefined,
       };
 
-      const response = await API.article.getMyArticles(params);
-      const newArticles = response.data.data || [];
-      const pagination = response.data.pagination || { totalPages: 1 };
+      // 统一接口，后端根据角色返回不同数据
+      const response = await API.comment.getUserComments(params);
 
-      setArticles((prev) => [...prev, ...newArticles]);
-      setHasMore(page + 1 < pagination.totalPages);
+      const newComments = response.data || [];
+
+      setComments((prev) => [...prev, ...newComments]);
+      setHasMore(page + 1 < (response.meta?.pagination?.totalPages || 1));
       setPage(page + 1);
-      setTotalItems((prev) => prev + newArticles.length);
+      setTotalItems((prev) => prev + newComments.length);
     } catch (err: any) {
-      console.error('加载更多文章失败:', err);
+      console.error('加载评论失败:', err);
       setError(new Error(err.message || '加载失败，请重试'));
     } finally {
       setIsLoading(false);
     }
-  }, [page, hasMore, isLoading, error, searchQuery, selectedCategory]);
+  }, [page, hasMore, isLoading, error, isAdmin, selectedStatus]);
 
-  // 重新加载数据（搜索/筛选时使用）
-  const reloadArticles = useCallback(async () => {
+  // 重新加载数据
+  const reloadComments = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
       setPage(1);
       setHasMore(true);
 
-      const params: ArticleParams = {
+      const params = {
         page: 1,
-        pageSize: 10,
-        keyword: searchQuery || undefined,
-        categoryId: selectedCategory,
+        limit: 10,
+        status: selectedStatus || undefined,
       };
 
-      const response = await API.article.getMyArticles(params);
-      const newArticles = response.data.data || [];
-      const pagination = response.data.pagination || { totalPages: 1 };
+      // 统一接口，后端根据角色返回不同数据
+      const response = await API.comment.getUserComments(params);
 
-      setArticles(newArticles);
-      setHasMore(1 < pagination.totalPages);
-      setTotalItems(newArticles.length);
+      const newComments = response.data || [];
+
+      setComments(newComments);
+      setHasMore(1 < (response.meta?.pagination?.totalPages || 1));
+      setTotalItems(newComments.length);
 
       // 计算统计数据
-      calculateStats(newArticles);
+      calculateStats(newComments);
     } catch (err: any) {
-      console.error('加载文章失败:', err);
+      console.error('加载评论失败:', err);
       setError(new Error(err.message || '加载失败，请重试'));
-      setArticles([]);
+      setComments([]);
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedStatus, isAdmin]);
 
   // 计算统计数据
-  const calculateStats = (articlesList: Article[]) => {
-    const newStats: ArticleStats = {
-      totalArticles: articlesList.length,
-      totalViews: articlesList.reduce((sum, article) => sum + (article.viewCount || 0), 0),
-      totalLikes: articlesList.reduce((sum, article) => sum + (article.likeCount || 0), 0),
-      publishedArticles: articlesList.filter((article) => article.status === 1).length,
-      draftArticles: articlesList.filter((article) => article.status === 0).length,
+  const calculateStats = (commentsList: Comment[]) => {
+    const newStats: CommentStats = {
+      totalComments: commentsList.length,
+      approvedComments: commentsList.filter((c) => c.status === 'approved').length,
+      pendingComments: commentsList.filter((c) => c.status === 'pending').length,
+      spamComments: commentsList.filter((c) => c.status === 'spam').length,
     };
     setStats(newStats);
   };
 
-  // 初始化 - 只在组件挂载时执行一次
+  // 初始化
   useEffect(() => {
-    reloadArticles();
+    reloadComments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 搜索和筛选变化时重新加载（防抖）
+  // 搜索和筛选变化时重新加载
   useEffect(() => {
     const timer = setTimeout(() => {
-      reloadArticles();
+      reloadComments();
     }, 300);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, selectedStatus, selectedCategory]);
+  }, [searchQuery, selectedStatus]);
 
-  // 处理创建文章
-  const handleCreateArticle = () => {
-    const url = `${window.location.origin}/#/editor/article`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
-  // 处理编辑文章
-  const handleEditArticle = (article: Article) => {
-    const url = `${window.location.origin}/#/editor/article?id=${article.id}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-
-  // 处理删除文章
-  const handleDeleteArticle = async (article: Article) => {
-    const confirmed = await adnaan.confirm.delete('确定要删除这篇文章吗？删除后无法恢复。', '删除文章');
+  // 处理删除评论
+  const handleDeleteComment = async (comment: Comment) => {
+    const confirmed = await adnaan.confirm.delete('确定要删除这条评论吗？删除后无法恢复。', '删除评论');
 
     if (!confirmed) return;
 
     try {
-      await API.article.deleteArticle(article.id);
-      adnaan.toast.success('文章删除成功');
-      setArticles((prev) => prev.filter((a) => a.id !== article.id));
-      calculateStats(articles.filter((a) => a.id !== article.id));
+      await API.comment.deleteComment(comment.id);
+
+      adnaan.toast.success('评论删除成功');
+      const updatedComments = comments.filter((c) => c.id !== comment.id);
+      setComments(updatedComments);
+      calculateStats(updatedComments);
+      setTotalItems((prev) => prev - 1);
     } catch (error: any) {
       adnaan.toast.error(error.message || '删除失败');
     }
@@ -504,17 +475,40 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
 
   // 处理刷新
   const handleRefresh = () => {
-    reloadArticles();
+    reloadComments();
   };
 
-  // 过滤状态选项
-  const statusOptions = ['已发布', '草稿'];
+  // 跳转到文章
+  const handleGoToPost = (postId: number) => {
+    navigate(`/article/${postId}`);
+  };
 
-  // 格式化状态显示
-  const getStatusText = (status: any): string => {
-    if (status === 'published' || status === 1) return '已发布';
-    if (status === 'draft' || status === 0) return '草稿';
-    return '未知';
+  // 获取状态文本
+  const getStatusText = (status?: string) => {
+    switch (status) {
+      case 'approved':
+        return '已通过';
+      case 'pending':
+        return '待审核';
+      case 'spam':
+        return '已驳回';
+      default:
+        return status || '未知';
+    }
+  };
+
+  // 获取状态图标
+  const getStatusIcon = (status?: string) => {
+    switch (status) {
+      case 'approved':
+        return <FiCheckCircle size={10} />;
+      case 'pending':
+        return <FiAlertCircle size={10} />;
+      case 'spam':
+        return <FiXCircle size={10} />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -522,26 +516,26 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
       <Header>
         <HeaderTop>
           <HeaderLeft>
-            <Title>我的文章</Title>
+            <Title>{isAdmin ? '评论管理' : '我的评论'}</Title>
             <StatsContainer>
               <StatItem>
-                <span className="number">{stats.totalArticles}</span>
-                <span>篇</span>
+                <span className="number">{stats.totalComments}</span>
+                <span>条</span>
               </StatItem>
-              <StatItem>
-                <FiEye size={12} />
-                <span className="number">{stats.totalViews}</span>
-              </StatItem>
-              <StatItem>
-                <FiHeart size={12} />
-                <span className="number">{stats.totalLikes}</span>
-              </StatItem>
+              {isAdmin && (
+                <>
+                  <StatItem>
+                    <FiCheckCircle size={12} />
+                    <span className="number">{stats.approvedComments}</span>
+                  </StatItem>
+                  <StatItem>
+                    <FiAlertCircle size={12} />
+                    <span className="number">{stats.pendingComments}</span>
+                  </StatItem>
+                </>
+              )}
             </StatsContainer>
           </HeaderLeft>
-          <Button variant="primary" onClick={handleCreateArticle}>
-            <FiPlus size={14} />
-            <span style={{ marginLeft: '0.5rem' }}>写文章</span>
-          </Button>
         </HeaderTop>
 
         <HeaderRight>
@@ -549,7 +543,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
             <SearchInput
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="搜索文章..."
+              placeholder="搜索评论..."
             />
             <SearchIcon>
               <FiSearch />
@@ -580,16 +574,22 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
                   全部
                 </FilterTag>
                 <FilterTag
-                  active={selectedStatus === 'published'}
-                  onClick={() => setSelectedStatus(selectedStatus === 'published' ? '' : 'published')}
+                  active={selectedStatus === 'approved'}
+                  onClick={() => setSelectedStatus(selectedStatus === 'approved' ? '' : 'approved')}
                 >
-                  已发布
+                  已通过
                 </FilterTag>
                 <FilterTag
-                  active={selectedStatus === 'draft'}
-                  onClick={() => setSelectedStatus(selectedStatus === 'draft' ? '' : 'draft')}
+                  active={selectedStatus === 'pending'}
+                  onClick={() => setSelectedStatus(selectedStatus === 'pending' ? '' : 'pending')}
                 >
-                  草稿
+                  待审核
+                </FilterTag>
+                <FilterTag
+                  active={selectedStatus === 'spam'}
+                  onClick={() => setSelectedStatus(selectedStatus === 'spam' ? '' : 'spam')}
+                >
+                  已驳回
                 </FilterTag>
               </div>
             </FilterBar>
@@ -602,90 +602,63 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
           hasMore={hasMore}
           loading={isLoading}
           error={error}
-          onLoadMore={loadMoreArticles}
-          onRetry={reloadArticles}
-          itemCount={articles.length}
+          onLoadMore={loadMoreComments}
+          onRetry={reloadComments}
+          itemCount={comments.length}
           maxHeight="calc(100vh - 400px)"
           showScrollToTop={true}
           emptyComponent={
             <EmptyState>
-              <h3>还没有文章</h3>
-              <p>开始创作你的第一篇文章吧</p>
-              <Button variant="primary" onClick={handleCreateArticle}>
-                <FiPlus size={14} />
-                写第一篇文章
-              </Button>
+              <h3>暂无评论</h3>
+              <p>{isAdmin ? '还没有任何评论' : '你还没有发表过评论'}</p>
             </EmptyState>
           }
         >
-          <ArticlesList>
+          <CommentsList>
             <AnimatePresence>
-              {articles.map((article, index) => (
-                <ArticleCard
-                  key={article.id}
+              {comments.map((comment, index) => (
+                <CommentCard
+                  key={comment.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <ArticleHeader>
-                    <ArticleTitle>{article.title}</ArticleTitle>
-                    <ArticleActions>
-                      <ActionButton onClick={() => handleEditArticle(article)}>
-                        <FiEdit3 size={14} />
-                      </ActionButton>
-                      <ActionButton onClick={() => handleDeleteArticle(article)}>
+                  <CommentHeader>
+                    <PostInfo>
+                      <PostLink onClick={() => handleGoToPost(comment.post_id)}>
+                        文章: {comment.post_title || `#${comment.post_id}`}
+                        <FiExternalLink size={14} />
+                      </PostLink>
+                      {comment.parent_id && <span>• 回复 #{comment.parent_id}</span>}
+                    </PostInfo>
+                    <CommentActions>
+                      <ActionButton onClick={() => handleDeleteComment(comment)}>
                         <FiTrash2 size={14} />
                       </ActionButton>
-                    </ArticleActions>
-                  </ArticleHeader>
+                    </CommentActions>
+                  </CommentHeader>
 
-                  <ArticleContent>
-                    {article.summary || RichTextParser.extractSummary(article.content || '')}
-                  </ArticleContent>
+                  <CommentContent>{comment.content}</CommentContent>
 
-                  <ArticleMeta>
+                  <CommentMeta>
                     <MetaItem>
-                      <FiCalendar size={12} />
-                      {new Date(article.createdAt || '').toLocaleDateString('zh-CN')}
+                      <FiClock size={12} />
+                      {formatDate(comment.createTime || (comment as any).createdAt || '', 'YYYY-MM-DD HH:mm')}
                     </MetaItem>
-                    {article.category && (
-                      <MetaItem>
-                        <FiFolder size={12} />
-                        {typeof article.category === 'string' ? article.category : article.category.name}
-                      </MetaItem>
-                    )}
-                    <MetaItem>
-                      <FiEye size={12} />
-                      {article.viewCount || 0}
-                    </MetaItem>
-                    <MetaItem>
-                      <FiHeart size={12} />
-                      {article.likeCount || 0}
-                    </MetaItem>
-                    <StatusBadge status={article.status === 1 ? 'published' : 'draft'}>
-                      <FiFileText size={10} />
-                      {getStatusText(article.status)}
+                    <StatusBadge status={comment.status}>
+                      {getStatusIcon(comment.status)}
+                      {getStatusText(comment.status)}
                     </StatusBadge>
-                  </ArticleMeta>
-
-                  {article.tags && article.tags.length > 0 && (
-                    <TagsContainer>
-                      {article.tags.map((tag: any) => (
-                        <Tag key={typeof tag === 'object' ? tag.id : tag}>
-                          {typeof tag === 'object' ? tag.name : tag}
-                        </Tag>
-                      ))}
-                    </TagsContainer>
-                  )}
-                </ArticleCard>
+                  </CommentMeta>
+                </CommentCard>
               ))}
             </AnimatePresence>
-          </ArticlesList>
+          </CommentsList>
         </InfiniteScroll>
       </Content>
     </Container>
   );
 };
 
-export default ArticleManagement;
+export default CommentManagement;

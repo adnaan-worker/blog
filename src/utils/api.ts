@@ -187,8 +187,12 @@ export interface ArticleParams extends PaginationParams {
 export interface Category {
   id: number;
   name: string;
+  slug: string;
   description?: string;
   count?: number;
+  articleCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -197,7 +201,13 @@ export interface Category {
 export interface Tag {
   id: number;
   name: string;
+  slug: string;
+  color?: string;
+  description?: string;
   count?: number;
+  articleCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -405,26 +415,44 @@ export const API = {
         data: { filePath },
       }),
     getUploadStats: (uploadDir?: string) => http.get('/users/upload-stats', { uploadDir }),
+
+    // 用户管理（管理员）
+    getAllUsers: (params?: { page?: number; limit?: number; search?: string }) =>
+      http.get<PaginationResult<UserProfile>>('/users', params),
+    getUserById: (id: string | number) => http.get<UserProfile>(`/users/${id}`),
+    createUser: (data: {
+      username: string;
+      email: string;
+      password: string;
+      fullName?: string;
+      role?: 'user' | 'admin';
+      status?: 'active' | 'inactive' | 'banned';
+    }) => http.post<UserProfile>('/users', data),
+    updateUser: (
+      id: string | number,
+      data: {
+        username?: string;
+        email?: string;
+        fullName?: string;
+        role?: 'user' | 'admin';
+        status?: 'active' | 'inactive' | 'banned';
+      },
+    ) => http.put<UserProfile>(`/users/${id}`, data),
+    deleteUser: (id: string | number) => http.delete(`/users/${id}`),
   },
 
   // 手记相关
   note: {
     /**
-     * 获取手记列表
+     * 获取手记列表（统一接口）
+     * 未登录：返回所有公开手记
+     * 已登录普通用户：返回自己的所有手记（包括私密）
+     * 管理员：返回所有手记
      * @param params 查询参数
      * @returns Promise<ApiResponse<PaginationResult<Note>>>
      */
     getNotes: (params?: NoteParams): Promise<ApiResponse<PaginationResult<Note>>> => {
       return http.get('/notes', params);
-    },
-
-    /**
-     * 获取我的手记列表
-     * @param params 查询参数
-     * @returns Promise<ApiResponse<PaginationResult<Note>>>
-     */
-    getMyNotes: (params?: Omit<NoteParams, 'userId'>): Promise<ApiResponse<PaginationResult<Note>>> => {
-      return http.get('/notes/my', params);
     },
 
     /**
@@ -584,8 +612,8 @@ export const API = {
      * 获取所有分类
      * @returns Promise<ApiResponse<Category[]>>
      */
-    getCategories: (): Promise<ApiResponse<Category[]>> => {
-      return http.get('/categories');
+    getCategories: (params?: { page?: number; limit?: number; search?: string }): Promise<ApiResponse<Category[]>> => {
+      return http.get('/categories', params);
     },
 
     /**
@@ -623,8 +651,8 @@ export const API = {
      * 获取所有标签
      * @returns Promise<ApiResponse<Tag[]>>
      */
-    getTags: (): Promise<ApiResponse<Tag[]>> => {
-      return http.get('/tags');
+    getTags: (params?: { page?: number; limit?: number; search?: string }): Promise<ApiResponse<Tag[]>> => {
+      return http.get('/tags', params);
     },
 
     /**
@@ -658,6 +686,17 @@ export const API = {
 
   // 评论相关
   comment: {
+    /**
+     * 获取评论列表（统一接口）
+     * 管理员：返回所有评论
+     * 普通用户：返回自己的评论
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<Comment>>>
+     */
+    getUserComments: (params?: CommentParams): Promise<ApiResponse<PaginationResult<Comment>>> => {
+      return http.get('/comments', params);
+    },
+
     /**
      * 获取文章的所有评论
      * @param postId 文章ID

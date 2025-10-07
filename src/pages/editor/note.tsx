@@ -321,7 +321,19 @@ const NoteEditorPage: React.FC = () => {
                     <MoodItem
                       key={option}
                       selected={mood === option}
-                      onClick={() => setMood(mood === option ? '' : option)}
+                      onClick={() =>
+                        setMood(
+                          mood === option
+                            ? ''
+                            : option
+                                .replace('😊 ', '')
+                                .replace('😢 ', '')
+                                .replace('😡 ', '')
+                                .replace('😌 ', '')
+                                .replace('😴 ', '')
+                                .replace('🤔 ', ''),
+                        )
+                      }
                     >
                       {option}
                     </MoodItem>
