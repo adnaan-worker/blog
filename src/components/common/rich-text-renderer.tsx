@@ -487,9 +487,10 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
 
           if (src) {
             // 返回一个 span 包装器，避免 div 嵌套在 p 内
+            // ImagePreview 组件内部已经实现了完整的预览功能，不需要外部传递 onClick
             return (
               <span style={{ display: 'block', margin: '1.5rem 0', textAlign: 'center' }}>
-                <ImagePreview src={src} alt={alt} onClick={onImageClick ? () => onImageClick(src) : undefined} />
+                <ImagePreview src={src} alt={alt} />
               </span>
             );
           }

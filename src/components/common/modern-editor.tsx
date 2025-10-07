@@ -12,6 +12,7 @@ import { common, createLowlight } from 'lowlight';
 import 'highlight.js/styles/github.css'; // 添加语法高亮样式
 import styled from '@emotion/styled';
 import '@/styles/rich-text.css';
+import { API } from '@/utils/api';
 import {
   FiBold,
   FiItalic,
@@ -29,10 +30,37 @@ import {
   FiMinus,
   FiMinus as FiStrikethrough,
   FiMessageSquare,
+  FiUpload,
 } from 'react-icons/fi';
 
 // 创建 lowlight 实例，支持更多语言
 const lowlight = createLowlight(common);
+
+/**
+ * 上传图片到服务器
+ * @param file 图片文件
+ * @returns 图片URL
+ */
+const uploadImage = async (file: File): Promise<string> => {
+  try {
+    const response = await API.user.batchUpload([file], 'editor');
+
+    // 后端返回的数据结构是 { data: { data: [...] } }
+    const files = response.data?.data.data;
+
+    if (files && Array.isArray(files) && files.length > 0) {
+      // 返回第一个上传成功的文件URL
+      const fileUrl = files[0].url || files[0].path;
+      // 修复路径中的反斜杠
+      return fileUrl.replace(/\\/g, '/');
+    }
+
+    throw new Error('上传失败，请重试');
+  } catch (error: any) {
+    console.error('图片上传失败:', error);
+    throw new Error(error.message || '图片上传失败');
+  }
+};
 
 // 编辑器配置
 const extensions = [
@@ -61,7 +89,7 @@ const extensions = [
     },
   }),
   Image.configure({
-    allowBase64: true,
+    allowBase64: false, // 禁用 base64，强制使用 URL
     inline: true,
   }),
   TextAlign.configure({
@@ -102,10 +130,12 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [languageMenuPosition, setLanguageMenuPosition] = useState({ top: 0, left: 0 });
   const [isInCodeBlock, setIsInCodeBlock] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [commandMenuPosition, setCommandMenuPosition] = useState({ top: 0, left: 0 });
   const [commandSearch, setCommandSearch] = useState('');
   const editorRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     extensions,
@@ -114,6 +144,72 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
       attributes: {
         class: 'ProseMirror rich-text-content',
         style: 'padding: 2rem 3rem; min-height: 400px;',
+      },
+      handlePaste: (view, event) => {
+        // 处理粘贴的图片
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItems = items.filter((item) => item.type.indexOf('image') !== -1);
+
+        if (imageItems.length > 0) {
+          event.preventDefault();
+
+          imageItems.forEach(async (item) => {
+            const file = item.getAsFile();
+            if (file) {
+              try {
+                setIsUploading(true);
+                const url = await uploadImage(file);
+
+                // 插入图片到编辑器
+                const { state } = view;
+                const { selection } = state;
+                const position = selection.$head.pos;
+
+                view.dispatch(view.state.tr.replaceSelectionWith(view.state.schema.nodes.image.create({ src: url })));
+              } catch (error: any) {
+                console.error('图片上传失败:', error);
+                adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
+              } finally {
+                setIsUploading(false);
+              }
+            }
+          });
+
+          return true;
+        }
+
+        return false;
+      },
+      handleDrop: (view, event) => {
+        // 处理拖拽的图片
+        const files = Array.from(event.dataTransfer?.files || []);
+        const imageFiles = files.filter((file) => file.type.indexOf('image') !== -1);
+
+        if (imageFiles.length > 0) {
+          event.preventDefault();
+
+          const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
+          if (!coords) return false;
+
+          imageFiles.forEach(async (file) => {
+            try {
+              setIsUploading(true);
+              const url = await uploadImage(file);
+
+              // 在拖放位置插入图片
+              view.dispatch(view.state.tr.insert(coords.pos, view.state.schema.nodes.image.create({ src: url })));
+            } catch (error: any) {
+              console.error('图片上传失败:', error);
+              adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
+            } finally {
+              setIsUploading(false);
+            }
+          });
+
+          return true;
+        }
+
+        return false;
       },
       handleKeyDown: (view, event) => {
         // 检测输入 /
@@ -434,6 +530,38 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
     }
   }, [editor, imageUrl]);
 
+  // 处理文件上传
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
+      const imageFiles = files.filter((file) => file.type.indexOf('image') !== -1);
+
+      if (imageFiles.length === 0) {
+        adnaan?.toast.error('请选择图片文件', '文件类型错误');
+        return;
+      }
+
+      for (const file of imageFiles) {
+        try {
+          setIsUploading(true);
+          const url = await uploadImage(file);
+          editor?.chain().focus().setImage({ src: url }).run();
+        } catch (error: any) {
+          console.error('图片上传失败:', error);
+          adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
+        } finally {
+          setIsUploading(false);
+        }
+      }
+
+      // 清空文件选择
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    },
+    [editor],
+  );
+
   if (!editor) {
     return null;
   }
@@ -547,8 +675,11 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
           >
             <FiLink />
           </ToolbarButton>
-          <ToolbarButton onClick={() => setShowImageInput(!showImageInput)} title="插入图片">
+          <ToolbarButton onClick={() => setShowImageInput(!showImageInput)} title="插入图片URL">
             <FiImage />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => fileInputRef.current?.click()} title="上传图片" disabled={isUploading}>
+            {isUploading ? '...' : <FiUpload />}
           </ToolbarButton>
           <ToolbarButton onClick={toggleCodeBlock} active={isInCodeBlock} title="代码块">
             <FiCode />
@@ -651,6 +782,23 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
           <button onClick={insertImage}>插入</button>
           <button onClick={() => setShowImageInput(false)}>取消</button>
         </InputPanel>
+      )}
+
+      {/* 隐藏的文件上传输入框 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: 'none' }}
+        onChange={handleFileUpload}
+      />
+
+      {/* 上传状态提示 */}
+      {isUploading && (
+        <UploadingIndicator>
+          <FiUpload /> 正在上传图片...
+        </UploadingIndicator>
       )}
 
       {/* 编辑器内容区 */}
@@ -756,6 +904,7 @@ const Divider = styled.div`
 
 interface ToolbarButtonProps {
   active?: boolean;
+  disabled?: boolean;
 }
 
 const ToolbarButton = styled.button<ToolbarButtonProps>`
@@ -768,23 +917,26 @@ const ToolbarButton = styled.button<ToolbarButtonProps>`
   background: ${(props) => (props.active ? 'var(--accent-color)' : 'transparent')};
   color: ${(props) => (props.active ? 'var(--text-on-accent)' : 'var(--text-primary)')};
   border-radius: 4px;
-  cursor: pointer;
+  cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
   transition: all 0.2s;
   font-size: 16px;
   position: relative;
+  opacity: ${(props) => (props.disabled ? 0.5 : 1)};
 
   &:hover {
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
+    background: ${(props) =>
+      props.disabled ? 'transparent' : props.active ? 'var(--accent-color)' : 'var(--bg-secondary)'};
     color: ${(props) => (props.active ? 'var(--text-on-accent)' : 'var(--text-primary)')};
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: ${(props) => (props.disabled ? 'none' : 'scale(0.95)')};
   }
 
   /* 为选中状态添加边框和阴影增强视觉效果 */
   ${(props) =>
     props.active &&
+    !props.disabled &&
     `
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -794,6 +946,7 @@ const ToolbarButton = styled.button<ToolbarButtonProps>`
   [data-theme='dark'] & {
     ${(props) =>
       props.active &&
+      !props.disabled &&
       `
       border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -990,6 +1143,37 @@ const LanguageMenuItem = styled.div<LanguageMenuItemProps>`
   &:last-of-type {
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
+  }
+`;
+
+const UploadingIndicator = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  font-size: 14px;
+  z-index: 1000;
+
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
   }
 `;
 

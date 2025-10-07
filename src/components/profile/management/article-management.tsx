@@ -396,7 +396,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
         categoryId: selectedCategory,
       };
 
-      const response = await API.article.getMyArticles(params);
+      const response = await API.article.getArticles(params);
       const newArticles = response.data || [];
       const pagination = response.meta?.pagination || { totalPages: 1 };
 
@@ -427,7 +427,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
         categoryId: selectedCategory,
       };
 
-      const response = await API.article.getMyArticles(params);
+      const response = await API.article.getArticles(params);
       const newArticles = response.data || [];
       const pagination = response.meta?.pagination || { totalPages: 1 };
 

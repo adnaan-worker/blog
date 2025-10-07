@@ -521,21 +521,14 @@ export const API = {
   // 博客文章相关
   article: {
     /**
-     * 获取公开文章列表（分页）
+     * 获取文章列表（统一接口）
+     * 未登录：返回所有已发布的文章
+     * 普通用户：返回自己的所有文章
+     * 管理员：返回所有文章
      * @param params 查询参数
      * @returns Promise<ApiResponse<PaginationResult<Article>>>
      */
     getArticles: (params?: ArticleParams): Promise<ApiResponse<PaginationResult<Article>>> => {
-      return http.get('/posts/page', params);
-    },
-
-    /**
-     * 获取所有文章（管理员）或我的文章（普通用户）
-     * 后端会根据用户角色自动判断返回内容
-     * @param params 查询参数
-     * @returns Promise<ApiResponse<PaginationResult<Article>>>
-     */
-    getMyArticles: (params?: ArticleParams): Promise<ApiResponse<PaginationResult<Article>>> => {
       return http.get('/posts', params);
     },
 

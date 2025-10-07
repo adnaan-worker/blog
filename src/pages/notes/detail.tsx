@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiCalendar, FiTag, FiMapPin, FiCloud, FiHeart, FiEdit3, FiClock } from 'react-icons/fi';
@@ -6,7 +6,6 @@ import styled from '@emotion/styled';
 import { API, Note } from '@/utils/api';
 import RichTextRenderer from '@/components/common/rich-text-renderer';
 import RichTextStats from '@/components/common/rich-text-stats';
-import ImagePreview from '@/components/common/image-preview';
 import PageLoading from '@/components/common/page-loading';
 
 // 页面容器
@@ -596,7 +595,6 @@ const NoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [note, setNote] = useState<NoteWithRelated | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     loadNote();
@@ -635,11 +633,6 @@ const NoteDetail: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  // 使用 useCallback 包装图片点击处理，避免重复渲染
-  const handleImageClick = useCallback((src: string) => {
-    setPreviewImage(src);
-  }, []);
 
   // 加载中状态
   if (isLoading) {
@@ -707,7 +700,6 @@ const NoteDetail: React.FC = () => {
                   enableCodeHighlight={true}
                   enableImagePreview={true}
                   enableTableOfContents={false}
-                  onImageClick={handleImageClick}
                 />
               </NoteContentWrapper>
 
@@ -808,9 +800,6 @@ const NoteDetail: React.FC = () => {
             </NoteSidebar>
           </NoteLayout>
         </motion.div>
-
-        {/* 图片预览模态框 - 使用统一的ImagePreview组件 */}
-        {previewImage && <ImagePreview src={previewImage} alt="预览" onClick={() => setPreviewImage(null)} />}
       </PageContainer>
     </>
   );
