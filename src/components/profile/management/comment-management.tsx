@@ -480,9 +480,11 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
     try {
       await API.comment.updateCommentStatus(comment.id, 'approved');
       adnaan.toast.success('评论已审核通过');
-
+      
       // 更新本地状态
-      const updatedComments = comments.map((c) => (c.id === comment.id ? { ...c, status: 'approved' } : c));
+      const updatedComments = comments.map((c) => 
+        c.id === comment.id ? { ...c, status: 'approved' } as Comment : c
+      );
       setComments(updatedComments);
       calculateStats(updatedComments);
     } catch (error: any) {
@@ -498,9 +500,11 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
     try {
       await API.comment.updateCommentStatus(comment.id, 'spam');
       adnaan.toast.success('评论已驳回');
-
+      
       // 更新本地状态
-      const updatedComments = comments.map((c) => (c.id === comment.id ? { ...c, status: 'spam' } : c));
+      const updatedComments = comments.map((c) => 
+        c.id === comment.id ? { ...c, status: 'spam' } as Comment : c
+      );
       setComments(updatedComments);
       calculateStats(updatedComments);
     } catch (error: any) {
@@ -514,7 +518,7 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
   };
 
   // 跳转到文章
-  const handleGoToPost = (postId: number) => {
+  const handleGoToPost = (postId: string | number) => {
     navigate(`/article/${postId}`);
   };
 
@@ -670,14 +674,14 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
                     <CommentActions>
                       {comment.status === 'pending' && (
                         <>
-                          <ActionButton
+                          <ActionButton 
                             onClick={() => handleApproveComment(comment)}
                             style={{ color: 'var(--success-color)' }}
                             title="审核通过"
                           >
                             <FiCheck size={16} />
                           </ActionButton>
-                          <ActionButton
+                          <ActionButton 
                             onClick={() => handleRejectComment(comment)}
                             style={{ color: 'var(--error-color)' }}
                             title="审核驳回"
