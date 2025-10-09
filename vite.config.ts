@@ -78,7 +78,7 @@ export default defineConfig(({ mode }) => {
           timeout: 60000,
           // 保持连接活跃
           configure: (proxy) => {
-            proxy.on('proxyReq', (proxyReq, req, res) => {
+            proxy.on('proxyReq', (proxyReq, req) => {
               // 设置Socket.IO相关的请求头
               if (req.url?.includes('socket.io')) {
                 proxyReq.setHeader('Connection', 'keep-alive');
@@ -104,6 +104,8 @@ export default defineConfig(({ mode }) => {
       include: [
         'react',
         'react-dom',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
         '@emotion/styled',
         '@emotion/react',
         'framer-motion',
@@ -111,9 +113,8 @@ export default defineConfig(({ mode }) => {
         'react-router-dom',
         '@reduxjs/toolkit',
         'react-redux',
+        'adnaan-ui',
       ],
-      // 强制预构建这些依赖
-      force: true,
       // 处理ESM兼容性
       esbuildOptions: {
         target: 'es2020',
