@@ -131,7 +131,7 @@ const LoadingMore = styled.div`
     display: inline-block;
     width: 16px;
     height: 16px;
-    border: 2px solid rgba(var(--accent-color-rgb), 0.2);
+    border: 2px solid rgba(var(--accent-rgb), 0.2);
     border-radius: 50%;
     border-top-color: var(--accent-color);
     animation: spin 1s ease-in-out infinite;

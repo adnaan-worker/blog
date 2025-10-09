@@ -36,6 +36,8 @@ import {
   CommentManagement,
   BookmarkManagement,
   LikeManagement,
+  NoteLikeManagement,
+  SecuritySettings,
   UserManagement,
   CategoryManagement,
   TagManagement,
@@ -237,7 +239,7 @@ const EmptyTabsIcon = styled.div`
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(var(--accent-color-rgb), 0.1) 0%, rgba(var(--accent-color-rgb), 0.05) 100%);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1) 0%, rgba(var(--accent-rgb), 0.05) 100%);
   color: var(--accent-color);
 
   svg {
@@ -325,7 +327,7 @@ const TabButton = styled.button<{ active?: boolean }>`
   }
 
   &:hover {
-    background: ${(props) => (props.active ? 'var(--bg-primary)' : 'rgba(var(--accent-color-rgb), 0.08)')};
+    background: ${(props) => (props.active ? 'var(--bg-primary)' : 'rgba(var(--accent-rgb), 0.08)')};
     color: var(--text-primary);
 
     &::after {
@@ -482,8 +484,9 @@ const Chart = styled.div`
 
 const ChartBar = styled(motion.div)<{ height: number }>`
   width: 100%;
-  height: ${(props) => props.height}%;
-  background: linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-color-rgb), 0.6) 100%);
+  min-height: ${(props) => (props.height > 0 ? '8px' : '0')}; /* 至少8px高度 */
+  height: ${(props) => Math.max(props.height, props.height > 0 ? 5 : 0)}%;
+  background: linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.6) 100%);
   border-radius: 4px 4px 0 0;
   opacity: 0.8;
   transition: all 0.3s ease;
@@ -587,7 +590,7 @@ const TodoBadge = styled.div<{ variant?: 'primary' | 'warning' | 'error' }>`
       case 'error':
         return 'rgba(244, 67, 54, 0.1)';
       default:
-        return 'rgba(var(--accent-color-rgb), 0.1)';
+        return 'rgba(var(--accent-rgb), 0.1)';
     }
   }};
   color: ${(props) => {
@@ -751,6 +754,32 @@ const Profile: React.FC = () => {
     loadUserAchievements();
     loadSiteSettings();
   }, []);
+
+  // 当用户信息加载完成后，加载仪表盘数据
+  useEffect(() => {
+    if (user) {
+      loadDashboardData();
+    }
+  }, [user]);
+
+  // 加载仪表盘数据
+  const loadDashboardData = async () => {
+    try {
+      const trendResponse = await API.user.getPublishTrend();
+      setPublishTrend(trendResponse.data || []);
+
+      // 只有管理员才加载待办事项
+      if (user && user.role === 'admin') {
+        const todoResponse = await API.user.getAdminTodoItems();
+        setTodoItems(todoResponse.data || []);
+      } else {
+        setTodoItems([]);
+      }
+    } catch (error: any) {
+      console.error('加载仪表盘数据失败:', error);
+      adnaan.toast.error('加载仪表盘数据失败');
+    }
+  };
 
   // 加载用户资料
   const loadUserProfile = async () => {
@@ -1004,10 +1033,16 @@ const Profile: React.FC = () => {
         addTab('comments', isAdmin ? '💬 评论管理' : '💬 我的评论');
         break;
       case 'view-likes':
-        addTab('likes', '❤️ 我的点赞');
+        addTab('likes', '❤️ 文章点赞');
+        break;
+      case 'view-note-likes':
+        addTab('note-likes', '💝 手记点赞');
         break;
       case 'view-bookmarks':
         addTab('bookmarks', '🔖 我的收藏');
+        break;
+      case 'view-security':
+        addTab('security', '🔒 账户安全');
         break;
       case 'view-users':
         if (isAdmin) {
@@ -1064,6 +1099,10 @@ const Profile: React.FC = () => {
   const handleBadgeClick = (achievement: UserAchievement | any) => {
     adnaan.toast.info(`${achievement.name}: ${achievement.description}`);
   };
+
+  // 仪表盘数据
+  const [publishTrend, setPublishTrend] = useState<{ month: string; value: number }[]>([]);
+  const [todoItems, setTodoItems] = useState<{ id: string; title: string; count: number; type: string }[]>([]);
 
   // 标签页管理
   const addTab = (id: string, label: string, closable = true) => {
@@ -1141,22 +1180,6 @@ const Profile: React.FC = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        // 模拟图表数据
-        const chartData = [
-          { month: '05月', value: 35 },
-          { month: '06月', value: 42 },
-          { month: '07月', value: 55 },
-          { month: '08月', value: 48 },
-          { month: '09月', value: 68 },
-          { month: '10月', value: 75 },
-        ];
-
-        // 模拟待办事项
-        const todoItems = [
-          { id: 1, title: '待审核文章', count: 3, type: 'warning', action: () => addTab('articles', '📰 文章管理') },
-          { id: 2, title: '未读评论', count: 12, type: 'primary', action: () => addTab('comments', '💬 评论管理') },
-        ];
-
         return (
           <DashboardContainer initial="hidden" animate="visible" variants={staggerContainerVariants}>
             {/* 数据统计 */}
@@ -1173,51 +1196,70 @@ const Profile: React.FC = () => {
                 </SectionHeader>
                 <TodoCard>
                   <TodoList>
-                    {todoItems.map((item) => (
-                      <TodoItem key={item.id} onClick={item.action} variants={cardVariants} whileHover={{ x: 2 }}>
-                        <TodoContent>
-                          <TodoTitle>{item.title}</TodoTitle>
-                          <TodoMeta>需要处理</TodoMeta>
-                        </TodoContent>
-                        <TodoBadge variant={item.type as any}>{item.count} 项</TodoBadge>
-                      </TodoItem>
-                    ))}
+                    {todoItems.map((item) => {
+                      const action = () => {
+                        if (item.id === 'pending-posts') {
+                          addTab('articles', '📰 文章管理');
+                        } else if (item.id === 'pending-comments') {
+                          addTab('comments', '💬 评论管理');
+                        }
+                      };
+                      return (
+                        <TodoItem key={item.id} onClick={action} variants={cardVariants} whileHover={{ x: 2 }}>
+                          <TodoContent>
+                            <TodoTitle>{item.title}</TodoTitle>
+                            <TodoMeta>需要处理</TodoMeta>
+                          </TodoContent>
+                          <TodoBadge variant={item.type as any}>{item.count} 项</TodoBadge>
+                        </TodoItem>
+                      );
+                    })}
                   </TodoList>
                 </TodoCard>
               </DashboardSection>
             )}
 
-            {/* 数据趋势图表 */}
+            {/* 数据趋势图表 - 总是显示，即使数据为0 */}
             <DashboardSection variants={fadeInUpVariants}>
               <SectionHeader>
                 <SectionTitle>
                   <FiBarChart2 />
-                  内容发布趋势
+                  内容发布趋势（最近6个月）
                 </SectionTitle>
               </SectionHeader>
-              <ChartCard>
-                <Chart>
-                  {chartData.map((item, index) => (
-                    <ChartBar
-                      key={index}
-                      height={item.value}
-                      initial={{ scaleY: 0 }}
-                      animate={{ scaleY: 1 }}
-                      transition={{
-                        duration: 0.5,
-                        delay: index * 0.05,
-                        ease: [0.25, 1, 0.5, 1],
-                      }}
-                      title={`${item.month}: ${item.value}篇`}
-                    />
-                  ))}
-                </Chart>
-                <ChartLabels>
-                  {chartData.map((item, index) => (
-                    <span key={index}>{item.month}</span>
-                  ))}
-                </ChartLabels>
-              </ChartCard>
+              {publishTrend.length > 0 ? (
+                <ChartCard>
+                  <Chart>
+                    {publishTrend.map((item, index) => {
+                      const maxValue = Math.max(...publishTrend.map((d) => d.value), 1);
+                      const heightPercent = item.value > 0 ? Math.max((item.value / maxValue) * 100, 5) : 0; // 至少5%的高度
+                      return (
+                        <ChartBar
+                          key={index}
+                          height={heightPercent}
+                          initial={{ scaleY: 0 }}
+                          animate={{ scaleY: 1 }}
+                          transition={{
+                            duration: 0.5,
+                            delay: index * 0.05,
+                            ease: [0.25, 1, 0.5, 1],
+                          }}
+                          title={`${item.month}: ${item.value}篇`}
+                        />
+                      );
+                    })}
+                  </Chart>
+                  <ChartLabels>
+                    {publishTrend.map((item, index) => (
+                      <span key={index}>{item.month}</span>
+                    ))}
+                  </ChartLabels>
+                </ChartCard>
+              ) : (
+                <ChartCard style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                  加载中...
+                </ChartCard>
+              )}
             </DashboardSection>
 
             {/* 最近活动 */}
@@ -1265,8 +1307,14 @@ const Profile: React.FC = () => {
       case 'likes':
         return <LikeManagement />;
 
+      case 'note-likes':
+        return <NoteLikeManagement />;
+
       case 'bookmarks':
         return <BookmarkManagement />;
+
+      case 'security':
+        return <SecuritySettings />;
 
       case 'users':
         if (!isAdmin) return <div>无权限访问</div>;

@@ -64,7 +64,7 @@ const NoteItem = styled.div`
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(var(--accent-color-rgb), 0.05);
+    background: rgba(var(--accent-rgb), 0.05);
     transform: translateX(2px);
   }
 `;

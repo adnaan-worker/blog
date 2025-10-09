@@ -402,6 +402,11 @@ export const API = {
     exportData: () => http.post('/users/export'),
     deleteAccount: (data: { password: string }) => http.delete('/users/account', { data }),
 
+    // 仪表盘数据
+    getPublishTrend: () => http.get<{ month: string; value: number }[]>('/users/publish-trend'),
+    getAdminTodoItems: () =>
+      http.get<{ id: string; title: string; count: number; type: string }[]>('/users/todo-items'),
+
     // 文件上传
     batchUpload: (files: File[], type?: string, maxCount?: number) => {
       const formData = new FormData();
@@ -515,6 +520,19 @@ export const API = {
      */
     getMetadata: (): Promise<ApiResponse<NoteMetadata>> => {
       return http.get('/notes/metadata');
+    },
+
+    /**
+     * 获取用户手记点赞列表
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<any>>>
+     */
+    getUserLikes: (params?: {
+      page?: number;
+      pageSize?: number;
+      search?: string;
+    }): Promise<ApiResponse<PaginationResult<any>>> => {
+      return http.get('/notes/user/likes', params);
     },
   },
 

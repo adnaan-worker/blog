@@ -13,7 +13,7 @@ const PageContainer = styled.div`
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 80px 1.5rem 4rem;
+  padding: 20px 1.5rem 4rem;
   position: relative;
   z-index: 3;
 

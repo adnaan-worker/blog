@@ -42,8 +42,8 @@ const IconWrapper = styled.div`
   border-radius: 12px;
   background: linear-gradient(
     135deg,
-    rgba(var(--accent-color-rgb, 59, 130, 246), 0.1),
-    rgba(var(--accent-color-rgb, 59, 130, 246), 0.2)
+    rgba(var(--accent-rgb, 59, 130, 246), 0.1),
+    rgba(var(--accent-rgb, 59, 130, 246), 0.2)
   );
   display: flex;
   align-items: center;

@@ -83,7 +83,7 @@ const ActionCard = styled.button<{ isProcessing?: boolean }>`
 
   &:hover:not(:disabled) {
     border-color: var(--accent-color);
-    box-shadow: 0 2px 8px rgba(var(--accent-color-rgb, 99, 102, 241), 0.1);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb, 99, 102, 241), 0.1);
   }
 
   &:disabled {
@@ -177,7 +177,7 @@ const ProcessingIndicator = styled.div`
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: rgba(var(--accent-color-rgb, 99, 102, 241), 0.1);
+  background: rgba(var(--accent-rgb, 99, 102, 241), 0.1);
   border-radius: 8px;
   margin-top: 1rem;
   font-size: 0.875rem;

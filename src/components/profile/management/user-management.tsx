@@ -108,7 +108,7 @@ const Badge = styled.span<{ variant?: 'admin' | 'user' | 'active' | 'inactive' |
     switch (props.variant) {
       case 'admin':
         return `
-          background: rgba(var(--accent-color-rgb, 59, 130, 246), 0.1);
+          background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
           color: var(--accent-color);
         `;
       case 'active':

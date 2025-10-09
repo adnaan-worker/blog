@@ -13,6 +13,8 @@ import {
   FiCheckCircle,
   FiAlertCircle,
   FiXCircle,
+  FiCheck,
+  FiX,
 } from 'react-icons/fi';
 import { Button, Input, InfiniteScroll } from 'adnaan-ui';
 import { API, type Comment } from '@/utils/api';
@@ -132,7 +134,7 @@ const FilterButton = styled.button<{ active?: boolean }>`
 
   &:hover {
     border-color: var(--accent-color);
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-color-rgb), 0.1)')};
+    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.1)')};
   }
 `;
 
@@ -161,7 +163,7 @@ const FilterTag = styled.button<{ active?: boolean }>`
 
   &:hover {
     border-color: var(--accent-color);
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-color-rgb), 0.1)')};
+    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.1)')};
   }
 `;
 
@@ -473,6 +475,39 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
     }
   };
 
+  // 处理审核通过
+  const handleApproveComment = async (comment: Comment) => {
+    try {
+      await API.comment.updateCommentStatus(comment.id, 'approved');
+      adnaan.toast.success('评论已审核通过');
+
+      // 更新本地状态
+      const updatedComments = comments.map((c) => (c.id === comment.id ? { ...c, status: 'approved' } : c));
+      setComments(updatedComments);
+      calculateStats(updatedComments);
+    } catch (error: any) {
+      adnaan.toast.error(error.message || '审核失败');
+    }
+  };
+
+  // 处理审核驳回
+  const handleRejectComment = async (comment: Comment) => {
+    const confirmed = await adnaan.confirm.delete('确定要驳回这条评论吗？', '驳回评论');
+    if (!confirmed) return;
+
+    try {
+      await API.comment.updateCommentStatus(comment.id, 'spam');
+      adnaan.toast.success('评论已驳回');
+
+      // 更新本地状态
+      const updatedComments = comments.map((c) => (c.id === comment.id ? { ...c, status: 'spam' } : c));
+      setComments(updatedComments);
+      calculateStats(updatedComments);
+    } catch (error: any) {
+      adnaan.toast.error(error.message || '驳回失败');
+    }
+  };
+
   // 处理刷新
   const handleRefresh = () => {
     reloadComments();
@@ -626,14 +661,32 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
                 >
                   <CommentHeader>
                     <PostInfo>
-                      <PostLink onClick={() => handleGoToPost(comment.post_id)}>
-                        文章: {comment.post_title || `#${comment.post_id}`}
+                      <PostLink onClick={() => handleGoToPost(comment.postId)}>
+                        文章: {comment.post?.title || `#${comment.postId}`}
                         <FiExternalLink size={14} />
                       </PostLink>
-                      {comment.parent_id && <span>• 回复 #{comment.parent_id}</span>}
+                      {comment.parentId && <span>• 回复 #{comment.parentId}</span>}
                     </PostInfo>
                     <CommentActions>
-                      <ActionButton onClick={() => handleDeleteComment(comment)}>
+                      {comment.status === 'pending' && (
+                        <>
+                          <ActionButton
+                            onClick={() => handleApproveComment(comment)}
+                            style={{ color: 'var(--success-color)' }}
+                            title="审核通过"
+                          >
+                            <FiCheck size={16} />
+                          </ActionButton>
+                          <ActionButton
+                            onClick={() => handleRejectComment(comment)}
+                            style={{ color: 'var(--error-color)' }}
+                            title="审核驳回"
+                          >
+                            <FiX size={16} />
+                          </ActionButton>
+                        </>
+                      )}
+                      <ActionButton onClick={() => handleDeleteComment(comment)} title="删除">
                         <FiTrash2 size={14} />
                       </ActionButton>
                     </CommentActions>

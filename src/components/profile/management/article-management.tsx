@@ -142,7 +142,7 @@ const FilterButton = styled.button<{ active?: boolean }>`
 
   &:hover {
     border-color: var(--accent-color);
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-color-rgb), 0.1)')};
+    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.1)')};
   }
 `;
 
@@ -171,7 +171,7 @@ const FilterTag = styled.button<{ active?: boolean }>`
 
   &:hover {
     border-color: var(--accent-color);
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-color-rgb), 0.1)')};
+    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.1)')};
   }
 `;
 
@@ -312,7 +312,7 @@ const TagsContainer = styled.div`
 
 const Tag = styled.span`
   padding: 0.2rem 0.5rem;
-  background: rgba(var(--accent-color-rgb), 0.1);
+  background: rgba(var(--accent-rgb), 0.1);
   color: var(--accent-color);
   border-radius: 12px;
   font-size: 0.7rem;

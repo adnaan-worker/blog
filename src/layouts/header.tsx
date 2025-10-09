@@ -230,6 +230,11 @@ const LogoText = styled.span`
     color: var(--accent-color);
   }
 
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+
   @media (max-width: 480px) {
     font-size: 1.2rem;
   }
@@ -519,8 +524,116 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
               <img src="/logo.png" alt="" />
             </LogoIconContainer>
             <LogoText className="logo-text">
-              <LogoHighlight className="logo-highlight">a</LogoHighlight>dnaan's
-              <LogoHighlight className="logo-highlight"> blog</LogoHighlight>
+              <svg width="500" height="120" viewBox="0 0 500 120" xmlns="http://www.w3.org/2000/svg">
+                <rect x="22" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="24" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="26" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="28" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="30" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="32" y="26" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="22" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="24" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="26" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="28" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="30" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="32" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="20" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="32" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="22" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="24" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="26" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="28" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="30" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="32" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="48" y="20" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="48" y="22" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="38" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="40" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="42" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="44" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="46" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="48" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="36" y="26" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="48" y="26" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="36" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="48" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="36" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="48" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="38" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="40" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="42" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="44" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="46" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="48" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="52" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="54" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="56" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="58" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="60" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="62" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="52" y="26" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="64" y="26" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="52" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="64" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="52" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="64" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="52" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="64" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="70" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="72" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="74" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="76" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="78" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="80" y="26" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="70" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="72" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="74" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="76" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="78" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="80" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="68" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="80" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="70" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="72" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="74" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="76" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="78" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="80" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="86" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="88" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="90" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="92" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="94" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="96" y="26" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="86" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="88" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="90" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="92" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="94" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="96" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="84" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="96" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="86" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="88" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="90" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="92" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="94" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="96" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="100" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="102" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="104" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="106" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="108" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="110" y="24" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="100" y="26" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="112" y="26" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="100" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="112" y="28" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="100" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="112" y="30" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="100" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+                <rect x="112" y="32" width="2" height="2" fill="#4caf50" shape-rendering="crispEdges" />
+              </svg>
             </LogoText>
             <LogoTooltip visible={showLogoTooltip}>{tooltipMessage}</LogoTooltip>
           </LogoContainer>

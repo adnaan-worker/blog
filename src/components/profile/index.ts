@@ -18,6 +18,8 @@ export { default as ArticleManagement } from './management/article-management';
 export { default as CommentManagement } from './management/comment-management';
 export { default as BookmarkManagement } from './management/bookmark-management';
 export { default as LikeManagement } from './management/like-management';
+export { default as NoteLikeManagement } from './management/note-like-management';
+export { default as SecuritySettings } from './management/security-settings';
 export { default as UserManagement } from './management/user-management';
 export { default as CategoryManagement } from './management/category-management';
 export { default as TagManagement } from './management/tag-management';

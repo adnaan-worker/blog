@@ -139,6 +139,13 @@ export const useUserRole = (user: UserProfile | null) => {
             action: 'view-tags',
           },
           {
+            id: 'view-security',
+            label: '账户安全',
+            icon: '🔒',
+            description: '修改密码、数据导出',
+            action: 'view-security',
+          },
+          {
             id: 'edit-site-settings',
             label: '网站设置',
             icon: '⚙️',
@@ -173,10 +180,17 @@ export const useUserRole = (user: UserProfile | null) => {
       quickActions: [
         {
           id: 'view-likes',
-          label: '我的点赞',
+          label: '文章点赞',
           icon: '❤️',
-          description: '查看我的点赞记录',
+          description: '查看我的文章点赞记录',
           action: 'view-likes',
+        },
+        {
+          id: 'view-note-likes',
+          label: '手记点赞',
+          icon: '💝',
+          description: '查看我的手记点赞记录',
+          action: 'view-note-likes',
         },
         {
           id: 'view-bookmarks',
@@ -191,6 +205,13 @@ export const useUserRole = (user: UserProfile | null) => {
           icon: '💬',
           description: '查看我的评论记录',
           action: 'view-comments',
+        },
+        {
+          id: 'view-security',
+          label: '账户安全',
+          icon: '🔒',
+          description: '修改密码、数据导出',
+          action: 'view-security',
         },
         {
           id: 'logout',
