@@ -3,9 +3,14 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# 设置国内镜像源
+RUN npm config set registry https://registry.npmmirror.com
+
 # 复制依赖文件
 COPY package*.json ./
-RUN npm ci
+
+# 清理并重新安装依赖（解决rollup可选依赖问题）
+RUN rm -rf node_modules package-lock.json && npm install
 
 # 复制源代码
 COPY . .

@@ -119,6 +119,8 @@ export default defineConfig(({ mode }) => {
       esbuildOptions: {
         target: 'es2020',
       },
+      // 强制重新构建
+      force: true,
     },
     // 构建选项
     build: {
@@ -151,37 +153,14 @@ export default defineConfig(({ mode }) => {
       // 分块策略
       rollupOptions: {
         output: {
-          // 使用函数式分割策略，更稳定
-          manualChunks: (id) => {
-            // 处理React相关依赖
-            if (id.includes('node_modules/react') || id.includes('node_modules/scheduler')) {
-              return 'react-vendor';
-            }
-
-            // UI组件库
-            if (id.includes('node_modules/@emotion') || id.includes('node_modules/framer-motion')) {
-              return 'ui-vendor';
-            }
-
-            // 图标
-            if (id.includes('node_modules/react-icons')) {
-              return 'icons';
-            }
-
-            // 路由
-            if (id.includes('node_modules/react-router')) {
-              return 'router';
-            }
-
-            // 状态管理
-            if (id.includes('node_modules/@reduxjs') || id.includes('node_modules/react-redux')) {
-              return 'redux';
-            }
-
-            // 其他node_modules依赖
-            if (id.includes('node_modules/')) {
-              return 'vendor';
-            }
+          // 简化分块策略，避免循环依赖
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'ui-vendor': ['@emotion/react', '@emotion/styled', 'framer-motion'],
+            'router': ['react-router-dom'],
+            'redux': ['@reduxjs/toolkit', 'react-redux'],
+            'icons': ['react-icons/fi'],
+            'vendor': ['adnaan-ui'],
           },
           // 优化文件名和路径
           entryFileNames: 'assets/[name].[hash].js',
