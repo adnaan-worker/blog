@@ -226,15 +226,17 @@ interface BookmarkManagementProps {
 // 收藏接口
 interface Bookmark {
   id: number;
-  post_id: number;
-  created_at: string;
+  postId: number;
+  userId: number;
+  createdAt: string;
   post?: {
     id: number;
     title: string;
     summary?: string;
-    view_count: number;
-    like_count: number;
-    created_at: string;
+    viewCount: number;
+    likeCount: number;
+    createdAt: string;
+    status: number;
   };
 }
 
@@ -346,11 +348,11 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
   const handleRemoveBookmark = async (bookmark: Bookmark, e: React.MouseEvent) => {
     e.stopPropagation();
 
-    const confirmed = await adnaan.confirm('确定要取消收藏吗？');
+    const confirmed = await adnaan.confirm.delete('确定要取消收藏这篇文章吗？', '确认取消');
     if (!confirmed) return;
 
     try {
-      await API.article.toggleBookmark(bookmark.post_id);
+      await API.article.toggleBookmark(bookmark.postId);
 
       adnaan.toast.success('取消收藏成功');
       const updatedBookmarks = bookmarks.filter((b) => b.id !== bookmark.id);
@@ -368,7 +370,7 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
 
   // 处理卡片点击
   const handleCardClick = (postId: number) => {
-    navigate(`/article/${postId}`);
+    navigate(`/blog/${postId}`);
   };
 
   return (
@@ -429,10 +431,10 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => handleCardClick(bookmark.post_id)}
+                  onClick={() => handleCardClick(bookmark.postId)}
                 >
                   <BookmarkHeader>
-                    <BookmarkTitle>{bookmark.post?.title || `文章 #${bookmark.post_id}`}</BookmarkTitle>
+                    <BookmarkTitle>{bookmark.post?.title || `文章 #${bookmark.postId}`}</BookmarkTitle>
                     <BookmarkActions>
                       <ActionButton onClick={(e) => handleRemoveBookmark(bookmark, e)}>
                         <FiTrash2 size={14} />
@@ -445,21 +447,21 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
                   <BookmarkMeta>
                     <MetaItem>
                       <FiBookmark size={12} />
-                      收藏于 {formatDate(bookmark.created_at, 'YYYY-MM-DD')}
+                      收藏于 {formatDate(bookmark.createdAt, 'YYYY-MM-DD HH:mm')}
                     </MetaItem>
                     {bookmark.post && (
                       <>
                         <MetaItem>
                           <FiCalendar size={12} />
-                          {formatDate(bookmark.post.created_at, 'YYYY-MM-DD')}
+                          {formatDate(bookmark.post.createdAt, 'YYYY-MM-DD')}
                         </MetaItem>
                         <MetaItem>
                           <FiEye size={12} />
-                          {bookmark.post.view_count}
+                          {bookmark.post.viewCount}
                         </MetaItem>
                         <MetaItem>
                           <FiHeart size={12} />
-                          {bookmark.post.like_count}
+                          {bookmark.post.likeCount}
                         </MetaItem>
                       </>
                     )}

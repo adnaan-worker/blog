@@ -25,8 +25,17 @@ export { StickyDebugger, useStickyDebug } from './sticky-debug';
 export { default as scrollLock } from './scroll-lock';
 
 // 导出一些常用的工具函数
-export const formatDate = (date: Date | string | number, format: string = 'YYYY-MM-DD HH:mm:ss'): string => {
+export const formatDate = (
+  date: Date | string | number | null | undefined,
+  format: string = 'YYYY-MM-DD HH:mm:ss',
+): string => {
+  // 处理空值
+  if (!date) return '-';
+
   const d = new Date(date);
+
+  // 检查日期是否有效
+  if (isNaN(d.getTime())) return '-';
 
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');

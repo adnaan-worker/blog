@@ -200,7 +200,8 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
 
   // 导出数据
   const handleExportData = async () => {
-    const confirmed = await adnaan.confirm(
+    const confirmed = await adnaan.confirm.confirm(
+      '导出数据',
       '确定要导出您的所有数据吗？\n导出的数据将包含您的文章、手记、评论等所有内容。',
     );
 
@@ -236,14 +237,15 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
       return;
     }
 
-    const confirmed = await adnaan.confirm(
-      '⚠️ 危险操作\n\n确定要永久删除您的账户吗？\n\n此操作不可撤销，您的所有数据将被永久删除！',
+    const confirmed = await adnaan.confirm.delete(
+      '确定要永久删除您的账户吗？\n\n此操作不可撤销，您的所有数据将被永久删除！',
+      '⚠️ 危险操作',
     );
 
     if (!confirmed) return;
 
     // 二次确认
-    const doubleConfirmed = await adnaan.confirm('最后确认：真的要删除账户吗？\n\n删除后将无法恢复！');
+    const doubleConfirmed = await adnaan.confirm.delete('真的要删除账户吗？\n\n删除后将无法恢复！', '最后确认');
 
     if (!doubleConfirmed) return;
 

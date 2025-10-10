@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
           algorithm: 'gzip',
           ext: '.gz',
           deleteOriginFile: false,
-          threshold: 10240, // 只压缩大于10kb的文件
+          threshold: 5120, // 降低阈值到5kb，压缩更多文件
           verbose: true,
           disable: false,
         }),
@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
           algorithm: 'brotliCompress',
           ext: '.br',
           deleteOriginFile: false,
-          threshold: 10240, // 只压缩大于10kb的文件
+          threshold: 5120, // 降低阈值到5kb
           verbose: true,
           disable: false,
         }),
@@ -45,6 +45,7 @@ export default defineConfig(({ mode }) => {
           gzipSize: true,
           brotliSize: true,
           filename: 'dist/stats.html',
+          template: 'treemap', // 使用树状图，更直观
         }),
     ].filter(Boolean),
     base: '/',
@@ -114,13 +115,21 @@ export default defineConfig(({ mode }) => {
         '@reduxjs/toolkit',
         'react-redux',
         'adnaan-ui',
+        // TipTap 编辑器相关 - 提升开发体验
+        '@tiptap/react',
+        '@tiptap/core',
+        '@tiptap/starter-kit',
+        'highlight.js',
+        'socket.io-client',
+      ],
+      // 排除不需要预构建的包
+      exclude: [
+        'live2d-widget', // 第三方库，可能不兼容预构建
       ],
       // 处理ESM兼容性
       esbuildOptions: {
         target: 'es2020',
       },
-      // 强制重新构建
-      force: true,
     },
     // 构建选项
     build: {
@@ -153,30 +162,110 @@ export default defineConfig(({ mode }) => {
       // 分块策略
       rollupOptions: {
         output: {
-          // 简化分块策略，避免循环依赖
-          manualChunks: {
-            'react-vendor': ['react', 'react-dom'],
-            'ui-vendor': ['@emotion/react', '@emotion/styled', 'framer-motion'],
-            'router': ['react-router-dom'],
-            'redux': ['@reduxjs/toolkit', 'react-redux'],
-            'icons': ['react-icons/fi'],
-            'vendor': ['adnaan-ui'],
+          // 优化分块策略 - 修复 React 调度器依赖问题
+          manualChunks: (id) => {
+            // React 生态系统必须放在一起，包括 scheduler
+            if (
+              id.includes('node_modules/react/') ||
+              id.includes('node_modules/react-dom/') ||
+              id.includes('node_modules/scheduler/')
+            ) {
+              return 'react-core';
+            }
+
+            // UI 基础库 - 高频使用
+            if (id.includes('@emotion/react') || id.includes('@emotion/styled') || id.includes('framer-motion')) {
+              return 'ui-base';
+            }
+
+            // 路由和状态管理 - 高频使用
+            if (id.includes('react-router-dom') || id.includes('@reduxjs/toolkit') || id.includes('react-redux')) {
+              return 'router-redux';
+            }
+
+            // TipTap 编辑器 - 仅编辑器页面使用，单独分块
+            if (id.includes('@tiptap/')) {
+              return 'editor';
+            }
+
+            // Socket.IO - 实时通信
+            if (id.includes('socket.io-client')) {
+              return 'socket';
+            }
+
+            // Live2D - 独立组件
+            if (id.includes('live2d-widget')) {
+              return 'live2d';
+            }
+
+            // 图标库 - 按需加载
+            if (id.includes('react-icons') || id.includes('lucide-react')) {
+              return 'icons';
+            }
+
+            // adnaan-ui 组件库
+            if (id.includes('adnaan-ui')) {
+              return 'adnaan-ui';
+            }
+
+            // 其他 node_modules 依赖
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
           },
-          // 优化文件名和路径
-          entryFileNames: 'assets/[name].[hash].js',
-          chunkFileNames: 'assets/[name].[hash].js',
+          // 优化文件名和路径 - 清晰的目录结构
+          entryFileNames: 'js/[name].[hash].js',
+          chunkFileNames: (chunkInfo) => {
+            // 根据chunk名称分类到不同目录
+            const name = chunkInfo.name;
+
+            // 核心库放在 js/core 目录
+            if (['react-core', 'ui-base', 'router-redux'].includes(name)) {
+              return 'js/core/[name].[hash].js';
+            }
+
+            // 功能模块放在 js/modules 目录
+            if (['editor', 'socket', 'live2d'].includes(name)) {
+              return 'js/modules/[name].[hash].js';
+            }
+
+            // UI和工具库放在 js/libs 目录
+            if (['adnaan-ui', 'icons', 'vendor'].includes(name)) {
+              return 'js/libs/[name].[hash].js';
+            }
+
+            // 页面chunk放在 js/pages 目录
+            return 'js/pages/[name].[hash].js';
+          },
           assetFileNames: (assetInfo) => {
-            // 根据文件类型分类资源
-            const extType = assetInfo.name?.split('.').at(-1);
-            if (/\.(png|jpe?g|gif|svg|webp|ico)$/.test(assetInfo.name || '')) {
-              return 'assets/images/[name].[hash][extname]';
+            const name = assetInfo.name || '';
+
+            // 图片资源
+            if (/\.(png|jpe?g|gif|svg|webp|ico|avif)$/i.test(name)) {
+              return 'images/[name].[hash][extname]';
             }
-            if (/\.(woff2?|eot|ttf|otf)$/.test(assetInfo.name || '')) {
-              return 'assets/fonts/[name].[hash][extname]';
+
+            // 字体文件
+            if (/\.(woff2?|eot|ttf|otf)$/i.test(name)) {
+              return 'fonts/[name].[hash][extname]';
             }
-            if (extType === 'css') {
-              return 'assets/css/[name].[hash][extname]';
+
+            // CSS文件
+            if (/\.css$/i.test(name)) {
+              return 'css/[name].[hash][extname]';
             }
+
+            // 媒体文件
+            if (/\.(mp4|webm|ogg|mp3|wav|flac|aac)$/i.test(name)) {
+              return 'media/[name].[hash][extname]';
+            }
+
+            // JSON等数据文件
+            if (/\.(json|xml|txt)$/i.test(name)) {
+              return 'data/[name].[hash][extname]';
+            }
+
+            // 其他文件
             return 'assets/[name].[hash][extname]';
           },
         },
@@ -198,7 +287,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       // 开发工具
-      devSourcemap: true,
+      devSourcemap: !isProduction, // 仅开发环境启用
     },
     // 性能优化
     esbuild: {

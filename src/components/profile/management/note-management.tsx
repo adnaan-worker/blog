@@ -443,14 +443,12 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
 
   // 处理创建手记
   const handleCreateNote = () => {
-    const url = `${window.location.origin}/#/editor/note`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    navigate('/editor/note');
   };
 
   // 处理编辑手记
   const handleEditNote = (note: Note) => {
-    const url = `${window.location.origin}/#/editor/note?id=${note.id}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    navigate(`/editor/note?id=${note.id}`);
   };
 
   // 处理删除手记

@@ -1063,7 +1063,7 @@ const Profile: React.FC = () => {
         setIsEditSiteSettingsModalOpen(true);
         break;
       case 'logout':
-        adnaan.confirm('确定要退出登录吗？').then((confirmed) => {
+        adnaan.confirm.confirm('退出登录', '确定要退出登录吗？').then((confirmed) => {
           if (!confirmed) return;
           API.user
             .logout()

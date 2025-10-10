@@ -257,8 +257,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       setLoading(true);
       const response = await API.comment.getCommentsByPost(postId, { page: 1, limit: 50 });
       if (response.code === 200 && response.data) {
-        setComments(response.data.comments || []);
-        setTotal(response.data.total || 0);
+        setComments(response.data || []);
+        setTotal(response.meta?.pagination?.total ?? 0);
       }
     } catch (error) {
       console.error('获取评论失败:', error);
@@ -328,8 +328,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
   // 删除评论
   const handleDelete = async (id: number) => {
-    const confirmed = adnaan?.confirm
-      ? await adnaan.confirm({ title: '确认删除', message: '确定要删除这条评论吗？' })
+    const confirmed = adnaan?.confirm?.delete
+      ? await adnaan.confirm.delete('确定要删除这条评论吗？', '确认删除')
       : window.confirm('确定要删除这条评论吗？');
 
     if (!confirmed) return;

@@ -476,14 +476,12 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
 
   // 处理创建文章
   const handleCreateArticle = () => {
-    const url = `${window.location.origin}/#/editor/article`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    navigate('/editor/article');
   };
 
   // 处理编辑文章
   const handleEditArticle = (article: Article) => {
-    const url = `${window.location.origin}/#/editor/article?id=${article.id}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    navigate(`/editor/article?id=${article.id}`);
   };
 
   // 处理删除文章

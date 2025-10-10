@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiHeart, FiEye, FiClock, FiSearch, FiRefreshCw, FiCalendar, FiMessageSquare } from 'react-icons/fi';
+import { FiHeart, FiEye, FiClock, FiSearch, FiRefreshCw, FiCalendar, FiMessageSquare, FiX } from 'react-icons/fi';
 import { Button, Input, InfiniteScroll } from 'adnaan-ui';
 import { API } from '@/utils/api';
 import { formatDate } from '@/utils';
@@ -146,6 +146,30 @@ const LikeTitle = styled.h3`
   gap: 0.5rem;
 `;
 
+const UnlikeButton = styled(motion.button)`
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.5rem;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--error-color-alpha, rgba(239, 68, 68, 0.1));
+    border-color: var(--error-color);
+    color: var(--error-color);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
 const LikeIcon = styled.div`
   color: var(--error-color);
   display: flex;
@@ -205,15 +229,17 @@ interface LikeManagementProps {
 // 点赞接口
 interface Like {
   id: number;
-  post_id: number;
-  created_at: string;
+  postId: number;
+  userId: number;
+  createdAt: string;
   post?: {
     id: number;
     title: string;
     summary?: string;
-    view_count: number;
-    like_count: number;
-    created_at: string;
+    viewCount: number;
+    likeCount: number;
+    createdAt: string;
+    status: number;
   };
 }
 
@@ -328,7 +354,27 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
 
   // 处理卡片点击
   const handleCardClick = (postId: number) => {
-    navigate(`/article/${postId}`);
+    navigate(`/blog/${postId}`);
+  };
+
+  // 处理取消点赞
+  const handleUnlike = async (e: React.MouseEvent, postId: number) => {
+    e.stopPropagation(); // 阻止冒泡到卡片点击事件
+
+    try {
+      await API.article.toggleLike(postId);
+      adnaan?.toast?.success('已取消点赞');
+
+      // 从列表中移除该项
+      setLikes((prev) => prev.filter((like) => like.postId !== postId));
+
+      // 更新统计
+      setStats((prev) => ({
+        totalLikes: prev.totalLikes - 1,
+      }));
+    } catch (error: any) {
+      adnaan?.toast?.error(error.message || '取消点赞失败');
+    }
   };
 
   return (
@@ -389,15 +435,23 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => handleCardClick(like.post_id)}
+                  onClick={() => handleCardClick(like.postId)}
                 >
                   <LikeHeader>
                     <LikeTitle>
                       <LikeIcon>
                         <FiHeart size={16} />
                       </LikeIcon>
-                      {like.post?.title || `文章 #${like.post_id}`}
+                      {like.post?.title || `文章 #${like.postId}`}
                     </LikeTitle>
+                    <UnlikeButton
+                      onClick={(e) => handleUnlike(e, like.postId)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      title="取消点赞"
+                    >
+                      <FiX size={16} />
+                    </UnlikeButton>
                   </LikeHeader>
 
                   {like.post?.summary && <LikeContent>{like.post.summary}</LikeContent>}
@@ -405,21 +459,21 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
                   <LikeMeta>
                     <MetaItem>
                       <FiClock size={12} />
-                      点赞于 {formatDate(like.created_at, 'YYYY-MM-DD HH:mm')}
+                      点赞于 {formatDate(like.createdAt, 'YYYY-MM-DD HH:mm')}
                     </MetaItem>
                     {like.post && (
                       <>
                         <MetaItem>
                           <FiCalendar size={12} />
-                          {formatDate(like.post.created_at, 'YYYY-MM-DD')}
+                          {formatDate(like.post.createdAt, 'YYYY-MM-DD')}
                         </MetaItem>
                         <MetaItem>
                           <FiEye size={12} />
-                          {like.post.view_count}
+                          {like.post.viewCount}
                         </MetaItem>
                         <MetaItem>
                           <FiHeart size={12} />
-                          {like.post.like_count}
+                          {like.post.likeCount}
                         </MetaItem>
                       </>
                     )}

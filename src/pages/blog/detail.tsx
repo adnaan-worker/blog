@@ -816,9 +816,9 @@ const BlogDetail: React.FC = () => {
           setArticle({ ...article, likeCount: response.data.likeCount });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('点赞失败:', error);
-      adnaan.toast.error('点赞失败，请稍后重试');
+      adnaan.toast.error((error && error.message) || '点赞失败，请稍后重试');
     }
   }, [id, article]);
 
@@ -830,9 +830,9 @@ const BlogDetail: React.FC = () => {
       if (response.success) {
         setBookmarked(response.data.bookmarked);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('收藏失败:', error);
-      adnaan.toast.error('收藏失败，请稍后重试');
+      adnaan.toast.error((error && error.message) || '收藏失败，请稍后重试');
     }
   }, [id]);
 

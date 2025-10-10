@@ -102,13 +102,26 @@ export const logoutUser = () => async (dispatch: any) => {
     // 清除本地存储中的用户信息
     storage.local.remove('user');
     storage.local.remove('token');
+    // 清除个人中心相关缓存
+    storage.local.remove('profile_active_tab');
+    storage.local.remove('profile_open_tabs');
     dispatch(logout());
     // 使用全局Toast显示登出成功
     adnaan.toast.info('您已成功退出登录', '再见');
+    // 跳转到首页
+    window.location.href = '/';
   } catch (error) {
     console.error('Logout failed:', error);
+    // 即使登出失败，也清除本地数据并跳转
+    storage.local.remove('user');
+    storage.local.remove('token');
+    storage.local.remove('profile_active_tab');
+    storage.local.remove('profile_open_tabs');
+    dispatch(logout());
     // 使用全局Toast显示登出失败
-    adnaan.toast.error('退出登录失败，请稍后重试', '出错了');
+    adnaan.toast.error('退出登录失败，但已清除本地数据', '出错了');
+    // 跳转到首页
+    window.location.href = '/';
   }
 };
 

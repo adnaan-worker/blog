@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiHeart, FiEye, FiClock, FiSearch, FiRefreshCw, FiCalendar } from 'react-icons/fi';
+import { FiHeart, FiEye, FiClock, FiSearch, FiRefreshCw, FiCalendar, FiX } from 'react-icons/fi';
 import { Button, Input, InfiniteScroll } from 'adnaan-ui';
 import { API } from '@/utils/api';
 import { formatDate } from '@/utils';
@@ -146,6 +146,30 @@ const LikeTitle = styled.h3`
   gap: 0.5rem;
 `;
 
+const UnlikeButton = styled(motion.button)`
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.5rem;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--error-color-alpha, rgba(239, 68, 68, 0.1));
+    border-color: var(--error-color);
+    color: var(--error-color);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
 const LikeIcon = styled.div`
   color: var(--error-color);
   display: flex;
@@ -214,16 +238,17 @@ interface NoteLikeManagementProps {
 // 手记点赞接口
 interface NoteLike {
   id: number;
-  note_id: number;
-  created_at: string;
+  noteId: number;
+  userId: number;
+  createdAt: string;
   note?: {
     id: number;
     title?: string;
     content: string;
     mood?: string;
-    view_count: number;
-    like_count: number;
-    created_at: string;
+    viewCount: number;
+    likeCount: number;
+    createdAt: string;
   };
 }
 
@@ -343,6 +368,26 @@ const NoteLikeManagement: React.FC<NoteLikeManagementProps> = ({ className }) =>
     navigate(`/note/${noteId}`);
   };
 
+  // 处理取消点赞
+  const handleUnlike = async (e: React.MouseEvent, noteId: number) => {
+    e.stopPropagation(); // 阻止冒泡到卡片点击事件
+
+    try {
+      await API.note.toggleLike(noteId);
+      adnaan?.toast?.success('已取消点赞');
+
+      // 从列表中移除该项
+      setLikes((prev) => prev.filter((like) => like.noteId !== noteId));
+
+      // 更新统计
+      setStats((prev) => ({
+        totalLikes: prev.totalLikes - 1,
+      }));
+    } catch (error: any) {
+      adnaan?.toast?.error(error.message || '取消点赞失败');
+    }
+  };
+
   // 获取心情emoji
   const getMoodEmoji = (mood?: string) => {
     switch (mood) {
@@ -429,7 +474,7 @@ const NoteLikeManagement: React.FC<NoteLikeManagementProps> = ({ className }) =>
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => handleCardClick(like.note_id)}
+                  onClick={() => handleCardClick(like.noteId)}
                 >
                   <LikeHeader>
                     <LikeTitle>
@@ -438,6 +483,14 @@ const NoteLikeManagement: React.FC<NoteLikeManagementProps> = ({ className }) =>
                       </LikeIcon>
                       {like.note?.title || like.note?.content.substring(0, 30) + '...'}
                     </LikeTitle>
+                    <UnlikeButton
+                      onClick={(e) => handleUnlike(e, like.noteId)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      title="取消点赞"
+                    >
+                      <FiX size={16} />
+                    </UnlikeButton>
                   </LikeHeader>
 
                   {like.note?.content && (
@@ -454,21 +507,21 @@ const NoteLikeManagement: React.FC<NoteLikeManagementProps> = ({ className }) =>
                     )}
                     <MetaItem>
                       <FiClock size={12} />
-                      点赞于 {formatDate(like.created_at, 'YYYY-MM-DD HH:mm')}
+                      点赞于 {formatDate(like.createdAt, 'YYYY-MM-DD HH:mm')}
                     </MetaItem>
                     {like.note && (
                       <>
                         <MetaItem>
                           <FiCalendar size={12} />
-                          {formatDate(like.note.created_at, 'YYYY-MM-DD')}
+                          {formatDate(like.note.createdAt, 'YYYY-MM-DD')}
                         </MetaItem>
                         <MetaItem>
                           <FiEye size={12} />
-                          {like.note.view_count}
+                          {like.note.viewCount}
                         </MetaItem>
                         <MetaItem>
                           <FiHeart size={12} />
-                          {like.note.like_count}
+                          {like.note.likeCount}
                         </MetaItem>
                       </>
                     )}

@@ -214,13 +214,7 @@ const ArticleEditorPage: React.FC = () => {
   // 处理退出
   const handleExit = async () => {
     if (hasUnsavedChanges) {
-      const confirmed = await adnaan.confirm({
-        title: '确认退出',
-        message: '您有未保存的修改，确定要退出吗？',
-        confirmText: '退出',
-        cancelText: '取消',
-        confirmVariant: 'danger',
-      });
+      const confirmed = await adnaan.confirm.confirm('确认退出', '您有未保存的修改，确定要退出吗？', '退出', '取消');
       if (!confirmed) return;
     }
 
