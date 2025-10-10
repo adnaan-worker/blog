@@ -122,10 +122,6 @@ export default defineConfig(({ mode }) => {
         'highlight.js',
         'socket.io-client',
       ],
-      // 排除不需要预构建的包
-      exclude: [
-        'live2d-widget', // 第三方库，可能不兼容预构建
-      ],
       // 处理ESM兼容性
       esbuildOptions: {
         target: 'es2020',
@@ -193,11 +189,6 @@ export default defineConfig(({ mode }) => {
               return 'socket';
             }
 
-            // Live2D - 独立组件
-            if (id.includes('live2d-widget')) {
-              return 'live2d';
-            }
-
             // 图标库 - 按需加载
             if (id.includes('react-icons') || id.includes('lucide-react')) {
               return 'icons';
@@ -225,7 +216,7 @@ export default defineConfig(({ mode }) => {
             }
 
             // 功能模块放在 js/modules 目录
-            if (['editor', 'socket', 'live2d'].includes(name)) {
+            if (['editor', 'socket'].includes(name)) {
               return 'js/modules/[name].[hash].js';
             }
 

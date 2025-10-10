@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
 import styled from '@emotion/styled';
-import { L2Dwidget } from 'live2d-widget';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Live2DContainer = styled(motion.div)`
@@ -45,6 +44,10 @@ const PetHouse = styled(motion.div)`
     height: 15px;
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 0 0 20px 20px;
+  }
+
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 
@@ -228,8 +231,10 @@ export const Live2DModel = () => {
 
   // 初始化Live2D模型的函数
   const initLive2DModel = () => {
-    if (typeof window !== 'undefined' && L2Dwidget) {
+    if (typeof window !== 'undefined' && (window as any).L2Dwidget) {
       try {
+        const L2Dwidget = (window as any).L2Dwidget;
+
         // 创建一个新的script元素用于监听模型加载
         const script = document.createElement('script');
         script.id = 'live2d-load-monitor';
@@ -319,8 +324,9 @@ export const Live2DModel = () => {
           }
         }, 100);
       } catch (error) {
-        console.error('Failed to initialize Live2D widget:', error);
+        console.error('初始化Live2D模型失败:', error);
         setIsModelLoading(false);
+        setIsCollapsed(true);
       }
     }
   };
