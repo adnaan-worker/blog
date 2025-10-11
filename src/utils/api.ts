@@ -121,12 +121,54 @@ export interface UpdateSiteSettingsParams {
 
 export interface UserActivity {
   id: string | number;
-  type: 'article_published' | 'like_received' | 'comment_received' | 'follow_received' | 'achievement_unlocked';
+  type: // 内容创建类
+  | 'post_created'
+    | 'post_updated'
+    | 'post_deleted'
+    | 'note_created'
+    | 'note_updated'
+    | 'note_deleted'
+    | 'comment_created'
+    | 'comment_updated'
+    | 'comment_deleted'
+    // 互动类
+    | 'post_liked'
+    | 'post_unliked'
+    | 'note_liked'
+    | 'note_unliked'
+    | 'post_bookmarked'
+    | 'post_unbookmarked'
+    // 收到反馈类
+    | 'like_received'
+    | 'comment_received'
+    | 'bookmark_received'
+    // 成就类
+    | 'achievement_unlocked'
+    | 'level_up'
+    | 'milestone_reached'
+    // 审核类
+    | 'post_approved'
+    | 'post_rejected'
+    | 'comment_approved'
+    | 'comment_rejected'
+    // 系统通知类
+    | 'system_notice'
+    | 'account_warning'
+    | 'welcome'
+    // 热门趋势类
+    | 'post_trending'
+    | 'post_featured';
   title: string;
   description?: string;
   timestamp: string;
   link?: string;
   metadata?: any;
+  priority?: number;
+  user?: {
+    id: string | number;
+    username: string;
+    avatar?: string;
+  };
 }
 
 export interface UserAchievement {
@@ -375,6 +417,13 @@ export interface AIChatMessage {
  * 所有的API请求都应该在这里定义
  */
 export const API = {
+  // 活动相关（公开接口）
+  activity: {
+    // 获取全站最新活动（无需登录）
+    getRecentActivities: (params?: PaginationParams & { type?: string }) =>
+      http.get<UserActivity[]>('/activities/recent', params),
+  },
+
   // 用户相关API
   user: {
     // 认证相关

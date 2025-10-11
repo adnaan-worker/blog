@@ -14,7 +14,7 @@ import {
   FiFolderPlus,
   FiCode,
 } from 'react-icons/fi';
-import { API, SiteSettings } from '@/utils/api';
+import { API, SiteSettings, UserActivity } from '@/utils/api';
 import { formatDate } from '@/utils';
 
 // 使用motion直接访问组件
@@ -550,7 +550,7 @@ const ScrollIndicator = styled(motion.div)`
   }
 `;
 
-const mouseScrollVariants = {
+const mouseScrollVariants: Variants = {
   initial: { opacity: 0.5, y: 0 },
   animate: {
     opacity: [0.5, 1, 0.5],
@@ -558,12 +558,12 @@ const mouseScrollVariants = {
     transition: {
       repeat: Infinity,
       duration: 1.5,
-      ease: 'easeInOut',
+      ease: [0.4, 0, 0.2, 1],
     },
   },
 };
 
-const scrollWheelVariants = {
+const scrollWheelVariants: Variants = {
   initial: { opacity: 0.5, scaleY: 1 },
   animate: {
     opacity: [0.5, 1, 0.5],
@@ -571,7 +571,7 @@ const scrollWheelVariants = {
     transition: {
       repeat: Infinity,
       duration: 1.5,
-      ease: 'easeInOut',
+      ease: [0.4, 0, 0.2, 1],
       delay: 0.2,
     },
   },
@@ -1197,73 +1197,70 @@ const projectVariants: Variants = {
   }),
 };
 
-// 示例数据
-const mockActivities = [
-  {
-    id: 1,
-    title: 'Next.js + Vite，这样什么都能做吧？',
-    author: 'XiaoChen1027',
-    time: '访问',
-    description: '微信名称Moon',
-    link: '/activity/1',
-  },
-  {
-    id: 2,
-    title: 'https://github.com/XiaoChen1027',
-    author: 'XiaoChen1027',
-    time: '访问',
-    description: '',
-    link: '/activity/2',
-  },
-  {
-    id: 3,
-    title: 'username 是什么',
-    author: 'Innei',
-    time: '访问',
-    description: '',
-    link: '/activity/3',
-  },
-  {
-    id: 4,
-    title: '四月，你好的样子',
-    author: '某人',
-    time: '访问',
-    description: '',
-    link: '/activity/4',
-  },
-  {
-    id: 5,
-    title: 'React 18 新特性深度解析',
-    author: 'TechGuru',
-    time: '访问',
-    description: '并发渲染和自动批处理',
-    link: '/activity/5',
-  },
-  {
-    id: 6,
-    title: 'TypeScript 5.0 发布了',
-    author: 'DevNews',
-    time: '访问',
-    description: '装饰器和新的语法特性',
-    link: '/activity/6',
-  },
-  {
-    id: 7,
-    title: 'Vite 4.0 性能优化指南',
-    author: 'BuildMaster',
-    time: '访问',
-    description: '构建速度提升50%',
-    link: '/activity/7',
-  },
-  {
-    id: 8,
-    title: '前端工程化最佳实践',
-    author: 'CodeReview',
-    time: '访问',
-    description: 'ESLint + Prettier + Husky',
-    link: '/activity/8',
-  },
-];
+// 活动格式化函数 - 根据不同类型返回不同的展示格式
+const formatActivityText = (activity: UserActivity & { user?: { username: string } }) => {
+  const username = activity.user?.username || '某人';
+  const metadata = activity.metadata || {};
+
+  switch (activity.type) {
+    case 'post_created':
+      return {
+        primary: `${username}发布了文章`,
+        secondary: metadata.postTitle || '无标题',
+        emoji: '📝',
+        color: 'var(--accent-color)',
+      };
+    case 'post_updated':
+      return {
+        primary: `${username}更新了文章`,
+        secondary: metadata.postTitle || '无标题',
+        emoji: '✏️',
+        color: '#10b981',
+      };
+    case 'note_created':
+      return {
+        primary: `${username}发布了手记`,
+        secondary: activity.description || '...',
+        emoji: '📌',
+        color: '#f59e0b',
+      };
+    case 'comment_created':
+      return {
+        primary: `${username}发表了评论`,
+        secondary: activity.description || '',
+        emoji: '💬',
+        color: '#8b5cf6',
+      };
+    case 'achievement_unlocked':
+      return {
+        primary: `${username}解锁了成就`,
+        secondary: metadata.achievementName || activity.description || '',
+        emoji: '🏆',
+        color: '#f59e0b',
+      };
+    case 'post_trending':
+      return {
+        primary: `${username}的文章上热门了`,
+        secondary: metadata.postTitle || '',
+        emoji: '🔥',
+        color: '#ef4444',
+      };
+    case 'post_featured':
+      return {
+        primary: `${username}的文章被精选了`,
+        secondary: metadata.postTitle || '',
+        emoji: '⭐',
+        color: '#f59e0b',
+      };
+    default:
+      return {
+        primary: `${username}${activity.title}`,
+        secondary: activity.description || '',
+        emoji: '📄',
+        color: 'var(--text-secondary)',
+      };
+  }
+};
 
 const chartData = [
   { month: '2025.5', value: 35 },
@@ -1339,6 +1336,9 @@ const Home = () => {
   // 文章和手记数据
   const [articles, setArticles] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
+  // 活动数据
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
 
   // 加载网站设置
   useEffect(() => {
@@ -1381,6 +1381,25 @@ const Home = () => {
     };
 
     loadNotes();
+  }, []);
+
+  // 加载全站活动
+  useEffect(() => {
+    const loadActivities = async () => {
+      try {
+        setActivitiesLoading(true);
+        const response = await API.activity.getRecentActivities({ page: 1, pageSize: 10 });
+        // 分页API返回格式: { data: [...], meta: { pagination: {...} } }
+        setActivities(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('加载活动失败:', error);
+        setActivities([]);
+      } finally {
+        setActivitiesLoading(false);
+      }
+    };
+
+    loadActivities();
   }, []);
 
   const handleCardFlip = () => {
@@ -1793,24 +1812,54 @@ const Home = () => {
               <ActivityScrollContainer>
                 <FadeMask className="top" />
                 <ActivityGrid variants={staggerContainerVariants}>
-                  {mockActivities.map((activity, index) => (
-                    <ActivityLink
-                      href={activity.link || '#'}
-                      key={activity.id}
-                      variants={cardVariants}
-                      whileHover={{ x: 2 }}
-                      custom={index}
-                    >
-                      <ActivityContent>
-                        <ActivityTitle>{activity.title}</ActivityTitle>
-                        <ActivityMeta>
-                          <ActivityAuthor>{activity.author}</ActivityAuthor>
-                          <ActivityTime>{activity.time}</ActivityTime>
-                        </ActivityMeta>
-                        {activity.description && <ActivityDescription>{activity.description}</ActivityDescription>}
-                      </ActivityContent>
-                    </ActivityLink>
-                  ))}
+                  {activitiesLoading ? (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                      加载中...
+                    </div>
+                  ) : activities.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>暂无活动</div>
+                  ) : (
+                    activities.map((activity, index) => {
+                      const formatted = formatActivityText(activity as any);
+                      const activityTime = formatDate(activity.timestamp, 'MM-DD HH:mm');
+
+                      return (
+                        <ActivityLink
+                          href={activity.link || '#'}
+                          key={activity.id}
+                          variants={cardVariants}
+                          whileHover={{ x: 2 }}
+                          custom={index}
+                        >
+                          <ActivityContent>
+                            <div
+                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}
+                            >
+                              <span style={{ fontSize: '1.2rem' }}>{formatted.emoji}</span>
+                              <ActivityAuthor style={{ color: formatted.color, fontWeight: 500 }}>
+                                {formatted.primary}
+                              </ActivityAuthor>
+                            </div>
+                            {formatted.secondary && (
+                              <ActivityTitle
+                                style={{
+                                  fontSize: '0.9rem',
+                                  fontWeight: 400,
+                                  color: 'var(--text-primary)',
+                                  marginBottom: '0.5rem',
+                                }}
+                              >
+                                {formatted.secondary}
+                              </ActivityTitle>
+                            )}
+                            <ActivityMeta style={{ marginTop: '0.5rem' }}>
+                              <ActivityTime>{activityTime}</ActivityTime>
+                            </ActivityMeta>
+                          </ActivityContent>
+                        </ActivityLink>
+                      );
+                    })
+                  )}
                 </ActivityGrid>
                 <FadeMask className="bottom" />
               </ActivityScrollContainer>
