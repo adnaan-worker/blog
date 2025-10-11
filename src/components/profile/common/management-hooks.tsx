@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { PaginatedApiResponse } from '@/utils/types';
 
 // 通用分页Hook
@@ -162,7 +162,7 @@ export const useManagementPage = <
   debounceTime = 300,
 }: UseManagementPageOptions<T, P>) => {
   const [items, setItems] = useState<T[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // 初始设置为 true，表示首次加载中
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<Error | null>(null);
@@ -174,23 +174,44 @@ export const useManagementPage = <
   // Filter state
   const [selectedFilter, setSelectedFilter] = useState(String(initialParams.status || ''));
 
+  // Use refs to store latest values and avoid dependency issues
+  const isLoadingRef = useRef(true); // 初始设置为 true，与 isLoading 保持一致
+  const fetchFunctionRef = useRef(fetchFunction);
+  const initialParamsRef = useRef(initialParams);
+  const pageSizeRef = useRef(pageSize);
+
+  // Update refs when values change
+  useEffect(() => {
+    fetchFunctionRef.current = fetchFunction;
+  }, [fetchFunction]);
+
+  useEffect(() => {
+    initialParamsRef.current = initialParams;
+  }, [initialParams]);
+
+  useEffect(() => {
+    pageSizeRef.current = pageSize;
+  }, [pageSize]);
+
   const fetchItems = useCallback(
     async (currentPage: number, append: boolean, currentSearchQuery: string, currentSelectedFilter: string) => {
-      if (isLoading && append) return; // Prevent multiple loads when appending
+      // Prevent multiple loads when appending
+      if (isLoadingRef.current && append) return;
 
+      isLoadingRef.current = true;
       setIsLoading(true);
       setError(null);
 
       try {
         const params: P = {
-          ...initialParams,
+          ...initialParamsRef.current,
           page: currentPage,
-          pageSize,
+          pageSize: pageSizeRef.current,
           keyword: currentSearchQuery || undefined,
           status: currentSelectedFilter !== '' ? currentSelectedFilter : undefined,
         } as P;
 
-        const response = await fetchFunction(params);
+        const response = await fetchFunctionRef.current(params);
         const newItems = response.data || [];
         const pagination = response.meta?.pagination || { totalPages: 1, total: 0 };
 
@@ -203,10 +224,11 @@ export const useManagementPage = <
         setError(new Error(err.message || '加载失败，请重试'));
         if (!append) setItems([]); // Clear items on initial load error
       } finally {
+        isLoadingRef.current = false;
         setIsLoading(false);
       }
     },
-    [fetchFunction, initialParams, pageSize, isLoading],
+    [], // No dependencies - use refs instead
   );
 
   // Initial load and reload on search/filter change
@@ -223,10 +245,10 @@ export const useManagementPage = <
   }, [searchQuery, selectedFilter, debounceTime, fetchItems]);
 
   const loadMore = useCallback(() => {
-    if (hasMore && !isLoading) {
+    if (hasMore && !isLoadingRef.current) {
       fetchItems(page + 1, true, searchQuery, selectedFilter);
     }
-  }, [hasMore, isLoading, page, searchQuery, selectedFilter, fetchItems]);
+  }, [hasMore, page, searchQuery, selectedFilter, fetchItems]);
 
   const reload = useCallback(() => {
     setPage(1);

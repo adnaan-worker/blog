@@ -416,12 +416,88 @@ export interface AIChatMessage {
  * API封装层
  * 所有的API请求都应该在这里定义
  */
+// 项目相关类型
+export interface Project {
+  id: number;
+  title: string;
+  slug: string;
+  description?: string;
+  content?: string;
+  coverImage?: string;
+  icon?: string;
+  status: 'active' | 'archived' | 'developing' | 'paused';
+  visibility: 'public' | 'private';
+  language?: string;
+  languageColor?: string;
+  tags: string[];
+  techStack: string[];
+  features: string[];
+  githubUrl?: string;
+  giteeUrl?: string;
+  demoUrl?: string;
+  docsUrl?: string;
+  npmPackage?: string;
+  stars: number;
+  forks: number;
+  watchers: number;
+  issues: number;
+  downloads: number;
+  isFeatured: boolean;
+  isOpenSource: boolean;
+  displayOrder: number;
+  authorId: number;
+  viewCount: number;
+  startedAt?: string;
+  lastUpdatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  author?: {
+    id: number;
+    username: string;
+    fullName?: string;
+    avatar?: string;
+  };
+}
+
+export interface ProjectParams extends PaginationParams {
+  status?: 'active' | 'archived' | 'developing' | 'paused';
+  isFeatured?: boolean;
+  isOpenSource?: boolean;
+  language?: string;
+  keyword?: string;
+}
+
 export const API = {
   // 活动相关（公开接口）
   activity: {
     // 获取全站最新活动（无需登录）
     getRecentActivities: (params?: PaginationParams & { type?: string }) =>
       http.get<UserActivity[]>('/activities/recent', params),
+  },
+
+  // 项目相关API
+  project: {
+    // 获取项目列表
+    getProjects: (params?: ProjectParams) => http.get<Project[]>('/projects', params),
+    // 获取项目详情
+    getProjectDetail: (id: string | number) => http.get<Project>(`/projects/${id}`),
+    // 获取精选项目
+    getFeaturedProjects: (limit?: number) => http.get<Project[]>('/projects/featured', { limit }),
+    // 获取项目统计
+    getProjectStats: () =>
+      http.get<{
+        total: number;
+        active: number;
+        developing: number;
+        featured: number;
+        languages: Array<{ language: string; count: number }>;
+      }>('/projects/stats'),
+    // 创建项目（管理员）
+    createProject: (data: Partial<Project>) => http.post<Project>('/projects', data),
+    // 更新项目（管理员）
+    updateProject: (id: number, data: Partial<Project>) => http.put<Project>(`/projects/${id}`, data),
+    // 删除项目（管理员）
+    deleteProject: (id: number) => http.delete(`/projects/${id}`),
   },
 
   // 用户相关API

@@ -41,6 +41,7 @@ export { default as SecuritySettings } from './management/security-settings';
 export { default as UserManagement } from './management/user-management';
 export { default as CategoryManagement } from './management/category-management';
 export { default as TagManagement } from './management/tag-management';
+export { default as ProjectManagement } from './management/project-management';
 
 // Types
 export type { UserProfile, UserStats, Activity, Achievement } from './types';

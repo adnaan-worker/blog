@@ -45,6 +45,7 @@ import {
   UserManagement,
   CategoryManagement,
   TagManagement,
+  ProjectManagement,
 } from '@/components/profile';
 import type { EditProfileForm } from '@/components/profile/types';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -1322,6 +1323,11 @@ const Profile: React.FC = () => {
           addTab('tags', '🏷️ 标签管理');
         }
         break;
+      case 'view-projects':
+        if (isAdmin) {
+          addTab('projects', '💼 项目管理');
+        }
+        break;
       case 'edit-site-settings':
         setIsEditSiteSettingsModalOpen(true);
         break;
@@ -1590,6 +1596,10 @@ const Profile: React.FC = () => {
       case 'tags':
         if (!isAdmin) return <div>无权限访问</div>;
         return <TagManagement />;
+
+      case 'projects':
+        if (!isAdmin) return <div>无权限访问</div>;
+        return <ProjectManagement />;
 
       default:
         return <div>页面未找到</div>;

@@ -61,7 +61,7 @@ const Container = styled.div<{ showCard?: boolean }>`
 `;
 
 const Header = styled.div<{ showCard?: boolean }>`
-  padding: ${(props) => (props.showCard ? '1.5rem' : '1.5rem 0')};
+  padding: 1.5rem;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -224,7 +224,7 @@ const FilterButton = styled.button<{ active?: boolean }>`
 `;
 
 const FilterBar = styled.div<{ showCard?: boolean }>`
-  padding: ${(props) => (props.showCard ? '1rem 1.5rem' : '1rem 0')};
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -293,8 +293,9 @@ const ActionButton = styled(motion.button)<{ variant?: 'primary' | 'secondary' }
 const Content = styled.div<{ showCard?: boolean }>`
   flex: 1;
   min-height: 400px;
-  padding: ${(props) => (props.showCard ? '0' : '0')};
+  padding: 1rem 1.5rem;
   background: ${(props) => (props.showCard ? 'transparent' : 'var(--bg-primary)')};
+  border-radius: ${(props) => (props.showCard ? '0' : '0 0 12px 12px')};
 `;
 
 const fadeInUpVariants: Variants = {

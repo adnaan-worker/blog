@@ -1,7 +1,23 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiEdit3, FiTrash2, FiEye, FiHeart, FiCalendar, FiClock, FiFolder, FiTag } from 'react-icons/fi';
+import {
+  FiEdit3,
+  FiTrash2,
+  FiEye,
+  FiHeart,
+  FiCalendar,
+  FiClock,
+  FiFolder,
+  FiTag,
+  FiStar,
+  FiGitBranch,
+  FiCode,
+  FiAlertCircle,
+  FiDownload,
+  FiMapPin,
+  FiSmile,
+} from 'react-icons/fi';
 
 // 通用卡片样式
 export const ItemCard = styled(motion.div)`
@@ -168,14 +184,38 @@ export const getMetaIcon = (type: string) => {
       return <FiCalendar size={12} />;
     case 'time':
       return <FiClock size={12} />;
+    case 'view':
     case 'views':
       return <FiEye size={12} />;
+    case 'like':
     case 'likes':
       return <FiHeart size={12} />;
     case 'category':
       return <FiFolder size={12} />;
+    case 'tag':
     case 'tags':
       return <FiTag size={12} />;
+    case 'star':
+    case 'stars':
+      return <FiStar size={12} />;
+    case 'fork':
+    case 'forks':
+      return <FiGitBranch size={12} />;
+    case 'code':
+    case 'language':
+      return <FiCode size={12} />;
+    case 'alert':
+    case 'issue':
+    case 'issues':
+      return <FiAlertCircle size={12} />;
+    case 'download':
+    case 'downloads':
+      return <FiDownload size={12} />;
+    case 'location':
+    case 'place':
+      return <FiMapPin size={12} />;
+    case 'mood':
+      return <FiSmile size={12} />;
     default:
       return null;
   }

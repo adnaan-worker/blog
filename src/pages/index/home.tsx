@@ -14,7 +14,7 @@ import {
   FiFolderPlus,
   FiCode,
 } from 'react-icons/fi';
-import { API, SiteSettings, UserActivity } from '@/utils/api';
+import { API, SiteSettings, UserActivity, Project } from '@/utils/api';
 import { formatDate } from '@/utils';
 
 // 使用motion直接访问组件
@@ -1339,6 +1339,8 @@ const Home = () => {
   // 活动数据
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
+  // 项目数据
+  const [projects, setProjects] = useState<Project[]>([]);
 
   // 加载网站设置
   useEffect(() => {
@@ -1400,6 +1402,20 @@ const Home = () => {
     };
 
     loadActivities();
+  }, []);
+
+  // 加载精选项目
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const response = await API.project.getFeaturedProjects(3);
+        setProjects(response.data || []);
+      } catch (error) {
+        console.error('加载项目失败:', error);
+      }
+    };
+
+    loadProjects();
   }, []);
 
   const handleCardFlip = () => {
@@ -1909,33 +1925,62 @@ const Home = () => {
           </SectionTitle>
 
           <ProjectsGrid>
-            {mockProjects.map((project, index) => (
+            {projects.map((project, index) => (
               <ProjectCard key={project.id} variants={projectVariants} custom={index} whileHover={{ y: -5 }}>
                 <ProjectHeader>
                   <ProjectTitle>{project.title}</ProjectTitle>
-                  <ProjectIcon>{renderProjectIcon(project.icon)}</ProjectIcon>
+                  <ProjectIcon>
+                    <FiCode size={20} />
+                  </ProjectIcon>
                 </ProjectHeader>
 
                 <ProjectContent>
                   <ProjectDescription>{project.description}</ProjectDescription>
 
                   <ProjectMeta>
-                    <ProjectLanguage color={project.languageColor}>{project.language}</ProjectLanguage>
-                    <ProjectMetaItem>
-                      <FiStar size={14} /> {project.stars}
-                    </ProjectMetaItem>
-                    <ProjectMetaItem>
-                      <FiGithub size={14} /> {project.forks}
-                    </ProjectMetaItem>
+                    {project.language && (
+                      <ProjectLanguage color={project.languageColor || '#6b7280'}>{project.language}</ProjectLanguage>
+                    )}
+                    {project.stars > 0 && (
+                      <ProjectMetaItem>
+                        <FiStar size={14} /> {project.stars}
+                      </ProjectMetaItem>
+                    )}
+                    {project.forks > 0 && (
+                      <ProjectMetaItem>
+                        <FiGithub size={14} /> {project.forks}
+                      </ProjectMetaItem>
+                    )}
                   </ProjectMeta>
 
                   <ProjectLinks>
-                    <ProjectLink href={project.repoUrl} target="_blank" rel="noopener noreferrer" className="primary">
-                      <FiGithub size={14} /> 查看源码
-                    </ProjectLink>
-                    <ProjectLink href={project.demoUrl} target="_blank" rel="noopener noreferrer" className="secondary">
-                      <FiExternalLink size={14} /> 演示
-                    </ProjectLink>
+                    {project.githubUrl && (
+                      <ProjectLink
+                        href={project.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="primary"
+                      >
+                        <FiGithub size={14} /> 查看源码
+                      </ProjectLink>
+                    )}
+                    {project.demoUrl && (
+                      <ProjectLink
+                        href={project.demoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="secondary"
+                      >
+                        <FiExternalLink size={14} /> 演示
+                      </ProjectLink>
+                    )}
+                    {!project.githubUrl && !project.demoUrl && (
+                      <Link to={`/projects/${project.slug}`} style={{ flex: 1 }}>
+                        <ProjectLink as="button" className="primary" style={{ width: '100%' }}>
+                          查看详情
+                        </ProjectLink>
+                      </Link>
+                    )}
                   </ProjectLinks>
                 </ProjectContent>
               </ProjectCard>

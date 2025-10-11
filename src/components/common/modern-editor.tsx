@@ -111,6 +111,7 @@ interface ModernEditorProps {
   content: string;
   onChange: (content: string) => void;
   placeholder?: string;
+  maxHeight?: string; // 最大高度，用于限制编辑器高度
 }
 
 interface CommandItem {
@@ -120,7 +121,7 @@ interface CommandItem {
   command: (editor: any) => void;
 }
 
-const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placeholder }) => {
+const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placeholder, maxHeight }) => {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
@@ -567,7 +568,7 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
   }
 
   return (
-    <EditorWrapper ref={editorRef}>
+    <EditorWrapper ref={editorRef} maxHeight={maxHeight}>
       {/* 浮动工具栏 */}
       <FloatingToolbar>
         <ToolbarGroup>
@@ -802,7 +803,9 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
       )}
 
       {/* 编辑器内容区 */}
-      <EditorContent editor={editor} />
+      <div className="tiptap-editor-container">
+        <EditorContent editor={editor} />
+      </div>
 
       {/* 斜杠命令菜单 */}
       {showCommandMenu && (
@@ -833,19 +836,48 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
 };
 
 // 样式组件
-const EditorWrapper = styled.div`
+const EditorWrapper = styled.div<{ maxHeight?: string }>`
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow-y: auto; /* 滚动容器在这里，让 sticky 生效 */
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-primary);
+  max-height: ${(props) => props.maxHeight || 'none'};
 
-  /* 编辑器内容区样式 - 只添加编辑器特有的 */
-  .ProseMirror {
+  /* 编辑器内容容器 - 可滚动 */
+  .tiptap-editor-container {
     flex: 1;
-    min-height: 100%;
+    overflow-y: auto;
+    min-height: 200px;
+    max-height: ${(props) => (props.maxHeight ? `calc(${props.maxHeight} - 50px)` : 'none')};
+
+    /* 自定义滚动条 */
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
+    }
+  }
+
+  /* 编辑器内容区样式 */
+  .ProseMirror {
     padding: 2rem;
+    min-height: 200px;
 
     &:focus {
       outline: none;
@@ -876,16 +908,11 @@ const FloatingToolbar = styled.div`
   padding: 8px 16px;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
-  z-index: 100;
   flex-wrap: wrap;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(8px);
-
-  /* 确保 sticky 生效 */
-  align-self: flex-start;
   width: 100%;
+  flex-shrink: 0; /* 防止工具栏被压缩 */
 `;
 
 const ToolbarGroup = styled.div`

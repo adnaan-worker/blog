@@ -139,6 +139,13 @@ export const useUserRole = (user: UserProfile | null) => {
             action: 'view-tags',
           },
           {
+            id: 'view-projects',
+            label: '项目管理',
+            icon: '💼',
+            description: '管理项目及同步GitHub',
+            action: 'view-projects',
+          },
+          {
             id: 'view-security',
             label: '账户安全',
             icon: '🔒',

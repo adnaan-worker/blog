@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -51,13 +51,6 @@ interface ArticleStats {
 
 const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<ArticleStats>({
-    totalArticles: 0,
-    totalViews: 0,
-    totalLikes: 0,
-    publishedArticles: 0,
-    draftArticles: 0,
-  });
   const [showFilters, setShowFilters] = useState(false);
 
   // 使用通用管理页面Hook
@@ -99,26 +92,15 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
     pageSize: 10,
   });
 
-  // 计算统计数据
-  const calculateStats = (articlesList: Article[]) => {
-    const newStats: ArticleStats = {
-      totalArticles: articlesList.length,
-      totalViews: articlesList.reduce((sum, article) => sum + (article.viewCount || 0), 0),
-      totalLikes: articlesList.reduce((sum, article) => sum + (article.likeCount || 0), 0),
-      publishedArticles: articlesList.filter((article) => article.status === 1).length,
-      draftArticles: articlesList.filter((article) => article.status === 0).length,
+  // 使用 useMemo 计算统计数据，避免不必要的重渲染
+  const stats = useMemo<ArticleStats>(() => {
+    return {
+      totalArticles: articles.length,
+      totalViews: articles.reduce((sum, article) => sum + (article.viewCount || 0), 0),
+      totalLikes: articles.reduce((sum, article) => sum + (article.likeCount || 0), 0),
+      publishedArticles: articles.filter((article) => article.status === 1).length,
+      draftArticles: articles.filter((article) => article.status === 0).length,
     };
-    setStats(newStats);
-  };
-
-  // 初始化数据
-  useEffect(() => {
-    reload();
-  }, []);
-
-  // 当文章数据变化时更新统计
-  useEffect(() => {
-    calculateStats(articles);
   }, [articles]);
 
   // 处理函数
@@ -180,7 +162,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
       filterOptions={filterOptions}
       selectedFilter={filter.selectedFilter}
       onFilterChange={filter.handleFilterChange}
-      showCard={false}
+      showCard={true}
       createButton={
         <Button variant="primary" onClick={handleCreateArticle}>
           <FiPlus size={14} />
