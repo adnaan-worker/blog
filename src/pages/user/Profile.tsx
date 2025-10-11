@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { motion, Variants } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
   FiFileText,
   FiHeart,
@@ -13,12 +13,16 @@ import {
   FiX,
   FiXCircle,
   FiChevronsRight,
+  FiChevronRight,
+  FiChevronLeft,
   FiTrash2,
   FiLayers,
   FiZap,
   FiBarChart2,
   FiClock,
   FiAlertCircle,
+  FiMenu,
+  FiUser,
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { API, UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings } from '@/utils/api';
@@ -51,7 +55,6 @@ const ProfileContainer = styled.div`
   padding: 1rem;
   min-height: calc(100vh - 120px);
   width: 100%;
-  overflow-x: hidden;
 
   @media (min-width: 768px) {
     padding: 2rem;
@@ -80,11 +83,15 @@ const UserSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: -webkit-sticky;
   position: sticky;
-  top: 80px; /* header高度 + 一点间距 */
-  align-self: start;
-  max-height: calc(100vh - 100px);
+  top: 90px; /* header高度 + 间距 */
+  align-self: flex-start;
+  max-height: calc(100vh - 110px);
   overflow-y: auto;
+  overflow-x: hidden;
+  will-change: transform;
+  z-index: 10;
 
   /* 自定义滚动条 */
   &::-webkit-scrollbar {
@@ -105,9 +112,7 @@ const UserSection = styled.div`
   }
 
   @media (max-width: 767px) {
-    position: static;
-    max-height: none;
-    overflow-y: visible;
+    display: none; /* 移动端完全隐藏 */
   }
 `;
 
@@ -117,9 +122,8 @@ const MainContent = styled.div`
   flex-direction: column;
   gap: 1.5rem;
   min-width: 0;
-  min-height: 600px;
+  min-height: calc(100vh - 200px);
   width: 100%;
-  overflow-x: hidden;
 `;
 
 // 右侧快捷操作区域 - 页面滚动时吸顶
@@ -127,11 +131,15 @@ const QuickActionsSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: -webkit-sticky;
   position: sticky;
-  top: 80px; /* header高度 + 一点间距 */
-  align-self: start;
-  max-height: calc(100vh - 100px);
+  top: 90px; /* header高度 + 间距 */
+  align-self: flex-start;
+  max-height: calc(100vh - 110px);
   overflow-y: auto;
+  overflow-x: hidden;
+  will-change: transform;
+  z-index: 10;
 
   /* 自定义滚动条 */
   &::-webkit-scrollbar {
@@ -152,7 +160,7 @@ const QuickActionsSection = styled.div`
   }
 
   @media (max-width: 1199px) {
-    display: none;
+    display: none; /* 移动端和平板完全隐藏 */
   }
 `;
 
@@ -172,15 +180,19 @@ const Card = styled.div`
   border-radius: 12px;
   border: 1px solid var(--border-color);
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 
   &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   [data-theme='dark'] & {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
   }
 `;
 
@@ -407,10 +419,207 @@ const CloseButton = styled.div`
 `;
 
 const TabContent = styled.div`
-  padding: 0;
   width: 100%;
   min-width: 0;
+  min-height: calc(100vh - 300px);
+  display: flex;
+  flex-direction: column;
+`;
+
+// ==================== 移动端抽屉组件 ====================
+
+// 抽屉遮罩
+const DrawerOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  backdrop-filter: blur(4px);
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+`;
+
+// 抽屉容器
+const Drawer = styled(motion.div)<{ position: 'left' | 'right' }>`
+  position: fixed;
+  top: 0;
+  ${(props) => (props.position === 'left' ? 'left: 0;' : 'right: 0;')}
+  bottom: 0;
+  width: 85%;
+  max-width: 340px;
+  background: var(--bg-primary);
+  box-shadow: ${(props) =>
+    props.position === 'left' ? '4px 0 24px rgba(0, 0, 0, 0.15)' : '-4px 0 24px rgba(0, 0, 0, 0.15)'};
+  z-index: 1000;
+  overflow-y: auto;
   overflow-x: hidden;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
+  }
+
+  [data-theme='dark'] & {
+    box-shadow: ${(props) =>
+      props.position === 'left' ? '4px 0 24px rgba(0, 0, 0, 0.4)' : '-4px 0 24px rgba(0, 0, 0, 0.4)'};
+  }
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+`;
+
+// 抽屉头部
+const DrawerHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0.5rem;
+`;
+
+const DrawerTitle = styled.h3`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  svg {
+    color: var(--accent-color);
+  }
+`;
+
+// 抽屉关闭按钮
+const DrawerCloseButton = styled.button`
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    transform: rotate(90deg);
+  }
+
+  &:active {
+    transform: rotate(90deg) scale(0.95);
+  }
+`;
+
+// 侧边箭头按钮（极简风格，只有箭头和光晕）
+const SideArrowButton = styled(motion.button)<{ position: 'left' | 'right' }>`
+  position: fixed;
+  ${(props) => (props.position === 'left' ? 'left: 0;' : 'right: 0;')}
+  top: 50%;
+  transform: translateY(-50%);
+  height: 4rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 998;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent; /* 禁用移动端点击高亮 */
+
+  /* 圆弧光晕效果 - 增强版 */
+  &::before {
+    content: '';
+    position: absolute;
+    ${(props) => (props.position === 'left' ? 'left: 0;' : 'right: 0;')}
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3rem;
+    height: 4rem;
+    background: radial-gradient(
+      ellipse ${(props) => (props.position === 'left' ? '120% 60% at 10% 50%' : '120% 60% at 90% 50%')},
+      rgba(0, 0, 0, 0.08) 0%,
+      rgba(0, 0, 0, 0.04) 30%,
+      rgba(0, 0, 0, 0.02) 50%,
+      transparent 80%
+    );
+    border-radius: ${(props) => (props.position === 'left' ? '0 60% 60% 0' : '60% 0 0 60%')};
+    opacity: 1;
+    transition: all 0.4s ease;
+    pointer-events: none;
+  }
+
+  svg {
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  }
+
+  &:hover,
+  &:active {
+    color: var(--accent-color);
+
+    &::before {
+      width: 3.5rem;
+      background: radial-gradient(
+        ellipse ${(props) => (props.position === 'left' ? '120% 60% at 10% 50%' : '120% 60% at 90% 50%')},
+        rgba(var(--accent-rgb), 0.15) 0%,
+        rgba(var(--accent-rgb), 0.08) 30%,
+        rgba(var(--accent-rgb), 0.04) 50%,
+        transparent 80%
+      );
+    }
+
+    svg {
+      transform: ${(props) => (props.position === 'left' ? 'translateX(4px)' : 'translateX(-4px)')};
+      filter: drop-shadow(0 2px 4px rgba(var(--accent-rgb), 0.3));
+    }
+  }
+
+  &:active {
+    transform: translateY(-50%) scale(0.92);
+
+    svg {
+      transform: ${(props) => (props.position === 'left' ? 'translateX(2px)' : 'translateX(-2px)')};
+    }
+  }
+
+  @media (min-width: 768px) {
+    display: none;
+  }
 `;
 
 // 右键菜单
@@ -456,6 +665,8 @@ const DashboardContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  min-height: calc(100vh - 300px);
+  padding-bottom: 2rem;
 `;
 
 const DashboardSection = styled(motion.section)`
@@ -753,6 +964,10 @@ const Profile: React.FC = () => {
   const [hasMoreActivities, setHasMoreActivities] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
+  // 移动端抽屉状态
+  const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
+  const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
+
   // 检测屏幕尺寸
   useEffect(() => {
     const checkMobile = () => {
@@ -764,6 +979,12 @@ const Profile: React.FC = () => {
 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // 关闭抽屉当切换tab时
+  useEffect(() => {
+    setLeftDrawerOpen(false);
+    setRightDrawerOpen(false);
+  }, [activeTab]);
 
   // 保存tab状态到localStorage
   useEffect(() => {
@@ -1401,15 +1622,6 @@ const Profile: React.FC = () => {
 
         {/* 主内容区域 */}
         <MainContent>
-          {/* 移动端快捷操作 */}
-          {permissions.quickActions.length > 0 && (
-            <MobileQuickActions>
-              <Card>
-                <QuickActions onAction={handleQuickAction} actions={permissions.quickActions} />
-              </Card>
-            </MobileQuickActions>
-          )}
-
           {/* 标签页容器 - 只在有多个tab时显示 */}
           {openTabs.length > 1 && (
             <TabsContainer>
@@ -1440,7 +1652,20 @@ const Profile: React.FC = () => {
           )}
 
           {/* 内容区域 */}
-          <TabContent>{renderTabContent()}</TabContent>
+          <TabContent>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+                style={{ width: '100%', minHeight: 'inherit' }}
+              >
+                {activeTab === 'dashboard' ? renderTabContent() : <Card>{renderTabContent()}</Card>}
+              </motion.div>
+            </AnimatePresence>
+          </TabContent>
         </MainContent>
 
         {/* 右侧快捷操作区域（大屏显示） */}
@@ -1470,6 +1695,126 @@ const Profile: React.FC = () => {
         onSave={handleSaveSiteSettings}
         isLoading={isSiteSettingsLoading}
       />
+
+      {/* 移动端侧边箭头按钮 */}
+      {isMobile && (
+        <>
+          {/* 左侧箭头按钮 - 个人资料 */}
+          <SideArrowButton
+            position="left"
+            onClick={() => setLeftDrawerOpen(true)}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 0.7, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            whileHover={{ opacity: 1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FiChevronRight />
+          </SideArrowButton>
+
+          {/* 右侧箭头按钮 - 快捷操作 */}
+          {permissions.quickActions.length > 0 && (
+            <SideArrowButton
+              position="right"
+              onClick={() => setRightDrawerOpen(true)}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 0.7, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              whileHover={{ opacity: 1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FiChevronLeft />
+            </SideArrowButton>
+          )}
+        </>
+      )}
+
+      {/* 左侧抽屉 - 个人资料 */}
+      <AnimatePresence>
+        {leftDrawerOpen && isMobile && (
+          <>
+            <DrawerOverlay
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setLeftDrawerOpen(false)}
+            />
+            <Drawer
+              position="left"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
+              <DrawerHeader>
+                <DrawerTitle>
+                  <FiUser />
+                  个人资料
+                </DrawerTitle>
+                <DrawerCloseButton onClick={() => setLeftDrawerOpen(false)}>
+                  <FiX />
+                </DrawerCloseButton>
+              </DrawerHeader>
+
+              {user && (
+                <UserInfoCard
+                  user={user}
+                  onEditProfile={() => {
+                    setLeftDrawerOpen(false);
+                    setIsEditModalOpen(true);
+                  }}
+                  onAvatarChange={handleAvatarChange}
+                  isLoading={isUserLoading}
+                />
+              )}
+
+              {/* 成就徽章 */}
+              <div>
+                <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+              </div>
+            </Drawer>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* 右侧抽屉 - 快捷操作 */}
+      <AnimatePresence>
+        {rightDrawerOpen && isMobile && permissions.quickActions.length > 0 && (
+          <>
+            <DrawerOverlay
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setRightDrawerOpen(false)}
+            />
+            <Drawer
+              position="right"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
+              <DrawerHeader>
+                <DrawerTitle>
+                  <FiZap />
+                  快捷操作
+                </DrawerTitle>
+                <DrawerCloseButton onClick={() => setRightDrawerOpen(false)}>
+                  <FiX />
+                </DrawerCloseButton>
+              </DrawerHeader>
+
+              <QuickActions
+                onAction={(action) => {
+                  setRightDrawerOpen(false);
+                  handleQuickAction(action);
+                }}
+                actions={permissions.quickActions}
+              />
+            </Drawer>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* 右键菜单 */}
       {contextMenu && (

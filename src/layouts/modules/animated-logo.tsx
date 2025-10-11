@@ -130,6 +130,7 @@ const ContentWrapper = styled.span`
   position: relative;
   display: inline-flex;
   align-items: center;
+  z-index: 100;
 `;
 
 // 文字内容

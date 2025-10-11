@@ -201,6 +201,9 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  /* 禁用移动端点击高亮 */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 html {
@@ -214,7 +217,8 @@ html {
   scroll-behavior: smooth;
   letter-spacing: -0.01em;
   height: auto;
-  overflow: visible;
+  overflow-x: hidden;
+  overflow-y: scroll; /* 始终显示滚动条，避免跳动 */
 }
 
 body {
