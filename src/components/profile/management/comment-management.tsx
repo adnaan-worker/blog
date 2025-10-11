@@ -98,11 +98,13 @@ const HeaderRight = styled.div`
 
 const SearchContainer = styled.div`
   position: relative;
-  min-width: 200px;
+  min-width: 150px;
+  flex: 1;
+  max-width: 100%;
 
   @media (max-width: 640px) {
-    flex: 1;
-    min-width: auto;
+    min-width: 0;
+    width: 100%;
   }
 `;
 

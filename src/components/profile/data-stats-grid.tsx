@@ -34,8 +34,13 @@ const SectionTitle = styled.h3`
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 1rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+  }
 `;
 
 const StatCard = styled.div<{ highlight?: boolean; clickable?: boolean }>`

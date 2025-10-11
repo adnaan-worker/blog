@@ -59,11 +59,25 @@ const Actions = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+  width: 100%;
+
+  @media (min-width: 769px) {
+    width: auto;
+    flex-wrap: nowrap;
+  }
 `;
 
 const SearchBox = styled.div`
   position: relative;
   width: 250px;
+  max-width: 100%;
+  flex: 1;
+  min-width: 150px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 
   svg {
     position: absolute;

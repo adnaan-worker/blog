@@ -50,6 +50,8 @@ const ProfileContainer = styled.div`
   margin: 0 auto;
   padding: 1rem;
   min-height: calc(100vh - 120px);
+  width: 100%;
+  overflow-x: hidden;
 
   @media (min-width: 768px) {
     padding: 2rem;
@@ -116,6 +118,8 @@ const MainContent = styled.div`
   gap: 1.5rem;
   min-width: 0;
   min-height: 600px;
+  width: 100%;
+  overflow-x: hidden;
 `;
 
 // 右侧快捷操作区域 - 页面滚动时吸顶
@@ -199,6 +203,18 @@ const TabsList = styled.div`
   width: calc(100% - 2rem); /* 减去左右margin */
   min-width: 0; /* 允许收缩 */
   min-height: 50px; /* 保持最小高度 */
+  max-width: 100%;
+
+  @media (max-width: 768px) {
+    margin: 0.75rem;
+    width: calc(100% - 1.5rem);
+    padding: 0.375rem;
+  }
+
+  @media (max-width: 480px) {
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+  }
 
   /* 自定义滚动条 */
   &::-webkit-scrollbar {
@@ -304,6 +320,19 @@ const TabButton = styled.button<{ active?: boolean }>`
   position: relative;
   user-select: none;
 
+  @media (max-width: 768px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    max-width: 160px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+    gap: 0.375rem;
+    max-width: 140px;
+  }
+
   /* 活动tab底部指示条 */
   &::after {
     content: '';
@@ -316,6 +345,10 @@ const TabButton = styled.button<{ active?: boolean }>`
     background: var(--accent-color);
     border-radius: 2px 2px 0 0;
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    @media (max-width: 480px) {
+      width: calc(100% - 0.5rem);
+    }
   }
 
   /* Tab标签文本溢出处理 */
@@ -324,6 +357,14 @@ const TabButton = styled.button<{ active?: boolean }>`
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 140px;
+
+    @media (max-width: 768px) {
+      max-width: 120px;
+    }
+
+    @media (max-width: 480px) {
+      max-width: 100px;
+    }
   }
 
   &:hover {
@@ -369,6 +410,7 @@ const TabContent = styled.div`
   padding: 0;
   width: 100%;
   min-width: 0;
+  overflow-x: hidden;
 `;
 
 // 右键菜单
