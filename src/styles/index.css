@@ -217,8 +217,6 @@ html {
   scroll-behavior: smooth;
   letter-spacing: -0.01em;
   height: auto;
-  overflow-x: hidden;
-  overflow-y: scroll; /* 始终显示滚动条，避免跳动 */
 }
 
 body {
