@@ -69,7 +69,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
-        // Socket.IO代理 - 这是必需的！
+        // Socket.IO代理
         '/socket.io': {
           target: env.VITE_SOCKET_URL,
           changeOrigin: true,

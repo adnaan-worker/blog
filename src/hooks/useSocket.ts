@@ -239,6 +239,11 @@ class SocketManager {
         extraHeaders: {
           Authorization: SOCKET_CONFIG.authKey,
         },
+        // 如果配置了 WebSocket URL，使用它作为 WebSocket 传输的目标
+        ...(SOCKET_CONFIG.wsUrl && {
+          upgrade: true,
+          rememberUpgrade: true,
+        }),
       });
 
       this.socket = socket;

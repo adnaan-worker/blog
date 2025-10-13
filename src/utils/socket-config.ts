@@ -1,6 +1,7 @@
 // Socket.IO 配置工具
 export interface SocketConfig {
   url: string;
+  wsUrl?: string;
   authKey: string;
 }
 
@@ -12,24 +13,13 @@ export interface ExtendedSocketConfig extends SocketConfig {
   transports: string[];
 }
 
-// 默认配置
-const DEFAULT_CONFIG: SocketConfig = {
-  url: 'http://localhost:8200',
-  authKey: 'duyong-socket-328',
-};
-
 // 获取Socket配置
 export const getSocketConfig = (): SocketConfig => {
   const config: SocketConfig = {
-    url: import.meta.env.VITE_SOCKET_URL || DEFAULT_CONFIG.url,
-    authKey: import.meta.env.VITE_SOCKET_IO_AUTH_KEY || DEFAULT_CONFIG.authKey,
+    url: import.meta.env.VITE_SOCKET_URL,
+    wsUrl: import.meta.env.VITE_SOCKET_WS_URL,
+    authKey: import.meta.env.VITE_SOCKET_IO_AUTH_KEY,
   };
-
-  // 验证配置
-  if (!validateSocketConfig(config)) {
-    console.warn('⚠️ 使用默认Socket配置');
-    return DEFAULT_CONFIG;
-  }
 
   return config;
 };
