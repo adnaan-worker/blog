@@ -1,0 +1,262 @@
+/* 动画性能优化 CSS */
+
+/* 启用硬件加速 */
+.hardware-acceleration {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 优化滚动性能 */
+.scroll-optimization {
+  overflow-anchor: auto;
+  scroll-behavior: smooth;
+}
+
+/* 减少重绘和重排 */
+.layout-optimization {
+  contain: layout style paint;
+}
+
+/* 优化的过渡效果 */
+.optimized-transition {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* 优化的hover效果 */
+.optimized-hover {
+  transition: transform 0.2s ease;
+}
+
+.optimized-hover:hover {
+  transform: translateY(-2px) translateZ(0);
+}
+
+/* 减少动画复杂度 */
+.reduced-motion {
+  animation-duration: 0.1s !important;
+  transition-duration: 0.1s !important;
+}
+
+/* 优化卡片动画 */
+.optimized-card {
+  will-change: transform, box-shadow;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.optimized-card:hover {
+  transform: translateY(-4px) translateZ(0);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 优化按钮动画 */
+.optimized-button {
+  will-change: transform;
+  transition: transform 0.15s ease;
+}
+
+.optimized-button:hover {
+  transform: translateY(-1px) translateZ(0);
+}
+
+.optimized-button:active {
+  transform: translateY(0) translateZ(0);
+}
+
+/* 优化图片加载 */
+.optimized-image {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* 优化文本渲染 */
+.optimized-text {
+  font-smooth: antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 优化背景模糊 */
+.optimized-blur {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* 减少阴影复杂度 */
+.optimized-shadow {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.optimized-shadow:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 优化渐变背景 */
+.optimized-gradient {
+  background: linear-gradient(135deg, var(--accent-color-alpha) 0%, var(--accent-color) 100%);
+  will-change: background;
+}
+
+/* 优化边框动画 */
+.optimized-border {
+  border: 1px solid var(--border-color);
+  transition: border-color 0.2s ease;
+}
+
+.optimized-border:hover {
+  border-color: var(--accent-color);
+}
+
+/* 优化列表动画 */
+.optimized-list {
+  contain: layout style;
+}
+
+.optimized-list-item {
+  will-change: transform;
+  transition: transform 0.2s ease;
+}
+
+.optimized-list-item:hover {
+  transform: translateX(4px) translateZ(0);
+}
+
+/* 优化网格布局 */
+.optimized-grid {
+  contain: layout style;
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* 优化弹性布局 */
+.optimized-flex {
+  contain: layout style;
+  display: flex;
+}
+
+/* 优化定位元素 */
+.optimized-positioned {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* 优化滚动容器 */
+.optimized-scroll-container {
+  overflow-anchor: auto;
+  scroll-behavior: smooth;
+  contain: layout style;
+}
+
+/* 优化模态框 */
+.optimized-modal {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 优化工具提示 */
+.optimized-tooltip {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* 优化加载动画 */
+.optimized-loading {
+  will-change: transform;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg) translateZ(0); }
+  to { transform: rotate(360deg) translateZ(0); }
+}
+
+/* 优化脉冲动画 */
+.optimized-pulse {
+  will-change: transform, box-shadow;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { 
+    transform: scale(1) translateZ(0); 
+    box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.4); 
+  }
+  50% { 
+    transform: scale(1.05) translateZ(0); 
+    box-shadow: 0 0 0 8px rgba(29, 185, 84, 0); 
+  }
+  100% { 
+    transform: scale(1) translateZ(0); 
+    box-shadow: 0 0 0 0 rgba(29, 185, 84, 0); 
+  }
+}
+
+/* 优化淡入动画 */
+.optimized-fade-in {
+  will-change: opacity, transform;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px) translateZ(0); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) translateZ(0); 
+  }
+}
+
+/* 优化滑入动画 */
+.optimized-slide-in {
+  will-change: transform, opacity;
+  animation: slideIn 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0; 
+    transform: translateX(-20px) translateZ(0); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0) translateZ(0); 
+  }
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .optimized-card:hover {
+    transform: translateY(-2px) translateZ(0);
+  }
+  
+  .optimized-button:hover {
+    transform: translateY(-0.5px) translateZ(0);
+  }
+  
+  .optimized-list-item:hover {
+    transform: translateX(2px) translateZ(0);
+  }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .optimized-card,
+  .optimized-button,
+  .optimized-list-item,
+  .optimized-hover {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  .optimized-card:hover,
+  .optimized-button:hover,
+  .optimized-list-item:hover {
+    transform: none !important;
+  }
+}

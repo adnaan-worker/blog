@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { variants as animationVariants, gpuAcceleration, drawerVariants, overlayVariants } from '@/utils/animation-config';
 import {
   FiFileText,
   FiHeart,
@@ -439,6 +440,9 @@ const DrawerOverlay = styled(motion.div)`
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
   backdrop-filter: blur(4px);
+  
+  /* GPU加速 */
+  ${gpuAcceleration as any}
 
   @media (min-width: 768px) {
     display: none;
@@ -463,6 +467,9 @@ const Drawer = styled(motion.div)<{ position: 'left' | 'right' }>`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  
+  /* GPU加速 */
+  ${gpuAcceleration as any}
 
   /* 自定义滚动条 */
   &::-webkit-scrollbar {
@@ -881,37 +888,10 @@ const EmptyState = styled.div`
   }
 `;
 
-// 动画变体定义
-const fadeInUpVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] },
-  },
-};
-
-const staggerContainerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 1, 0.5, 1],
-    },
-  },
-};
+// 使用统一的动画变体
+const fadeInUpVariants = animationVariants.fadeInUp;
+const staggerContainerVariants = animationVariants.staggerContainer;
+const cardVariants = animationVariants.cardVariants;
 
 // Tab类型定义
 interface Tab {
@@ -1744,17 +1724,18 @@ const Profile: React.FC = () => {
         {leftDrawerOpen && isMobile && (
           <>
             <DrawerOverlay
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={overlayVariants}
               onClick={() => setLeftDrawerOpen(false)}
             />
             <Drawer
               position="left"
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={drawerVariants.left}
             >
               <DrawerHeader>
                 <DrawerTitle>
@@ -1792,17 +1773,18 @@ const Profile: React.FC = () => {
         {rightDrawerOpen && isMobile && permissions.quickActions.length > 0 && (
           <>
             <DrawerOverlay
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={overlayVariants}
               onClick={() => setRightDrawerOpen(false)}
             />
             <Drawer
               position="right"
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={drawerVariants.right}
             >
               <DrawerHeader>
                 <DrawerTitle>

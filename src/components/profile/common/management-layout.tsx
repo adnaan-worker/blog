@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { FiSearch, FiPlus, FiRefreshCw, FiFilter } from 'react-icons/fi';
 import { Empty, Button } from 'adnaan-ui';
+import { variants as animationVariants, hoverScale } from '@/utils/animation-config';
 
 // 统计项接口
 export interface StatItemData {
@@ -298,14 +299,8 @@ const Content = styled.div<{ showCard?: boolean }>`
   border-radius: ${(props) => (props.showCard ? '0' : '0 0 12px 12px')};
 `;
 
-const fadeInUpVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4 },
-  },
-};
+// 使用统一的动画变体
+const fadeInUpVariants = animationVariants.fadeInUp;
 
 export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
   title,
@@ -354,7 +349,7 @@ export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
             )}
           </HeaderLeft>
           {createButton || (
-            <ActionButton variant="primary" onClick={onAdd} whileHover={{ scale: 1.02 }}>
+            <ActionButton variant="primary" onClick={onAdd} {...hoverScale}>
               <FiPlus />
               添加
             </ActionButton>
@@ -377,7 +372,7 @@ export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
               <span style={{ marginLeft: '0.25rem' }}>筛选</span>
             </FilterButton>
           )}
-          <ActionButton variant="secondary" onClick={onRefresh} disabled={loading} whileHover={{ scale: 1.02 }}>
+          <ActionButton variant="secondary" onClick={onRefresh} disabled={loading} {...hoverScale}>
             <FiRefreshCw style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
             刷新
           </ActionButton>
@@ -390,7 +385,7 @@ export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           >
             <FilterBar showCard={showCard}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>

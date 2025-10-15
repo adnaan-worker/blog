@@ -16,6 +16,8 @@ import {
 } from 'react-icons/fi';
 import { API, SiteSettings, UserActivity, Project } from '@/utils/api';
 import { formatDate } from '@/utils';
+import { useAnimationOptimization } from '@/utils/animation-utils';
+import { variants as animationVariants, gpuAcceleration, hoverScale } from '@/utils/animation-config';
 
 // 使用motion直接访问组件
 const MotionDiv = motion.div;
@@ -23,39 +25,6 @@ const MotionH1 = motion.h1;
 const MotionH2 = motion.h2;
 const MotionP = motion.p;
 const MotionSpan = motion.span;
-
-// 动画变体定义
-const fadeInUpVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] },
-  },
-};
-
-const staggerContainerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const iconVariants: Variants = {
-  hidden: { scale: 0, opacity: 0 },
-  visible: {
-    scale: 1,
-    opacity: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 300,
-      damping: 15,
-    },
-  },
-};
 
 const PageContainer = styled.div`
   width: 100%;
@@ -169,18 +138,28 @@ const ProfileCard = styled.div`
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border-radius: 16px;
-  box-shadow: 0 10px 30px var(--accent-color-alpha);
+  box-shadow: 0 8px 24px var(--accent-color-alpha);
   cursor: pointer;
+  
+  /* 性能优化 - 但不影响3D翻转 */
+  will-change: transform;
 
-  &:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 35px var(--accent-color-alpha);
+  &:hover:not(.flipped) {
+    transform: translateY(-8px) translateZ(0);
+    box-shadow: 0 12px 28px var(--accent-color-alpha);
   }
 
   &.flipped {
-    transform: rotateY(180deg);
+    transform: rotateY(180deg) translateZ(0);
+  }
+  
+  /* 确保翻转动画始终工作，即使有减少动画偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    &.flipped {
+      transform: rotateY(180deg) translateZ(0);
+    }
   }
 `;
 
@@ -969,27 +948,14 @@ const ChartLabels = styled.div`
   opacity: 0.8;
 `;
 
-// 文章卡片动画变体
-const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 1, 0.5, 1],
-    },
-  },
-};
-
-// 图表条动画变体
+// 图表条动画变体 - 使用自定义配置因为需要custom参数
 const barVariants: Variants = {
-  hidden: { scaleY: 0 },
+  hidden: { scaleY: 0, transformOrigin: 'bottom' },
   visible: (custom) => ({
     scaleY: 1,
     transition: {
-      duration: 0.5,
-      delay: custom * 0.05,
+      duration: 0.3,
+      delay: custom * 0.03,
       ease: [0.25, 1, 0.5, 1],
     },
   }),
@@ -1015,14 +981,17 @@ const ProjectCard = styled(motion.div)`
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border-color);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
   height: 100%;
+  
+  /* GPU加速 */
+  ${gpuAcceleration as any}
 
   &:hover {
     box-shadow: 0 10px 30px rgba(81, 131, 245, 0.1);
-    transform: translateY(-5px);
+    transform: translateY(-4px) translateZ(0);
     border-color: rgba(81, 131, 245, 0.2);
   }
 `;
@@ -1183,15 +1152,15 @@ const mockProjects = [
   },
 ];
 
-// 项目卡片动画变体
+// 项目卡片动画变体 - 带延迟的淡入
 const projectVariants: Variants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 20 },
   visible: (i) => ({
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5,
-      delay: i * 0.1,
+      duration: 0.3,
+      delay: i * 0.08,
       ease: [0.25, 1, 0.5, 1],
     },
   }),
@@ -1328,7 +1297,15 @@ const SkillTags = styled(motion.div)`
 `;
 
 // 组件
-const Home = () => {
+const Home: React.FC = () => {
+  // 使用动画优化工具
+  const { fadeInUp, staggerContainer, iconVariants, shouldReduceAnimations } = useAnimationOptimization();
+  
+  // 使用统一的动画变体
+  const cardVariants = shouldReduceAnimations 
+    ? animationVariants.fade 
+    : animationVariants.cardVariants;
+  
   // 卡片翻转状态
   const [isFlipped, setIsFlipped] = useState(false);
   // 网站设置数据
@@ -1439,8 +1416,8 @@ const Home = () => {
       <PageContainer>
         <HeroSection>
           <Hero>
-            <HeroContent variants={staggerContainerVariants} initial="hidden" animate="visible">
-              <Title variants={fadeInUpVariants}>
+            <HeroContent variants={staggerContainer} initial="hidden" animate="visible">
+              <Title variants={fadeInUp}>
                 欢迎踏入代码与创意交织的<span style={{ color: 'var(--accent-color)' }}>奇幻宇宙</span>
                 <motion.span
                   className="wave"
@@ -1456,7 +1433,7 @@ const Home = () => {
                 </motion.span>
               </Title>
 
-              <Subtitle variants={fadeInUpVariants}>
+              <Subtitle variants={fadeInUp}>
                 <span
                   style={{
                     background: 'linear-gradient(90deg, rgb(var(--gradient-from)), rgb(var(--gradient-to)))',
@@ -1470,14 +1447,14 @@ const Home = () => {
                 <code style={{ color: 'var(--accent-color)' }}>@adnaan</code>
               </Subtitle>
 
-              <Description variants={fadeInUpVariants}>
+              <Description variants={fadeInUp}>
                 我是<strong style={{ color: 'var(--accent-color)' }}>全栈工程师</strong>与
                 <strong style={{ color: 'var(--accent-color)' }}>UI/UX爱好者</strong>，专注于构建美观且高性能的Web体验。
                 <br />
                 <span style={{ fontSize: '0.9em', opacity: 0.9 }}>「每一行代码都有诗意，每一个像素都有故事」</span>
               </Description>
 
-              <SkillTags variants={fadeInUpVariants}>
+              <SkillTags variants={fadeInUp}>
                 <span>
                   <FiCode size={14} /> 开发者
                 </span>
@@ -1549,7 +1526,7 @@ const Home = () => {
                 </span>
               </SkillTags>
 
-              <SocialLinks variants={staggerContainerVariants}>
+              <SocialLinks variants={staggerContainer}>
                 <SocialLink
                   href={Array.isArray(socialLinks) ? undefined : socialLinks?.email}
                   aria-label="Email"
@@ -1759,12 +1736,12 @@ const Home = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-          variants={staggerContainerVariants}
+              variants={staggerContainer}
         >
           {/* 左侧栏 */}
           <LeftColumn>
             {/* 文章部分 */}
-            <ContentSection variants={fadeInUpVariants}>
+            <ContentSection variants={fadeInUp}>
               <SectionTitle>
                 最近更新的文稿
                 <motion.a href="/blog" whileHover={{ x: 5 }}>
@@ -1772,7 +1749,7 @@ const Home = () => {
                 </motion.a>
               </SectionTitle>
 
-              <ArticleGrid variants={staggerContainerVariants}>
+              <ArticleGrid variants={staggerContainer}>
                 {articles.slice(0, 3).map((article, index) => (
                   <ArticleLink
                     to={`/blog/${article.id}`}
@@ -1793,7 +1770,7 @@ const Home = () => {
             </ContentSection>
 
             {/* 手记部分 */}
-            <ContentSection variants={fadeInUpVariants}>
+            <ContentSection variants={fadeInUp}>
               <SectionTitle>
                 最近更新的手记
                 <motion.a href="/notes" whileHover={{ x: 5 }}>
@@ -1801,7 +1778,7 @@ const Home = () => {
                 </motion.a>
               </SectionTitle>
 
-              <ArticleGrid variants={staggerContainerVariants}>
+              <ArticleGrid variants={staggerContainer}>
                 {notes.slice(0, 5).map((note, index) => (
                   <ArticleLink
                     to={`/notes/${note.id}`}
@@ -1822,12 +1799,12 @@ const Home = () => {
 
           {/* 右侧栏 */}
           <RightColumn>
-            <ContentSection variants={fadeInUpVariants}>
+            <ContentSection variants={fadeInUp}>
               <SectionTitle>最近发生的事</SectionTitle>
 
               <ActivityScrollContainer>
                 <FadeMask className="top" />
-                <ActivityGrid variants={staggerContainerVariants}>
+                <ActivityGrid variants={staggerContainer}>
                   {activitiesLoading ? (
                     <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
                       加载中...
@@ -1888,11 +1865,11 @@ const Home = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-          variants={staggerContainerVariants}
+              variants={staggerContainer}
         >
-          <SectionTitle variants={fadeInUpVariants}>热力图</SectionTitle>
+          <SectionTitle variants={fadeInUp}>热力图</SectionTitle>
 
-          <ChartContainer variants={fadeInUpVariants} whileHover={{ y: -3 }}>
+          <ChartContainer variants={fadeInUp} whileHover={{ y: -3 }}>
             <Chart>
               {chartData.map((item, index) => (
                 <ChartBar
@@ -1915,11 +1892,11 @@ const Home = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-          variants={staggerContainerVariants}
+              variants={staggerContainer}
         >
-          <SectionTitle variants={fadeInUpVariants}>
+          <SectionTitle variants={fadeInUp}>
             开源项目
-            <motion.a href="/projects" whileHover={{ x: 5 }} variants={fadeInUpVariants}>
+            <motion.a href="/projects" whileHover={{ x: 5 }} variants={fadeInUp}>
               查看全部 <FiArrowRight size={12} />
             </motion.a>
           </SectionTitle>

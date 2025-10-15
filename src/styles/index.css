@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Fira+Code&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 @import './rich-text.css';
+@import './animation.css';
 
 /**
  * 1. CSS变量定义

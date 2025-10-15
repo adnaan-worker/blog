@@ -43,17 +43,7 @@ const LoadingIndicator = styled(motion.div)`
   z-index: 1000;
 `;
 
-// 页面过渡动画配置
-const pageTransition = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: 10 },
-  transition: {
-    duration: 0.3,
-    ease: [0.4, 0, 0.2, 1],
-    staggerChildren: 0.05,
-  },
-};
+import { pageTransition } from '@/utils/animation-config';
 
 /**
  * 根布局组件，提供应用程序的基本结构
@@ -231,7 +221,7 @@ const RootLayout = () => {
 
       {/* 主内容区域 - 带动画过渡 */}
       <AnimatePresence mode="wait">
-        <Content key={location.pathname} initial="initial" animate="animate" exit="exit" variants={pageTransition}>
+        <Content key={location.pathname} {...pageTransition}>
           <Outlet />
         </Content>
       </AnimatePresence>
