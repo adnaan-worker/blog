@@ -42,7 +42,7 @@ const cardVariants: Variants = {
 // 样式组件
 const PageContainer = styled.div`
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--max-width);
   margin: 0 auto;
   padding: 2rem 1rem;
   min-height: calc(100vh - 200px);

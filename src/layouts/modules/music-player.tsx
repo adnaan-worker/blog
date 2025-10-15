@@ -13,8 +13,9 @@ import {
   FiMessageSquare,
 } from 'react-icons/fi';
 import musicListData from '@/data/musicList.json';
+import { drawerVariants, gpuAcceleration, overlayVariants, ANIMATION_DURATION, EASING } from '@/utils/animation-config';
 
-// 音乐播放器面板
+// 音乐播放器面板 - 优化性能
 const PlayerPanel = styled(motion.div)`
   position: fixed;
   bottom: 80px;
@@ -27,13 +28,16 @@ const PlayerPanel = styled(motion.div)`
   border: 1px solid var(--border-color);
   overflow: hidden;
   z-index: 1000;
+  
+  /* GPU加速 */
+  ${gpuAcceleration as any}
 
   @media (max-width: 768px) {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    transform: none;
+    transform: translateZ(0); /* 保持GPU加速 */
     width: 100%;
     max-width: 100%;
     border-radius: 20px 20px 0 0;
@@ -41,6 +45,10 @@ const PlayerPanel = styled(motion.div)`
     max-height: 70vh;
     overflow-y: auto;
     padding: 1rem;
+    
+    /* 滚动性能优化 */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
   &::before {
@@ -106,6 +114,11 @@ const MusicList = styled.div`
   margin: 0.8rem 0;
   max-height: 180px;
   overflow-y: auto;
+  
+  /* 滚动性能优化 */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  ${gpuAcceleration as any}
 
   @media (max-width: 768px) {
     max-height: 200px;
@@ -123,6 +136,10 @@ const MusicList = styled.div`
   &::-webkit-scrollbar-thumb {
     background-color: rgba(81, 131, 245, 0.3);
     border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(81, 131, 245, 0.5);
   }
 `;
 
@@ -894,10 +911,13 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
     <AnimatePresence>
       {isOpen && (
         <PlayerPanel
-          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ 
+            duration: ANIMATION_DURATION.normal,
+            ease: EASING.ease
+          }}
         >
           <PlayerHeader>
             <h4>

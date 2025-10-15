@@ -52,14 +52,13 @@ import type { EditProfileForm } from '@/components/profile/types';
 import { useUserRole } from '@/hooks/useUserRole';
 
 const ProfileContainer = styled.div`
-  max-width: 1400px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 1rem 2rem;
   min-height: calc(100vh - 120px);
   width: 100%;
 
   @media (min-width: 768px) {
-    padding: 2rem;
+    padding: 2rem 5rem;
   }
 `;
 

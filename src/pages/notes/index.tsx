@@ -13,7 +13,7 @@ const PageContainer = styled.div`
 `;
 
 const Container = styled.div`
-  max-width: 1200px;
+  max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 2rem;
 

@@ -28,7 +28,7 @@ const MotionSpan = motion.span;
 
 const PageContainer = styled.div`
   width: 100%;
-  max-width: 1100px;
+  max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 1rem;
 `;
