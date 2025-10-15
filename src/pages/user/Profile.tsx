@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { variants as animationVariants, gpuAcceleration, drawerVariants, overlayVariants } from '@/utils/animation-config';
+import {
+  variants as animationVariants,
+  gpuAcceleration,
+  drawerVariants,
+  overlayVariants,
+} from '@/utils/animation-config';
 import {
   FiFileText,
   FiHeart,
@@ -439,7 +444,7 @@ const DrawerOverlay = styled(motion.div)`
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
   backdrop-filter: blur(4px);
-  
+
   /* GPU加速 */
   ${gpuAcceleration as any}
 
@@ -466,7 +471,7 @@ const Drawer = styled(motion.div)<{ position: 'left' | 'right' }>`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  
+
   /* GPU加速 */
   ${gpuAcceleration as any}
 
@@ -1729,13 +1734,7 @@ const Profile: React.FC = () => {
               variants={overlayVariants}
               onClick={() => setLeftDrawerOpen(false)}
             />
-            <Drawer
-              position="left"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={drawerVariants.left}
-            >
+            <Drawer position="left" initial="hidden" animate="visible" exit="exit" variants={drawerVariants.left}>
               <DrawerHeader>
                 <DrawerTitle>
                   <FiUser />
@@ -1778,13 +1777,7 @@ const Profile: React.FC = () => {
               variants={overlayVariants}
               onClick={() => setRightDrawerOpen(false)}
             />
-            <Drawer
-              position="right"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={drawerVariants.right}
-            >
+            <Drawer position="right" initial="hidden" animate="visible" exit="exit" variants={drawerVariants.right}>
               <DrawerHeader>
                 <DrawerTitle>
                   <FiZap />

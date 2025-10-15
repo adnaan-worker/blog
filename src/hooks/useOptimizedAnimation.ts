@@ -7,27 +7,28 @@ import type { Variants } from 'framer-motion';
  * 优化的动画Hook
  * 结合视图检测、性能检测和动画队列
  */
-export const useOptimizedAnimation = (variants: Variants, options = {
-  threshold: 0.1,
-  triggerOnce: true,
-  enableQueue: false,
-}) => {
+export const useOptimizedAnimation = (
+  variants: Variants,
+  options = {
+    threshold: 0.1,
+    triggerOnce: true,
+    enableQueue: false,
+  },
+) => {
   const { ref, isInView } = useInViewAnimation({
     threshold: options.threshold,
     triggerOnce: options.triggerOnce,
   });
-  
+
   const { enqueue } = useAnimationQueue(3);
   const [shouldAnimate, setShouldAnimate] = useState(false);
-  
+
   // 检测是否应该减少动画
   const reduceMotion = shouldReduceMotion();
-  
+
   // 获取优化后的动画变体
-  const optimizedVariants = reduceMotion 
-    ? getAnimationVariants(variants)
-    : variants;
-  
+  const optimizedVariants = reduceMotion ? getAnimationVariants(variants) : variants;
+
   useEffect(() => {
     if (isInView) {
       if (options.enableQueue) {
@@ -37,7 +38,7 @@ export const useOptimizedAnimation = (variants: Variants, options = {
       }
     }
   }, [isInView, options.enableQueue, enqueue]);
-  
+
   return {
     ref,
     isInView,
@@ -59,20 +60,20 @@ export const useOptimizedAnimation = (variants: Variants, options = {
 export const useDebouncedAnimation = (delay = 300) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const trigger = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
+
     setIsAnimating(true);
-    
+
     timeoutRef.current = setTimeout(() => {
       setIsAnimating(false);
       timeoutRef.current = null;
     }, delay);
   };
-  
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -80,7 +81,7 @@ export const useDebouncedAnimation = (delay = 300) => {
       }
     };
   }, []);
-  
+
   return {
     isAnimating,
     trigger,
@@ -94,26 +95,26 @@ export const useDebouncedAnimation = (delay = 300) => {
 export const useThrottledAnimation = (delay = 100) => {
   const [canAnimate, setCanAnimate] = useState(true);
   const rafRef = useRef<number | null>(null);
-  
+
   const trigger = () => {
     if (!canAnimate) return false;
-    
+
     setCanAnimate(false);
-    
+
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
     }
-    
+
     rafRef.current = requestAnimationFrame(() => {
       setTimeout(() => {
         setCanAnimate(true);
         rafRef.current = null;
       }, delay);
     });
-    
+
     return true;
   };
-  
+
   useEffect(() => {
     return () => {
       if (rafRef.current) {
@@ -121,7 +122,7 @@ export const useThrottledAnimation = (delay = 100) => {
       }
     };
   }, []);
-  
+
   return {
     canAnimate,
     trigger,
@@ -134,12 +135,12 @@ export const useThrottledAnimation = (delay = 100) => {
  */
 export const useSmartAnimation = (variants: Variants) => {
   const [performanceLevel, setPerformanceLevel] = useState<'high' | 'medium' | 'low'>('high');
-  
+
   useEffect(() => {
     // 检测设备性能
     const cores = navigator.hardwareConcurrency || 4;
     const memory = (navigator as any).deviceMemory || 4;
-    
+
     if (cores >= 4 && memory >= 4) {
       setPerformanceLevel('high');
     } else if (cores >= 2 && memory >= 2) {
@@ -148,7 +149,7 @@ export const useSmartAnimation = (variants: Variants) => {
       setPerformanceLevel('low');
     }
   }, []);
-  
+
   // 根据性能调整动画
   const adjustedVariants = {
     ...variants,
@@ -156,15 +157,16 @@ export const useSmartAnimation = (variants: Variants) => {
       ...variants.visible,
       transition: {
         ...(variants.visible as any)?.transition,
-        duration: performanceLevel === 'low' 
-          ? 0.2 
-          : performanceLevel === 'medium' 
-            ? 0.3 
-            : (variants.visible as any)?.transition?.duration || 0.5,
+        duration:
+          performanceLevel === 'low'
+            ? 0.2
+            : performanceLevel === 'medium'
+              ? 0.3
+              : (variants.visible as any)?.transition?.duration || 0.5,
       },
     },
   };
-  
+
   return {
     performanceLevel,
     variants: adjustedVariants,
@@ -177,4 +179,3 @@ export default {
   useThrottledAnimation,
   useSmartAnimation,
 };
-

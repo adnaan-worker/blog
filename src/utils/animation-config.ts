@@ -311,10 +311,7 @@ export const createStaggerVariants = (delay = 0.05, duration = ANIMATION_DURATIO
 /**
  * 创建自定义淡入动画
  */
-export const createFadeInVariants = (
-  direction: 'up' | 'down' | 'left' | 'right' = 'up',
-  distance = 20
-): Variants => {
+export const createFadeInVariants = (direction: 'up' | 'down' | 'left' | 'right' = 'up', distance = 20): Variants => {
   const isVertical = direction === 'up' || direction === 'down';
   const value = direction === 'up' || direction === 'left' ? distance : -distance;
 
@@ -410,4 +407,3 @@ export const variants = {
 };
 
 export default variants;
-

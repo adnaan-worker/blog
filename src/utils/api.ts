@@ -481,8 +481,9 @@ export const API = {
     getProjects: (params?: ProjectParams) => http.get<Project[]>('/projects', params),
     // 获取项目详情
     getProjectDetail: (id: string | number) => http.get<Project>(`/projects/${id}`),
-    // 获取精选项目
-    getFeaturedProjects: (limit?: number) => http.get<Project[]>('/projects/featured', { limit }),
+    // 获取精选项目（支持分页）
+    getFeaturedProjects: (params?: { page?: number; pageSize?: number }) =>
+      http.get<Project[]>('/projects/featured', params),
     // 获取项目统计
     getProjectStats: () =>
       http.get<{

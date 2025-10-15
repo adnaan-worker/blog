@@ -37,35 +37,39 @@ const LyricCapsule = styled(motion.div)<{ isExpanded: boolean }>`
   height: 48px;
   background: linear-gradient(135deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.9) 100%);
   padding: ${(props) => (props.isExpanded ? '0 16px 0 0' : '0')}; /* 移除上下padding确保按钮居中 */
-  box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.35), 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 8px 24px rgba(var(--accent-rgb), 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   overflow: hidden;
   gap: 8px; /* 按钮和文字间距 */
-  
+
   /* GPU加速 */
   ${gpuAcceleration as any}
-  
+
   /* 悬停效果 */
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    box-shadow: 0 12px 32px rgba(var(--accent-rgb), 0.45), 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow:
+      0 12px 32px rgba(var(--accent-rgb), 0.45),
+      0 4px 12px rgba(0, 0, 0, 0.2);
     transform: translateY(-2px) translateZ(0);
   }
 
   @media (max-width: 768px) {
     height: 44px;
     padding: ${(props) => (props.isExpanded ? '0 12px 0 0' : '0')}; /* 移动端也移除上下padding */
-    
+
     /* 移动端收起时的宽度 */
-    &[data-expanded="false"] {
+    &[data-expanded='false'] {
       width: 44px !important;
     }
-    
+
     /* 移动端展开时的固定宽度，覆盖动画变体 */
-    &[data-expanded="true"] {
+    &[data-expanded='true'] {
       width: 184px !important; /* 44px按钮 + 8px间距 + 120px文字 + 12px右padding */
     }
   }
@@ -193,11 +197,13 @@ const ToolbarButton = styled(motion.button)`
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.3), 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 4px 16px rgba(var(--accent-rgb), 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  
+
   /* GPU加速 */
   ${gpuAcceleration as any}
 
@@ -212,9 +218,11 @@ const ToolbarButton = styled(motion.button)`
   }
 
   &:hover {
-    box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.4), 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow:
+      0 8px 24px rgba(var(--accent-rgb), 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px) translateZ(0);
-    
+
     &::before {
       opacity: 1;
     }
@@ -324,16 +332,13 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
           isExpanded={isCapsuleExpanded}
           data-expanded={isCapsuleExpanded}
           variants={capsuleVariants}
-          animate={isCapsuleExpanded ? "expanded" : "collapsed"}
+          animate={isCapsuleExpanded ? 'expanded' : 'collapsed'}
           initial="collapsed"
         >
-          <MusicButton
-            onClick={handleMusicPlayerToggle}
-            {...hoverScale}
-          >
+          <MusicButton onClick={handleMusicPlayerToggle} {...hoverScale}>
             <FiMusic />
           </MusicButton>
-          
+
           <AnimatePresence mode="wait">
             {isCapsuleExpanded && currentLyric && (
               <LyricText

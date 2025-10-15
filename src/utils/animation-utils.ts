@@ -5,45 +5,45 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 export const detectAnimationPerformance = () => {
   // 检测用户是否偏好减少动画
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  
+
   // 检测设备性能（简单检测）
   const canvas = document.createElement('canvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   const hasWebGL = !!gl;
-  
+
   // 检测CPU核心数（粗略估计）
   const cores = navigator.hardwareConcurrency || 4;
-  
+
   // 检测设备内存（如果可用）
   const memory = (navigator as any).deviceMemory || 4;
-  
+
   return {
     prefersReducedMotion,
     hasWebGL,
     cores,
     memory,
-    performanceLevel: (
-      prefersReducedMotion 
-        ? 'low' 
-        : hasWebGL && cores >= 4 && memory >= 4 
-          ? 'high' 
-          : 'medium'
-    ) as 'high' | 'medium' | 'low'
+    performanceLevel: (prefersReducedMotion ? 'low' : hasWebGL && cores >= 4 && memory >= 4 ? 'high' : 'medium') as
+      | 'high'
+      | 'medium'
+      | 'low',
   };
 };
 
 // 优化的动画变体
-export const createOptimizedVariants = (baseVariants: Variants, performanceLevel: 'high' | 'medium' | 'low' = 'high'): Variants => {
+export const createOptimizedVariants = (
+  baseVariants: Variants,
+  performanceLevel: 'high' | 'medium' | 'low' = 'high',
+): Variants => {
   if (performanceLevel === 'low') {
     return {
       hidden: { opacity: 0 },
-      visible: { 
+      visible: {
         opacity: 1,
-        transition: { duration: 0.1 }
+        transition: { duration: 0.1 },
       },
     };
   }
-  
+
   if (performanceLevel === 'medium') {
     return {
       ...baseVariants,
@@ -51,13 +51,13 @@ export const createOptimizedVariants = (baseVariants: Variants, performanceLevel
         ...baseVariants.visible,
         transition: {
           ...(baseVariants.visible as any)?.transition,
-          duration: Math.min(((baseVariants.visible as any)?.transition?.duration) || 0.6, 0.3),
-          staggerChildren: Math.min(((baseVariants.visible as any)?.transition?.staggerChildren) || 0.1, 0.05),
+          duration: Math.min((baseVariants.visible as any)?.transition?.duration || 0.6, 0.3),
+          staggerChildren: Math.min((baseVariants.visible as any)?.transition?.staggerChildren || 0.1, 0.05),
         },
       },
     };
   }
-  
+
   return baseVariants;
 };
 
@@ -67,9 +67,9 @@ export const optimizedFadeInUp: Variants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { 
-      duration: 0.4, 
-      ease: [0.25, 0.46, 0.45, 0.94] // 使用GPU友好的缓动函数
+    transition: {
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94], // 使用GPU友好的缓动函数
     },
   },
 };
@@ -108,8 +108,8 @@ export const optimizedIconVariants: Variants = {
     transition: {
       type: 'spring',
       stiffness: 200, // 减少弹性
-      damping: 20,   // 增加阻尼
-      duration: 0.3,  // 限制持续时间
+      damping: 20, // 增加阻尼
+      duration: 0.3, // 限制持续时间
     },
   },
 };
@@ -129,13 +129,13 @@ export const pageTransition = {
 // 动画性能优化Hook
 export const useAnimationOptimization = () => {
   const performance = detectAnimationPerformance();
-  
+
   const getOptimizedVariants = (baseVariants: Variants) => {
     return createOptimizedVariants(baseVariants, performance.performanceLevel);
   };
-  
+
   const shouldReduceAnimations = performance.performanceLevel === 'low' || performance.prefersReducedMotion;
-  
+
   return {
     performance,
     getOptimizedVariants,
@@ -157,23 +157,23 @@ export const cssAnimationOptimizer = {
     backface-visibility: hidden;
     perspective: 1000px;
   `,
-  
+
   // 优化滚动性能
   scrollOptimization: `
     overflow-anchor: auto;
     scroll-behavior: smooth;
   `,
-  
+
   // 减少重绘和重排
   layoutOptimization: `
     contain: layout style paint;
   `,
-  
+
   // 优化的过渡效果
   optimizedTransition: `
     transition: transform 0.2s ease, opacity 0.2s ease;
   `,
-  
+
   // 优化的hover效果
   optimizedHover: `
     &:hover {
@@ -187,23 +187,23 @@ export const cssAnimationOptimizer = {
 export const createAnimationThrottle = (delay = 16) => {
   let canAnimate = true;
   let rafId: number | null = null;
-  
+
   return () => {
     if (!canAnimate) return false;
-    
+
     canAnimate = false;
-    
+
     if (rafId) {
       cancelAnimationFrame(rafId);
     }
-    
+
     rafId = requestAnimationFrame(() => {
       setTimeout(() => {
         canAnimate = true;
         rafId = null;
       }, delay);
     });
-    
+
     return true;
   };
 };
@@ -211,12 +211,12 @@ export const createAnimationThrottle = (delay = 16) => {
 // 动画防抖工具 - 防止快速触发
 export const createAnimationDebounce = (callback: () => void, delay = 300) => {
   let timeoutId: NodeJS.Timeout | null = null;
-  
+
   return () => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
-    
+
     timeoutId = setTimeout(() => {
       callback();
       timeoutId = null;
@@ -244,7 +244,7 @@ export const useInViewAnimation = (options = { threshold: 0.1, triggerOnce: true
           setIsInView(false);
         }
       },
-      { threshold: options.threshold }
+      { threshold: options.threshold },
     );
 
     observerRef.current.observe(ref.current);
@@ -269,7 +269,7 @@ export const useAnimationQueue = (maxConcurrent = 3) => {
       const animation = queueRef.current.shift();
       if (animation) {
         runningRef.current++;
-        
+
         requestAnimationFrame(() => {
           animation();
           runningRef.current--;
@@ -279,10 +279,13 @@ export const useAnimationQueue = (maxConcurrent = 3) => {
     }
   }, [maxConcurrent]);
 
-  const enqueue = useCallback((animation: () => void) => {
-    queueRef.current.push(animation);
-    processQueue();
-  }, [processQueue]);
+  const enqueue = useCallback(
+    (animation: () => void) => {
+      queueRef.current.push(animation);
+      processQueue();
+    },
+    [processQueue],
+  );
 
   return { enqueue };
 };
@@ -291,20 +294,20 @@ export const useAnimationQueue = (maxConcurrent = 3) => {
 export const batchAnimationOptimizer = {
   // 减少同时执行的动画数量
   maxConcurrentAnimations: 5,
-  
+
   // 动画队列管理
   animationQueue: [] as (() => void)[],
-  
+
   // 添加动画到队列
   addToQueue: (animation: () => void) => {
     batchAnimationOptimizer.animationQueue.push(animation);
     batchAnimationOptimizer.processQueue();
   },
-  
+
   // 处理动画队列
   processQueue: () => {
     if (batchAnimationOptimizer.animationQueue.length === 0) return;
-    
+
     const animation = batchAnimationOptimizer.animationQueue.shift();
     if (animation) {
       animation();

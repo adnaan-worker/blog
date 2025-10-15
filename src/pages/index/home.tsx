@@ -13,6 +13,7 @@ import {
   FiStar,
   FiFolderPlus,
   FiCode,
+  FiLoader,
 } from 'react-icons/fi';
 import { API, SiteSettings, UserActivity, Project } from '@/utils/api';
 import { formatDate } from '@/utils';
@@ -142,7 +143,7 @@ const ProfileCard = styled.div`
   border-radius: 16px;
   box-shadow: 0 8px 24px var(--accent-color-alpha);
   cursor: pointer;
-  
+
   /* 性能优化 - 但不影响3D翻转 */
   will-change: transform;
 
@@ -154,7 +155,7 @@ const ProfileCard = styled.div`
   &.flipped {
     transform: rotateY(180deg) translateZ(0);
   }
-  
+
   /* 确保翻转动画始终工作，即使有减少动画偏好 */
   @media (prefers-reduced-motion: reduce) {
     &.flipped {
@@ -565,16 +566,52 @@ const SectionTitle = styled(motion.h2)`
   align-items: center;
   justify-content: space-between;
 
-  a {
-    font-size: 0.85rem;
-    color: var(--accent-color);
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
+  /* 为标题添加装饰线 */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-color), transparent);
+    border-radius: 3px;
+  }
+`;
 
-    &:hover {
-      text-decoration: underline;
-    }
+// 简洁居中标题容器
+const CreativeSectionHeader = styled.div`
+  text-align: center;
+  margin: 3.5rem 0 2.5rem;
+
+  @media (max-width: 768px) {
+    margin: 2.5rem 0 2rem;
+  }
+`;
+
+// 主标题
+const CreativeSectionTitle = styled(motion.h2)`
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  letter-spacing: 0.02em;
+
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+  }
+`;
+
+// 副标题
+const SectionSubtitle = styled(motion.p)`
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 400;
+  opacity: 0.8;
+
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
   }
 `;
 
@@ -891,11 +928,7 @@ const ChartSection = styled(motion.section)`
 `;
 
 const ChartContainer = styled(motion.div)`
-  background: var(--bg-primary);
-  border-radius: 12px;
   padding: 1.25rem;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 
   [data-theme='dark'] & {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -903,7 +936,7 @@ const ChartContainer = styled(motion.div)`
 `;
 
 const Chart = styled.div`
-  height: 100px;
+  height: 150px;
   display: flex;
   align-items: flex-end;
   gap: 3px;
@@ -964,99 +997,400 @@ const barVariants: Variants = {
 // 添加开源项目相关的样式组件
 const ProjectsSection = styled(motion.section)`
   margin: 3rem 0 4rem;
+  position: relative;
+
+  /* 拼图画布背景 */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(var(--accent-rgb), 0.03) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+  }
 `;
 
+// 左右布局容器 - 左侧60% 右侧40%
 const ProjectsGrid = styled(motion.div)`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: 3fr 2fr;
+  gap: 1.5rem;
+  padding: 2rem 0;
+  position: relative;
+
+  @media (max-width: 968px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+`;
+
+// 左侧大卡片容器
+const ProjectMainCard = styled(motion.div)`
+  position: relative;
+`;
+
+// 渐变色方案 - 每个项目独特的渐变背景
+const gradientColors = [
+  'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%)',
+  'linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(239, 68, 68, 0.05) 100%)',
+  'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%)',
+  'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%)',
+];
+
+// 左侧项目展示容器 - 扁平设计
+const ProjectDetailContainer = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-height: 420px;
+
+  /* GPU加速 */
+  ${gpuAcceleration as any}
+`;
+
+// 项目信息区域
+const ProjectInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+// 项目数据展示区域
+const ProjectDataSection = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
 
-  @media (max-width: 768px) {
+  @media (max-width: 968px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const ProjectCard = styled(motion.div)`
-  background: var(--bg-primary);
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+// 雷达图容器
+const RadarChartContainer = styled.div`
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 280px;
+  margin: 0 auto;
+`;
+
+// 项目数据卡片
+const DataCard = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
-  
-  /* GPU加速 */
-  ${gpuAcceleration as any}
+  gap: 1rem;
+`;
 
-  &:hover {
-    box-shadow: 0 10px 30px rgba(81, 131, 245, 0.1);
-    transform: translateY(-4px) translateZ(0);
-    border-color: rgba(81, 131, 245, 0.2);
+// 数据项
+const DataItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
+
+  &:last-child {
+    border-bottom: none;
   }
 `;
 
-const ProjectHeader = styled.div`
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+// 数据标签
+const DataLabel = styled.span`
+  font-size: 0.875rem;
+  color: var(--text-secondary);
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
-const ProjectIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--accent-color-alpha) 0%, var(--accent-color) 100%);
+// 数据值
+const DataValue = styled.span`
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+`;
+
+// 雷达图SVG样式
+const RadarSVG = styled.svg`
+  width: 100%;
+  height: 100%;
+`;
+
+// 雷达图网格线
+const RadarGrid = styled.polygon`
+  fill: none;
+  stroke: var(--border-color);
+  stroke-width: 1;
+  opacity: 0.3;
+`;
+
+// 雷达图数据区域
+const RadarArea = styled.polygon`
+  fill: var(--accent-color);
+  fill-opacity: 0.2;
+  stroke: var(--accent-color);
+  stroke-width: 2;
+  transition: all 0.3s ease;
+
+  &:hover {
+    fill-opacity: 0.3;
+  }
+`;
+
+// 雷达图标签
+const RadarLabel = styled.text`
+  font-size: 0.75rem;
+  fill: var(--text-secondary);
+  text-anchor: middle;
+  font-weight: 500;
+`;
+
+// 右侧缩略图滚动容器 - 紧凑设计
+const ProjectThumbnailContainer = styled.div`
+  position: relative;
+  height: 420px;
+  overflow: hidden;
+  background: var(--bg-primary);
+  padding: 0.5rem;
+
+  @media (max-width: 968px) {
+    height: auto;
+    max-height: 200px;
+  }
+`;
+
+// 右侧缩略图网格 - 可滚动 - 紧凑布局
+const ProjectThumbnailGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
+  }
+
+  @media (max-width: 968px) {
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    gap: 0.375rem;
+  }
+`;
+
+// 小方块缩略图 - 紧凑头像大小
+const ProjectThumbnail = styled(motion.div)<{ isActive: boolean; colorIndex: number }>`
+  aspect-ratio: 1;
+  width: 100%;
+  background: var(--bg-primary);
+  border-radius: 10px;
+  border: 2px solid ${(props) => (props.isActive ? 'var(--accent-color)' : 'var(--border-color)')};
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 1.2rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* GPU加速 */
+  ${gpuAcceleration as any}
+
+  /* 渐变装饰背景 */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: ${(props) => gradientColors[props.colorIndex % 4]};
+    opacity: ${(props) => (props.isActive ? 1 : 0.6)};
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    border-color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.5)')};
+    transform: scale(1.05);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 968px) {
+    border-radius: 8px;
+  }
+`;
+
+// 项目头部 - 扁平设计
+const ProjectHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+`;
+
+// 右上角查看详情链接
+const ViewDetailLink = styled(Link)`
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 0.875rem;
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  &:hover {
+    color: var(--accent-color);
+    opacity: 0.8;
+    transform: translateX(2px);
+  }
+
+  svg {
+    transition: transform 0.2s ease;
+  }
+
+  &:hover svg {
+    transform: translateX(2px);
+  }
+`;
+
+const ProjectIcon = styled.div<{ size?: 'large' | 'small' }>`
+  width: ${(props) => (props.size === 'small' ? '32px' : '56px')};
+  height: ${(props) => (props.size === 'small' ? '32px' : '56px')};
+  border-radius: ${(props) => (props.size === 'small' ? '10px' : '14px')};
+  background: rgba(var(--accent-rgb), 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
+  font-size: ${(props) => (props.size === 'small' ? '1rem' : '1.75rem')};
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(var(--accent-rgb), 0.15);
+    transform: scale(1.05);
+  }
+`;
+
+// 缩略图首字母标识
+const ThumbnailInitial = styled.div`
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  position: relative;
+  z-index: 1;
+  text-transform: uppercase;
+
+  @media (max-width: 968px) {
+    font-size: 0.875rem;
+  }
+`;
+
+// 加载更多指示器
+const LoadMoreIndicator = styled.div`
+  aspect-ratio: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-color);
+
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 968px) {
+    border-radius: 8px;
+  }
+`;
+
+const ProjectTitleWrapper = styled.div`
+  flex: 1;
+  min-width: 0;
 `;
 
 const ProjectTitle = styled.h3`
   font-size: 1.1rem;
   font-weight: 600;
-  margin: 0;
+  margin: 0 0 0.5rem 0;
   color: var(--text-primary);
+  transition: color 0.2s ease;
+  line-height: 1.4;
 `;
 
 const ProjectContent = styled.div`
-  padding: 1.5rem;
-  flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 `;
 
 const ProjectDescription = styled.p`
   font-size: 0.9rem;
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 1.5rem;
-  flex: 1;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 `;
 
 const ProjectMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
   font-size: 0.85rem;
   color: var(--text-secondary);
+  margin-top: auto;
 `;
 
 const ProjectMetaItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4rem;
+
+  svg {
+    opacity: 0.6;
+  }
 `;
 
 const ProjectLanguage = styled.div<{ color: string }>`
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.5rem;
 
   &::before {
     content: '';
@@ -1070,100 +1404,65 @@ const ProjectLanguage = styled.div<{ color: string }>`
 const ProjectLinks = styled.div`
   display: flex;
   gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color);
 `;
 
 const ProjectLink = styled.a`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s ease;
+  text-decoration: none;
+  flex: 1;
 
   &.primary {
-    background-color: var(--accent-color);
+    background: var(--accent-color);
     color: white;
 
     &:hover {
-      background-color: var(--accent-color-hover);
-      transform: translateY(-2px);
+      background: var(--accent-color-hover);
+      transform: translateY(-1px);
     }
   }
 
   &.secondary {
-    background-color: var(--bg-secondary);
+    background: transparent;
     color: var(--text-secondary);
+    border: 1px solid var(--border-color);
 
     &:hover {
-      background-color: var(--bg-tertiary);
-      color: var(--text-primary);
-      transform: translateY(-2px);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+      transform: translateY(-1px);
     }
   }
 
   svg {
-    margin-right: 0.3rem;
+    margin-right: 0.4rem;
   }
 `;
-
-// 添加演示项目数据
-const mockProjects = [
-  {
-    id: 1,
-    title: 'React Native UI Kit',
-    description: '一个高度可定制的UI组件库，为React Native应用提供美观且易用的界面元素。支持深色模式和RTL布局。',
-    language: 'TypeScript',
-    languageColor: '#3178c6',
-    stars: 432,
-    forks: 89,
-    lastUpdated: '3天前',
-    repoUrl: 'https://github.com/adnaan/react-native-ui-kit',
-    demoUrl: 'https://example.com/demo',
-    icon: 'components',
-  },
-  {
-    id: 2,
-    title: 'NodeJS API Starter',
-    description:
-      'Express和TypeScript打造的API启动模板，集成了认证、权限管理、日志记录和自动化测试。快速启动你的Node.js后端项目。',
-    language: 'JavaScript',
-    languageColor: '#f1e05a',
-    stars: 257,
-    forks: 63,
-    lastUpdated: '1周前',
-    repoUrl: 'https://github.com/adnaan/node-api-starter',
-    demoUrl: 'https://example.com/node-api',
-    icon: 'server',
-  },
-  {
-    id: 3,
-    title: 'ByteBlogs CMS',
-    description: '专为开发者设计的轻量级内容管理系统，支持Markdown编辑、代码高亮和版本控制。适合技术博客和文档网站。',
-    language: 'Vue',
-    languageColor: '#41b883',
-    stars: 189,
-    forks: 41,
-    lastUpdated: '2周前',
-    repoUrl: 'https://github.com/adnaan/byte-blogs',
-    demoUrl: 'https://example.com/byte-blogs',
-    icon: 'blog',
-  },
-];
-
-// 项目卡片动画变体 - 带延迟的淡入
+// 简约淡入动画 - 轻微上浮效果
+// 项目卡片切换动画 - 优雅的淡入淡出
 const projectVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i) => ({
+  hidden: {
+    opacity: 0,
+    scale: 0.95,
+    y: 10,
+  },
+  visible: {
     opacity: 1,
+    scale: 1,
     y: 0,
     transition: {
-      duration: 0.3,
-      delay: i * 0.08,
-      ease: [0.25, 1, 0.5, 1],
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94],
     },
-  }),
+  },
 };
 
 // 活动格式化函数 - 根据不同类型返回不同的展示格式
@@ -1246,20 +1545,6 @@ const chartData = [
   { month: '2026.4', value: 92 },
 ];
 
-// 项目图标渲染函数
-const renderProjectIcon = (iconType: string) => {
-  switch (iconType) {
-    case 'components':
-      return <FiCode size={20} />;
-    case 'server':
-      return <FiFolderPlus size={20} />;
-    case 'blog':
-      return <FiCalendar size={20} />;
-    default:
-      return <FiCode size={20} />;
-  }
-};
-
 // 添加自定义ArticleLink组件
 interface ArticleLinkProps {
   to: string;
@@ -1300,12 +1585,10 @@ const SkillTags = styled(motion.div)`
 const Home: React.FC = () => {
   // 使用动画优化工具
   const { fadeInUp, staggerContainer, iconVariants, shouldReduceAnimations } = useAnimationOptimization();
-  
+
   // 使用统一的动画变体
-  const cardVariants = shouldReduceAnimations 
-    ? animationVariants.fade 
-    : animationVariants.cardVariants;
-  
+  const cardVariants = shouldReduceAnimations ? animationVariants.fade : animationVariants.cardVariants;
+
   // 卡片翻转状态
   const [isFlipped, setIsFlipped] = useState(false);
   // 网站设置数据
@@ -1318,6 +1601,12 @@ const Home: React.FC = () => {
   const [activitiesLoading, setActivitiesLoading] = useState(true);
   // 项目数据
   const [projects, setProjects] = useState<Project[]>([]);
+  // 当前选中的项目索引
+  const [selectedProjectIndex, setSelectedProjectIndex] = useState(0);
+  // 项目分页状态
+  const [projectPage, setProjectPage] = useState(1);
+  const [hasMoreProjects, setHasMoreProjects] = useState(true);
+  const [loadingMoreProjects, setLoadingMoreProjects] = useState(false);
 
   // 加载网站设置
   useEffect(() => {
@@ -1368,7 +1657,6 @@ const Home: React.FC = () => {
       try {
         setActivitiesLoading(true);
         const response = await API.activity.getRecentActivities({ page: 1, pageSize: 10 });
-        // 分页API返回格式: { data: [...], meta: { pagination: {...} } }
         setActivities(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('加载活动失败:', error);
@@ -1381,12 +1669,13 @@ const Home: React.FC = () => {
     loadActivities();
   }, []);
 
-  // 加载精选项目
+  // 加载精选项目（首次加载）
   useEffect(() => {
     const loadProjects = async () => {
       try {
-        const response = await API.project.getFeaturedProjects(3);
+        const response = await API.project.getFeaturedProjects({ page: 1, pageSize: 6 });
         setProjects(response.data || []);
+        setHasMoreProjects((response as any).meta?.pagination?.totalPages > 1);
       } catch (error) {
         console.error('加载项目失败:', error);
       }
@@ -1394,6 +1683,105 @@ const Home: React.FC = () => {
 
     loadProjects();
   }, []);
+
+  // 加载更多项目
+  const loadMoreProjects = async () => {
+    if (loadingMoreProjects || !hasMoreProjects) return;
+
+    try {
+      setLoadingMoreProjects(true);
+      const nextPage = projectPage + 1;
+      const response = await API.project.getFeaturedProjects({ page: nextPage, pageSize: 6 });
+
+      if (response.data && response.data.length > 0) {
+        setProjects((prev) => [...prev, ...response.data]);
+        setProjectPage(nextPage);
+        setHasMoreProjects((response as any).meta?.pagination?.page < (response as any).meta?.pagination?.totalPages);
+      } else {
+        setHasMoreProjects(false);
+      }
+    } catch (error) {
+      console.error('加载更多项目失败:', error);
+    } finally {
+      setLoadingMoreProjects(false);
+    }
+  };
+
+  // 雷达图渲染函数
+  const renderRadarChart = (project: Project) => {
+    // 雷达图数据配置（5个维度）
+    const radarData = [
+      { label: '活跃度', value: Math.min((project.stars || 0) / 10, 100), max: 100 },
+      { label: '受欢迎', value: Math.min((project.forks || 0) * 5, 100), max: 100 },
+      { label: '代码量', value: 85, max: 100 }, // 可以根据实际数据调整
+      { label: '更新度', value: 90, max: 100 },
+      { label: '文档', value: 75, max: 100 },
+    ];
+
+    const center = 140;
+    const radius = 100;
+    const levels = 5;
+
+    // 计算雷达图坐标
+    const getPoint = (value: number, index: number, max: number) => {
+      const angle = (Math.PI * 2 * index) / radarData.length - Math.PI / 2;
+      const percent = value / max;
+      const x = center + radius * percent * Math.cos(angle);
+      const y = center + radius * percent * Math.sin(angle);
+      return { x, y };
+    };
+
+    // 计算标签位置
+    const getLabelPoint = (index: number) => {
+      const angle = (Math.PI * 2 * index) / radarData.length - Math.PI / 2;
+      const labelRadius = radius + 25;
+      const x = center + labelRadius * Math.cos(angle);
+      const y = center + labelRadius * Math.sin(angle);
+      return { x, y };
+    };
+
+    // 生成网格线坐标
+    const gridPoints = (level: number) => {
+      return radarData
+        .map((_, index) => {
+          const p = getPoint(100 * (level / levels), index, 100);
+          return `${p.x},${p.y}`;
+        })
+        .join(' ');
+    };
+
+    // 生成数据区域坐标
+    const dataPoints = radarData
+      .map((item, index) => {
+        const p = getPoint(item.value, index, item.max);
+        return `${p.x},${p.y}`;
+      })
+      .join(' ');
+
+    return (
+      <RadarChartContainer>
+        <RadarSVG viewBox="0 0 280 280">
+          {/* 绘制网格 */}
+          {[...Array(levels)].map((_, i) => (
+            <RadarGrid key={i} points={gridPoints(i + 1)} />
+          ))}
+
+          {/* 绘制数据区域 */}
+          <RadarArea points={dataPoints} />
+
+          {/* 绘制标签 */}
+          {radarData.map((item, index) => {
+            const { x, y } = getLabelPoint(index);
+            return (
+              <RadarLabel key={index} x={x} y={y} dy={5}>
+                {item.label}
+              </RadarLabel>
+            );
+          })}
+        </RadarSVG>
+      </RadarChartContainer>
+    );
+  };
 
   const handleCardFlip = () => {
     setIsFlipped(!isFlipped);
@@ -1736,7 +2124,7 @@ const Home: React.FC = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-              variants={staggerContainer}
+          variants={staggerContainer}
         >
           {/* 左侧栏 */}
           <LeftColumn>
@@ -1744,9 +2132,20 @@ const Home: React.FC = () => {
             <ContentSection variants={fadeInUp}>
               <SectionTitle>
                 最近更新的文稿
-                <motion.a href="/blog" whileHover={{ x: 5 }}>
-                  还有更多 <FiArrowRight size={12} />
-                </motion.a>
+                <Link to="/blog" style={{ textDecoration: 'none' }}>
+                  <motion.span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      color: 'var(--accent-color)',
+                      fontSize: '0.85rem',
+                    }}
+                    whileHover={{ x: 5 }}
+                  >
+                    还有更多 <FiArrowRight size={12} />
+                  </motion.span>
+                </Link>
               </SectionTitle>
 
               <ArticleGrid variants={staggerContainer}>
@@ -1773,9 +2172,20 @@ const Home: React.FC = () => {
             <ContentSection variants={fadeInUp}>
               <SectionTitle>
                 最近更新的手记
-                <motion.a href="/notes" whileHover={{ x: 5 }}>
-                  还有更多 <FiArrowRight size={12} />
-                </motion.a>
+                <Link to="/notes" style={{ textDecoration: 'none' }}>
+                  <motion.span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      color: 'var(--accent-color)',
+                      fontSize: '0.85rem',
+                    }}
+                    whileHover={{ x: 5 }}
+                  >
+                    还有更多 <FiArrowRight size={12} />
+                  </motion.span>
+                </Link>
               </SectionTitle>
 
               <ArticleGrid variants={staggerContainer}>
@@ -1865,9 +2275,26 @@ const Home: React.FC = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-              variants={staggerContainer}
+          variants={staggerContainer}
         >
-          <SectionTitle variants={fadeInUp}>热力图</SectionTitle>
+          <CreativeSectionHeader>
+            <CreativeSectionTitle
+              variants={fadeInUp}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+            >
+              年度活跃度一览
+            </CreativeSectionTitle>
+            <SectionSubtitle
+              variants={fadeInUp}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
+            >
+              记录每一次创作的足迹
+            </SectionSubtitle>
+          </CreativeSectionHeader>
 
           <ChartContainer variants={fadeInUp} whileHover={{ y: -3 }}>
             <Chart>
@@ -1892,48 +2319,101 @@ const Home: React.FC = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-              variants={staggerContainer}
+          variants={staggerContainer}
         >
-          <SectionTitle variants={fadeInUp}>
-            开源项目
-            <motion.a href="/projects" whileHover={{ x: 5 }} variants={fadeInUp}>
-              查看全部 <FiArrowRight size={12} />
-            </motion.a>
-          </SectionTitle>
+          <CreativeSectionHeader>
+            <CreativeSectionTitle
+              variants={fadeInUp}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+            >
+              开源项目
+            </CreativeSectionTitle>
+            <SectionSubtitle
+              variants={fadeInUp}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
+            >
+              用代码构建更美好的世界
+            </SectionSubtitle>
+          </CreativeSectionHeader>
 
           <ProjectsGrid>
-            {projects.map((project, index) => (
-              <ProjectCard key={project.id} variants={projectVariants} custom={index} whileHover={{ y: -5 }}>
-                <ProjectHeader>
-                  <ProjectTitle>{project.title}</ProjectTitle>
-                  <ProjectIcon>
-                    <FiCode size={20} />
-                  </ProjectIcon>
-                </ProjectHeader>
+            {/* 左侧：选中项目的详细信息 */}
+            <ProjectMainCard>
+              {projects[selectedProjectIndex] && (
+                <ProjectDetailContainer
+                  key={projects[selectedProjectIndex].id}
+                  variants={projectVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {/* 项目基本信息 */}
+                  <ProjectInfo>
+                    <ProjectHeader>
+                      <ProjectIcon size="large">
+                        <FiCode size={28} />
+                      </ProjectIcon>
+                      <ProjectTitleWrapper>
+                        <ProjectTitle>{projects[selectedProjectIndex].title}</ProjectTitle>
+                        <ProjectDescription>{projects[selectedProjectIndex].description}</ProjectDescription>
+                      </ProjectTitleWrapper>
+                      <ViewDetailLink to={`/projects/${projects[selectedProjectIndex].slug}`}>
+                        查看详情
+                        <FiArrowRight size={12} />
+                      </ViewDetailLink>
+                    </ProjectHeader>
+                  </ProjectInfo>
 
-                <ProjectContent>
-                  <ProjectDescription>{project.description}</ProjectDescription>
+                  {/* 项目数据和雷达图 */}
+                  <ProjectDataSection>
+                    {/* 左侧：项目数据 */}
+                    <DataCard>
+                      <DataItem>
+                        <DataLabel>
+                          <FiStar size={16} />
+                          Stars
+                        </DataLabel>
+                        <DataValue>{projects[selectedProjectIndex].stars || 0}</DataValue>
+                      </DataItem>
+                      <DataItem>
+                        <DataLabel>
+                          <FiGithub size={16} />
+                          Forks
+                        </DataLabel>
+                        <DataValue>{projects[selectedProjectIndex].forks || 0}</DataValue>
+                      </DataItem>
+                      <DataItem>
+                        <DataLabel>
+                          <FiCode size={16} />
+                          语言
+                        </DataLabel>
+                        <DataValue>{projects[selectedProjectIndex].language || 'N/A'}</DataValue>
+                      </DataItem>
+                      <DataItem>
+                        <DataLabel>
+                          <FiCalendar size={16} />
+                          更新时间
+                        </DataLabel>
+                        <DataValue>
+                          {projects[selectedProjectIndex].updatedAt
+                            ? formatDate(projects[selectedProjectIndex].updatedAt, 'YYYY-MM-DD')
+                            : '最近'}
+                        </DataValue>
+                      </DataItem>
+                    </DataCard>
 
-                  <ProjectMeta>
-                    {project.language && (
-                      <ProjectLanguage color={project.languageColor || '#6b7280'}>{project.language}</ProjectLanguage>
-                    )}
-                    {project.stars > 0 && (
-                      <ProjectMetaItem>
-                        <FiStar size={14} /> {project.stars}
-                      </ProjectMetaItem>
-                    )}
-                    {project.forks > 0 && (
-                      <ProjectMetaItem>
-                        <FiGithub size={14} /> {project.forks}
-                      </ProjectMetaItem>
-                    )}
-                  </ProjectMeta>
+                    {/* 右侧：雷达图 */}
+                    {renderRadarChart(projects[selectedProjectIndex])}
+                  </ProjectDataSection>
 
+                  {/* 项目链接 */}
                   <ProjectLinks>
-                    {project.githubUrl && (
+                    {projects[selectedProjectIndex].githubUrl && (
                       <ProjectLink
-                        href={project.githubUrl}
+                        href={projects[selectedProjectIndex].githubUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="primary"
@@ -1941,9 +2421,9 @@ const Home: React.FC = () => {
                         <FiGithub size={14} /> 查看源码
                       </ProjectLink>
                     )}
-                    {project.demoUrl && (
+                    {projects[selectedProjectIndex].demoUrl && (
                       <ProjectLink
-                        href={project.demoUrl}
+                        href={projects[selectedProjectIndex].demoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="secondary"
@@ -1951,17 +2431,41 @@ const Home: React.FC = () => {
                         <FiExternalLink size={14} /> 演示
                       </ProjectLink>
                     )}
-                    {!project.githubUrl && !project.demoUrl && (
-                      <Link to={`/projects/${project.slug}`} style={{ flex: 1 }}>
-                        <ProjectLink as="button" className="primary" style={{ width: '100%' }}>
-                          查看详情
-                        </ProjectLink>
-                      </Link>
-                    )}
                   </ProjectLinks>
-                </ProjectContent>
-              </ProjectCard>
-            ))}
+                </ProjectDetailContainer>
+              )}
+            </ProjectMainCard>
+
+            {/* 右侧：所有项目的缩略图 */}
+            <ProjectThumbnailContainer>
+              <ProjectThumbnailGrid
+                onScroll={(e) => {
+                  const element = e.currentTarget;
+                  const isBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 50;
+                  if (isBottom && hasMoreProjects && !loadingMoreProjects) {
+                    loadMoreProjects();
+                  }
+                }}
+              >
+                {projects.map((project, index) => (
+                  <ProjectThumbnail
+                    key={project.id}
+                    isActive={selectedProjectIndex === index}
+                    colorIndex={index}
+                    onClick={() => setSelectedProjectIndex(index)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <ThumbnailInitial>{project.title.charAt(0)}</ThumbnailInitial>
+                  </ProjectThumbnail>
+                ))}
+                {loadingMoreProjects && (
+                  <LoadMoreIndicator>
+                    <FiLoader />
+                  </LoadMoreIndicator>
+                )}
+              </ProjectThumbnailGrid>
+            </ProjectThumbnailContainer>
           </ProjectsGrid>
         </ProjectsSection>
       </PageContainer>

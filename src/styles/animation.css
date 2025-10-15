@@ -21,7 +21,9 @@
 
 /* 优化的过渡效果 */
 .optimized-transition {
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 
 /* 优化的hover效果 */
@@ -42,7 +44,9 @@
 /* 优化卡片动画 */
 .optimized-card {
   will-change: transform, box-shadow;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .optimized-card:hover {
@@ -160,7 +164,9 @@
 .optimized-tooltip {
   will-change: transform, opacity;
   transform: translateZ(0);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 /* 优化加载动画 */
@@ -170,8 +176,12 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg) translateZ(0); }
-  to { transform: rotate(360deg) translateZ(0); }
+  from {
+    transform: rotate(0deg) translateZ(0);
+  }
+  to {
+    transform: rotate(360deg) translateZ(0);
+  }
 }
 
 /* 优化脉冲动画 */
@@ -181,17 +191,17 @@
 }
 
 @keyframes pulse {
-  0% { 
-    transform: scale(1) translateZ(0); 
-    box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.4); 
+  0% {
+    transform: scale(1) translateZ(0);
+    box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.4);
   }
-  50% { 
-    transform: scale(1.05) translateZ(0); 
-    box-shadow: 0 0 0 8px rgba(29, 185, 84, 0); 
+  50% {
+    transform: scale(1.05) translateZ(0);
+    box-shadow: 0 0 0 8px rgba(29, 185, 84, 0);
   }
-  100% { 
-    transform: scale(1) translateZ(0); 
-    box-shadow: 0 0 0 0 rgba(29, 185, 84, 0); 
+  100% {
+    transform: scale(1) translateZ(0);
+    box-shadow: 0 0 0 0 rgba(29, 185, 84, 0);
   }
 }
 
@@ -202,13 +212,13 @@
 }
 
 @keyframes fadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px) translateZ(0); 
+  from {
+    opacity: 0;
+    transform: translateY(20px) translateZ(0);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0) translateZ(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
   }
 }
 
@@ -219,13 +229,13 @@
 }
 
 @keyframes slideIn {
-  from { 
-    opacity: 0; 
-    transform: translateX(-20px) translateZ(0); 
+  from {
+    opacity: 0;
+    transform: translateX(-20px) translateZ(0);
   }
-  to { 
-    opacity: 1; 
-    transform: translateX(0) translateZ(0); 
+  to {
+    opacity: 1;
+    transform: translateX(0) translateZ(0);
   }
 }
 
@@ -234,11 +244,11 @@
   .optimized-card:hover {
     transform: translateY(-2px) translateZ(0);
   }
-  
+
   .optimized-button:hover {
     transform: translateY(-0.5px) translateZ(0);
   }
-  
+
   .optimized-list-item:hover {
     transform: translateX(2px) translateZ(0);
   }
@@ -253,7 +263,7 @@
     transition: none !important;
     animation: none !important;
   }
-  
+
   .optimized-card:hover,
   .optimized-button:hover,
   .optimized-list-item:hover {

@@ -28,7 +28,7 @@ const PlayerPanel = styled(motion.div)`
   border: 1px solid var(--border-color);
   overflow: hidden;
   z-index: 1000;
-  
+
   /* GPU加速 */
   ${gpuAcceleration as any}
 
@@ -45,7 +45,7 @@ const PlayerPanel = styled(motion.div)`
     max-height: 70vh;
     overflow-y: auto;
     padding: 1rem;
-    
+
     /* 滚动性能优化 */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -114,7 +114,7 @@ const MusicList = styled.div`
   margin: 0.8rem 0;
   max-height: 180px;
   overflow-y: auto;
-  
+
   /* 滚动性能优化 */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -137,7 +137,7 @@ const MusicList = styled.div`
     background-color: rgba(81, 131, 245, 0.3);
     border-radius: 3px;
   }
-  
+
   &::-webkit-scrollbar-thumb:hover {
     background-color: rgba(81, 131, 245, 0.5);
   }
@@ -914,9 +914,9 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          transition={{ 
+          transition={{
             duration: ANIMATION_DURATION.normal,
-            ease: EASING.ease
+            ease: EASING.ease,
           }}
         >
           <PlayerHeader>
