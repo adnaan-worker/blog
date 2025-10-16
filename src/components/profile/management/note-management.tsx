@@ -113,7 +113,7 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
       orderBy: 'createdAt',
       orderDirection: 'DESC',
     },
-    pageSize: 10,
+    limit: 10,
   });
 
   // 使用 useMemo 计算统计数据，避免不必要的重渲染

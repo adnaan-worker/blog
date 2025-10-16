@@ -1069,7 +1069,7 @@ const Profile: React.FC = () => {
     try {
       const response = await API.user.getActivities({
         page,
-        pageSize: 10,
+        limit: 10,
       });
 
       // 转换活动数据，添加图标

@@ -111,7 +111,7 @@ const Blog: React.FC = () => {
     const fetchArticles = async () => {
       try {
         setError(null);
-        const response = await API.article.getArticles({ page: 1, pageSize: 100 });
+        const response = await API.article.getArticles({ page: 1, limit: 100 });
         const articleList = response.data || [];
 
         if (articleList.length > 0) {

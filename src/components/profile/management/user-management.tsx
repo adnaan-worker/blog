@@ -232,12 +232,12 @@ const UserManagement: React.FC = () => {
     status: 'active' as 'active' | 'inactive' | 'banned',
   });
 
-  const pageSize = 12;
+  const limit = 12;
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await API.user.getAllUsers({ page, limit: pageSize, search });
+      const response = await API.user.getAllUsers({ page, limit: limit, search });
       setUsers(response.data || []);
       setTotal(response.meta?.pagination?.total || 0);
       setTotalPages(response.meta?.pagination?.totalPages || 0);

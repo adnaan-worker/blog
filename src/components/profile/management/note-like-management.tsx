@@ -285,7 +285,7 @@ const NoteLikeManagement: React.FC<NoteLikeManagementProps> = ({ className }) =>
       // 目前可能需要先检查后端是否有这个接口
       const response = await API.note.getUserLikes?.({
         page: page + 1,
-        pageSize: 10,
+        limit: 10,
         search: searchQuery || undefined,
       });
 
@@ -314,7 +314,7 @@ const NoteLikeManagement: React.FC<NoteLikeManagementProps> = ({ className }) =>
 
       const response = await API.note.getUserLikes?.({
         page: 1,
-        pageSize: 10,
+        limit: 10,
         search: searchQuery || undefined,
       });
 

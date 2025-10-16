@@ -517,7 +517,7 @@ const Projects: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
-  const pageSize = 5;
+  const limit = 5;
 
   // 加载项目
   const loadProjects = async (currentPage: number) => {
@@ -525,7 +525,7 @@ const Projects: React.FC = () => {
       setLoading(true);
       const response = await API.project.getProjects({
         page: currentPage,
-        limit: pageSize, // 统一使用 limit 参数
+        limit: limit, // 统一使用 limit 参数
         status: selectedStatus as any,
         language: selectedLanguage,
       });
@@ -612,7 +612,7 @@ const Projects: React.FC = () => {
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
-                pageSize={pageSize}
+                limit={limit}
                 totalItems={totalCount}
                 onPageChange={handlePageChange}
                 showInfo={false}

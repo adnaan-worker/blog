@@ -81,18 +81,6 @@ class HttpRequest {
           reqConfig.headers.set('X-Environment', 'development');
         }
 
-        // 统一分页参数：将前端的pageSize转换为后端的limit
-        if (reqConfig.params && reqConfig.params.pageSize) {
-          reqConfig.params.limit = reqConfig.params.pageSize;
-          delete reqConfig.params.pageSize;
-        }
-
-        // 处理GET请求的查询参数
-        if (reqConfig.method === 'get' && reqConfig.data && reqConfig.data.pageSize) {
-          reqConfig.data.limit = reqConfig.data.pageSize;
-          delete reqConfig.data.pageSize;
-        }
-
         return reqConfig;
       },
       (error: AxiosError): Promise<AxiosError> => {
@@ -147,25 +135,6 @@ class HttpRequest {
             errors: data.errors,
             meta: data.meta,
           } as ErrorResponse) as any;
-        }
-
-        // 转换分页参数：将后端的limit转换回前端的pageSize
-        if (data.data && typeof data.data === 'object') {
-          const convertPaginationParams = (obj: any) => {
-            if (obj && typeof obj === 'object') {
-              if (obj.limit !== undefined) {
-                obj.pageSize = obj.limit;
-                delete obj.limit;
-              }
-              // 递归处理嵌套对象
-              Object.keys(obj).forEach((key) => {
-                if (obj[key] && typeof obj[key] === 'object') {
-                  convertPaginationParams(obj[key]);
-                }
-              });
-            }
-          };
-          convertPaginationParams(data.data);
         }
 
         return response;

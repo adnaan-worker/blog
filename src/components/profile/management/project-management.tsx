@@ -83,7 +83,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({ className }) => {
       status: undefined,
       language: undefined,
     },
-    pageSize: 10,
+    limit: 10,
   });
 
   // 使用 useMemo 计算统计数据，避免不必要的重渲染

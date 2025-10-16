@@ -274,7 +274,7 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
 
       const response = await API.article.getUserLikes({
         page: page + 1,
-        pageSize: 10,
+        limit: 10,
         search: searchQuery || undefined,
       });
 
@@ -303,7 +303,7 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
 
       const response = await API.article.getUserLikes({
         page: 1,
-        pageSize: 10,
+        limit: 10,
         search: searchQuery || undefined,
       });
 

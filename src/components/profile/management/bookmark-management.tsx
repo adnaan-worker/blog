@@ -271,7 +271,7 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
 
       const response = await API.article.getUserBookmarks({
         page: page + 1,
-        pageSize: 10,
+        limit: 10,
         search: searchQuery || undefined,
       });
 
@@ -300,7 +300,7 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
 
       const response = await API.article.getUserBookmarks({
         page: 1,
-        pageSize: 10,
+        limit: 10,
         search: searchQuery || undefined,
       });
 

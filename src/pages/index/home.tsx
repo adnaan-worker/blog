@@ -19,6 +19,9 @@ import { API, SiteSettings, UserActivity, Project } from '@/utils/api';
 import { formatDate } from '@/utils';
 import { useAnimationOptimization } from '@/utils/animation-utils';
 import { variants as animationVariants, gpuAcceleration, hoverScale } from '@/utils/animation-config';
+import { RadarChart } from '@/components/common/RadarChart';
+import { Icon } from '@/components/common/Icon';
+import { getLanguageIcon, calculateProjectRadarData } from '@/utils/language-icons';
 
 // 使用motion直接访问组件
 const MotionDiv = motion.div;
@@ -630,7 +633,7 @@ const ArticleCard = styled(motion.div)`
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
   transition: all 0.2s ease;
   position: relative;
 
@@ -667,7 +670,7 @@ const ArticleCard = styled(motion.div)`
   }
 
   [data-theme='dark'] & {
-    border-bottom-color: rgba(75, 85, 99, 0.3);
+    border-bottom-color: rgba(75, 85, 99, 0.5);
   }
 `;
 
@@ -832,7 +835,7 @@ const ActivityLink = styled(motion.a)`
   display: flex;
   align-items: flex-start;
   padding: 1rem 0;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.3);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
   transition: all 0.2s ease;
   position: relative;
   text-decoration: none;
@@ -864,7 +867,7 @@ const ActivityLink = styled(motion.a)`
   }
 
   [data-theme='dark'] & {
-    border-bottom-color: rgba(75, 85, 99, 0.3);
+    border-bottom-color: rgba(75, 85, 99, 0.5);
   }
 `;
 
@@ -1014,13 +1017,36 @@ const ProjectsSection = styled(motion.section)`
 const ProjectsGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: 3fr 2fr;
-  gap: 1.5rem;
+  gap: 3rem;
   padding: 2rem 0;
   position: relative;
 
+  /* 简短中间分割线 - 在间隔中间 */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 60%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 100px;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--border-color) 15%,
+      var(--border-color) 85%,
+      transparent 100%
+    );
+    opacity: 0.6;
+
+    @media (max-width: 968px) {
+      display: none;
+    }
+  }
+
   @media (max-width: 968px) {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 2rem;
   }
 `;
 
@@ -1029,19 +1055,11 @@ const ProjectMainCard = styled(motion.div)`
   position: relative;
 `;
 
-// 渐变色方案 - 每个项目独特的渐变背景
-const gradientColors = [
-  'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%)',
-  'linear-gradient(135deg, rgba(236, 72, 153, 0.05) 0%, rgba(239, 68, 68, 0.05) 100%)',
-  'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%)',
-  'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%)',
-];
-
-// 左侧项目展示容器 - 扁平设计
+// 左侧项目展示容器
 const ProjectDetailContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   min-height: 420px;
 
   /* GPU加速 */
@@ -1055,24 +1073,131 @@ const ProjectInfo = styled.div`
   gap: 1.5rem;
 `;
 
+// 右侧几何拼图容器
+const GeometryGridContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-rows: 60px;
+  gap: 0.5rem;
+  height: 420px;
+  overflow: hidden;
+  position: relative;
+
+  @media (max-width: 968px) {
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 50px;
+    height: auto;
+    max-height: 300px;
+  }
+`;
+
+// 几何块标题（悬停显示）- 需要在 GeometryBlock 之前声明
+const GeometryBlockTitle = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  background: linear-gradient(
+    to top,
+    rgba(var(--accent-rgb), 0.95) 0%,
+    rgba(var(--accent-rgb), 0.85) 50%,
+    transparent 100%
+  );
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+
+  /* 默认隐藏 */
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+`;
+
+// 几何块 - 不规则尺寸
+const GeometryBlock = styled(motion.div)<{
+  isActive: boolean;
+  rowSpan: number;
+  colSpan: number;
+  colorIndex: number;
+}>`
+  grid-row: span ${(props) => props.rowSpan};
+  grid-column: span ${(props) => props.colSpan};
+  background: ${(props) => (props.isActive ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--accent-rgb), 0.06)')};
+  border-radius: 8px;
+  border: 2px solid ${(props) => (props.isActive ? 'var(--accent-color)' : 'transparent')};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  /* 扁平化装饰 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(var(--accent-rgb), 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    background: rgba(var(--accent-rgb), 0.12);
+    border-color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.4)')};
+    transform: scale(1.02);
+    z-index: 1;
+
+    &::before {
+      opacity: 1;
+    }
+
+    /* 悬停时显示标题 */
+    ${GeometryBlockTitle} {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 968px) {
+    border-radius: 6px;
+  }
+`;
+
+// 几何块内容
+const GeometryBlockContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--accent-color);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+`;
+
 // 项目数据展示区域
 const ProjectDataSection = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
+  margin-top: 1rem;
 
-  @media (max-width: 968px) {
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
-`;
-
-// 雷达图容器
-const RadarChartContainer = styled.div`
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  max-width: 280px;
-  margin: 0 auto;
 `;
 
 // 项目数据卡片
@@ -1088,7 +1213,7 @@ const DataItem = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
+  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.5);
 
   &:last-child {
     border-bottom: none;
@@ -1111,132 +1236,6 @@ const DataValue = styled.span`
   color: var(--text-primary);
 `;
 
-// 雷达图SVG样式
-const RadarSVG = styled.svg`
-  width: 100%;
-  height: 100%;
-`;
-
-// 雷达图网格线
-const RadarGrid = styled.polygon`
-  fill: none;
-  stroke: var(--border-color);
-  stroke-width: 1;
-  opacity: 0.3;
-`;
-
-// 雷达图数据区域
-const RadarArea = styled.polygon`
-  fill: var(--accent-color);
-  fill-opacity: 0.2;
-  stroke: var(--accent-color);
-  stroke-width: 2;
-  transition: all 0.3s ease;
-
-  &:hover {
-    fill-opacity: 0.3;
-  }
-`;
-
-// 雷达图标签
-const RadarLabel = styled.text`
-  font-size: 0.75rem;
-  fill: var(--text-secondary);
-  text-anchor: middle;
-  font-weight: 500;
-`;
-
-// 右侧缩略图滚动容器 - 紧凑设计
-const ProjectThumbnailContainer = styled.div`
-  position: relative;
-  height: 420px;
-  overflow: hidden;
-  background: var(--bg-primary);
-  padding: 0.5rem;
-
-  @media (max-width: 968px) {
-    height: auto;
-    max-height: 200px;
-  }
-`;
-
-// 右侧缩略图网格 - 可滚动 - 紧凑布局
-const ProjectThumbnailGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
-  padding: 0;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  /* 自定义滚动条 */
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
-    border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
-  }
-
-  @media (max-width: 968px) {
-    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
-    gap: 0.375rem;
-  }
-`;
-
-// 小方块缩略图 - 紧凑头像大小
-const ProjectThumbnail = styled(motion.div)<{ isActive: boolean; colorIndex: number }>`
-  aspect-ratio: 1;
-  width: 100%;
-  background: var(--bg-primary);
-  border-radius: 10px;
-  border: 2px solid ${(props) => (props.isActive ? 'var(--accent-color)' : 'var(--border-color)')};
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* GPU加速 */
-  ${gpuAcceleration as any}
-
-  /* 渐变装饰背景 */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: ${(props) => gradientColors[props.colorIndex % 4]};
-    opacity: ${(props) => (props.isActive ? 1 : 0.6)};
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-  }
-
-  &:hover {
-    border-color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.5)')};
-    transform: scale(1.05);
-
-    &::before {
-      opacity: 1;
-    }
-  }
-
-  @media (max-width: 968px) {
-    border-radius: 8px;
-  }
-`;
-
 // 项目头部 - 扁平设计
 const ProjectHeader = styled.div`
   display: flex;
@@ -1244,14 +1243,20 @@ const ProjectHeader = styled.div`
   gap: 1rem;
   margin-bottom: 1.5rem;
   position: relative;
+  padding-right: 6rem; /* 为右上角链接预留空间 */
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    padding-right: 0;
+  }
 `;
 
-// 右上角查看详情链接
+// 右上角查看详情链接 - 修复布局
 const ViewDetailLink = styled(Link)`
   position: absolute;
   top: 0;
   right: 0;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--accent-color);
   text-decoration: none;
   font-weight: 500;
@@ -1259,6 +1264,7 @@ const ViewDetailLink = styled(Link)`
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  white-space: nowrap;
 
   &:hover {
     color: var(--accent-color);
@@ -1272,6 +1278,11 @@ const ViewDetailLink = styled(Link)`
 
   &:hover svg {
     transform: translateX(2px);
+  }
+
+  @media (max-width: 768px) {
+    position: static;
+    margin-top: 0.5rem;
   }
 `;
 
@@ -1294,17 +1305,19 @@ const ProjectIcon = styled.div<{ size?: 'large' | 'small' }>`
   }
 `;
 
-// 缩略图首字母标识
-const ThumbnailInitial = styled.div`
-  font-size: 1rem;
-  font-weight: 700;
+// 缩略图内容容器
+const ThumbnailContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
   color: var(--accent-color);
   position: relative;
   z-index: 1;
-  text-transform: uppercase;
 
-  @media (max-width: 968px) {
-    font-size: 0.875rem;
+  svg {
+    opacity: 0.8;
   }
 `;
 
@@ -1334,6 +1347,48 @@ const LoadMoreIndicator = styled.div`
 
   @media (max-width: 968px) {
     border-radius: 8px;
+  }
+`;
+
+// 空状态提示
+const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+  min-height: 420px;
+
+  svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+  }
+
+  p {
+    font-size: 0.9rem;
+    margin: 0;
+    opacity: 0.7;
+  }
+`;
+
+// 语言标签样式
+const LanguageTag = styled.span<{ color: string }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+
+  &::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: ${(props) => props.color};
   }
 `;
 
@@ -1404,46 +1459,31 @@ const ProjectLanguage = styled.div<{ color: string }>`
 const ProjectLinks = styled.div`
   display: flex;
   gap: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border-color);
+  margin-top: 0.5rem;
 `;
 
 const ProjectLink = styled.a`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.625rem 1rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  gap: 0.25rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
   font-weight: 500;
   transition: all 0.2s ease;
   text-decoration: none;
-  flex: 1;
+  color: var(--text-secondary);
+  background: transparent;
 
-  &.primary {
-    background: var(--accent-color);
-    color: white;
-
-    &:hover {
-      background: var(--accent-color-hover);
-      transform: translateY(-1px);
-    }
-  }
-
-  &.secondary {
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-
-    &:hover {
-      border-color: var(--accent-color);
-      color: var(--accent-color);
-      transform: translateY(-1px);
-    }
+  &:hover {
+    color: var(--accent-color);
+    background: rgba(var(--accent-rgb), 0.08);
   }
 
   svg {
-    margin-right: 0.4rem;
+    width: 14px;
+    height: 14px;
   }
 `;
 // 简约淡入动画 - 轻微上浮效果
@@ -1608,6 +1648,26 @@ const Home: React.FC = () => {
   const [hasMoreProjects, setHasMoreProjects] = useState(true);
   const [loadingMoreProjects, setLoadingMoreProjects] = useState(false);
 
+  // 生成不规则几何块布局 - 优化版本
+  const generateGeometryLayout = (count: number) => {
+    // 精心设计的几何块模式，确保能够良好拼接
+    const patterns = [
+      { rowSpan: 2, colSpan: 3 }, // 0 - 大横块
+      { rowSpan: 2, colSpan: 3 }, // 1 - 大横块
+      { rowSpan: 3, colSpan: 2 }, // 2 - 竖长块
+      { rowSpan: 1, colSpan: 2 }, // 3 - 小横块
+      { rowSpan: 2, colSpan: 2 }, // 4 - 方块
+      { rowSpan: 1, colSpan: 2 }, // 5 - 小横块
+      { rowSpan: 3, colSpan: 2 }, // 6 - 竖长块
+    ];
+
+    const layouts = [];
+    for (let i = 0; i < Math.min(count, 7); i++) {
+      layouts.push(patterns[i]);
+    }
+    return layouts;
+  };
+
   // 加载网站设置
   useEffect(() => {
     const loadSiteSettings = async () => {
@@ -1627,7 +1687,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const loadArticles = async () => {
       try {
-        const response = await API.article.getArticles({ page: 1, pageSize: 3 });
+        const response = await API.article.getArticles({ page: 1, limit: 3 });
         setArticles(response.data || []);
       } catch (error) {
         console.error('加载文章失败:', error);
@@ -1641,7 +1701,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const loadNotes = async () => {
       try {
-        const response = await API.note.getNotes({ page: 1, pageSize: 5, isPrivate: false });
+        const response = await API.note.getNotes({ page: 1, limit: 5, isPrivate: false });
         setNotes(response.data || []);
       } catch (error) {
         console.error('加载手记失败:', error);
@@ -1656,7 +1716,7 @@ const Home: React.FC = () => {
     const loadActivities = async () => {
       try {
         setActivitiesLoading(true);
-        const response = await API.activity.getRecentActivities({ page: 1, pageSize: 10 });
+        const response = await API.activity.getRecentActivities({ page: 1, limit: 10 });
         setActivities(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('加载活动失败:', error);
@@ -1673,7 +1733,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const loadProjects = async () => {
       try {
-        const response = await API.project.getFeaturedProjects({ page: 1, pageSize: 6 });
+        const response = await API.project.getFeaturedProjects({ page: 1, limit: 100 });
         setProjects(response.data || []);
         setHasMoreProjects((response as any).meta?.pagination?.totalPages > 1);
       } catch (error) {
@@ -1691,7 +1751,7 @@ const Home: React.FC = () => {
     try {
       setLoadingMoreProjects(true);
       const nextPage = projectPage + 1;
-      const response = await API.project.getFeaturedProjects({ page: nextPage, pageSize: 6 });
+      const response = await API.project.getFeaturedProjects({ page: nextPage, limit: 6 });
 
       if (response.data && response.data.length > 0) {
         setProjects((prev) => [...prev, ...response.data]);
@@ -1705,82 +1765,6 @@ const Home: React.FC = () => {
     } finally {
       setLoadingMoreProjects(false);
     }
-  };
-
-  // 雷达图渲染函数
-  const renderRadarChart = (project: Project) => {
-    // 雷达图数据配置（5个维度）
-    const radarData = [
-      { label: '活跃度', value: Math.min((project.stars || 0) / 10, 100), max: 100 },
-      { label: '受欢迎', value: Math.min((project.forks || 0) * 5, 100), max: 100 },
-      { label: '代码量', value: 85, max: 100 }, // 可以根据实际数据调整
-      { label: '更新度', value: 90, max: 100 },
-      { label: '文档', value: 75, max: 100 },
-    ];
-
-    const center = 140;
-    const radius = 100;
-    const levels = 5;
-
-    // 计算雷达图坐标
-    const getPoint = (value: number, index: number, max: number) => {
-      const angle = (Math.PI * 2 * index) / radarData.length - Math.PI / 2;
-      const percent = value / max;
-      const x = center + radius * percent * Math.cos(angle);
-      const y = center + radius * percent * Math.sin(angle);
-      return { x, y };
-    };
-
-    // 计算标签位置
-    const getLabelPoint = (index: number) => {
-      const angle = (Math.PI * 2 * index) / radarData.length - Math.PI / 2;
-      const labelRadius = radius + 25;
-      const x = center + labelRadius * Math.cos(angle);
-      const y = center + labelRadius * Math.sin(angle);
-      return { x, y };
-    };
-
-    // 生成网格线坐标
-    const gridPoints = (level: number) => {
-      return radarData
-        .map((_, index) => {
-          const p = getPoint(100 * (level / levels), index, 100);
-          return `${p.x},${p.y}`;
-        })
-        .join(' ');
-    };
-
-    // 生成数据区域坐标
-    const dataPoints = radarData
-      .map((item, index) => {
-        const p = getPoint(item.value, index, item.max);
-        return `${p.x},${p.y}`;
-      })
-      .join(' ');
-
-    return (
-      <RadarChartContainer>
-        <RadarSVG viewBox="0 0 280 280">
-          {/* 绘制网格 */}
-          {[...Array(levels)].map((_, i) => (
-            <RadarGrid key={i} points={gridPoints(i + 1)} />
-          ))}
-
-          {/* 绘制数据区域 */}
-          <RadarArea points={dataPoints} />
-
-          {/* 绘制标签 */}
-          {radarData.map((item, index) => {
-            const { x, y } = getLabelPoint(index);
-            return (
-              <RadarLabel key={index} x={x} y={y} dy={5}>
-                {item.label}
-              </RadarLabel>
-            );
-          })}
-        </RadarSVG>
-      </RadarChartContainer>
-    );
   };
 
   const handleCardFlip = () => {
@@ -1847,70 +1831,10 @@ const Home: React.FC = () => {
                   <FiCode size={14} /> 开发者
                 </span>
                 <span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M12 17H12.01"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>{' '}
-                  设计爱好者
+                  <Icon name="helpCircle" size={14} /> 设计爱好者
                 </span>
                 <span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M18 8C19.6569 8 21 6.65685 21 5C21 3.34315 19.6569 2 18 2C16.3431 2 15 3.34315 15 5C15 6.65685 16.3431 8 18 8Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M6 15C7.65685 15 9 13.6569 9 12C9 10.3431 7.65685 9 6 9C4.34315 9 3 10.3431 3 12C3 13.6569 4.34315 15 6 15Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M18 22C19.6569 22 21 20.6569 21 19C21 17.3431 19.6569 16 18 16C16.3431 16 15 17.3431 15 19C15 20.6569 16.3431 22 18 22Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M8.59 13.51L15.42 17.49"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M15.41 6.51L8.59 10.49"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>{' '}
-                  终身学习者
+                  <Icon name="share" size={14} /> 终身学习者
                 </span>
               </SkillTags>
 
@@ -1948,15 +1872,7 @@ const Home: React.FC = () => {
                       'linear-gradient(135deg, rgba(var(--gradient-from), 0.08), rgba(var(--gradient-to), 0.08))',
                   }}
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906L17.813 4.653z" />
-                  </svg>
+                  <Icon name="bilibili" size={18} />
                 </SocialLink>
                 <SocialLink
                   href={Array.isArray(socialLinks) ? undefined : socialLinks?.twitter}
@@ -1967,15 +1883,7 @@ const Home: React.FC = () => {
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.325.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"></path>
-                  </svg>
+                  <Icon name="telegram" size={18} />
                 </SocialLink>
                 <SocialLink
                   href={Array.isArray(socialLinks) ? undefined : socialLinks?.rss}
@@ -1984,17 +1892,7 @@ const Home: React.FC = () => {
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M19 20.001C19 11.729 12.271 5 4 5v2c7.168 0 13 5.832 13 13.001h2z"></path>
-                    <path d="M12 20.001h2C14 14.486 9.514 10 4 10v2c4.411 0 8 3.589 8 8.001z"></path>
-                    <circle cx="6" cy="18" r="2"></circle>
-                  </svg>
+                  <Icon name="rss" size={18} />
                 </SocialLink>
               </SocialLinks>
             </HeroContent>
@@ -2343,7 +2241,12 @@ const Home: React.FC = () => {
           <ProjectsGrid>
             {/* 左侧：选中项目的详细信息 */}
             <ProjectMainCard>
-              {projects[selectedProjectIndex] && (
+              {projects.length === 0 ? (
+                <EmptyState>
+                  <FiFolderPlus />
+                  <p>暂无精选项目</p>
+                </EmptyState>
+              ) : projects[selectedProjectIndex] ? (
                 <ProjectDetailContainer
                   key={projects[selectedProjectIndex].id}
                   variants={projectVariants}
@@ -2354,7 +2257,15 @@ const Home: React.FC = () => {
                   <ProjectInfo>
                     <ProjectHeader>
                       <ProjectIcon size="large">
-                        <FiCode size={28} />
+                        {getLanguageIcon(projects[selectedProjectIndex].language).icon === 'code' ? (
+                          <FiCode size={28} />
+                        ) : (
+                          <Icon
+                            name={getLanguageIcon(projects[selectedProjectIndex].language).icon}
+                            size={28}
+                            color={getLanguageIcon(projects[selectedProjectIndex].language).color}
+                          />
+                        )}
                       </ProjectIcon>
                       <ProjectTitleWrapper>
                         <ProjectTitle>{projects[selectedProjectIndex].title}</ProjectTitle>
@@ -2390,7 +2301,11 @@ const Home: React.FC = () => {
                           <FiCode size={16} />
                           语言
                         </DataLabel>
-                        <DataValue>{projects[selectedProjectIndex].language || 'N/A'}</DataValue>
+                        <DataValue>
+                          <LanguageTag color={getLanguageIcon(projects[selectedProjectIndex].language).color}>
+                            {projects[selectedProjectIndex].language || 'N/A'}
+                          </LanguageTag>
+                        </DataValue>
                       </DataItem>
                       <DataItem>
                         <DataLabel>
@@ -2403,69 +2318,117 @@ const Home: React.FC = () => {
                             : '最近'}
                         </DataValue>
                       </DataItem>
+
+                      {/* 项目链接 - 放在数据下方 */}
+                      <ProjectLinks>
+                        {projects[selectedProjectIndex].githubUrl && (
+                          <ProjectLink
+                            href={projects[selectedProjectIndex].githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <FiGithub /> GitHub
+                          </ProjectLink>
+                        )}
+                        {projects[selectedProjectIndex].giteeUrl && (
+                          <ProjectLink
+                            href={projects[selectedProjectIndex].giteeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Icon name="gitee" size={14} /> Gitee
+                          </ProjectLink>
+                        )}
+                        {projects[selectedProjectIndex].demoUrl && (
+                          <ProjectLink
+                            href={projects[selectedProjectIndex].demoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <FiExternalLink /> 演示
+                          </ProjectLink>
+                        )}
+                      </ProjectLinks>
                     </DataCard>
 
                     {/* 右侧：雷达图 */}
-                    {renderRadarChart(projects[selectedProjectIndex])}
+                    <RadarChart data={calculateProjectRadarData(projects[selectedProjectIndex])} size={280} />
                   </ProjectDataSection>
-
-                  {/* 项目链接 */}
-                  <ProjectLinks>
-                    {projects[selectedProjectIndex].githubUrl && (
-                      <ProjectLink
-                        href={projects[selectedProjectIndex].githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="primary"
-                      >
-                        <FiGithub size={14} /> 查看源码
-                      </ProjectLink>
-                    )}
-                    {projects[selectedProjectIndex].demoUrl && (
-                      <ProjectLink
-                        href={projects[selectedProjectIndex].demoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="secondary"
-                      >
-                        <FiExternalLink size={14} /> 演示
-                      </ProjectLink>
-                    )}
-                  </ProjectLinks>
                 </ProjectDetailContainer>
-              )}
+              ) : null}
             </ProjectMainCard>
 
-            {/* 右侧：所有项目的缩略图 */}
-            <ProjectThumbnailContainer>
-              <ProjectThumbnailGrid
-                onScroll={(e) => {
-                  const element = e.currentTarget;
-                  const isBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 50;
-                  if (isBottom && hasMoreProjects && !loadingMoreProjects) {
-                    loadMoreProjects();
-                  }
-                }}
-              >
-                {projects.map((project, index) => (
-                  <ProjectThumbnail
-                    key={project.id}
-                    isActive={selectedProjectIndex === index}
-                    colorIndex={index}
-                    onClick={() => setSelectedProjectIndex(index)}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <ThumbnailInitial>{project.title.charAt(0)}</ThumbnailInitial>
-                  </ProjectThumbnail>
-                ))}
-                {loadingMoreProjects && (
-                  <LoadMoreIndicator>
-                    <FiLoader />
-                  </LoadMoreIndicator>
-                )}
-              </ProjectThumbnailGrid>
-            </ProjectThumbnailContainer>
+            {/* 右侧：不规则几何拼图布局 */}
+            <div>
+              <GeometryGridContainer>
+                {projects.slice(0, 7).map((project, index) => {
+                  const langIcon = getLanguageIcon(project.language);
+                  const isActive = selectedProjectIndex === index;
+                  const layout = generateGeometryLayout(7)[index];
+
+                  return (
+                    <GeometryBlock
+                      key={project.id}
+                      isActive={isActive}
+                      rowSpan={layout.rowSpan}
+                      colSpan={layout.colSpan}
+                      colorIndex={index}
+                      onClick={() => setSelectedProjectIndex(index)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <GeometryBlockContent>
+                        {langIcon.icon === 'code' ? (
+                          <FiCode
+                            size={layout.rowSpan * layout.colSpan > 2 ? 32 : 24}
+                            style={{ color: langIcon.color }}
+                          />
+                        ) : (
+                          <Icon
+                            name={langIcon.icon}
+                            size={layout.rowSpan * layout.colSpan > 2 ? 32 : 24}
+                            color={langIcon.color}
+                          />
+                        )}
+
+                        {/* 悬停显示标题 */}
+                        <GeometryBlockTitle>{project.title}</GeometryBlockTitle>
+                      </GeometryBlockContent>
+                    </GeometryBlock>
+                  );
+                })}
+              </GeometryGridContainer>
+
+              {/* 当前选中项目提示 */}
+              {projects.length > 0 && (
+                <div
+                  style={{
+                    marginTop: '1rem',
+                    textAlign: 'center',
+                    fontSize: '0.8rem',
+                    color: 'var(--text-primary)',
+                    fontWeight: 500,
+                  }}
+                >
+                  {projects[selectedProjectIndex]?.title || ''}
+                </div>
+              )}
+
+              {/* 项目数量提示 */}
+              {projects.length > 7 && (
+                <div
+                  style={{
+                    marginTop: '0.5rem',
+                    textAlign: 'center',
+                    fontSize: '0.7rem',
+                    color: 'var(--text-secondary)',
+                    opacity: 0.5,
+                  }}
+                >
+                  显示 7 / {projects.length} 个项目
+                </div>
+              )}
+            </div>
           </ProjectsGrid>
         </ProjectsSection>
       </PageContainer>

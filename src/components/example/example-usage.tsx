@@ -27,7 +27,7 @@ const ExampleUsage: React.FC = () => {
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const response = await API.article.getArticles({ page: 1, pageSize: 10 });
+      const response = await API.article.getArticles({ page: 1, limit: 10 });
       if (response.success) {
         setArticles(response.data);
       } else {

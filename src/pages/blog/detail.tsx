@@ -534,7 +534,7 @@ const BlogDetail: React.FC = () => {
         setArticle(apiArticle);
 
         // 获取文章列表用于导航
-        const listResponse = await API.article.getArticles({ page: 1, pageSize: 100 });
+        const listResponse = await API.article.getArticles({ page: 1, limit: 100 });
 
         let apiArticles: any[] = [];
         if (listResponse && typeof listResponse === 'object') {

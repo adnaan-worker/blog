@@ -189,7 +189,7 @@ const TagManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12);
+  const [limit, setlimit] = useState(12);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -206,7 +206,7 @@ const TagManagement: React.FC = () => {
       setLoading(true);
       const response = await API.tag.getTags({
         page,
-        limit: pageSize,
+        limit: limit,
         search,
       });
 
@@ -330,10 +330,10 @@ const TagManagement: React.FC = () => {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  pageSize={pageSize}
+                  limit={limit}
                   totalItems={totalItems}
                   onPageChange={setPage}
-                  onPageSizeChange={setPageSize}
+                  onlimitChange={setlimit}
                 />
               </PaginationWrapper>
             )}

@@ -5,13 +5,13 @@ import { PaginatedApiResponse } from '@/utils/types';
 export interface UsePaginationOptions<T, P = any> {
   fetchFunction: (params: P) => Promise<PaginatedApiResponse<T>>;
   initialParams?: P;
-  pageSize?: number;
+  limit?: number;
 }
 
 export const usePagination = <T, P = any>({
   fetchFunction,
   initialParams = {} as P,
-  pageSize = 10,
+  limit = 10,
 }: UsePaginationOptions<T, P>) => {
   const [items, setItems] = useState<T[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +32,7 @@ export const usePagination = <T, P = any>({
       const requestParams = {
         ...params,
         page: page + 1,
-        pageSize,
+        limit,
       } as P;
 
       const response = await fetchFunction(requestParams);
@@ -49,7 +49,7 @@ export const usePagination = <T, P = any>({
     } finally {
       setIsLoading(false);
     }
-  }, [page, hasMore, isLoading, error, params, pageSize, fetchFunction]);
+  }, [page, hasMore, isLoading, error, params, limit, fetchFunction]);
 
   // 重新加载数据（搜索/筛选时使用）
   const reload = useCallback(async () => {
@@ -62,7 +62,7 @@ export const usePagination = <T, P = any>({
       const requestParams = {
         ...params,
         page: 1,
-        pageSize,
+        limit,
       } as P;
 
       const response = await fetchFunction(requestParams);
@@ -79,7 +79,7 @@ export const usePagination = <T, P = any>({
     } finally {
       setIsLoading(false);
     }
-  }, [params, pageSize, fetchFunction]);
+  }, [params, limit, fetchFunction]);
 
   // 更新参数（搜索/筛选）
   const updateParams = useCallback((newParams: Partial<P>) => {
@@ -144,21 +144,21 @@ export const useFilter = (onFilterChange: (filter: string) => void) => {
 // 通用管理页面Hook - 整合分页、搜索、筛选
 export interface UseManagementPageOptions<
   T,
-  P extends { page?: number; pageSize?: number; keyword?: string; status?: number | string; [key: string]: any } = any,
+  P extends { page?: number; limit?: number; keyword?: string; status?: number | string; [key: string]: any } = any,
 > {
   fetchFunction: (params: P) => Promise<PaginatedApiResponse<T>>;
   initialParams?: P;
-  pageSize?: number;
+  limit?: number;
   debounceTime?: number;
 }
 
 export const useManagementPage = <
   T,
-  P extends { page?: number; pageSize?: number; keyword?: string; status?: number | string; [key: string]: any } = any,
+  P extends { page?: number; limit?: number; keyword?: string; status?: number | string; [key: string]: any } = any,
 >({
   fetchFunction,
   initialParams = {} as P,
-  pageSize = 10,
+  limit = 10,
   debounceTime = 300,
 }: UseManagementPageOptions<T, P>) => {
   const [items, setItems] = useState<T[]>([]);
@@ -178,7 +178,7 @@ export const useManagementPage = <
   const isLoadingRef = useRef(true); // 初始设置为 true，与 isLoading 保持一致
   const fetchFunctionRef = useRef(fetchFunction);
   const initialParamsRef = useRef(initialParams);
-  const pageSizeRef = useRef(pageSize);
+  const limitRef = useRef(limit);
 
   // Update refs when values change
   useEffect(() => {
@@ -190,8 +190,8 @@ export const useManagementPage = <
   }, [initialParams]);
 
   useEffect(() => {
-    pageSizeRef.current = pageSize;
-  }, [pageSize]);
+    limitRef.current = limit;
+  }, [limit]);
 
   const fetchItems = useCallback(
     async (currentPage: number, append: boolean, currentSearchQuery: string, currentSelectedFilter: string) => {
@@ -206,7 +206,7 @@ export const useManagementPage = <
         const params: P = {
           ...initialParamsRef.current,
           page: currentPage,
-          pageSize: pageSizeRef.current,
+          limit: limitRef.current,
           keyword: currentSearchQuery || undefined,
           status: currentSelectedFilter !== '' ? currentSelectedFilter : undefined,
         } as P;

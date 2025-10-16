@@ -397,11 +397,11 @@ export interface AITaskStatus {
 }
 
 export interface AIQuota {
-  dailyChatLimit: number;
+  dailyChatlimit: number;
   dailyChatUsed: number;
-  dailyGenerateLimit: number;
+  dailyGeneratelimit: number;
   dailyGenerateUsed: number;
-  monthlyTokenLimit: number;
+  monthlyTokenlimit: number;
   monthlyTokenUsed: number;
   available: boolean;
 }
@@ -482,7 +482,7 @@ export const API = {
     // 获取项目详情
     getProjectDetail: (id: string | number) => http.get<Project>(`/projects/${id}`),
     // 获取精选项目（支持分页）
-    getFeaturedProjects: (params?: { page?: number; pageSize?: number }) =>
+    getFeaturedProjects: (params?: { page?: number; limit?: number }) =>
       http.get<Project[]>('/projects/featured', params),
     // 获取项目统计
     getProjectStats: () =>
@@ -519,7 +519,7 @@ export const API = {
     },
 
     // 用户活动、成就、统计
-    getActivities: (params?: { page?: number; pageSize?: number }) =>
+    getActivities: (params?: { page?: number; limit?: number }) =>
       http.get<UserActivity[]>('/users/activities', params),
     getAchievements: () => http.get<UserAchievement[]>('/users/achievements'),
     getStats: () => http.get<UserStats>('/users/stats'),
@@ -655,7 +655,7 @@ export const API = {
      */
     getUserLikes: (params?: {
       page?: number;
-      pageSize?: number;
+      limit?: number;
       search?: string;
     }): Promise<ApiResponse<PaginationResult<any>>> => {
       return http.get('/notes/user/likes', params);
@@ -749,7 +749,7 @@ export const API = {
      */
     getUserBookmarks: (params?: {
       page?: number;
-      pageSize?: number;
+      limit?: number;
       search?: string;
     }): Promise<ApiResponse<PaginationResult<any>>> => {
       return http.get('/posts/user/bookmarks', params);
@@ -762,7 +762,7 @@ export const API = {
      */
     getUserLikes: (params?: {
       page?: number;
-      pageSize?: number;
+      limit?: number;
       search?: string;
     }): Promise<ApiResponse<PaginationResult<any>>> => {
       return http.get('/posts/user/likes', params);
