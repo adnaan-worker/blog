@@ -1020,6 +1020,7 @@ const ProjectsGrid = styled(motion.div)`
   gap: 3rem;
   padding: 2rem 0;
   position: relative;
+  min-height: 500px;
 
   /* 简短中间分割线 - 在间隔中间 */
   &::before {
@@ -1047,12 +1048,14 @@ const ProjectsGrid = styled(motion.div)`
   @media (max-width: 968px) {
     grid-template-columns: 1fr;
     gap: 2rem;
+    min-height: auto;
   }
 `;
 
 // 左侧大卡片容器
 const ProjectMainCard = styled(motion.div)`
   position: relative;
+  height: 100%;
 `;
 
 // 左侧项目展示容器
@@ -1060,7 +1063,7 @@ const ProjectDetailContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  min-height: 420px;
+  height: 100%;
 
   /* GPU加速 */
   ${gpuAcceleration as any}
@@ -1075,19 +1078,12 @@ const ProjectInfo = styled.div`
 
 // 右侧几何拼图容器
 const GeometryGridContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-auto-rows: 60px;
-  gap: 0.5rem;
-  height: 420px;
-  overflow: hidden;
   position: relative;
-
+  width: 100%;
+  height: 500px;
+  
   @media (max-width: 968px) {
-    grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: 50px;
-    height: auto;
-    max-height: 300px;
+    height: 400px;
   }
 `;
 
@@ -1122,12 +1118,16 @@ const GeometryBlockTitle = styled.div`
 // 几何块 - 不规则尺寸
 const GeometryBlock = styled(motion.div)<{
   isActive: boolean;
-  rowSpan: number;
-  colSpan: number;
-  colorIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }>`
-  grid-row: span ${(props) => props.rowSpan};
-  grid-column: span ${(props) => props.colSpan};
+  position: absolute;
+  left: calc(${(props) => props.x}% + 4px);
+  top: calc(${(props) => props.y}% + 4px);
+  width: calc(${(props) => props.width}% - 8px);
+  height: calc(${(props) => props.height}% - 8px);
   background: ${(props) => (props.isActive ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--accent-rgb), 0.06)')};
   border-radius: 8px;
   border: 2px solid ${(props) => (props.isActive ? 'var(--accent-color)' : 'transparent')};
@@ -1136,7 +1136,6 @@ const GeometryBlock = styled(motion.div)<{
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
   overflow: hidden;
 
   /* 扁平化装饰 */
@@ -1155,8 +1154,7 @@ const GeometryBlock = styled(motion.div)<{
   &:hover {
     background: rgba(var(--accent-rgb), 0.12);
     border-color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.4)')};
-    transform: scale(1.02);
-    z-index: 1;
+    z-index: 10;
 
     &::before {
       opacity: 1;
@@ -1648,24 +1646,112 @@ const Home: React.FC = () => {
   const [hasMoreProjects, setHasMoreProjects] = useState(true);
   const [loadingMoreProjects, setLoadingMoreProjects] = useState(false);
 
-  // 生成不规则几何块布局 - 优化版本
+  // 拼图切割算法 - 生成多样化的不规则布局
   const generateGeometryLayout = (count: number) => {
-    // 精心设计的几何块模式，确保能够良好拼接
-    const patterns = [
-      { rowSpan: 2, colSpan: 3 }, // 0 - 大横块
-      { rowSpan: 2, colSpan: 3 }, // 1 - 大横块
-      { rowSpan: 3, colSpan: 2 }, // 2 - 竖长块
-      { rowSpan: 1, colSpan: 2 }, // 3 - 小横块
-      { rowSpan: 2, colSpan: 2 }, // 4 - 方块
-      { rowSpan: 1, colSpan: 2 }, // 5 - 小横块
-      { rowSpan: 3, colSpan: 2 }, // 6 - 竖长块
-    ];
-
-    const layouts = [];
-    for (let i = 0; i < Math.min(count, 7); i++) {
-      layouts.push(patterns[i]);
-    }
-    return layouts;
+    const containerWidth = 100;
+    const containerHeight = 100;
+    const layouts: Array<{ x: number; y: number; width: number; height: number }> = [];
+    
+    if (count === 0) return layouts;
+    
+    // 递归切割算法 - 支持多种切割模式
+    const splitArea = (
+      x: number,
+      y: number,
+      width: number,
+      height: number,
+      remaining: number,
+      depth: number = 0
+    ): Array<{ x: number; y: number; width: number; height: number }> => {
+      if (remaining === 1) {
+        return [{ x, y, width, height }];
+      }
+      
+      const blocks: Array<{ x: number; y: number; width: number; height: number }> = [];
+      const area = width * height;
+      const avgArea = area / remaining;
+      
+      // 决定切割方式：横切、竖切、或十字切割
+      const cutType = Math.random();
+      const canCrossCut = remaining >= 3 && width > 30 && height > 30;
+      
+      if (canCrossCut && cutType > 0.7) {
+        // 十字切割（分成4块）
+        const vSplit = width * (0.3 + Math.random() * 0.4); // 30%-70%
+        const hSplit = height * (0.3 + Math.random() * 0.4);
+        
+        const pieces = [
+          { x, y, width: vSplit, height: hSplit },
+          { x: x + vSplit, y, width: width - vSplit, height: hSplit },
+          { x, y: y + hSplit, width: vSplit, height: height - hSplit },
+          { x: x + vSplit, y: y + hSplit, width: width - vSplit, height: height - hSplit },
+        ];
+        
+        // 随机选择要继续分割的块
+        const piecesToSplit = Math.min(remaining, 4);
+        for (let i = 0; i < piecesToSplit; i++) {
+          const piece = pieces[i];
+          const splitRemaining = i === piecesToSplit - 1 ? remaining - i : 1;
+          blocks.push(...splitArea(piece.x, piece.y, piece.width, piece.height, splitRemaining, depth + 1));
+        }
+      } else if (cutType > 0.4 && remaining >= 2) {
+        // L型切割（分成2-3块）
+        const isHorizontalL = width > height;
+        
+        if (isHorizontalL) {
+          const vSplit = width * (0.4 + Math.random() * 0.3); // 40%-70%
+          const hSplit = height * (0.5 + Math.random() * 0.3); // 50%-80%
+          
+          // L型：左边一个大块，右边分上下
+          blocks.push({ x, y, width: vSplit, height });
+          
+          const rightRemaining = remaining - 1;
+          if (rightRemaining === 1) {
+            blocks.push({ x: x + vSplit, y, width: width - vSplit, height });
+          } else {
+            blocks.push({ x: x + vSplit, y, width: width - vSplit, height: hSplit });
+            blocks.push(...splitArea(x + vSplit, y + hSplit, width - vSplit, height - hSplit, rightRemaining - 1, depth + 1));
+          }
+        } else {
+          const hSplit = height * (0.4 + Math.random() * 0.3);
+          const vSplit = width * (0.5 + Math.random() * 0.3);
+          
+          // L型：上面一个大块，下面分左右
+          blocks.push({ x, y, width, height: hSplit });
+          
+          const bottomRemaining = remaining - 1;
+          if (bottomRemaining === 1) {
+            blocks.push({ x, y: y + hSplit, width, height: height - hSplit });
+          } else {
+            blocks.push({ x, y: y + hSplit, width: vSplit, height: height - hSplit });
+            blocks.push(...splitArea(x + vSplit, y + hSplit, width - vSplit, height - hSplit, bottomRemaining - 1, depth + 1));
+          }
+        }
+      } else {
+        // 普通二分切割
+        const isHorizontal = width > height ? Math.random() > 0.3 : Math.random() > 0.6;
+        
+        if (isHorizontal) {
+          const splitRatio = 0.35 + Math.random() * 0.3; // 35%-65%
+          const splitPos = width * splitRatio;
+          const firstRemaining = Math.max(1, Math.floor(remaining * splitRatio));
+          
+          blocks.push(...splitArea(x, y, splitPos, height, firstRemaining, depth + 1));
+          blocks.push(...splitArea(x + splitPos, y, width - splitPos, height, remaining - firstRemaining, depth + 1));
+        } else {
+          const splitRatio = 0.35 + Math.random() * 0.3;
+          const splitPos = height * splitRatio;
+          const firstRemaining = Math.max(1, Math.floor(remaining * splitRatio));
+          
+          blocks.push(...splitArea(x, y, width, splitPos, firstRemaining, depth + 1));
+          blocks.push(...splitArea(x, y + splitPos, width, height - splitPos, remaining - firstRemaining, depth + 1));
+        }
+      }
+      
+      return blocks;
+    };
+    
+    return splitArea(0, 0, containerWidth, containerHeight, count);
   };
 
   // 加载网站设置
@@ -2359,75 +2445,48 @@ const Home: React.FC = () => {
             </ProjectMainCard>
 
             {/* 右侧：不规则几何拼图布局 */}
-            <div>
+            <div style={{ height: '100%' }}>
               <GeometryGridContainer>
-                {projects.slice(0, 7).map((project, index) => {
-                  const langIcon = getLanguageIcon(project.language);
-                  const isActive = selectedProjectIndex === index;
-                  const layout = generateGeometryLayout(7)[index];
+                {(() => {
+                  const layouts = generateGeometryLayout(projects.length);
+                  return projects.map((project, index) => {
+                    const langIcon = getLanguageIcon(project.language);
+                    const isActive = selectedProjectIndex === index;
+                    const layout = layouts[index];
+                    const blockArea = layout.width * layout.height;
 
-                  return (
-                    <GeometryBlock
-                      key={project.id}
-                      isActive={isActive}
-                      rowSpan={layout.rowSpan}
-                      colSpan={layout.colSpan}
-                      colorIndex={index}
-                      onClick={() => setSelectedProjectIndex(index)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <GeometryBlockContent>
-                        {langIcon.icon === 'code' ? (
-                          <FiCode
-                            size={layout.rowSpan * layout.colSpan > 2 ? 32 : 24}
-                            style={{ color: langIcon.color }}
-                          />
-                        ) : (
-                          <Icon
-                            name={langIcon.icon}
-                            size={layout.rowSpan * layout.colSpan > 2 ? 32 : 24}
-                            color={langIcon.color}
-                          />
-                        )}
+                    return (
+                      <GeometryBlock
+                        key={project.id}
+                        isActive={isActive}
+                        x={layout.x}
+                        y={layout.y}
+                        width={layout.width}
+                        height={layout.height}
+                        onClick={() => setSelectedProjectIndex(index)}
+                      >
+                        <GeometryBlockContent>
+                          {langIcon.icon === 'code' ? (
+                            <FiCode
+                              size={blockArea > 800 ? 32 : blockArea > 400 ? 24 : 18}
+                              style={{ color: langIcon.color }}
+                            />
+                          ) : (
+                            <Icon
+                              name={langIcon.icon}
+                              size={blockArea > 800 ? 32 : blockArea > 400 ? 24 : 18}
+                              color={langIcon.color}
+                            />
+                          )}
 
-                        {/* 悬停显示标题 */}
-                        <GeometryBlockTitle>{project.title}</GeometryBlockTitle>
-                      </GeometryBlockContent>
-                    </GeometryBlock>
-                  );
-                })}
+                          {/* 悬停显示标题 */}
+                          <GeometryBlockTitle>{project.title}</GeometryBlockTitle>
+                        </GeometryBlockContent>
+                      </GeometryBlock>
+                    );
+                  });
+                })()}
               </GeometryGridContainer>
-
-              {/* 当前选中项目提示 */}
-              {projects.length > 0 && (
-                <div
-                  style={{
-                    marginTop: '1rem',
-                    textAlign: 'center',
-                    fontSize: '0.8rem',
-                    color: 'var(--text-primary)',
-                    fontWeight: 500,
-                  }}
-                >
-                  {projects[selectedProjectIndex]?.title || ''}
-                </div>
-              )}
-
-              {/* 项目数量提示 */}
-              {projects.length > 7 && (
-                <div
-                  style={{
-                    marginTop: '0.5rem',
-                    textAlign: 'center',
-                    fontSize: '0.7rem',
-                    color: 'var(--text-secondary)',
-                    opacity: 0.5,
-                  }}
-                >
-                  显示 7 / {projects.length} 个项目
-                </div>
-              )}
             </div>
           </ProjectsGrid>
         </ProjectsSection>
