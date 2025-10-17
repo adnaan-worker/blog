@@ -2,6 +2,13 @@ import fs from 'fs';
 
 const originalData = [
   {
+    name: '明日坐标',
+    artist: '林俊杰',
+    url: 'https://meting.qjqq.cn/?server=tencenttype=url&id=004BJRhU4g74fg',
+    pic: 'https://meting.qjqq.cn/?server=tencent&type=pic&id=004BJRhU4g74fg',
+    lrc: 'https://meting.qjqq.cn/?server=tencent&type=lrc&id=004BJRhU4g74fg',
+  },
+  {
     name: '愿与愁',
     artist: '林俊杰',
     url: 'https://meting.qjqq.cn/?server=netease&type=url&id=2041026502',
@@ -3016,7 +3023,7 @@ function processData(data) {
 }
 
 const processedData = processData(originalData);
-// console.log(processedData);
+console.log(processedData);
 
 // 将处理后的数据写入 JSON 文件
 fs.writeFile('musicList.json', JSON.stringify(processedData, null, 2), (err) => {

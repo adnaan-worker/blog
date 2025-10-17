@@ -21,19 +21,19 @@ const RadarSVG = styled.svg`
 const RadarGrid = styled.polygon`
   fill: none;
   stroke: var(--border-color);
-  stroke-width: 1;
-  opacity: 0.3;
+  stroke-width: 1.5;
+  opacity: 0.5;
 `;
 
 const RadarArea = styled.polygon`
   fill: var(--accent-color);
-  fill-opacity: 0.2;
+  fill-opacity: 0.35;
   stroke: var(--accent-color);
-  stroke-width: 2;
+  stroke-width: 2.5;
   transition: all 0.3s ease;
 
   &:hover {
-    fill-opacity: 0.3;
+    fill-opacity: 0.5;
   }
 `;
 
