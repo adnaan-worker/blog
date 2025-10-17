@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { FiSave, FiUpload } from 'react-icons/fi';
-import { Button, Input } from 'adnaan-ui';
+import { Button, Input, Textarea } from 'adnaan-ui';
 import { Modal } from 'adnaan-ui';
-import type { UserProfile, EditProfileForm } from './types';
+import type { UserProfile, EditProfileForm } from '../types';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -104,28 +104,9 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
-const TextArea = styled.textarea`
-  width: 100%;
+const StyledTextArea = styled(Textarea)`
   min-height: 80px;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.375rem;
-  background: var(--bg-primary);
-  color: var(--text-primary);
   font-size: 0.875rem;
-  font-family: inherit;
-  resize: vertical;
-  transition: all 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px var(--accent-color-alpha);
-  }
-
-  &::placeholder {
-    color: var(--text-tertiary);
-  }
 `;
 
 const ErrorMessage = styled.div`
@@ -309,7 +290,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
           <FormField>
             <Label>个人简介</Label>
-            <TextArea
+            <StyledTextArea
               value={formData.bio}
               onChange={(e) => handleInputChange('bio', e.target.value)}
               placeholder="介绍一下自己..."

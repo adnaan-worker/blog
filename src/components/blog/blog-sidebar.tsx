@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { FiSearch, FiBarChart2 } from 'react-icons/fi';
+import { Input } from 'adnaan-ui';
 
 // 侧边栏容器
 const SidebarContainer = styled.div`
@@ -41,26 +42,9 @@ const SidebarCard = styled.div`
 `;
 
 // 搜索输入框
-const SearchInput = styled.input`
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-primary);
+const StyledSearchInput = styled(Input)`
   font-size: 0.9rem;
-  transition: all 0.2s ease;
   width: 100%;
-
-  &:focus {
-    outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px var(--accent-color-alpha);
-  }
-
-  &::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.6;
-  }
 `;
 
 // 分类列表
@@ -192,19 +176,13 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
     <SidebarContainer>
       <SidebarCard>
         <h3>搜索文章</h3>
-        <div style={{ position: 'relative' }}>
-          <SearchInput type="text" placeholder="搜索文章..." value={searchQuery} onChange={onSearchChange} />
-          <FiSearch
-            style={{
-              position: 'absolute',
-              right: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-secondary)',
-              opacity: 0.6,
-            }}
-          />
-        </div>
+        <StyledSearchInput
+          type="text"
+          placeholder="搜索文章..."
+          value={searchQuery}
+          onChange={onSearchChange}
+          leftIcon={<FiSearch />}
+        />
       </SidebarCard>
 
       {onViewModeChange && (

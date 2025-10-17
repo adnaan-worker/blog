@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { FiSave } from 'react-icons/fi';
-import { Button, Input } from 'adnaan-ui';
+import { Button, Input, Textarea } from 'adnaan-ui';
 import { Modal } from 'adnaan-ui';
 import type { SiteSettings } from '@/utils/api';
 
@@ -52,38 +52,8 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
-const Textarea = styled.textarea`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  font-family: inherit;
-  resize: vertical;
+const StyledTextarea = styled(Textarea)`
   min-height: 80px;
-  transition: all 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px var(--accent-color-alpha);
-  }
-
-  &:hover:not(:focus) {
-    border-color: var(--text-secondary);
-  }
-
-  &::placeholder {
-    color: var(--text-tertiary);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    background-color: var(--bg-secondary);
-    color: var(--text-tertiary);
-  }
 `;
 
 const TagsContainer = styled.div`

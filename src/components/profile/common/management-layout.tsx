@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { FiSearch, FiPlus, FiRefreshCw, FiFilter } from 'react-icons/fi';
-import { Empty, Button } from 'adnaan-ui';
+import { Empty, Button, Input } from 'adnaan-ui';
 import { useAnimationEngine } from '@/utils/animation-engine';
 
 // 统计项接口
@@ -165,7 +165,6 @@ const Actions = styled.div`
 `;
 
 const SearchBox = styled.div`
-  position: relative;
   min-width: 150px;
   flex: 1;
   max-width: 100%;
@@ -174,34 +173,14 @@ const SearchBox = styled.div`
     min-width: 0;
     width: 100%;
   }
-
-  svg {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary);
-  }
 `;
 
-const SearchInput = styled.input`
-  width: 100%;
-  padding: 0.625rem 0.75rem 0.625rem 2.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+const StyledSearchInput = styled(Input)`
   background: var(--bg-secondary);
-  color: var(--text-primary);
   font-size: 0.875rem;
-  transition: all 0.2s ease;
 
   &:focus {
-    outline: none;
-    border-color: var(--accent-color);
     background: var(--bg-primary);
-  }
-
-  &::placeholder {
-    color: var(--text-tertiary);
   }
 `;
 
@@ -359,12 +338,12 @@ export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
 
         <HeaderRight>
           <SearchBox>
-            <FiSearch />
-            <SearchInput
+            <StyledSearchInput
               type="text"
               placeholder={searchPlaceholder}
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
+              leftIcon={<FiSearch />}
             />
           </SearchBox>
           {onToggleFilters && (

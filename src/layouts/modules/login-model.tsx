@@ -4,7 +4,7 @@ import { FiUser, FiLock, FiGithub, FiTwitter } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
-import { Modal } from 'adnaan-ui';
+import { Modal, Input } from 'adnaan-ui';
 
 // 模态框内容容器
 const ModalContent = styled.div`
@@ -25,45 +25,6 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-`;
-
-// 输入框容器
-const InputGroup = styled.div`
-  position: relative;
-`;
-
-// 输入框
-const Input = styled.input`
-  width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px var(--accent-color-alpha);
-  }
-
-  &::placeholder {
-    color: var(--text-tertiary);
-  }
-`;
-
-// 图标
-const InputIcon = styled.div`
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 `;
 
 // 提交按钮
@@ -189,33 +150,25 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
         <Title>登录账号</Title>
 
         <Form onSubmit={handleSubmit}>
-          <InputGroup>
-            <InputIcon>
-              <FiUser size={18} />
-            </InputIcon>
-            <Input
-              type="text"
-              name="username"
-              placeholder="用户名"
-              value={formData.username}
-              onChange={handleChange}
-              required
-            />
-          </InputGroup>
+          <Input
+            type="text"
+            name="username"
+            placeholder="用户名"
+            value={formData.username}
+            onChange={handleChange}
+            required
+            leftIcon={<FiUser size={18} />}
+          />
 
-          <InputGroup>
-            <InputIcon>
-              <FiLock size={18} />
-            </InputIcon>
-            <Input
-              type="password"
-              name="password"
-              placeholder="密码"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </InputGroup>
+          <Input
+            type="password"
+            name="password"
+            placeholder="密码"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            leftIcon={<FiLock size={18} />}
+          />
 
           <SubmitButton type="submit" disabled={loading}>
             {loading ? '处理中...' : '登录'}
