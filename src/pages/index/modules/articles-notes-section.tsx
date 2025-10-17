@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 import { formatDate } from '@/utils';
-import { useAnimationOptimization } from '@/utils/animation-utils';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import { ArticlesSectionProps, NotesSectionProps } from './types';
 
 // Styled Components
@@ -140,7 +140,7 @@ const ArticleLink: React.FC<ArticleLinkProps> = ({ to, children, ...props }) => 
 // 文章区域组件
 export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, loading }) => {
   // 使用动画优化工具
-  const { fadeInUp, staggerContainer } = useAnimationOptimization();
+  const { variants } = useAnimationEngine();
 
   // 卡片动画变体
   const cardVariants: any = {
@@ -157,7 +157,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
 
   if (loading) {
     return (
-      <ContentSection variants={fadeInUp}>
+      <ContentSection variants={variants.fadeIn}>
         <SectionTitle>最新文章</SectionTitle>
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
       </ContentSection>
@@ -165,7 +165,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
   }
 
   return (
-    <ContentSection variants={fadeInUp}>
+    <ContentSection variants={variants.fadeIn}>
       <SectionTitle>
         最新文章
         <Link to="/blog" style={{ textDecoration: 'none' }}>
@@ -184,7 +184,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
         </Link>
       </SectionTitle>
 
-      <ArticleGrid variants={staggerContainer}>
+      <ArticleGrid variants={variants.stagger}>
         {articles.slice(0, 3).map((article, index) => (
           <ArticleLink
             to={`/blog/${article.id}`}
@@ -196,9 +196,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
             <ArticleContent>
               <ArticleTitle>{article.title}</ArticleTitle>
             </ArticleContent>
-            <ArticleTime>
-              {formatDate(article.createdAt, 'YYYY-MM-DD')}
-            </ArticleTime>
+            <ArticleTime>{formatDate(article.createdAt, 'YYYY-MM-DD')}</ArticleTime>
           </ArticleLink>
         ))}
       </ArticleGrid>
@@ -209,7 +207,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
 // 笔记区域组件
 export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) => {
   // 使用动画优化工具
-  const { fadeInUp, staggerContainer } = useAnimationOptimization();
+  const { variants } = useAnimationEngine();
 
   // 卡片动画变体
   const cardVariants: any = {
@@ -226,7 +224,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
 
   if (loading) {
     return (
-      <ContentSection variants={fadeInUp}>
+      <ContentSection variants={variants.fadeIn}>
         <SectionTitle>最近更新的手记</SectionTitle>
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
       </ContentSection>
@@ -234,7 +232,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
   }
 
   return (
-    <ContentSection variants={fadeInUp}>
+    <ContentSection variants={variants.fadeIn}>
       <SectionTitle>
         最近更新的手记
         <Link to="/notes" style={{ textDecoration: 'none' }}>
@@ -253,7 +251,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
         </Link>
       </SectionTitle>
 
-      <ArticleGrid variants={staggerContainer}>
+      <ArticleGrid variants={variants.stagger}>
         {notes.slice(0, 5).map((note, index) => (
           <ArticleLink
             to={`/notes/${note.id}`}
@@ -274,4 +272,3 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
 };
 
 export default { ArticlesSection, NotesSection };
-

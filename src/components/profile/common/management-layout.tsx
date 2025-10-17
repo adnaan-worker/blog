@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { FiSearch, FiPlus, FiRefreshCw, FiFilter } from 'react-icons/fi';
 import { Empty, Button } from 'adnaan-ui';
-import { variants as animationVariants, hoverScale } from '@/utils/animation-config';
+import { useAnimationEngine } from '@/utils/animation-engine';
 
 // 统计项接口
 export interface StatItemData {
@@ -299,9 +299,6 @@ const Content = styled.div<{ showCard?: boolean }>`
   border-radius: ${(props) => (props.showCard ? '0' : '0 0 12px 12px')};
 `;
 
-// 使用统一的动画变体
-const fadeInUpVariants = animationVariants.fadeInUp;
-
 export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
   title,
   icon,
@@ -326,6 +323,10 @@ export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
   createButton,
   showCard = true,
 }) => {
+  const { variants } = useAnimationEngine();
+  const fadeInUpVariants = variants.fadeIn;
+  const hoverScale = { whileHover: { scale: 1.02 }, whileTap: { scale: 0.98 } };
+
   return (
     <Container showCard={showCard}>
       <Header showCard={showCard}>

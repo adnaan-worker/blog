@@ -13,7 +13,25 @@ import {
   FiMessageSquare,
 } from 'react-icons/fi';
 import musicListData from '@/data/musicList.json';
-import { drawerVariants, gpuAcceleration, overlayVariants, ANIMATION_DURATION, EASING } from '@/utils/animation-config';
+
+// 动画配置常量
+const ANIMATION_DURATION = {
+  fast: 0.2,
+  normal: 0.3,
+  slow: 0.5,
+};
+
+const EASING = {
+  ease: [0.4, 0, 0.2, 1] as any,
+  easeIn: [0.4, 0, 1, 1] as any,
+  easeOut: [0, 0, 0.2, 1] as any,
+};
+
+const gpuAcceleration = {
+  transform: 'translateZ(0)',
+  backfaceVisibility: 'hidden' as const,
+  perspective: 1000,
+};
 
 // 音乐播放器面板 - 优化性能
 const PlayerPanel = styled(motion.div)`

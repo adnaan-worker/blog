@@ -1,12 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import {
-  variants as animationVariants,
-  gpuAcceleration,
-  drawerVariants,
-  overlayVariants,
-} from '@/utils/animation-config';
+import { useAnimationEngine } from '@/utils/animation-engine';
+
+// GPU 加速样式
+const gpuAcceleration = {
+  transform: 'translateZ(0)',
+  backfaceVisibility: 'hidden' as const,
+  perspective: 1000,
+};
+
+// 抽屉动画变体
+const drawerVariants = {
+  left: {
+    hidden: { x: '-100%', opacity: 0 },
+    visible: { x: 0, opacity: 1, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as any } },
+    exit: { x: '-100%', opacity: 0, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] as any } },
+  },
+  right: {
+    hidden: { x: '100%', opacity: 0 },
+    visible: { x: 0, opacity: 1, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as any } },
+    exit: { x: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] as any } },
+  },
+};
+
+// 遮罩层动画变体
+const overlayVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.2 } },
+  exit: { opacity: 0, transition: { duration: 0.2 } },
+};
+
 import {
   FiFileText,
   FiHeart,
@@ -892,11 +916,6 @@ const EmptyState = styled.div`
   }
 `;
 
-// 使用统一的动画变体
-const fadeInUpVariants = animationVariants.fadeInUp;
-const staggerContainerVariants = animationVariants.staggerContainer;
-const cardVariants = animationVariants.cardVariants;
-
 // Tab类型定义
 interface Tab {
   id: string;
@@ -906,6 +925,12 @@ interface Tab {
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+
+  // 动画引擎
+  const { variants } = useAnimationEngine();
+  const fadeInUpVariants = variants.fadeIn;
+  const staggerContainerVariants = variants.stagger;
+  const cardVariants = variants.card;
 
   // 用户数据
   const [user, setUser] = useState<UserProfile | null>(null);

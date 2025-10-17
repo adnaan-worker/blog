@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
-import { useAnimationOptimization } from '@/utils/animation-utils';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import { ActivityChartSectionProps } from './types';
 
 // Styled Components
@@ -99,7 +99,7 @@ const ChartLabels = styled.div`
 // 主组件
 export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ chartData }) => {
   // 使用动画优化工具
-  const { fadeInUp, staggerContainer } = useAnimationOptimization();
+  const { variants } = useAnimationEngine();
 
   // 柱状图动画变体
   const barVariants: any = {
@@ -119,18 +119,14 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
-      variants={staggerContainer}
+      variants={variants.stagger}
     >
       <CreativeSectionHeader>
-        <CreativeSectionTitle variants={fadeInUp}>
-          年度活跃度一览
-        </CreativeSectionTitle>
-        <SectionSubtitle variants={fadeInUp}>
-          记录每一次创作的足迹
-        </SectionSubtitle>
+        <CreativeSectionTitle variants={variants.fadeIn}>年度活跃度一览</CreativeSectionTitle>
+        <SectionSubtitle variants={variants.fadeIn}>记录每一次创作的足迹</SectionSubtitle>
       </CreativeSectionHeader>
 
-      <ChartContainer variants={fadeInUp} whileHover={{ y: -3 }}>
+      <ChartContainer variants={variants.fadeIn} whileHover={{ y: -3 }}>
         <Chart>
           {chartData.map((item, index) => (
             <ChartBar
@@ -144,9 +140,7 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
         </Chart>
 
         <ChartLabels>
-          {chartData.map((item, index) =>
-            index % 3 === 0 ? <span key={item.month}>{item.month}</span> : null
-          )}
+          {chartData.map((item, index) => (index % 3 === 0 ? <span key={item.month}>{item.month}</span> : null))}
         </ChartLabels>
       </ChartContainer>
     </ChartSection>
@@ -154,4 +148,3 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
 };
 
 export default ActivityChartSection;
-

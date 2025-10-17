@@ -7,4 +7,3 @@ export { ActivityChartSection } from './activity-chart-section';
 export { ProjectsSection } from './projects-section';
 
 export * from './types';
-

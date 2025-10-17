@@ -2,16 +2,25 @@ import React, { useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiArrowRight, FiArrowLeft, FiStar, FiGithub, FiCode, FiCalendar, FiFolderPlus, FiExternalLink } from 'react-icons/fi';
+import {
+  FiArrowRight,
+  FiArrowLeft,
+  FiStar,
+  FiGithub,
+  FiCode,
+  FiCalendar,
+  FiFolderPlus,
+  FiExternalLink,
+} from 'react-icons/fi';
 import { SiGitee } from 'react-icons/si';
 import { formatDate } from '@/utils';
-import { useAnimationOptimization } from '@/utils/animation-utils';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import { Icon } from '@/components/common/Icon';
 import { RadarChart } from '@/components/common/RadarChart';
 import { getLanguageIcon, calculateProjectRadarData } from '@/utils/language-icons';
 import { ProjectsSectionProps } from './types';
 
-// Styled Components 
+// Styled Components
 const ProjectsWrapper = styled(motion.section)`
   margin: 3rem 0 4rem;
   position: relative;
@@ -102,7 +111,7 @@ const ProjectsGrid = styled(motion.div)`
 const ProjectMainCard = styled(motion.div)`
   position: relative;
   height: 100%;
-  
+
   @media (max-width: 968px) {
     width: 100%;
     max-width: 100%;
@@ -115,7 +124,7 @@ const ProjectMainCard = styled(motion.div)`
 
 const MobileNavButton = styled(motion.button)`
   display: none;
-  
+
   @media (max-width: 968px) {
     display: flex;
     align-items: center;
@@ -133,25 +142,25 @@ const MobileNavButton = styled(motion.button)`
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     pointer-events: auto;
-    
+
     &:active {
       transform: scale(0.9);
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     }
-    
+
     &:disabled {
       opacity: 0.4;
       cursor: not-allowed;
     }
-    
+
     &.prev {
       left: 4px;
     }
-    
+
     &.next {
       right: 4px;
     }
-    
+
     svg {
       width: 16px;
       height: 16px;
@@ -171,7 +180,7 @@ const ProjectDetailContainer = styled(motion.div)`
   will-change: transform;
   backface-visibility: hidden;
   perspective: 1000px;
-  
+
   @media (max-width: 968px) {
     width: 100%;
     max-width: 100%;
@@ -187,7 +196,7 @@ const ProjectInfo = styled.div`
   gap: 1.5rem;
   width: 100%;
   max-width: 100%;
-  
+
   @media (max-width: 968px) {
     gap: 0.75rem;
   }
@@ -248,7 +257,7 @@ const ProjectTitle = styled.h3`
   line-height: 1.4;
   word-break: break-word;
   overflow-wrap: break-word;
-  
+
   @media (max-width: 968px) {
     font-size: 0.9rem;
     margin: 0 0 0.3rem 0;
@@ -267,7 +276,7 @@ const ProjectDescription = styled.p`
   overflow: hidden;
   word-break: break-word;
   overflow-wrap: break-word;
-  
+
   @media (max-width: 968px) {
     font-size: 0.75rem;
     line-height: 1.4;
@@ -332,7 +341,7 @@ const DataCard = styled.div`
   gap: 1rem;
   width: 100%;
   max-width: 100%;
-  
+
   @media (max-width: 968px) {
     flex: 1;
     min-width: 0;
@@ -347,11 +356,11 @@ const RadarChartWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   @media (max-width: 968px) {
     width: 110px;
     flex-shrink: 0;
-    
+
     canvas {
       width: 110px !important;
       height: 110px !important;
@@ -369,7 +378,7 @@ const DataItem = styled.div`
   &:last-child {
     border-bottom: none;
   }
-  
+
   @media (max-width: 968px) {
     flex-direction: column;
     align-items: flex-start;
@@ -390,12 +399,12 @@ const DataLabel = styled.span`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  
+
   @media (max-width: 968px) {
     font-size: 0.6rem;
     opacity: 0.85;
     font-weight: 500;
-    
+
     svg {
       width: 10px;
       height: 10px;
@@ -407,7 +416,7 @@ const DataValue = styled.span`
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
-  
+
   @media (max-width: 968px) {
     font-size: 0.5rem;
     font-weight: 700;
@@ -439,7 +448,7 @@ const ProjectLinks = styled.div`
   display: flex;
   gap: 0.75rem;
   margin-top: 0.5rem;
-  
+
   @media (max-width: 968px) {
     grid-column: 1 / -1;
     justify-content: center;
@@ -474,12 +483,12 @@ const ProjectLink = styled.a`
     width: 14px;
     height: 14px;
   }
-  
+
   @media (max-width: 968px) {
     padding: 0.3rem 0.5rem;
     font-size: 0.65rem;
     border-radius: 5px;
-    
+
     svg {
       width: 11px;
       height: 11px;
@@ -489,20 +498,20 @@ const ProjectLink = styled.a`
 
 const MobileProjectIndicator = styled.div`
   display: none;
-  
+
   @media (max-width: 968px) {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.75rem;
     margin-top: 1.5rem;
-    
+
     .counter {
       font-size: 0.75rem;
       color: var(--text-secondary);
       font-weight: 500;
     }
-    
+
     .dots {
       display: flex;
       gap: 0.4rem;
@@ -524,7 +533,7 @@ const GeometryGridContainer = styled.div`
   position: relative;
   width: 100%;
   height: 500px;
-  
+
   @media (max-width: 968px) {
     display: none; /* 手机端隐藏 */
   }
@@ -656,33 +665,27 @@ const EmptyState = styled.div`
 const generateGeometryLayout = (count: number) => {
   if (count === 0) return [];
   if (count === 1) return [{ x: 0, y: 0, width: 100, height: 100 }];
-  
+
   const layouts: Array<{ x: number; y: number; width: number; height: number }> = [];
-  
-  const splitArea = (
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    remaining: number
-  ): void => {
+
+  const splitArea = (x: number, y: number, width: number, height: number, remaining: number): void => {
     if (remaining === 1) {
       layouts.push({ x, y, width, height });
       return;
     }
-    
+
     const aspectRatio = width / height;
     const shouldCutVertically = aspectRatio > 1.2 ? Math.random() > 0.3 : Math.random() < 0.3;
-    
+
     if (shouldCutVertically) {
       const minRatio = 0.3;
       const maxRatio = 0.7;
       const splitRatio = minRatio + Math.random() * (maxRatio - minRatio);
       const splitPos = width * splitRatio;
-      
+
       const leftCount = Math.max(1, Math.min(remaining - 1, Math.round(remaining * splitRatio)));
       const rightCount = remaining - leftCount;
-      
+
       splitArea(x, y, splitPos, height, leftCount);
       splitArea(x + splitPos, y, width - splitPos, height, rightCount);
     } else {
@@ -690,24 +693,28 @@ const generateGeometryLayout = (count: number) => {
       const maxRatio = 0.7;
       const splitRatio = minRatio + Math.random() * (maxRatio - minRatio);
       const splitPos = height * splitRatio;
-      
+
       const topCount = Math.max(1, Math.min(remaining - 1, Math.round(remaining * splitRatio)));
       const bottomCount = remaining - topCount;
-      
+
       splitArea(x, y, width, splitPos, topCount);
       splitArea(x, y + splitPos, width, height - splitPos, bottomCount);
     }
   };
-  
+
   splitArea(0, 0, 100, 100, count);
-  
+
   return layouts;
 };
 
 // 主组件
-export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, selectedProjectIndex, onProjectChange }) => {
-  // 使用动画优化工具
-  const { fadeInUp, staggerContainer } = useAnimationOptimization();
+export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
+  projects,
+  selectedProjectIndex,
+  onProjectChange,
+}) => {
+  // 使用动画引擎
+  const { variants } = useAnimationEngine();
 
   // 使用 useMemo 根据 projects.length 动态计算布局
   const geometryLayouts = useMemo(() => {
@@ -744,15 +751,11 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, sele
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
-      variants={staggerContainer}
+      variants={variants.stagger}
     >
       <CreativeSectionHeader>
-        <CreativeSectionTitle variants={fadeInUp}>
-          开源项目
-        </CreativeSectionTitle>
-        <SectionSubtitle variants={fadeInUp}>
-          用代码构建更美好的世界
-        </SectionSubtitle>
+        <CreativeSectionTitle variants={variants.fadeIn}>开源项目</CreativeSectionTitle>
+        <SectionSubtitle variants={variants.fadeIn}>用代码构建更美好的世界</SectionSubtitle>
       </CreativeSectionHeader>
 
       <ProjectsGrid>
@@ -871,19 +874,31 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, sele
                   {/* 项目链接 */}
                   <ProjectLinks>
                     {projects[selectedProjectIndex].githubUrl && (
-                      <ProjectLink href={projects[selectedProjectIndex].githubUrl} target="_blank" rel="noopener noreferrer">
+                      <ProjectLink
+                        href={projects[selectedProjectIndex].githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <FiGithub />
                         GitHub
                       </ProjectLink>
                     )}
                     {projects[selectedProjectIndex].giteeUrl && (
-                      <ProjectLink href={projects[selectedProjectIndex].giteeUrl} target="_blank" rel="noopener noreferrer">
+                      <ProjectLink
+                        href={projects[selectedProjectIndex].giteeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <SiGitee />
                         Gitee
                       </ProjectLink>
                     )}
                     {projects[selectedProjectIndex].demoUrl && (
-                      <ProjectLink href={projects[selectedProjectIndex].demoUrl} target="_blank" rel="noopener noreferrer">
+                      <ProjectLink
+                        href={projects[selectedProjectIndex].demoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <FiExternalLink />
                         Demo
                       </ProjectLink>
@@ -896,7 +911,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, sele
                   <RadarChart data={calculateProjectRadarData(projects[selectedProjectIndex], projects)} size={280} />
                 </RadarChartWrapper>
               </ProjectDataSection>
-              
+
               {/* 手机端项目指示器 */}
               <MobileProjectIndicator>
                 <div className="counter">
@@ -904,14 +919,11 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, sele
                 </div>
                 <div className="dots">
                   {projects.slice(0, 8).map((_, index) => (
-                    <Dot
-                      key={index}
-                      active={index === selectedProjectIndex}
-                      initial={false}
-                      animate={{ opacity: 1 }}
-                    />
+                    <Dot key={index} active={index === selectedProjectIndex} initial={false} animate={{ opacity: 1 }} />
                   ))}
-                  {projects.length > 8 && <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>...</span>}
+                  {projects.length > 8 && (
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>...</span>
+                  )}
                 </div>
               </MobileProjectIndicator>
             </ProjectDetailContainer>
@@ -942,10 +954,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, sele
               >
                 <GeometryBlockContent>
                   {getLanguageIcon(project.language).icon === 'code' ? (
-                    <FiCode
-                      size={iconSize}
-                      style={{ color: getLanguageIcon(project.language).color }}
-                    />
+                    <FiCode size={iconSize} style={{ color: getLanguageIcon(project.language).color }} />
                   ) : (
                     <Icon
                       name={getLanguageIcon(project.language).icon}
@@ -967,4 +976,3 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, sele
 };
 
 export default ProjectsSection;
-

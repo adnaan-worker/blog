@@ -40,12 +40,12 @@ export const getLanguageIcon = (language?: string): { icon: string; color: strin
 const normalizeScore = (value: number, min: number = 0, max: number = 100): number => {
   if (value <= 0) return 0;
   if (max <= min) return 50;
-  
+
   // 使用对数缩放，让小数值的差异更明显
   const logValue = Math.log(value + 1);
   const logMin = Math.log(min + 1);
   const logMax = Math.log(max + 1);
-  
+
   const normalized = ((logValue - logMin) / (logMax - logMin)) * 100;
   return Math.max(0, Math.min(100, normalized));
 };
@@ -71,7 +71,7 @@ export const calculateProjectRadarData = (
     watchers?: number;
     issues?: number;
     viewCount?: number;
-  }>
+  }>,
 ): Array<{ label: string; value: number; max: number }> => {
   // 获取当前项目的各项数据
   const stars = project.stars || 0;
@@ -82,25 +82,22 @@ export const calculateProjectRadarData = (
 
   // 如果提供了所有项目数据，使用相对评分
   if (allProjects && allProjects.length > 1) {
-    const maxStars = Math.max(...allProjects.map(p => p.stars || 0), 1);
-    const maxForks = Math.max(...allProjects.map(p => p.forks || 0), 1);
-    const maxWatchers = Math.max(...allProjects.map(p => p.watchers || 0), 1);
-    const maxViews = Math.max(...allProjects.map(p => p.viewCount || 0), 1);
+    const maxStars = Math.max(...allProjects.map((p) => p.stars || 0), 1);
+    const maxForks = Math.max(...allProjects.map((p) => p.forks || 0), 1);
+    const maxWatchers = Math.max(...allProjects.map((p) => p.watchers || 0), 1);
+    const maxViews = Math.max(...allProjects.map((p) => p.viewCount || 0), 1);
 
     // 使用对数归一化评分
     const popularityScore = normalizeScore(stars, 0, maxStars);
     const communityScore = normalizeScore(forks + watchers, 0, maxForks + maxWatchers);
     const activityScore = normalizeScore(viewCount, 0, maxViews);
-    
+
     // 问题评分：越少越好（反向评分）
-    const issuesScore = issues === 0 ? 100 : Math.max(0, 100 - (issues * 10));
-    
+    const issuesScore = issues === 0 ? 100 : Math.max(0, 100 - issues * 10);
+
     // 综合质量：基于多个因素的加权平均
     const qualityScore = Math.round(
-      popularityScore * 0.3 + 
-      communityScore * 0.25 + 
-      activityScore * 0.25 + 
-      issuesScore * 0.2
+      popularityScore * 0.3 + communityScore * 0.25 + activityScore * 0.25 + issuesScore * 0.2,
     );
 
     return [
@@ -121,7 +118,7 @@ export const calculateProjectRadarData = (
   const popularityScore = normalizeScore(stars, 0, 10);
   const communityScore = normalizeScore(forks + watchers, 0, 5);
   const activityScore = Math.max(0, Math.min(100, 100 - daysSinceUpdate * 3));
-  const issuesScore = issues === 0 ? 100 : Math.max(0, 100 - (issues * 10));
+  const issuesScore = issues === 0 ? 100 : Math.max(0, 100 - issues * 10);
   const qualityScore = Math.round((popularityScore + communityScore + activityScore + issuesScore) / 4);
 
   return [

@@ -2,15 +2,9 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import {
-
-  FiGithub,
-  FiMail,
-  FiCode,
-} from 'react-icons/fi';
+import { FiGithub, FiMail, FiCode } from 'react-icons/fi';
 import { API, SiteSettings, UserActivity, Project } from '@/utils/api';
-import { useAnimationOptimization } from '@/utils/animation-utils';
-import { variants as animationVariants, gpuAcceleration, hoverScale } from '@/utils/animation-config';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import { Icon } from '@/components/common/Icon';
 import {
   ArticlesSection,
@@ -625,11 +619,8 @@ const SkillTags = styled(motion.div)`
 
 // 组件
 const Home: React.FC = () => {
-  // 使用动画优化工具
-  const { fadeInUp, staggerContainer, iconVariants, shouldReduceAnimations } = useAnimationOptimization();
-
-  // 使用统一的动画变体
-  const cardVariants = shouldReduceAnimations ? animationVariants.fade : animationVariants.cardVariants;
+  // 使用动画引擎
+  const { variants } = useAnimationEngine();
 
   // 卡片翻转状态
   const [isFlipped, setIsFlipped] = useState(false);
@@ -742,12 +733,12 @@ const Home: React.FC = () => {
       <PageContainer>
         <HeroSection>
           <Hero>
-            <HeroContent variants={staggerContainer} initial="hidden" animate="visible">
-              <Title variants={fadeInUp}>
+            <HeroContent variants={variants.stagger} initial="hidden" animate="visible">
+              <Title variants={variants.fadeIn}>
                 欢迎踏入代码与创意交织的<span style={{ color: 'var(--accent-color)' }}>奇幻宇宙</span>
                 <motion.span
                   className="wave"
-                  variants={iconVariants}
+                  variants={variants.scale}
                   initial="hidden"
                   animate="visible"
                   style={{
@@ -759,7 +750,7 @@ const Home: React.FC = () => {
                 </motion.span>
               </Title>
 
-              <Subtitle variants={fadeInUp}>
+              <Subtitle variants={variants.fadeIn}>
                 <span
                   style={{
                     background: 'linear-gradient(90deg, rgb(var(--gradient-from)), rgb(var(--gradient-to)))',
@@ -773,14 +764,14 @@ const Home: React.FC = () => {
                 <code style={{ color: 'var(--accent-color)' }}>@adnaan</code>
               </Subtitle>
 
-              <Description variants={fadeInUp}>
+              <Description variants={variants.fadeIn}>
                 我是<strong style={{ color: 'var(--accent-color)' }}>全栈工程师</strong>与
                 <strong style={{ color: 'var(--accent-color)' }}>UI/UX爱好者</strong>，专注于构建美观且高性能的Web体验。
                 <br />
                 <span style={{ fontSize: '0.9em', opacity: 0.9 }}>「每一行代码都有诗意，每一个像素都有故事」</span>
               </Description>
 
-              <SkillTags variants={fadeInUp}>
+              <SkillTags variants={variants.fadeIn}>
                 <span>
                   <FiCode size={14} /> 开发者
                 </span>
@@ -792,7 +783,7 @@ const Home: React.FC = () => {
                 </span>
               </SkillTags>
 
-              <SocialLinks variants={staggerContainer}>
+              <SocialLinks variants={variants.stagger}>
                 <SocialLink
                   href={Array.isArray(socialLinks) ? undefined : socialLinks?.email}
                   aria-label="Email"
@@ -976,7 +967,7 @@ const Home: React.FC = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-          variants={staggerContainer}
+          variants={variants.stagger}
         >
           {/* 左侧栏 */}
           <LeftColumn>

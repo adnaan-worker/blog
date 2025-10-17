@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { formatDate } from '@/utils';
-import { useAnimationOptimization } from '@/utils/animation-utils';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import { UserActivity } from '@/utils/api';
 
 // Styled Components
@@ -305,7 +305,7 @@ interface ActivitiesSectionProps {
 // 主组件
 export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities, loading }) => {
   // 使用动画优化工具
-  const { fadeInUp, staggerContainer } = useAnimationOptimization();
+  const { variants } = useAnimationEngine();
 
   // 卡片动画变体
   const cardVariants: any = {
@@ -321,20 +321,16 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
   };
 
   return (
-    <ContentSection variants={fadeInUp}>
+    <ContentSection variants={variants.fadeIn}>
       <SectionTitle>最近发生的事</SectionTitle>
 
       <ActivityScrollContainer>
         <FadeMask className="top" />
-        <ActivityGrid variants={staggerContainer}>
+        <ActivityGrid variants={variants.stagger}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-              加载中...
-            </div>
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
           ) : activities.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-              暂无活动
-            </div>
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>暂无活动</div>
           ) : (
             activities.map((activity, index) => {
               const formatted = formatActivityText(activity);
@@ -350,9 +346,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
                 >
                   <ActivityIcon>{formatted.emoji}</ActivityIcon>
                   <ActivityContent>
-                    <div
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}
-                    >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                       <ActivityAuthor style={{ color: formatted.color, fontWeight: 500 }}>
                         {formatted.primary}
                       </ActivityAuthor>
@@ -385,4 +379,3 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
 };
 
 export default ActivitiesSection;
-

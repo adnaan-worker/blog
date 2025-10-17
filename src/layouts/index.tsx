@@ -43,7 +43,13 @@ const LoadingIndicator = styled(motion.div)`
   z-index: 1000;
 `;
 
-import { pageTransition } from '@/utils/animation-config';
+// 页面过渡动画配置
+const pageTransition = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: 10 },
+  transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as any },
+};
 
 /**
  * 根布局组件，提供应用程序的基本结构

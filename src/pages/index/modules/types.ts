@@ -1,5 +1,3 @@
-
-
 /**
  * 首页模块类型定义
  */
@@ -66,4 +64,3 @@ export interface ProjectsSectionProps {
   selectedProjectIndex: number;
   onProjectChange: (index: number) => void;
 }
-
