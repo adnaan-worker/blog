@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // 定义菜单项接口
 interface MenuItem {
@@ -43,7 +44,7 @@ const NavLink = styled(Link)<{ active: string }>`
 `;
 
 // 下拉菜单样式
-const DropdownContent = styled.div`
+const DropdownContent = styled(motion.div)`
   position: absolute;
   top: calc(100% + 0.5rem);
   right: 0;
@@ -59,6 +60,29 @@ const DropdownContent = styled.div`
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   }
 `;
+
+// 下拉菜单动画变体
+const dropdownVariants = {
+  hidden: { opacity: 0, y: -10, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.2,
+      ease: [0.4, 0, 0.2, 1] as any,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    scale: 0.95,
+    transition: {
+      duration: 0.15,
+      ease: [0.4, 0, 1, 1] as any,
+    },
+  },
+};
 
 const DropdownItem = styled(Link)`
   display: flex;
@@ -150,16 +174,18 @@ const NavLinks: React.FC<NavLinksProps> = ({
                 {item.title}
               </NavLinkWithHover>
 
-              {moreDropdownOpen && (
-                <DropdownContent>
-                  {item.children.map((childItem) => (
-                    <DropdownItem key={childItem.path} to={childItem.path} onClick={onLinkClick}>
-                      {childItem.icon}
-                      {childItem.title}
-                    </DropdownItem>
-                  ))}
-                </DropdownContent>
-              )}
+              <AnimatePresence>
+                {moreDropdownOpen && (
+                  <DropdownContent initial="hidden" animate="visible" exit="exit" variants={dropdownVariants}>
+                    {item.children.map((childItem) => (
+                      <DropdownItem key={childItem.path} to={childItem.path} onClick={onLinkClick}>
+                        {childItem.icon}
+                        {childItem.title}
+                      </DropdownItem>
+                    ))}
+                  </DropdownContent>
+                )}
+              </AnimatePresence>
             </div>
           );
         } else {

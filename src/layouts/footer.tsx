@@ -91,20 +91,7 @@ const StyledLogo = styled(Link)`
 interface FooterLinkProps {
   to: string;
   children: React.ReactNode;
-  variants?: {
-    hidden?: {
-      opacity?: number;
-      y?: number;
-    };
-    visible?: {
-      opacity?: number;
-      y?: number;
-      transition?: {
-        duration?: number;
-        ease?: string;
-      };
-    };
-  };
+  variants?: any;
 }
 
 const FooterLink: React.FC<FooterLinkProps> = ({ to, children, variants, ...props }) => (
@@ -117,20 +104,7 @@ const FooterLink: React.FC<FooterLinkProps> = ({ to, children, variants, ...prop
 interface FooterLogoProps {
   to: string;
   children: React.ReactNode;
-  variants?: {
-    hidden?: {
-      opacity?: number;
-      y?: number;
-    };
-    visible?: {
-      opacity?: number;
-      y?: number;
-      transition?: {
-        duration?: number;
-        ease?: string;
-      };
-    };
-  };
+  variants?: any;
 }
 
 const FooterLogo: React.FC<FooterLogoProps> = ({ to, children, variants, ...props }) => (
@@ -295,12 +269,13 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: 'easeOut',
+      ease: 'easeOut' as any,
     },
   },
 };
 
 const Footer = () => {
+  // TODO: 添加 siteSettings Redux slice 后再使用动态配置
   return (
     <FooterContainer
       initial="hidden"
@@ -323,7 +298,7 @@ const Footer = () => {
 
             <SocialLinks>
               <SocialLink
-                href="https://github.com"
+                href="https://github.com/yourusername"
                 target="_blank"
                 rel="noopener noreferrer"
                 variants={itemVariants}
@@ -334,7 +309,7 @@ const Footer = () => {
                 <FiGithub size={18} />
               </SocialLink>
               <SocialLink
-                href="mailto:example@example.com"
+                href="mailto:your.email@example.com"
                 variants={itemVariants}
                 whileHover={{ y: -2, scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
@@ -407,11 +382,11 @@ const Footer = () => {
 
           <PoweredBy>
             由{' '}
-            <a href="#" target="_blank" rel="noopener noreferrer">
+            <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
               React
             </a>{' '}
             强力驱动 |{' '}
-            <a href="#" target="_blank" rel="noopener noreferrer">
+            <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
               ICP备20236136号
             </a>
           </PoweredBy>

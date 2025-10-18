@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FiUser, FiLogOut, FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '@/store/modules/userSlice';
@@ -149,7 +149,7 @@ export const dropdownVariants = {
     scale: 1,
     transition: {
       duration: 0.2,
-      ease: [0.4, 0, 0.2, 1],
+      ease: [0.4, 0, 0.2, 1] as any,
     },
   },
   exit: {
@@ -158,7 +158,7 @@ export const dropdownVariants = {
     scale: 0.95,
     transition: {
       duration: 0.15,
-      ease: [0.4, 0, 1, 1],
+      ease: [0.4, 0, 1, 1] as any,
     },
   },
 };
@@ -201,45 +201,47 @@ const UserMenu: React.FC<UserMenuProps> = ({
         </Avatar>
       )}
 
-      {userDropdownOpen && (
-        <UserDropdownContent initial="hidden" animate="visible" exit="exit" variants={dropdownVariants}>
-          {isLoggedIn ? (
-            <>
-              <UserDropdownHeader>
-                <Avatar>
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt={user.username} />
-                  ) : (
-                    <FiUser color="var(--text-secondary)" />
-                  )}
-                </Avatar>
-                <UserInfo>
-                  <UserName>{user?.username}</UserName>
-                  <UserRole roleColor={getRoleColor(user?.role)}>{getRoleDisplayName(user?.role)}</UserRole>
-                </UserInfo>
-              </UserDropdownHeader>
+      <AnimatePresence>
+        {userDropdownOpen && (
+          <UserDropdownContent initial="hidden" animate="visible" exit="exit" variants={dropdownVariants}>
+            {isLoggedIn ? (
+              <>
+                <UserDropdownHeader>
+                  <Avatar>
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt={user.username} />
+                    ) : (
+                      <FiUser color="var(--text-secondary)" />
+                    )}
+                  </Avatar>
+                  <UserInfo>
+                    <UserName>{user?.username}</UserName>
+                    <UserRole roleColor={getRoleColor(user?.role)}>{getRoleDisplayName(user?.role)}</UserRole>
+                  </UserInfo>
+                </UserDropdownHeader>
 
-              <UserDropdownItem to="/profile" onClick={handleLinkClick}>
-                <FiUser size={16} /> 个人中心
-              </UserDropdownItem>
+                <UserDropdownItem to="/profile" onClick={handleLinkClick}>
+                  <FiUser size={16} /> 个人中心
+                </UserDropdownItem>
 
-              <UserDropdownLogout onClick={handleLogout}>
-                <FiLogOut size={16} /> 退出登录
-              </UserDropdownLogout>
-            </>
-          ) : (
-            <>
-              <UserDropdownItem to="#" onClick={handleLogin}>
-                <FiLogIn size={16} /> 登录
-              </UserDropdownItem>
+                <UserDropdownLogout onClick={handleLogout}>
+                  <FiLogOut size={16} /> 退出登录
+                </UserDropdownLogout>
+              </>
+            ) : (
+              <>
+                <UserDropdownItem to="#" onClick={handleLogin}>
+                  <FiLogIn size={16} /> 登录
+                </UserDropdownItem>
 
-              <UserDropdownItem to="#" onClick={handleRegister}>
-                <FiUserPlus size={16} /> 注册
-              </UserDropdownItem>
-            </>
-          )}
-        </UserDropdownContent>
-      )}
+                <UserDropdownItem to="#" onClick={handleRegister}>
+                  <FiUserPlus size={16} /> 注册
+                </UserDropdownItem>
+              </>
+            )}
+          </UserDropdownContent>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
