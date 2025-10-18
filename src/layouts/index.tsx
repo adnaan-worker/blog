@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import Header from './header';
 import Footer from './footer';
 import FloatingToolbar from './floating-toolbar';
-import Live2DModel from './live2d-model';
+import GhostWidget from './ghost-widget';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageLoading from '@/components/common/page-loading';
 
@@ -238,8 +238,8 @@ const RootLayout = () => {
       {/* 悬浮工具栏 */}
       <FloatingToolbar scrollPosition={scrollPosition} />
 
-      {/* Live2D模型 */}
-      <Live2DModel />
+      {/* 幽灵小部件 */}
+      <GhostWidget />
     </MainContainer>
   );
 };

@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMusic, FiArrowUp } from 'react-icons/fi';
 import MusicPlayer from './modules/music-player';
-import LyricBubble from './modules/lyric-bubble';
 
 // 动画配置常量
 const ANIMATION_DURATION = {
