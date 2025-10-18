@@ -4,28 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiMusic, FiArrowUp } from 'react-icons/fi';
 import MusicPlayer from './modules/music-player';
 
-// 动画配置常量
-const ANIMATION_DURATION = {
-  fast: 0.2,
-  normal: 0.3,
-  slow: 0.5,
-};
-
-const EASING = {
-  ease: [0.4, 0, 0.2, 1] as any,
-  easeIn: [0.4, 0, 1, 1] as any,
-  easeOut: [0, 0, 0.2, 1] as any,
-};
-
+// GPU加速优化
 const gpuAcceleration = {
   transform: 'translateZ(0)',
   backfaceVisibility: 'hidden' as const,
   perspective: 1000,
-};
-
-const hoverScale = {
-  whileHover: { scale: 1.05 },
-  whileTap: { scale: 0.95 },
 };
 
 // 统一的浮动工具栏容器
@@ -52,56 +35,58 @@ const ToolbarContainer = styled.div`
   }
 `;
 
-// 歌词胶囊容器 - 始终在最底部
+// 歌词胶囊容器 - 高性能动画方案 - 使用 CSS 变量实现响应式
 const LyricCapsule = styled(motion.div)<{ isExpanded: boolean }>`
   display: flex;
   align-items: center;
   height: 48px;
   background: linear-gradient(135deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.9) 100%);
-  padding: ${(props) => (props.isExpanded ? '0 16px 0 0' : '0')}; /* 移除上下padding确保按钮居中 */
+  padding: 0;
   box-shadow:
     0 8px 24px rgba(var(--accent-rgb), 0.35),
     0 2px 8px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  overflow: hidden;
-  gap: 8px; /* 按钮和文字间距 */
-
-  /* GPU加速 */
+  overflow: visible;
+  
+  /* GPU加速 - 关键优化 */
   ${gpuAcceleration as any}
+  will-change: transform;
 
   /* 悬停效果 */
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.25s ease;
 
   &:hover {
     box-shadow:
       0 12px 32px rgba(var(--accent-rgb), 0.45),
       0 4px 12px rgba(0, 0, 0, 0.2);
-    transform: translateY(-2px) translateZ(0);
   }
 
+  /* 移动端响应式 - 通过 CSS 变量覆盖，避免 JS 计算 */
   @media (max-width: 768px) {
     height: 44px;
-    padding: ${(props) => (props.isExpanded ? '0 12px 0 0' : '0')}; /* 移动端也移除上下padding */
-
-    /* 移动端收起时的宽度 */
-    &[data-expanded='false'] {
-      width: 44px !important;
-    }
-
-    /* 移动端展开时的固定宽度，覆盖动画变体 */
-    &[data-expanded='true'] {
-      width: 184px !important; /* 44px按钮 + 8px间距 + 120px文字 + 12px右padding */
-    }
+    --button-size: 44px !important;
+    --expanded-width: 196px !important; /* 44 + 12 + 140 */
+    --border-radius: 22px !important;
   }
+`;
+
+// 内容容器 - 控制 overflow
+const CapsuleContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  overflow: hidden;
+  padding: 0 16px 0 0;
 `;
 
 // 音乐按钮
 const MusicButton = styled(motion.button)`
   width: 48px;
   height: 48px;
-  min-width: 48px; /* 确保不会被压缩 */
+  min-width: 48px;
   min-height: 48px;
   border-radius: 50%;
   border: none;
@@ -111,8 +96,7 @@ const MusicButton = styled(motion.button)`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0; /* 移除默认padding */
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
   flex-shrink: 0;
   position: relative;
 
@@ -122,7 +106,7 @@ const MusicButton = styled(motion.button)`
     inset: 0;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background 0.2s ease;
   }
 
   &:hover::before {
@@ -132,7 +116,7 @@ const MusicButton = styled(motion.button)`
   svg {
     width: 22px;
     height: 22px;
-    display: block; /* 移除inline默认间距 */
+    display: block;
     z-index: 1;
   }
 
@@ -149,65 +133,32 @@ const MusicButton = styled(motion.button)`
   }
 `;
 
+// 歌词文本容器 - 固定宽度避免抖动
+const LyricTextWrapper = styled(motion.div)`
+  width: 200px;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    width: 140px;
+  }
+`;
+
 // 歌词文本
-const LyricText = styled(motion.div)`
+const LyricText = styled.div`
   color: white;
   font-size: 0.8rem;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 180px; /* 固定宽度 */
   line-height: 1.2;
 
   @media (max-width: 768px) {
     font-size: 0.75rem;
-    width: 120px; /* 移动端固定宽度 */
   }
 `;
 
-// 歌词胶囊动画变体 - 固定展开宽度，避免文字变化导致胶囊抖动
-const capsuleVariants = {
-  collapsed: {
-    width: 48,
-    borderRadius: '50%', // 收起时完全圆形
-    transition: {
-      duration: ANIMATION_DURATION.normal,
-      ease: EASING.ease,
-    },
-  },
-  expanded: {
-    width: 252, // 固定展开宽度 (48px按钮 + 8px间距 + 180px文字 + 16px右padding)
-    borderRadius: '24px', // 展开时圆角矩形
-    transition: {
-      duration: ANIMATION_DURATION.normal,
-      ease: EASING.ease,
-    },
-  },
-};
-
-// 歌词文本动画变体 - 淡入效果，不改变宽度
-const lyricTextVariants = {
-  hidden: {
-    opacity: 0,
-    x: 10,
-    transition: {
-      duration: ANIMATION_DURATION.fast,
-      ease: EASING.ease,
-    },
-  },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: ANIMATION_DURATION.normal,
-      delay: 0.1,
-      ease: EASING.easeIn,
-    },
-  },
-};
-
-// 返回顶部按钮样式 - 增强视觉效果
+// 返回顶部按钮样式
 const ToolbarButton = styled(motion.button)`
   width: 48px;
   height: 48px;
@@ -222,7 +173,6 @@ const ToolbarButton = styled(motion.button)`
   box-shadow:
     0 4px 16px rgba(var(--accent-rgb), 0.3),
     0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 
@@ -236,22 +186,17 @@ const ToolbarButton = styled(motion.button)`
     inset: -50%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.25s ease;
   }
 
   &:hover {
     box-shadow:
       0 8px 24px rgba(var(--accent-rgb), 0.4),
       0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px) translateZ(0);
 
     &::before {
       opacity: 1;
     }
-  }
-
-  &:active {
-    transform: translateY(0) translateZ(0);
   }
 
   svg {
@@ -272,28 +217,6 @@ const ToolbarButton = styled(motion.button)`
   }
 `;
 
-// 返回顶部按钮的动画变体 - 使用统一配置
-const scrollTopVariants = {
-  hidden: {
-    opacity: 0,
-    y: 20,
-    scale: 0.8,
-    transition: {
-      duration: ANIMATION_DURATION.fast,
-      ease: EASING.ease,
-    },
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: ANIMATION_DURATION.normal,
-      ease: EASING.easeIn,
-    },
-  },
-};
-
 interface FloatingToolbarProps {
   scrollPosition: number;
 }
@@ -309,13 +232,26 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
     setShowScrollTop(scrollPosition > 300);
   }, [scrollPosition]);
 
-  // 监听歌词变化，控制胶囊展开
+  // 监听歌词变化，控制胶囊展开 - 精确控制动画时序
   useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    
     if (currentLyric && isLyricBubbleEnabled) {
+      // 立即展开
       setIsCapsuleExpanded(true);
     } else {
-      setIsCapsuleExpanded(false);
+      // 延迟收缩，让文字淡出动画先完成
+      timer = setTimeout(() => {
+        setIsCapsuleExpanded(false);
+      }, 120); // 与文字 exit 动画时长一致
     }
+    
+    // 总是返回 cleanup 函数
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
   }, [currentLyric, isLyricBubbleEnabled]);
 
   const handleScrollTop = () => {
@@ -335,10 +271,6 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
     }
   };
 
-  const handleLyricComplete = () => {
-    setCurrentLyric(null);
-  };
-
   const handleLyricBubbleToggle = (isEnabled: boolean) => {
     setIsLyricBubbleEnabled(isEnabled);
     if (!isEnabled) {
@@ -349,42 +281,74 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
   return (
     <>
       <ToolbarContainer>
-        {/* 音乐歌词胶囊 - 始终在最底部 */}
+        {/* 音乐歌词胶囊 - 高性能弹簧动画 - 使用 CSS 变量实现响应式 */}
         <LyricCapsule
           isExpanded={isCapsuleExpanded}
-          data-expanded={isCapsuleExpanded}
-          variants={capsuleVariants}
-          animate={isCapsuleExpanded ? 'expanded' : 'collapsed'}
-          initial="collapsed"
+          animate={{
+            width: isCapsuleExpanded ? 'var(--expanded-width)' : 'var(--button-size)',
+            borderRadius: 'var(--border-radius)',
+          }}
+          initial={{
+            width: 'var(--button-size)',
+            borderRadius: 'var(--border-radius)',
+          }}
+          transition={{
+            type: 'spring',
+            stiffness: 600, // 超高刚度，反应迅速
+            damping: 40, // 超高阻尼，快速稳定，无震荡
+            mass: 0.4, // 极轻质量，瞬间响应
+            restDelta: 0.01, // 更早结束动画
+            restSpeed: 0.01, // 更早结束动画
+          }}
+          style={{
+            '--button-size': '48px',
+            '--expanded-width': '264px',
+            '--border-radius': '24px',
+          } as React.CSSProperties}
         >
-          <MusicButton onClick={handleMusicPlayerToggle} {...hoverScale}>
-            <FiMusic />
-          </MusicButton>
+          <CapsuleContent>
+            <MusicButton
+              onClick={handleMusicPlayerToggle}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FiMusic />
+            </MusicButton>
 
-          <AnimatePresence mode="wait">
-            {isCapsuleExpanded && currentLyric && (
-              <LyricText
-                variants={lyricTextVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-                key={currentLyric}
-              >
-                {currentLyric}
-              </LyricText>
-            )}
-          </AnimatePresence>
+            {/* 歌词文本 - 快速淡入淡出，避免与容器动画冲突 */}
+            <AnimatePresence mode="wait">
+              {isCapsuleExpanded && currentLyric && (
+                <LyricTextWrapper
+                  key={currentLyric}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: 0.12, // 更快的动画
+                    ease: [0.4, 0, 0.2, 1], // 快速缓动
+                  }}
+                >
+                  <LyricText>{currentLyric}</LyricText>
+                </LyricTextWrapper>
+              )}
+            </AnimatePresence>
+          </CapsuleContent>
         </LyricCapsule>
 
-        {/* 返回顶部按钮 - 出现时会自动把音乐按钮推上去 */}
+        {/* 返回顶部按钮 */}
         <AnimatePresence mode="wait">
           {showScrollTop && (
             <ToolbarButton
-              variants={scrollTopVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              {...hoverScale}
+              initial={{ opacity: 0, y: 20, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.8 }}
+              transition={{
+                type: 'spring',
+                stiffness: 400,
+                damping: 25,
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleScrollTop}
             >
               <FiArrowUp />
