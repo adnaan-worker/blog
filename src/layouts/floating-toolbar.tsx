@@ -48,7 +48,7 @@ const LyricCapsule = styled(motion.div)<{ isExpanded: boolean }>`
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   overflow: visible;
-  
+
   /* GPU加速 - 关键优化 */
   ${gpuAcceleration as any}
   will-change: transform;
@@ -137,7 +137,7 @@ const MusicButton = styled(motion.button)`
 const LyricTextWrapper = styled(motion.div)`
   width: 200px;
   overflow: hidden;
-  
+
   @media (max-width: 768px) {
     width: 140px;
   }
@@ -235,7 +235,7 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
   // 监听歌词变化，控制胶囊展开 - 精确控制动画时序
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    
+
     if (currentLyric && isLyricBubbleEnabled) {
       // 立即展开
       setIsCapsuleExpanded(true);
@@ -245,7 +245,7 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
         setIsCapsuleExpanded(false);
       }, 120); // 与文字 exit 动画时长一致
     }
-    
+
     // 总是返回 cleanup 函数
     return () => {
       if (timer) {
@@ -300,18 +300,16 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
             restDelta: 0.01, // 更早结束动画
             restSpeed: 0.01, // 更早结束动画
           }}
-          style={{
-            '--button-size': '48px',
-            '--expanded-width': '264px',
-            '--border-radius': '24px',
-          } as React.CSSProperties}
+          style={
+            {
+              '--button-size': '48px',
+              '--expanded-width': '264px',
+              '--border-radius': '24px',
+            } as React.CSSProperties
+          }
         >
           <CapsuleContent>
-            <MusicButton
-              onClick={handleMusicPlayerToggle}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            <MusicButton onClick={handleMusicPlayerToggle} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <FiMusic />
             </MusicButton>
 

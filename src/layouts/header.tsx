@@ -160,6 +160,8 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
+  const navCardRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
 
   // 根据登录状态动态生成移动端菜单分组
   const mobileMenuGroups: MenuGroup[] = isLoggedIn
@@ -220,6 +222,42 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
     };
   }, []);
 
+  // 高性能鼠标跟随聚光灯效果
+  useEffect(() => {
+    const navCard = navCardRef.current;
+    if (!navCard || internalScrolled) return;
+
+    let mouseX = 0;
+    let mouseY = 0;
+
+    const updateSpotlight = () => {
+      // 使用 CSS 变量更新位置，性能优于直接修改 background
+      navCard.style.setProperty('--spotlight-x', `${mouseX}px`);
+      navCard.style.setProperty('--spotlight-y', `${mouseY}px`);
+      rafRef.current = null;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = navCard.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+
+      // 使用 requestAnimationFrame 优化性能
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(updateSpotlight);
+      }
+    };
+
+    navCard.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      navCard.removeEventListener('mousemove', handleMouseMove);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, [internalScrolled]);
+
   // 关闭所有下拉菜单和移动菜单
   const handleLinkClick = () => {
     setMoreDropdownOpen(false);
@@ -274,7 +312,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
         </div>
 
         {/* 桌面导航 */}
-        <div className="nav-card">
+        <div className="nav-card" ref={navCardRef}>
           <NavLinks
             mainNavItems={mainNavItems}
             onLinkClick={handleLinkClick}

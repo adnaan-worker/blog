@@ -95,7 +95,6 @@ export const NavLinkWithHover: React.FC<{
     <NavLink to={to} active={active ? 'true' : 'false'} onClick={onClick} className="nav-link-hover">
       {active ? icon : <></>}
       {children}
-      <div className="bg-effect" />
       {active ? <div className="underline" /> : <></>}
     </NavLink>
   );
