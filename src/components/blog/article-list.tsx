@@ -333,9 +333,16 @@ export const BlogCardComponent: React.FC<{ article: Article }> = ({ article }) =
 interface ArticleListProps {
   articles: Article[];
   viewMode?: 'timeline' | 'card';
+  loading?: boolean;
 }
 
-const ArticleList: React.FC<ArticleListProps> = ({ articles, viewMode = 'timeline' }) => {
+const ArticleList: React.FC<ArticleListProps> = ({ articles, viewMode = 'timeline', loading = false }) => {
+  // 加载中不显示空状态
+  if (loading) {
+    return null;
+  }
+
+  // 数据加载完成后才判断是否为空
   if (articles.length === 0) {
     return (
       <NoArticles initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>

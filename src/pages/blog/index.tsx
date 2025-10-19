@@ -97,6 +97,7 @@ const Blog: React.FC = () => {
   // 状态管理
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('全部');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -110,6 +111,7 @@ const Blog: React.FC = () => {
   useEffect(() => {
     const fetchArticles = async () => {
       try {
+        setIsLoading(true);
         setError(null);
         const response = await API.article.getArticles({ page: 1, limit: 100 });
         const articleList = response.data || [];
@@ -123,6 +125,8 @@ const Blog: React.FC = () => {
       } catch (err) {
         console.error('获取文章失败:', err);
         setError('网络错误，请稍后重试');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -248,11 +252,11 @@ const Blog: React.FC = () => {
           {error ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--error-color)' }}>{error}</div>
           ) : (
-            <ArticleList articles={currentArticles} viewMode={viewMode} />
+            <ArticleList articles={currentArticles} viewMode={viewMode} loading={isLoading} />
           )}
 
-          {/* 分页控件 */}
-          {totalPages > 1 && (
+          {/* 分页控件 - 只在非加载状态且有数据时显示 */}
+          {!isLoading && totalPages > 1 && (
             <Pagination>
               <PageButton onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
                 &lt;
