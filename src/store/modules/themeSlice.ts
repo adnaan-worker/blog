@@ -1,5 +1,6 @@
 import { storage } from '@/utils';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { executeThemeTransition } from '@/utils/theme-transition';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
 type Theme = 'light' | 'dark';
@@ -7,6 +8,12 @@ type Theme = 'light' | 'dark';
 interface ThemeState {
   mode: ThemeMode; // 用户选择的模式
   theme: Theme; // 实际应用的主题
+}
+
+interface TransitionOptions {
+  x?: number;
+  y?: number;
+  duration?: number;
 }
 
 const initialState: ThemeState = {
@@ -37,8 +44,8 @@ const themeSlice = createSlice({
   name: 'theme',
   initialState,
   reducers: {
-    // 设置主题模式（light/dark/auto）
-    setMode: (state, action: PayloadAction<ThemeMode>) => {
+    // 设置主题模式（light/dark/auto）- 内部使用，不包含动画
+    _setModeInternal: (state, action: PayloadAction<ThemeMode>) => {
       state.mode = action.payload;
       storage.local.set('themeMode', action.payload);
 
@@ -51,8 +58,8 @@ const themeSlice = createSlice({
       applyTheme(state.theme);
     },
 
-    // 循环切换：light → dark → auto → light
-    cycleTheme: (state) => {
+    // 循环切换：light → dark → auto → light（内部使用，不包含动画）
+    _cycleThemeInternal: (state) => {
       const cycle: ThemeMode[] = ['light', 'dark', 'auto'];
       const currentIndex = cycle.indexOf(state.mode);
       const nextMode = cycle[(currentIndex + 1) % cycle.length];
@@ -76,7 +83,29 @@ const themeSlice = createSlice({
   },
 });
 
-export const { setMode, cycleTheme, updateTheme } = themeSlice.actions;
+export const { _setModeInternal, _cycleThemeInternal, updateTheme } = themeSlice.actions;
+
+/**
+ * 带动画的设置主题模式
+ */
+export const setMode = (mode: ThemeMode, options: TransitionOptions = {}) => {
+  return async (dispatch: any) => {
+    await executeThemeTransition(() => {
+      dispatch(_setModeInternal(mode));
+    }, options);
+  };
+};
+
+/**
+ * 带动画的循环切换主题
+ */
+export const cycleTheme = (options: TransitionOptions = {}) => {
+  return async (dispatch: any) => {
+    await executeThemeTransition(() => {
+      dispatch(_cycleThemeInternal());
+    }, options);
+  };
+};
 
 /**
  * 初始化主题
@@ -85,22 +114,25 @@ export const { setMode, cycleTheme, updateTheme } = themeSlice.actions;
  *
  * 注意：系统主题变化监听已移到 useSystemTheme Hook 中管理
  */
+/**
+ * 初始化主题（不带动画，用于应用启动）
+ */
 export const initializeTheme = () => (dispatch: any) => {
   try {
     // 1. 首先尝试获取保存的主题模式
     const savedMode = getSavedMode();
     if (savedMode) {
-      dispatch(setMode(savedMode));
+      dispatch(_setModeInternal(savedMode));
       return savedMode;
     }
 
     // 2. 如果没有保存，默认使用 auto
-    dispatch(setMode('auto'));
+    dispatch(_setModeInternal('auto'));
     return 'auto';
   } catch (error) {
     console.error('Failed to initialize theme:', error);
     // 如果出错，使用默认 auto 模式
-    dispatch(setMode('auto'));
+    dispatch(_setModeInternal('auto'));
     return 'auto';
   }
 };

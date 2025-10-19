@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSun, FiMoon, FiMonitor } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { cycleTheme } from '@/store/modules/themeSlice';
+import { getElementCenter } from '@/utils/theme-transition';
 import type { RootState } from '@/store';
 
 // 主题切换按钮容器
@@ -28,9 +29,24 @@ const ThemeToggleButton = styled(motion.button)`
   justify-content: center;
   padding: 0.5rem;
   border-radius: 50%;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 2;
+
+  /* 增强的悬停效果 */
+  &:hover {
+    transform: rotate(15deg);
+  }
+
+  &:active {
+    transform: scale(0.9) rotate(15deg);
+  }
+
+  /* 禁用状态下的样式（防止动画期间重复点击） */
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 `;
 
 // 图标容器
@@ -65,6 +81,8 @@ const ThemeToggle: React.FC = () => {
   const dispatch = useDispatch();
   const mode = useSelector((state: RootState) => state.theme.mode);
   const theme = useSelector((state: RootState) => state.theme.theme);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isTransitioning, setIsTransitioning] = React.useState(false);
 
   // 太阳动画变体
   const sunVariants = {
@@ -171,6 +189,31 @@ const ThemeToggle: React.FC = () => {
     },
   };
 
+  // 处理主题切换
+  const handleToggle = async () => {
+    // 防止动画期间重复点击
+    if (isTransitioning) return;
+
+    setIsTransitioning(true);
+
+    // 获取按钮中心位置作为动画起点
+    const center = buttonRef.current ? getElementCenter(buttonRef.current) : undefined;
+
+    try {
+      // 使用动画切换主题
+      await dispatch(
+        cycleTheme({
+          x: center?.x,
+          y: center?.y,
+          duration: 800,
+        }) as any,
+      );
+    } finally {
+      // 动画完成后恢复按钮状态
+      setTimeout(() => setIsTransitioning(false), 100);
+    }
+  };
+
   // 获取提示文本
   const getAriaLabel = () => {
     switch (mode) {
@@ -188,11 +231,13 @@ const ThemeToggle: React.FC = () => {
   return (
     <ThemeToggleContainer>
       <ThemeToggleButton
-        onClick={() => dispatch(cycleTheme())}
+        ref={buttonRef}
+        onClick={handleToggle}
+        disabled={isTransitioning}
         aria-label={getAriaLabel()}
         title={getAriaLabel()}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: isTransitioning ? 1 : 1.1 }}
+        whileTap={{ scale: isTransitioning ? 1 : 0.9 }}
       >
         <AnimatePresence mode="wait">
           {mode === 'light' ? (

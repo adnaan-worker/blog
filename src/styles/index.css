@@ -182,7 +182,96 @@
 }
 
 /**
- * 主题过渡效果
+ * View Transitions API - 主题切换动画
+ * 实现圆形扩散效果，从点击位置开始扩散
+ */
+
+/* 定义动画变量 */
+:root {
+  --theme-transition-duration: 800ms;
+  --theme-transition-x: 50%;
+  --theme-transition-y: 50%;
+  --theme-transition-radius: 100vmax;
+}
+
+/* View Transition 容器 - 控制整个过渡的容器背景 */
+::view-transition-group(root) {
+  animation-duration: var(--theme-transition-duration);
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 为整个文档启用 view transition */
+::view-transition-old(root),
+::view-transition-new(root) {
+  /* 移除默认的交叉淡入淡出动画，使用自定义动画 */
+  animation-duration: var(--theme-transition-duration);
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  mix-blend-mode: normal;
+  /* 不设置背景，让内容的真实背景显示 */
+  overflow: hidden;
+}
+
+/* 旧视图（当前主题）的动画 - 保持完整显示直到被新视图覆盖 */
+::view-transition-old(root) {
+  z-index: 1;
+  /* 旧视图保持完整，不做裁剪，只在最后淡出 */
+  animation-name: theme-fade-out;
+}
+
+/* 新视图（新主题）的动画 - 圆形扩散出现 */
+::view-transition-new(root) {
+  z-index: 2;
+  /* 新视图从点击位置圆形扩散 */
+  animation-name: theme-circle-expand;
+}
+
+/* 圆形扩散动画关键帧 */
+@keyframes theme-circle-expand {
+  from {
+    clip-path: circle(0px at var(--theme-transition-x) var(--theme-transition-y));
+  }
+  to {
+    clip-path: circle(var(--theme-transition-radius) at var(--theme-transition-x) var(--theme-transition-y));
+  }
+}
+
+/* 旧视图淡出动画 - 保持完整直到最后 */
+@keyframes theme-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/**
+ * 降级方案 - 不支持 View Transitions API 的浏览器使用普通过渡
+ */
+@supports not (view-transition-name: none) {
+  html {
+    transition:
+      color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    transition:
+      color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * {
+    transition:
+      color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/**
+ * 主题过渡效果（旧版，保留作为降级）
  */
 .theme-transition {
   transition:
@@ -223,9 +312,6 @@ body {
   font-family: var(--font-sans);
   color: var(--text-primary);
   background-color: var(--bg-primary);
-  transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 15px;

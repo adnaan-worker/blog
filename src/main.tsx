@@ -5,11 +5,16 @@ import { RouterProvider } from 'react-router-dom';
 import router from './router';
 import store, { AppDispatch } from './store';
 import { initializeTheme } from './store/modules/themeSlice';
+import { preloadTransitionStyles } from './utils/theme-transition';
 import './styles/index.css';
 import AccentColorStyleInjector from './components/theme/accent-color-style-injector';
 import { ToastProvider, ToastListener, initAdnaanUI } from 'adnaan-ui';
+
 // 初始化UI组件库
 initAdnaanUI();
+
+// 预加载主题切换动画样式（性能优化）
+preloadTransitionStyles();
 
 // 定义标题数组
 const titles = [
