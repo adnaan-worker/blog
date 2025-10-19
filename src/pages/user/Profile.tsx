@@ -3,32 +3,57 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAnimationEngine } from '@/utils/animation-engine';
 
-// GPU 加速样式
-const gpuAcceleration = {
-  transform: 'translateZ(0)',
-  backfaceVisibility: 'hidden' as const,
-  perspective: 1000,
-};
+// GPU 加速样式 - 已废弃，直接在各组件中使用优化的样式
 
-// 抽屉动画变体
+// 抽屉动画变体 - 优化性能
 const drawerVariants = {
   left: {
     hidden: { x: '-100%', opacity: 0 },
-    visible: { x: 0, opacity: 1, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as any } },
-    exit: { x: '-100%', opacity: 0, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] as any } },
+    visible: {
+      x: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.25,
+        ease: [0.25, 0.1, 0.25, 1] as any,
+        opacity: { duration: 0.15 },
+      },
+    },
+    exit: {
+      x: '-100%',
+      opacity: 0,
+      transition: {
+        duration: 0.2,
+        ease: [0.4, 0, 1, 1] as any,
+      },
+    },
   },
   right: {
     hidden: { x: '100%', opacity: 0 },
-    visible: { x: 0, opacity: 1, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as any } },
-    exit: { x: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.4, 0, 1, 1] as any } },
+    visible: {
+      x: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.25,
+        ease: [0.25, 0.1, 0.25, 1] as any,
+        opacity: { duration: 0.15 },
+      },
+    },
+    exit: {
+      x: '100%',
+      opacity: 0,
+      transition: {
+        duration: 0.2,
+        ease: [0.4, 0, 1, 1] as any,
+      },
+    },
   },
 };
 
-// 遮罩层动画变体
+// 遮罩层动画变体 - 简化动画
 const overlayVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.2 } },
-  exit: { opacity: 0, transition: { duration: 0.2 } },
+  visible: { opacity: 1, transition: { duration: 0.15 } }, // 更快速的渐显
+  exit: { opacity: 0, transition: { duration: 0.15 } },
 };
 
 import {
@@ -467,10 +492,14 @@ const DrawerOverlay = styled(motion.div)`
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
-  backdrop-filter: blur(4px);
+  /* 移除 backdrop-filter 提升性能 */
+  /* backdrop-filter: blur(4px); */
 
   /* GPU加速 */
-  ${gpuAcceleration as any}
+  transform: translateZ(0);
+  will-change: opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 
   @media (min-width: 768px) {
     display: none;
@@ -496,8 +525,16 @@ const Drawer = styled(motion.div)<{ position: 'left' | 'right' }>`
   flex-direction: column;
   gap: 1.5rem;
 
-  /* GPU加速 */
-  ${gpuAcceleration as any}
+  /* GPU加速优化 */
+  transform: translateZ(0);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+
+  /* 优化滚动性能 */
+  -webkit-overflow-scrolling: touch;
 
   /* 自定义滚动条 */
   &::-webkit-scrollbar {
@@ -958,7 +995,15 @@ const Profile: React.FC = () => {
   });
   const [openTabs, setOpenTabs] = useState<Tab[]>(() => {
     const savedTabs = storage.local.get<Tab[]>('profile_open_tabs');
-    return savedTabs || permissions.visibleTabs;
+    const defaultTab = { id: 'dashboard', label: '🏠 仪表盘', closable: false };
+
+    // 如果有保存的 tabs 且不为空，使用保存的
+    if (savedTabs && savedTabs.length > 0) {
+      return savedTabs;
+    }
+
+    // 否则使用权限中的 tabs，如果也为空，至少返回仪表盘
+    return permissions.visibleTabs.length > 0 ? permissions.visibleTabs : [defaultTab];
   });
 
   // 右键菜单状态
@@ -995,6 +1040,36 @@ const Profile: React.FC = () => {
     setLeftDrawerOpen(false);
     setRightDrawerOpen(false);
   }, [activeTab]);
+
+  // 防止抽屉打开时背景滚动
+  useEffect(() => {
+    if (leftDrawerOpen || rightDrawerOpen) {
+      // 锁定背景滚动
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      // 恢复滚动
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+
+    return () => {
+      // 组件卸载时恢复
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [leftDrawerOpen, rightDrawerOpen]);
+
+  // 确保权限加载后至少有一个仪表盘 tab
+  useEffect(() => {
+    if (permissions.visibleTabs.length > 0 && openTabs.length === 0) {
+      setOpenTabs(permissions.visibleTabs);
+      setActiveTab('dashboard');
+    }
+  }, [permissions.visibleTabs]);
 
   // 保存tab状态到localStorage
   useEffect(() => {
@@ -1396,10 +1471,19 @@ const Profile: React.FC = () => {
 
   const closeTab = (tabId: string) => {
     const filteredTabs = openTabs.filter((tab) => tab.id !== tabId);
+
+    // 确保至少保留仪表盘 tab
+    if (filteredTabs.length === 0) {
+      const dashboardTab = { id: 'dashboard', label: '🏠 仪表盘', closable: false };
+      setOpenTabs([dashboardTab]);
+      setActiveTab('dashboard');
+      return;
+    }
+
     setOpenTabs(filteredTabs);
 
     // 如果关闭的是当前活动标签页，切换到第一个标签页
-    if (activeTab === tabId && filteredTabs.length > 0) {
+    if (activeTab === tabId) {
       setActiveTab(filteredTabs[0].id);
     }
   };
@@ -1448,7 +1532,15 @@ const Profile: React.FC = () => {
   const handleCloseAllTabs = () => {
     // 只保留不可关闭的tab（仪表盘）
     const unclosableTabs = openTabs.filter((tab) => !tab.closable);
-    setOpenTabs(unclosableTabs);
+
+    // 如果没有不可关闭的 tab，至少保留仪表盘
+    if (unclosableTabs.length === 0) {
+      const dashboardTab = { id: 'dashboard', label: '🏠 仪表盘', closable: false };
+      setOpenTabs([dashboardTab]);
+    } else {
+      setOpenTabs(unclosableTabs);
+    }
+
     // 切换到仪表盘
     setActiveTab('dashboard');
     setContextMenu(null);
@@ -1549,7 +1641,7 @@ const Profile: React.FC = () => {
                 </SectionTitle>
               </SectionHeader>
               <ActivityFeed
-                activities={activities}
+                activities={activities as any}
                 onActivityClick={handleActivityClick}
                 onRefresh={handleRefreshActivities}
                 onLoadMore={handleLoadMoreActivities}
@@ -1641,11 +1733,25 @@ const Profile: React.FC = () => {
 
         {/* 主内容区域 */}
         <MainContent>
-          {/* 标签页容器 - 只在有多个tab时显示 */}
-          {openTabs.length > 1 && (
-            <TabsContainer>
-              <TabsList>
-                {openTabs.map((tab) => (
+          {/* 标签页容器 - 始终显示，让用户知道当前位置 */}
+          <TabsContainer>
+            <TabsList>
+              {openTabs.length === 0 ? (
+                /* 空状态提示 */
+                <EmptyTabsState>
+                  <EmptyTabsIcon>
+                    <FiLayers size={20} />
+                  </EmptyTabsIcon>
+                  <EmptyTabsText>
+                    <EmptyTabsTitle>暂无打开的标签页</EmptyTabsTitle>
+                    <EmptyTabsHint>
+                      <FiChevronRight size={14} />
+                      使用右侧快捷操作打开功能
+                    </EmptyTabsHint>
+                  </EmptyTabsText>
+                </EmptyTabsState>
+              ) : (
+                openTabs.map((tab) => (
                   <TabButton
                     key={tab.id}
                     active={activeTab === tab.id}
@@ -1665,10 +1771,10 @@ const Profile: React.FC = () => {
                       </CloseButton>
                     )}
                   </TabButton>
-                ))}
-              </TabsList>
-            </TabsContainer>
-          )}
+                ))
+              )}
+            </TabsList>
+          </TabsContainer>
 
           {/* 内容区域 */}
           <TabContent>
