@@ -2,16 +2,7 @@ import React, { useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import {
-  FiArrowRight,
-  FiArrowLeft,
-  FiStar,
-  FiGithub,
-  FiCode,
-  FiCalendar,
-  FiFolderPlus,
-  FiExternalLink,
-} from 'react-icons/fi';
+import { FiArrowRight, FiStar, FiGithub, FiCode, FiCalendar, FiFolderPlus, FiExternalLink } from 'react-icons/fi';
 import { SiGitee } from 'react-icons/si';
 import { formatDate } from '@/utils';
 import { useAnimationEngine } from '@/utils/animation-engine';
@@ -115,57 +106,9 @@ const ProjectMainCard = styled(motion.div)`
   @media (max-width: 968px) {
     width: 100%;
     max-width: 100%;
-    padding: 0 2.75rem;
     box-sizing: border-box;
     overflow-x: hidden;
     overflow-y: visible;
-  }
-`;
-
-const MobileNavButton = styled(motion.button)`
-  display: none;
-
-  @media (max-width: 968px) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 80px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--bg-primary);
-    border: 1.5px solid var(--border-color);
-    color: var(--text-secondary);
-    cursor: pointer;
-    z-index: 5;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    pointer-events: auto;
-
-    &:active {
-      transform: scale(0.9);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    &.prev {
-      left: 4px;
-    }
-
-    &.next {
-      right: 4px;
-    }
-
-    svg {
-      width: 16px;
-      height: 16px;
-      color: var(--accent-color);
-    }
   }
 `;
 
@@ -451,7 +394,6 @@ const ProjectLinks = styled.div`
 
   @media (max-width: 968px) {
     grid-column: 1 / -1;
-    justify-content: center;
     margin-top: 0.5rem;
     padding-top: 0.6rem;
     border-top: 1px solid var(--border-color);
@@ -505,12 +447,6 @@ const MobileProjectIndicator = styled.div`
     align-items: center;
     gap: 0.75rem;
     margin-top: 1.5rem;
-
-    .counter {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
 
     .dots {
       display: flex;
@@ -761,27 +697,6 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
       <ProjectsGrid>
         {/* 左侧：选中项目的详细信息 */}
         <ProjectMainCard>
-          {/* 手机端左右切换按钮 */}
-          <MobileNavButton
-            className="prev"
-            onClick={handlePrevProject}
-            disabled={projects.length === 0}
-            whileTap={{ scale: 0.9 }}
-            aria-label="上一个项目"
-          >
-            <FiArrowLeft />
-          </MobileNavButton>
-
-          <MobileNavButton
-            className="next"
-            onClick={handleNextProject}
-            disabled={projects.length === 0}
-            whileTap={{ scale: 0.9 }}
-            aria-label="下一个项目"
-          >
-            <FiArrowRight />
-          </MobileNavButton>
-
           {projects.length === 0 ? (
             <EmptyState>
               <FiFolderPlus />
@@ -914,16 +829,10 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
 
               {/* 手机端项目指示器 */}
               <MobileProjectIndicator>
-                <div className="counter">
-                  {selectedProjectIndex + 1} / {projects.length}
-                </div>
                 <div className="dots">
-                  {projects.slice(0, 8).map((_, index) => (
+                  {projects.map((_, index) => (
                     <Dot key={index} active={index === selectedProjectIndex} initial={false} animate={{ opacity: 1 }} />
                   ))}
-                  {projects.length > 8 && (
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>...</span>
-                  )}
                 </div>
               </MobileProjectIndicator>
             </ProjectDetailContainer>
