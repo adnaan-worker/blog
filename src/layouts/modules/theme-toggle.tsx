@@ -15,7 +15,6 @@ const ThemeToggleContainer = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0.5rem;
 `;
 
 // 主题切换按钮

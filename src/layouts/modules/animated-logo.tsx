@@ -37,6 +37,7 @@ const LogoContainer = styled(Link)`
   @media (max-width: 480px) {
     padding: 0.5rem 0.8rem;
     font-size: 1.2rem;
+    z-index: 51;
   }
 `;
 

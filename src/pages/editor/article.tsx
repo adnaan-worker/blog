@@ -217,17 +217,7 @@ const ArticleEditorPage: React.FC = () => {
       if (!confirmed) return;
     }
 
-    // 尝试关闭当前窗口，如果无法关闭则返回上一页
-    try {
-      window.close();
-    } catch (error) {
-      // 如果无法关闭窗口（比如不是通过window.open打开的），则返回上一页
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        navigate('/profile');
-      }
-    }
+    navigate(-1);
   };
 
   // 加载状态由路由级别的Suspense处理，不需要额外显示

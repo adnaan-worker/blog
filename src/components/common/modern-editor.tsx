@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
@@ -13,6 +12,7 @@ import 'highlight.js/styles/github.css'; // 添加语法高亮样式
 import styled from '@emotion/styled';
 import '@/styles/rich-text.css';
 import { API } from '@/utils/api';
+import { ResizableImage } from './resizable-image';
 import {
   FiBold,
   FiItalic,
@@ -88,9 +88,12 @@ const extensions = [
       return '输入 / 唤起命令菜单，或直接开始输入...';
     },
   }),
-  Image.configure({
-    allowBase64: false, // 禁用 base64，强制使用 URL
-    inline: true,
+  ResizableImage.configure({
+    allowBase64: false,
+    inline: false,
+    HTMLAttributes: {
+      class: 'editor-image',
+    },
   }),
   TextAlign.configure({
     types: ['heading', 'paragraph'],
@@ -162,11 +165,7 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
                 const url = await uploadImage(file);
 
                 // 插入图片到编辑器
-                const { state } = view;
-                const { selection } = state;
-                const position = selection.$head.pos;
-
-                view.dispatch(view.state.tr.replaceSelectionWith(view.state.schema.nodes.image.create({ src: url })));
+                editor?.commands.setImage({ src: url });
               } catch (error: any) {
                 console.error('图片上传失败:', error);
                 adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
@@ -198,7 +197,7 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
               const url = await uploadImage(file);
 
               // 在拖放位置插入图片
-              view.dispatch(view.state.tr.insert(coords.pos, view.state.schema.nodes.image.create({ src: url })));
+              editor?.commands.setImage({ src: url });
             } catch (error: any) {
               console.error('图片上传失败:', error);
               adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
@@ -897,6 +896,159 @@ const EditorWrapper = styled.div<{ maxHeight?: string }>`
   @media (max-width: 768px) {
     .ProseMirror {
       padding: 1rem 1.5rem !important;
+    }
+  }
+
+  /* ===== 可调整大小的图片样式 ===== */
+
+  /* 图片包装器 */
+  .ProseMirror .resizable-image-wrapper {
+    display: flex;
+    margin: 1.5rem 0;
+    position: relative;
+
+    &[data-align='left'] {
+      justify-content: flex-start;
+    }
+
+    &[data-align='center'] {
+      justify-content: center;
+    }
+
+    &[data-align='right'] {
+      justify-content: flex-end;
+    }
+  }
+
+  /* 图片容器 */
+  .ProseMirror .resizable-image-container {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    border-radius: 8px;
+    overflow: visible;
+    transition: all 0.2s ease;
+
+    img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    /* 选中状态 */
+    &.ProseMirror-selectednode {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+
+      .resize-handle {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .image-toolbar {
+        opacity: 1;
+        pointer-events: all;
+      }
+    }
+
+    /* 悬停状态 */
+    &:hover {
+      .resize-handle {
+        opacity: 1;
+      }
+
+      .image-toolbar {
+        opacity: 1;
+      }
+    }
+  }
+
+  /* 调整大小手柄 */
+  .ProseMirror .resize-handle {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-color);
+    border: 2px solid var(--bg-primary);
+    border-radius: 50%;
+    cursor: nwse-resize;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+    &:hover {
+      transform: scale(1.2);
+    }
+  }
+
+  /* 图片工具栏 */
+  .ProseMirror .image-toolbar {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 10;
+
+    [data-theme='dark'] & {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .toolbar-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-primary);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      &:hover {
+        background: var(--bg-secondary);
+        color: var(--accent-color);
+      }
+
+      &[data-action='delete']:hover {
+        background: var(--error-bg);
+        color: var(--error-color);
+      }
+    }
+  }
+
+  /* 调整大小时的样式 */
+  .ProseMirror .resizable-image-wrapper.resizing {
+    .resizable-image-container {
+      opacity: 0.7;
+    }
+
+    img {
+      pointer-events: none;
     }
   }
 `;

@@ -208,18 +208,8 @@ const NoteEditorPage: React.FC = () => {
       const confirmed = await adnaan.confirm.confirm('确认退出', '您有未保存的修改，确定要退出吗？', '退出', '取消');
       if (!confirmed) return;
     }
-
-    // 尝试关闭当前窗口，如果无法关闭则返回上一页
-    try {
-      window.close();
-    } catch (error) {
-      // 如果无法关闭窗口（比如不是通过window.open打开的），则返回上一页
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        navigate('/profile');
-      }
-    }
+    // 返回上一页
+    navigate(-1);
   };
 
   // 心情选项
