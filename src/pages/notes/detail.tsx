@@ -6,7 +6,6 @@ import styled from '@emotion/styled';
 import { API, Note } from '@/utils/api';
 import RichTextRenderer from '@/components/common/rich-text-renderer';
 import RichTextStats from '@/components/common/rich-text-stats';
-import PageLoading from '@/components/common/page-loading';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -634,9 +633,32 @@ const NoteDetail: React.FC = () => {
     }
   };
 
-  // 加载中状态
+  // 加载中，显示骨架屏
   if (isLoading) {
-    return <PageLoading message="加载手记中" />;
+    return (
+      <>
+        <PageHeadGradient />
+        <PaperBackground />
+        <PageContainer>
+          <motion.div variants={pageVariants} initial="initial" animate="animate">
+            <BackLink to="/notes">
+              <FiArrowLeft size={16} /> 返回手记列表
+            </BackLink>
+            <div style={{ padding: '2rem 0', opacity: 0.5 }}>
+              <div
+                style={{
+                  height: '200px',
+                  background: 'var(--bg-secondary)',
+                  borderRadius: '12px',
+                  marginBottom: '1rem',
+                }}
+              />
+              <div style={{ height: '400px', background: 'var(--bg-secondary)', borderRadius: '12px' }} />
+            </div>
+          </motion.div>
+        </PageContainer>
+      </>
+    );
   }
 
   // 手记未找到

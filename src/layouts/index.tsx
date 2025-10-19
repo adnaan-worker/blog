@@ -1,13 +1,14 @@
 import { Outlet, useLocation } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
 import Header from './header';
 import Footer from './footer';
 import FloatingToolbar from './floating-toolbar';
 import GhostWidget from './ghost-widget';
 import { AnimatePresence, motion } from 'framer-motion';
-import PageLoading from '@/components/common/page-loading';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
+import PageLoading from '@/components/common/page-loading';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -16,18 +17,29 @@ const MainContainer = styled.div`
   display: flex;
   flex-direction: column;
   background-color: var(--bg-primary);
-  transition: background-color 0.3s ease;
   position: relative;
 `;
 
-// 内容区域样式
-const Content = styled(motion.main)`
+// 内容区域样式 - 移除 motion，使用纯 CSS 过渡
+const Content = styled.main`
   flex: 1;
   width: 100%;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   overflow: visible;
   margin-top: var(--header-height);
+
+  /* 简单的淡入淡出，不阻塞渲染 */
+  animation: fade-in 0.2s ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 
   @media (max-width: 768px) {
     padding: 1.5rem 1.25rem;
@@ -42,15 +54,8 @@ const LoadingIndicator = styled(motion.div)`
   height: 3px;
   background: var(--accent-color);
   z-index: 1000;
+  box-shadow: 0 0 10px var(--accent-color);
 `;
-
-// 页面过渡动画配置
-const pageTransition = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: 10 },
-  transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as any },
-};
 
 /**
  * 根布局组件，提供应用程序的基本结构
@@ -75,7 +80,7 @@ const RootLayout = () => {
     setMounted(true);
   }, []);
 
-  // 路由变化时的加载指示器
+  // 路由变化时的加载指示器 - 优化逻辑
   useEffect(() => {
     // 检查路径是否变化
     const isPathChanged = previousPathRef.current !== location.pathname;
@@ -88,14 +93,14 @@ const RootLayout = () => {
       loaderTimerRef.current = null;
     }
 
-    // 显示加载器
+    // 显示加载器（顶部进度条，不显示全屏loading）
     setShowLoader(true);
 
-    // 最小显示时间 500ms
+    // 更快的过渡时间 300ms
     loaderTimerRef.current = setTimeout(() => {
       setShowLoader(false);
       loaderTimerRef.current = null;
-    }, 500);
+    }, 300);
 
     // 更新路径引用
     previousPathRef.current = location.pathname;
@@ -137,33 +142,30 @@ const RootLayout = () => {
 
   return (
     <MainContainer>
-      {/* 加载指示器 */}
+      {/* 简洁的顶部加载进度条 */}
       <AnimatePresence>
         {showLoader && (
-          <>
-            <LoadingIndicator
-              initial={{ width: 0 }}
-              animate={{ width: '100%' }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.5,
-                ease: 'easeInOut',
-              }}
-            />
-            <PageLoading />
-          </>
+          <LoadingIndicator
+            initial={{ width: 0 }}
+            animate={{ width: '100%' }}
+            exit={{ opacity: 0 }}
+            transition={{
+              duration: 0.25,
+              ease: 'easeOut',
+            }}
+          />
         )}
       </AnimatePresence>
 
       {/* 头部导航 */}
       <Header scrolled={isScrolled} />
 
-      {/* 主内容区域 - 带动画过渡 */}
-      <AnimatePresence mode="wait">
-        <Content key={location.pathname} {...pageTransition}>
+      {/* 主内容区域 - 移除复杂动画，使用纯CSS淡入 */}
+      <Suspense fallback={createPortal(<PageLoading fullScreen />, document.body)}>
+        <Content key={location.pathname}>
           <Outlet />
         </Content>
-      </AnimatePresence>
+      </Suspense>
 
       {/* 页脚 */}
       <Footer />

@@ -1,7 +1,6 @@
 import { createHashRouter, useLocation } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import RootLayout from '@/layouts';
-import PageLoading from '@/components/common/page-loading';
 
 /**
  * 滚动恢复组件
@@ -51,77 +50,39 @@ const router = createHashRouter([
     children: [
       {
         index: true,
-        element: (
-          <Suspense fallback={<PageLoading fullScreen />}>
-            <Home />
-          </Suspense>
-        ),
+        element: <Home />,
       },
       {
         path: '/code',
-        element: (
-          <Suspense fallback={<PageLoading fullScreen />}>
-            <Code />
-          </Suspense>
-        ),
+        element: <Code />,
       },
       {
         path: '/blog',
-        element: (
-          <Suspense fallback={<PageLoading fullScreen />}>
-            <Blog />
-          </Suspense>
-        ),
+        element: <Blog />,
       },
       {
         path: '/blog/:id',
-        element: (
-          <Suspense fallback={<PageLoading fullScreen />}>
-            <BlogDetail />
-          </Suspense>
-        ),
+        element: <BlogDetail />,
       },
       {
         path: '/notes',
-        element: (
-          <Suspense fallback={<PageLoading fullScreen />}>
-            <Notes />
-          </Suspense>
-        ),
+        element: <Notes />,
       },
       {
         path: '/notes/:id',
-        element: (
-          <Suspense fallback={<PageLoading fullScreen />}>
-            <NoteDetail />
-          </Suspense>
-        ),
+        element: <NoteDetail />,
       },
-      // 项目页面路由
       {
         path: '/projects',
-        element: (
-          <Suspense fallback={<PageLoading fullScreen />}>
-            <Projects />
-          </Suspense>
-        ),
+        element: <Projects />,
       },
       {
         path: '/projects/:id',
-        element: (
-          <Suspense fallback={<PageLoading fullScreen />}>
-            <ProjectDetail />
-          </Suspense>
-        ),
+        element: <ProjectDetail />,
       },
-      // 个人中心相关路由
       {
         path: '/profile',
-        element: (
-          <Suspense fallback={<PageLoading fullScreen />}>
-            <Profile />
-          </Suspense>
-        ),
+        element: <Profile />,
       },
     ],
   },
@@ -129,7 +90,7 @@ const router = createHashRouter([
   {
     path: '/editor/article',
     element: (
-      <Suspense fallback={<PageLoading fullScreen />}>
+      <Suspense fallback={null}>
         <ArticleEditor />
       </Suspense>
     ),
@@ -137,18 +98,14 @@ const router = createHashRouter([
   {
     path: '/editor/note',
     element: (
-      <Suspense fallback={<PageLoading fullScreen />}>
+      <Suspense fallback={null}>
         <NoteEditor />
       </Suspense>
     ),
   },
   {
     path: '*',
-    element: (
-      <Suspense fallback={<PageLoading fullScreen />}>
-        <NotFound />
-      </Suspense>
-    ),
+    element: <NotFound />,
   },
 ]);
 

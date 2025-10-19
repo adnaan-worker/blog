@@ -18,7 +18,6 @@ import ModernEditor from '@/components/common/modern-editor';
 import EditorAIAssistant from '@/components/common/editor-ai-assistant';
 import { API } from '@/utils/api';
 import { Button, Input } from 'adnaan-ui';
-import PageLoading from '@/components/common/page-loading';
 
 interface Note {
   id: number;
@@ -227,10 +226,7 @@ const NoteEditorPage: React.FC = () => {
   const moodOptions = ['😊 开心', '😢 难过', '😡 愤怒', '😌 平静', '😴 困倦', '🤔 思考'];
   const weatherOptions = ['☀️ 晴天', '☁️ 多云', '🌧️ 雨天', '❄️ 下雪', '🌈 彩虹'];
 
-  if (isLoading) {
-    return <PageLoading message="加载手记编辑器" fullScreen />;
-  }
-
+  // 加载状态由路由级别的Suspense处理，不需要额外显示
   return (
     <EditorContainer>
       {/* 顶部工具栏 */}

@@ -3,45 +3,34 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import scrollLock from '@/utils/scroll-lock';
 
-// 加载容器
+// 加载容器 - 始终全屏覆盖
 const LoadingContainer = styled(motion.div)<{ $fullScreen?: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
   gap: 1.5rem;
+  background: var(--bg-primary);
+  z-index: ${(props) => (props.$fullScreen ? '9999' : '10000')};
+  overflow: hidden;
 
-  /* 全屏模式 */
-  ${(props) =>
-    props.$fullScreen
-      ? `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--bg-primary);
-    z-index: 9999;
-    overflow: hidden;
-  `
-      : `
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--bg-primary);
-    z-index: 1000;
-    overflow: hidden;
-  `}
+  /* 确保完全覆盖所有内容 */
+  pointer-events: all;
 
-  /* 防止滚动条导致的跳动 */
-  body:has(&) {
-    overflow: hidden;
+  /* 防止内容穿透 */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--bg-primary);
+    z-index: -1;
   }
 `;
 
@@ -103,7 +92,7 @@ interface PageLoadingProps {
 const PageLoading: React.FC<PageLoadingProps> = ({
   message,
   size = 'medium',
-  fullScreen = false,
+  fullScreen = true,
   variant = 'pulse',
 }) => {
   const [loadingMessage, setLoadingMessage] = useState('');
