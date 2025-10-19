@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
 import Color from 'colorjs.io';
 
 // 类型定义
@@ -99,6 +101,9 @@ const colorUtils = {
  * 用于生成和注入随机主题色及其相关样式
  */
 const AccentColorStyleInjector: React.FC = () => {
+  // 监听当前主题
+  const currentTheme = useSelector((state: RootState) => state.theme.theme);
+
   // 使用useMemo缓存随机选择的颜色，避免重复计算
   const selectedColors = useMemo(() => {
     const randomLightIndex = Math.floor(Math.random() * ACCENT_COLORS.light.length);
@@ -180,7 +185,7 @@ const AccentColorStyleInjector: React.FC = () => {
     }
   };
 
-  // 注入样式
+  // 注入样式 - 在主题切换时也会重新生成
   useEffect(() => {
     const styleElement = document.getElementById('accent-color-style') || document.createElement('style');
     styleElement.id = 'accent-color-style';
@@ -189,7 +194,7 @@ const AccentColorStyleInjector: React.FC = () => {
     if (!document.getElementById('accent-color-style')) {
       document.head.appendChild(styleElement);
     }
-  }, [selectedColors]);
+  }, [selectedColors, currentTheme]); // 添加 currentTheme 依赖
 
   return null; // 这是一个纯样式注入组件，不需要渲染任何内容
 };

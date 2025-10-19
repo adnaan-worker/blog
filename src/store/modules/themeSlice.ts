@@ -1,13 +1,16 @@
 import { storage } from '@/utils';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+type ThemeMode = 'light' | 'dark' | 'auto';
 type Theme = 'light' | 'dark';
 
 interface ThemeState {
-  theme: Theme;
+  mode: ThemeMode; // 用户选择的模式
+  theme: Theme; // 实际应用的主题
 }
 
 const initialState: ThemeState = {
+  mode: 'auto', // 默认自动模式
   theme: 'light',
 };
 
@@ -17,72 +20,88 @@ const getSystemTheme = (): Theme => {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 };
 
-// 获取保存的主题
-const getSavedTheme = (): Theme | null => {
+// 获取保存的主题模式
+const getSavedMode = (): ThemeMode | null => {
   if (typeof window === 'undefined') return null;
-  const savedTheme = storage.local.get('theme') as Theme;
-  return savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : null;
+  const savedMode = storage.local.get('themeMode') as ThemeMode;
+  return savedMode === 'dark' || savedMode === 'light' || savedMode === 'auto' ? savedMode : null;
 };
 
 // 应用主题到 DOM
 const applyTheme = (theme: Theme) => {
   if (typeof document === 'undefined') return;
   document.documentElement.setAttribute('data-theme', theme);
-  storage.local.set('theme', theme);
 };
 
 const themeSlice = createSlice({
   name: 'theme',
   initialState,
   reducers: {
-    setTheme: (state, action: PayloadAction<Theme>) => {
+    // 设置主题模式（light/dark/auto）
+    setMode: (state, action: PayloadAction<ThemeMode>) => {
+      state.mode = action.payload;
+      storage.local.set('themeMode', action.payload);
+
+      // 如果是 auto，使用系统主题；否则使用指定主题
+      if (action.payload === 'auto') {
+        state.theme = getSystemTheme();
+      } else {
+        state.theme = action.payload;
+      }
+      applyTheme(state.theme);
+    },
+
+    // 循环切换：light → dark → auto → light
+    cycleTheme: (state) => {
+      const cycle: ThemeMode[] = ['light', 'dark', 'auto'];
+      const currentIndex = cycle.indexOf(state.mode);
+      const nextMode = cycle[(currentIndex + 1) % cycle.length];
+
+      state.mode = nextMode;
+      storage.local.set('themeMode', nextMode);
+
+      if (nextMode === 'auto') {
+        state.theme = getSystemTheme();
+      } else {
+        state.theme = nextMode;
+      }
+      applyTheme(state.theme);
+    },
+
+    // 内部使用：仅更新实际主题（用于 auto 模式下系统主题变化）
+    updateTheme: (state, action: PayloadAction<Theme>) => {
       state.theme = action.payload;
       applyTheme(action.payload);
-    },
-    toggleTheme: (state) => {
-      const newTheme = state.theme === 'light' ? 'dark' : 'light';
-      state.theme = newTheme;
-      applyTheme(newTheme);
     },
   },
 });
 
-export const { setTheme, toggleTheme } = themeSlice.actions;
+export const { setMode, cycleTheme, updateTheme } = themeSlice.actions;
 
-// 初始化主题
+/**
+ * 初始化主题
+ * 1. 优先使用保存的主题模式（light/dark/auto）
+ * 2. 如果没有保存，默认使用 auto（跟随系统）
+ *
+ * 注意：系统主题变化监听已移到 useSystemTheme Hook 中管理
+ */
 export const initializeTheme = () => (dispatch: any) => {
   try {
-    // 1. 首先尝试获取保存的主题
-    const savedTheme = getSavedTheme();
-    if (savedTheme) {
-      dispatch(setTheme(savedTheme));
-      return;
+    // 1. 首先尝试获取保存的主题模式
+    const savedMode = getSavedMode();
+    if (savedMode) {
+      dispatch(setMode(savedMode));
+      return savedMode;
     }
 
-    // 2. 如果没有保存的主题，使用系统主题
-    const systemTheme = getSystemTheme();
-    dispatch(setTheme(systemTheme));
-
-    // 3. 监听系统主题变化
-    if (typeof window !== 'undefined') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = (e: MediaQueryListEvent) => {
-        const newTheme = e.matches ? 'dark' : 'light';
-        dispatch(setTheme(newTheme));
-      };
-
-      // 添加监听器
-      mediaQuery.addEventListener('change', handleChange);
-
-      // 返回清理函数
-      return () => {
-        mediaQuery.removeEventListener('change', handleChange);
-      };
-    }
+    // 2. 如果没有保存，默认使用 auto
+    dispatch(setMode('auto'));
+    return 'auto';
   } catch (error) {
     console.error('Failed to initialize theme:', error);
-    // 如果出错，使用默认主题
-    dispatch(setTheme('light'));
+    // 如果出错，使用默认 auto 模式
+    dispatch(setMode('auto'));
+    return 'auto';
   }
 };
 

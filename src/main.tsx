@@ -40,8 +40,8 @@ const init = async () => {
   // 挂载应用
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-      <AccentColorStyleInjector />
       <Provider store={store}>
+        <AccentColorStyleInjector />
         <ToastProvider>
           <ToastListener />
           <RouterProvider router={router} />

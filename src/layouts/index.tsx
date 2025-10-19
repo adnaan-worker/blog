@@ -7,6 +7,7 @@ import FloatingToolbar from './floating-toolbar';
 import GhostWidget from './ghost-widget';
 import { AnimatePresence, motion } from 'framer-motion';
 import PageLoading from '@/components/common/page-loading';
+import { useSystemTheme } from '@/hooks/useSystemTheme';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -65,6 +66,9 @@ const RootLayout = () => {
   const [showLoader, setShowLoader] = useState(false);
   const previousPathRef = useRef(location.pathname);
   const loaderTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 监听系统主题变化（自动在 auto 模式下启用）
+  useSystemTheme();
 
   // 组件挂载处理
   useEffect(() => {
