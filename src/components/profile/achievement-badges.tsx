@@ -1,6 +1,8 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import { FiLock, FiInfo } from 'react-icons/fi';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import type { Achievement } from './types';
 
 interface AchievementBadgesProps {
@@ -29,20 +31,19 @@ const SectionTitle = styled.h3`
   }
 `;
 
-const BadgesGrid = styled.div`
+const BadgesGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.75rem;
 `;
 
-const BadgeCard = styled.div<{ unlocked: boolean; clickable?: boolean }>`
+const BadgeCard = styled(motion.div)<{ unlocked: boolean; clickable?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 0.75rem;
   border-radius: 0.5rem;
   text-align: center;
-  transition: all 0.2s ease;
   cursor: ${(props) => (props.clickable ? 'pointer' : 'default')};
 
   ${(props) =>
@@ -57,15 +58,6 @@ const BadgeCard = styled.div<{ unlocked: boolean; clickable?: boolean }>`
     border: 1px dashed var(--border-color);
     color: var(--text-tertiary);
   `}
-
-  &:hover {
-    ${(props) =>
-      props.clickable &&
-      `
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    `}
-  }
 `;
 
 const BadgeIcon = styled.div<{ unlocked: boolean }>`

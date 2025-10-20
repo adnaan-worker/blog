@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import {
   FiEdit,
   FiEdit3,
@@ -13,6 +14,7 @@ import {
   FiCamera,
 } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import type { UserProfile } from './types';
 
 interface UserInfoCardProps {
@@ -23,21 +25,16 @@ interface UserInfoCardProps {
 }
 
 // 卡片基础样式
-const Card = styled.div`
+const Card = styled(motion.div)`
   background: var(--bg-secondary);
   border-radius: 0.5rem;
   border: 1px solid var(--border-color);
   padding: 1.5rem;
-  transition: all 0.2s ease;
   position: relative;
   text-align: center;
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
 `;
 
-const AvatarContainer = styled.div`
+const AvatarContainer = styled(motion.div)`
   position: relative;
   margin: 0 auto 1rem;
   width: 120px;
@@ -59,7 +56,7 @@ const Avatar = styled.div`
   }
 `;
 
-const AvatarOverlay = styled.div`
+const AvatarOverlay = styled(motion.div)`
   position: absolute;
   top: 0;
   left: 0;
@@ -69,14 +66,8 @@ const AvatarOverlay = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
   cursor: pointer;
   border-radius: 50%;
-
-  &:hover {
-    opacity: 1;
-  }
 
   svg {
     color: white;
@@ -182,6 +173,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
   isLoading = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { variants, springPresets } = useAnimationEngine();
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -228,17 +220,32 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
   };
 
   return (
-    <Card>
+    <Card
+      variants={variants.card}
+      initial="hidden"
+      animate="visible"
+      whileHover={{ y: -2, boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)' }}
+      transition={springPresets.gentle}
+    >
       {isLoading && (
         <LoadingOverlay>
           <div>更新中...</div>
         </LoadingOverlay>
       )}
 
-      <AvatarContainer>
+      <AvatarContainer
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={springPresets.bouncy}
+      >
         <Avatar>
           <img src={user.avatar || '/api/placeholder/120/120'} alt="用户头像" />
-          <AvatarOverlay onClick={handleAvatarClick}>
+          <AvatarOverlay
+            onClick={handleAvatarClick}
+            initial={{ opacity: 0 }}
+            whileHover={{ opacity: 1, scale: 1.05 }}
+            transition={springPresets.snappy}
+          >
             <FiCamera size={24} />
           </AvatarOverlay>
         </Avatar>

@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import {
   FiEdit,
   FiSettings,
@@ -13,6 +14,7 @@ import {
   FiGlobe,
 } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import { storage } from '@/utils';
 
 interface QuickAction {
@@ -57,7 +59,7 @@ const SectionTitle = styled.h3`
   }
 `;
 
-const ActionsList = styled.div`
+const ActionsList = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;

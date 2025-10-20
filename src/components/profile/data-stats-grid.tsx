@@ -1,6 +1,8 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import { FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import type { UserStats } from './types';
 
 interface DataStatsGridProps {
@@ -10,16 +12,11 @@ interface DataStatsGridProps {
 }
 
 // 卡片基础样式
-const Card = styled.div`
+const Card = styled(motion.div)`
   background: var(--bg-secondary);
   border-radius: 0.5rem;
   border: 1px solid var(--border-color);
   padding: 1.5rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
 `;
 
 const SectionTitle = styled.h3`
@@ -32,7 +29,7 @@ const SectionTitle = styled.h3`
   gap: 0.5rem;
 `;
 
-const StatsGrid = styled.div`
+const StatsGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 1rem;
@@ -43,12 +40,11 @@ const StatsGrid = styled.div`
   }
 `;
 
-const StatCard = styled.div<{ highlight?: boolean; clickable?: boolean }>`
+const StatCard = styled(motion.div)<{ highlight?: boolean; clickable?: boolean }>`
   padding: 1rem;
   background: var(--bg-secondary);
   border-radius: 0.5rem;
   border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
   position: relative;
   cursor: ${(props) => (props.clickable ? 'pointer' : 'default')};
 
@@ -58,15 +54,6 @@ const StatCard = styled.div<{ highlight?: boolean; clickable?: boolean }>`
     border-color: var(--accent-color);
     background: var(--accent-color-alpha);
   `}
-
-  &:hover {
-    ${(props) =>
-      props.clickable &&
-      `
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
-    `}
-  }
 `;
 
 const StatIcon = styled.div`
@@ -98,12 +85,17 @@ const StatValue = styled.div`
   margin-bottom: 0.5rem;
 `;
 
-const StatTrend = styled.div<{ direction: 'up' | 'down' }>`
+const StatTrend = styled.div<{ direction: 'up' | 'down' | 'stable' }>`
   display: flex;
   align-items: center;
   gap: 0.25rem;
   font-size: 0.75rem;
-  color: ${(props) => (props.direction === 'up' ? 'var(--success-color)' : 'var(--error-color)')};
+  color: ${(props) =>
+    props.direction === 'up'
+      ? 'var(--success-color)'
+      : props.direction === 'down'
+        ? 'var(--error-color)'
+        : 'var(--text-secondary)'};
 
   svg {
     font-size: 0.875rem;
@@ -140,6 +132,8 @@ const formatNumber = (num: number | string): string => {
 };
 
 export const DataStatsGrid: React.FC<DataStatsGridProps> = ({ stats, onStatClick, isLoading = false }) => {
+  const { variants, springPresets } = useAnimationEngine();
+
   const handleStatClick = (stat: UserStats) => {
     if (onStatClick) {
       onStatClick(stat);
@@ -148,7 +142,7 @@ export const DataStatsGrid: React.FC<DataStatsGridProps> = ({ stats, onStatClick
 
   if (isLoading) {
     return (
-      <Card>
+      <Card variants={variants.fadeIn} initial="hidden" animate="visible">
         <SectionTitle>数据概览</SectionTitle>
         <StatsGrid>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -167,15 +161,19 @@ export const DataStatsGrid: React.FC<DataStatsGridProps> = ({ stats, onStatClick
   }
 
   return (
-    <Card>
+    <Card variants={variants.card} initial="hidden" animate="visible">
       <SectionTitle>📊 数据概览</SectionTitle>
-      <StatsGrid>
+      <StatsGrid variants={variants.stagger} initial="hidden" animate="visible">
         {stats.map((stat, index) => (
           <StatCard
             key={index}
             highlight={stat.highlight}
             clickable={!!onStatClick}
             onClick={() => handleStatClick(stat)}
+            variants={variants.listItem}
+            whileHover={onStatClick ? { y: -4, scale: 1.02 } : undefined}
+            whileTap={onStatClick ? { scale: 0.98 } : undefined}
+            transition={springPresets.bouncy}
           >
             <StatHeader>
               <div style={{ flex: 1 }}>

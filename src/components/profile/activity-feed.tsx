@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import { FiRefreshCw, FiExternalLink } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
+import { useAnimationEngine } from '@/utils/animation-engine';
 import type { Activity } from './types';
 
 interface ActivityFeedProps {
@@ -15,16 +17,11 @@ interface ActivityFeedProps {
 }
 
 // 卡片基础样式
-const Card = styled.div`
+const Card = styled(motion.div)`
   background: var(--bg-secondary);
   border-radius: 0.5rem;
   border: 1px solid var(--border-color);
   padding: 1.5rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
 `;
 
 const SectionHeader = styled.div`
