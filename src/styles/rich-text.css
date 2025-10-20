@@ -261,14 +261,179 @@
   margin-bottom: 0;
 }
 
-/* 图片样式 */
+/* 图片样式 - 基础样式 */
 .rich-text-content img,
 .ProseMirror img {
   max-width: 100%;
-  height: auto;
   border-radius: 8px;
   margin: 1.5rem 0;
   display: block;
+}
+
+/* 详情页显示 - 保持设置的宽高 */
+.rich-text-content img[width] {
+  width: auto;
+  max-width: 100%;
+}
+
+.rich-text-content img[height] {
+  height: auto;
+}
+
+/* 如果同时设置了宽高，优先使用设置的值 */
+.rich-text-content img[width][height] {
+  width: attr(width px);
+  height: attr(height px);
+  max-width: 100%;
+  height: auto;
+}
+
+/* 可调整大小的图片容器 */
+.ProseMirror .resizable-image-wrapper {
+  width: 100%;
+  margin: 1.5rem 0;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.ProseMirror .resizable-image-wrapper[data-align='left'] {
+  justify-content: flex-start;
+}
+
+.ProseMirror .resizable-image-wrapper[data-align='right'] {
+  justify-content: flex-end;
+}
+
+.ProseMirror .resizable-image-wrapper[data-align='center'] {
+  justify-content: center;
+}
+
+.ProseMirror .resizable-image-container {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  user-select: none;
+}
+
+.ProseMirror .resizable-image-container img {
+  display: block;
+  max-width: 100%;
+  height: auto !important; /* 确保高度可以被 JS 修改 */
+  border-radius: 8px;
+  cursor: default;
+  transition: none; /* 移除过渡以避免调整时的延迟 */
+  pointer-events: auto;
+}
+
+/* 调整大小手柄 - 增强可见性和交互性 */
+.ProseMirror .resize-handle {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 24px;
+  height: 24px;
+  background: var(--accent-color);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: all 0.2s ease;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  pointer-events: auto !important; /* 确保可以点击 */
+}
+
+[data-theme='dark'] .ProseMirror .resize-handle {
+  border-color: #1a1a1a;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+.ProseMirror .resizable-image-container:hover .resize-handle,
+.ProseMirror .resizable-image-wrapper.resizing .resize-handle {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.ProseMirror .resize-handle:hover {
+  background: var(--accent-color);
+  transform: scale(1.2) !important;
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb, 81, 131, 245), 0.4);
+}
+
+/* 图片工具栏 */
+.ProseMirror .image-toolbar {
+  position: absolute;
+  top: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  white-space: nowrap;
+}
+
+[data-theme='dark'] .ProseMirror .image-toolbar {
+  background: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.ProseMirror .resizable-image-container:hover .image-toolbar {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.ProseMirror .toolbar-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.ProseMirror .toolbar-btn:hover {
+  background: rgba(var(--accent-rgb, 81, 131, 245), 0.12);
+  color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.ProseMirror .toolbar-btn:active {
+  transform: scale(0.95);
+}
+
+.ProseMirror .toolbar-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 调整大小时的样式 */
+.ProseMirror .resizable-image-wrapper.resizing .resizable-image-container {
+  outline: 2px dashed var(--accent-color);
+  outline-offset: 4px;
+  opacity: 0.9;
+}
+
+.ProseMirror .resizable-image-wrapper.resizing img {
+  pointer-events: none;
+  user-select: none;
+  transition: none !important;
+  will-change: width, height;
 }
 
 /* 链接样式 */

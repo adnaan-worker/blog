@@ -8,34 +8,6 @@ import { RichTextParser } from '@/utils/rich-text-parser';
 import ImagePreview from './image-preview';
 import { FiCopy, FiCheck, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
-// 语法高亮颜色配置
-const SYNTAX_COLORS = {
-  dark: {
-    default: '#abb2bf',
-    keyword: '#c678dd',
-    string: '#98c379',
-    comment: '#7f848e',
-    function: '#61afef',
-    number: '#d19a66',
-    builtin: '#e5c07b',
-    variable: '#e06c75',
-    literal: '#56b6c2',
-    operator: '#56b6c2',
-  },
-  light: {
-    default: '#24292e',
-    keyword: '#d73a49',
-    string: '#032f62',
-    comment: '#6a737d',
-    function: '#6f42c1',
-    number: '#005cc5',
-    builtin: '#005cc5',
-    variable: '#e36209',
-    literal: '#005cc5',
-    operator: '#d73a49',
-  },
-};
-
 // 代码块容器
 const CodeBlockContainer = styled.div`
   position: relative;
@@ -484,13 +456,50 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
         if (enableImagePreview && element.name === 'img') {
           const src = element.attribs.src;
           const alt = element.attribs.alt || '';
+          let width = element.attribs.width;
+          let height = element.attribs.height;
+          const align = element.attribs['data-align'] || 'center';
+
+          // 如果 width/height 属性不存在，尝试从 style 中提取
+          if (!width || !height) {
+            const styleAttr = element.attribs.style;
+            if (styleAttr) {
+              const widthMatch = styleAttr.match(/width:\s*(\d+)px/);
+              const heightMatch = styleAttr.match(/height:\s*(\d+)px/);
+
+              if (widthMatch) {
+                width = widthMatch[1];
+              }
+              if (heightMatch) {
+                height = heightMatch[1];
+              }
+            }
+          }
 
           if (src) {
-            // 返回一个 span 包装器，避免 div 嵌套在 p 内
-            // ImagePreview 组件内部已经实现了完整的预览功能，不需要外部传递 onClick
+            // 根据对齐方式设置样式
+            const alignStyle =
+              {
+                left: 'flex-start',
+                center: 'center',
+                right: 'flex-end',
+              }[align] || 'center';
+
             return (
-              <span style={{ display: 'block', margin: '1.5rem 0', textAlign: 'center' }}>
-                <ImagePreview src={src} alt={alt} />
+              <span
+                style={{
+                  display: 'flex',
+                  justifyContent: alignStyle,
+                  margin: '1.5rem 0',
+                  width: '100%',
+                }}
+              >
+                <ImagePreview
+                  src={src}
+                  alt={alt}
+                  {...(width && { width: parseInt(width) })}
+                  {...(height && { height: parseInt(height) })}
+                />
               </span>
             );
           }

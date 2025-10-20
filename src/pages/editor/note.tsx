@@ -169,19 +169,15 @@ const NoteEditorPage: React.FC = () => {
         isPrivate,
       });
 
-      // 保存成功后，延迟关闭，让用户看到成功提示
+      // 保存成功后，延迟返回，让用户看到成功提示
       setTimeout(() => {
-        try {
-          window.close();
-        } catch (error) {
-          // 如果无法关闭窗口，则返回上一页
-          if (window.history.length > 1) {
-            window.history.back();
-          } else {
-            navigate('/profile');
-          }
+        // 返回上一页或个人中心
+        if (window.history.length > 1) {
+          navigate(-1);
+        } else {
+          navigate('/profile');
         }
-      }, 3500); // 给用户3.5秒时间看到成功提示
+      }, 2000); // 给用户2秒时间看到成功提示
     } catch (error: any) {
       adnaan.toast.error(error.message || '保存失败');
     } finally {
@@ -212,9 +208,22 @@ const NoteEditorPage: React.FC = () => {
     navigate(-1);
   };
 
-  // 心情选项
-  const moodOptions = ['😊 开心', '😢 难过', '😡 愤怒', '😌 平静', '😴 困倦', '🤔 思考'];
-  const weatherOptions = ['☀️ 晴天', '☁️ 多云', '🌧️ 雨天', '❄️ 下雪', '🌈 彩虹'];
+  // 心情和天气选项
+  const moodOptions = [
+    { label: '😊 开心', value: '开心' },
+    { label: '😢 难过', value: '难过' },
+    { label: '😡 愤怒', value: '愤怒' },
+    { label: '😌 平静', value: '平静' },
+    { label: '😴 困倦', value: '困倦' },
+    { label: '🤔 思考', value: '思考' },
+  ];
+  const weatherOptions = [
+    { label: '☀️ 晴天', value: '晴天' },
+    { label: '☁️ 多云', value: '多云' },
+    { label: '🌧️ 雨天', value: '雨天' },
+    { label: '❄️ 下雪', value: '下雪' },
+    { label: '🌈 彩虹', value: '彩虹' },
+  ];
 
   // 加载状态由路由级别的Suspense处理，不需要额外显示
   return (
@@ -299,23 +308,11 @@ const NoteEditorPage: React.FC = () => {
                 <MoodGrid>
                   {moodOptions.map((option) => (
                     <MoodItem
-                      key={option}
-                      selected={mood === option}
-                      onClick={() =>
-                        setMood(
-                          mood === option
-                            ? ''
-                            : option
-                                .replace('😊 ', '')
-                                .replace('😢 ', '')
-                                .replace('😡 ', '')
-                                .replace('😌 ', '')
-                                .replace('😴 ', '')
-                                .replace('🤔 ', ''),
-                        )
-                      }
+                      key={option.value}
+                      selected={mood === option.value}
+                      onClick={() => setMood(mood === option.value ? '' : option.value)}
                     >
-                      {option}
+                      {option.label}
                     </MoodItem>
                   ))}
                 </MoodGrid>
@@ -330,11 +327,11 @@ const NoteEditorPage: React.FC = () => {
                 <WeatherGrid>
                   {weatherOptions.map((option) => (
                     <WeatherItem
-                      key={option}
-                      selected={weather === option}
-                      onClick={() => setWeather(weather === option ? '' : option)}
+                      key={option.value}
+                      selected={weather === option.value}
+                      onClick={() => setWeather(weather === option.value ? '' : option.value)}
                     >
-                      {option}
+                      {option.label}
                     </WeatherItem>
                   ))}
                 </WeatherGrid>
@@ -356,8 +353,7 @@ const NoteEditorPage: React.FC = () => {
                   <span>标签</span>
                 </Label>
                 <TagInput>
-                  <input
-                    type="text"
+                  <Input
                     placeholder="添加标签..."
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
@@ -368,7 +364,9 @@ const NoteEditorPage: React.FC = () => {
                       }
                     }}
                   />
-                  <button onClick={handleAddTag}>添加</button>
+                  <Button variant="primary" size="small" onClick={handleAddTag}>
+                    添加
+                  </Button>
                 </TagInput>
                 <TagsList>
                   {tags.map((tag) => (
@@ -645,13 +643,16 @@ const MoodItem = styled.div<MoodItemProps>`
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
-  background: ${(props) => (props.selected ? 'var(--primary-color)' : 'var(--bg-primary)')};
-  color: ${(props) => (props.selected ? '#fff' : 'var(--text-primary)')};
-  border-color: ${(props) => (props.selected ? 'var(--primary-color)' : 'var(--border-color)')};
+  background: ${(props) => (props.selected ? 'rgba(var(--accent-rgb, 81, 131, 245), 0.12)' : 'var(--bg-primary)')};
+  color: ${(props) => (props.selected ? 'var(--accent-color)' : 'var(--text-primary)')};
+  border-color: ${(props) => (props.selected ? 'var(--accent-color)' : 'var(--border-color)')};
   font-size: 14px;
+  font-weight: ${(props) => (props.selected ? '600' : '400')};
 
   &:hover {
-    border-color: var(--primary-color);
+    border-color: var(--accent-color);
+    background: ${(props) =>
+      props.selected ? 'rgba(var(--accent-rgb, 81, 131, 245), 0.15)' : 'rgba(var(--accent-rgb, 81, 131, 245), 0.06)'};
   }
 `;
 
@@ -672,49 +673,23 @@ const WeatherItem = styled.div<WeatherItemProps>`
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
-  background: ${(props) => (props.selected ? 'var(--primary-color)' : 'var(--bg-primary)')};
-  color: ${(props) => (props.selected ? '#fff' : 'var(--text-primary)')};
-  border-color: ${(props) => (props.selected ? 'var(--primary-color)' : 'var(--border-color)')};
+  background: ${(props) => (props.selected ? 'rgba(var(--accent-rgb, 81, 131, 245), 0.12)' : 'var(--bg-primary)')};
+  color: ${(props) => (props.selected ? 'var(--accent-color)' : 'var(--text-primary)')};
+  border-color: ${(props) => (props.selected ? 'var(--accent-color)' : 'var(--border-color)')};
   font-size: 14px;
+  font-weight: ${(props) => (props.selected ? '600' : '400')};
 
   &:hover {
-    border-color: var(--primary-color);
+    border-color: var(--accent-color);
+    background: ${(props) =>
+      props.selected ? 'rgba(var(--accent-rgb, 81, 131, 245), 0.15)' : 'rgba(var(--accent-rgb, 81, 131, 245), 0.06)'};
   }
 `;
 
 const TagInput = styled.div`
   display: flex;
   gap: 8px;
-
-  input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 14px;
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary-color);
-    }
-  }
-
-  button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    background: var(--primary-color);
-    color: #fff;
-    cursor: pointer;
-    font-size: 14px;
-    transition: opacity 0.2s;
-
-    &:hover {
-      opacity: 0.9;
-    }
-  }
+  align-items: center;
 `;
 
 const TagsList = styled.div`

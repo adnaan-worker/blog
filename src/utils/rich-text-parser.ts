@@ -77,7 +77,7 @@ export class RichTextParser {
     const allowedAttributes: Record<string, string[]> = {
       div: ['class', 'data-language'],
       a: ['href', 'target', 'rel', 'class'],
-      img: ['src', 'alt', 'loading', 'class'],
+      img: ['src', 'alt', 'loading', 'class', 'width', 'height', 'style', 'data-align'], // ✅ 添加图片尺寸和对齐属性
       code: ['class'],
       pre: ['class', 'data-language'],
       blockquote: ['class'],
@@ -87,7 +87,7 @@ export class RichTextParser {
     };
 
     const allowed = allowedAttributes[tagName] || ['class'];
-    const attrRegex = /(\w+)=["']([^"']*)["']/g;
+    const attrRegex = /([\w-]+)=["']([^"']*)["']/g; // ✅ 支持包含连字符的属性名（如 data-align）
     const cleanAttrs: string[] = [];
     let match;
 
@@ -107,7 +107,21 @@ export class RichTextParser {
           cleanAttrs.push(`${attrName}="${attrValue}"`);
         } else if (attrName === 'src' && this.isValidUrl(attrValue)) {
           cleanAttrs.push(`${attrName}="${attrValue}"`);
-        } else if (['target', 'rel', 'alt', 'loading', 'data-language', 'colspan', 'rowspan'].includes(attrName)) {
+        } else if (
+          [
+            'target',
+            'rel',
+            'alt',
+            'loading',
+            'data-language',
+            'colspan',
+            'rowspan',
+            'width',
+            'height',
+            'style',
+            'data-align',
+          ].includes(attrName)
+        ) {
           cleanAttrs.push(`${attrName}="${attrValue}"`);
         }
       }

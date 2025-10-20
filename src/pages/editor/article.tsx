@@ -92,13 +92,16 @@ const ArticleEditorPage: React.FC = () => {
         const response = await API.article.getArticleDetail(Number(articleId));
         const article = response.data;
 
+        // 从tags数组中提取tagIds
+        const tagIds = Array.isArray(article.tags) ? article.tags.map((tag: any) => tag.id) : [];
+
         const loadedData = {
           title: article.title,
           content: article.content,
           summary: article.summary || '',
           coverImage: article.coverImage || '',
           categoryId: article.typeId || null,
-          selectedTagIds: article.tagIds || [],
+          selectedTagIds: tagIds,
         };
 
         setTitle(loadedData.title);
@@ -185,19 +188,15 @@ const ArticleEditorPage: React.FC = () => {
         selectedTagIds,
       });
 
-      // 保存成功后，延迟关闭，让用户看到成功提示
+      // 保存成功后，延迟返回，让用户看到成功提示
       setTimeout(() => {
-        try {
-          window.close();
-        } catch (error) {
-          // 如果无法关闭窗口，则返回上一页
-          if (window.history.length > 1) {
-            window.history.back();
-          } else {
-            navigate('/profile');
-          }
+        // 返回上一页或个人中心
+        if (window.history.length > 1) {
+          navigate(-1);
+        } else {
+          navigate('/profile');
         }
-      }, 3500); // 给用户3.5秒时间看到成功提示
+      }, 2000); // 给用户2秒时间看到成功提示
     } catch (error: any) {
       adnaan.toast.error(error.message || '保存失败');
     } finally {
@@ -636,12 +635,15 @@ const TagItem = styled.div<TagItemProps>`
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
-  background: ${(props) => (props.selected ? 'var(--primary-color)' : 'var(--bg-primary)')};
-  color: ${(props) => (props.selected ? '#fff' : 'var(--text-primary)')};
-  border-color: ${(props) => (props.selected ? 'var(--primary-color)' : 'var(--border-color)')};
+  background: ${(props) => (props.selected ? 'rgba(var(--accent-rgb, 81, 131, 245), 0.12)' : 'var(--bg-primary)')};
+  color: ${(props) => (props.selected ? 'var(--accent-color)' : 'var(--text-primary)')};
+  border-color: ${(props) => (props.selected ? 'var(--accent-color)' : 'var(--border-color)')};
+  font-weight: ${(props) => (props.selected ? '600' : '400')};
 
   &:hover {
-    border-color: var(--primary-color);
+    border-color: var(--accent-color);
+    background: ${(props) =>
+      props.selected ? 'rgba(var(--accent-rgb, 81, 131, 245), 0.15)' : 'rgba(var(--accent-rgb, 81, 131, 245), 0.06)'};
   }
 `;
 

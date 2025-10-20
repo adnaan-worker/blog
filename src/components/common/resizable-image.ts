@@ -103,7 +103,17 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['img', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)];
+    const attrs = mergeAttributes(this.options.HTMLAttributes, HTMLAttributes);
+
+    // 确保宽高属性正确渲染
+    if (attrs.width) {
+      attrs.style = `width: ${attrs.width}px; ${attrs.style || ''}`;
+    }
+    if (attrs.height) {
+      attrs.style = `height: ${attrs.height}px; ${attrs.style || ''}`;
+    }
+
+    return ['img', attrs];
   },
 
   addCommands() {
@@ -188,6 +198,9 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
       let startWidth = 0;
       let startHeight = 0;
       let aspectRatio = 1;
+      let rafId: number | null = null; // requestAnimationFrame ID
+      let currentMouseX = 0;
+      let currentMouseY = 0;
 
       const onMouseDown = (e: MouseEvent) => {
         e.preventDefault();
@@ -199,34 +212,83 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
         startHeight = img.offsetHeight;
         aspectRatio = startWidth / startHeight;
 
+        // 临时移除最大宽度限制和 transition
+        img.style.maxWidth = 'none';
+        img.style.transition = 'none';
+
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
 
         dom.classList.add('resizing');
+        document.body.style.cursor = 'nwse-resize'; // 设置全局鼠标样式
+      };
+
+      const updateSize = () => {
+        const deltaX = currentMouseX - startX;
+        const deltaY = currentMouseY - startY;
+
+        // 使用对角线距离来计算新尺寸
+        const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY) * Math.sign(deltaX);
+        const newWidth = Math.max(100, Math.min(startWidth + delta, 1200)); // 限制最大宽度
+        const newHeight = newWidth / aspectRatio;
+
+        // 直接设置 DOM，非常快
+        img.style.width = `${newWidth}px`;
+        img.style.height = `${newHeight}px`;
+
+        rafId = null; // 重置 RAF ID
       };
 
       const onMouseMove = (e: MouseEvent) => {
-        const deltaX = e.clientX - startX;
-        const newWidth = Math.max(100, startWidth + deltaX);
-        const newHeight = newWidth / aspectRatio;
+        e.preventDefault();
 
-        img.style.width = `${newWidth}px`;
-        img.style.height = `${newHeight}px`;
+        // 保存当前鼠标位置
+        currentMouseX = e.clientX;
+        currentMouseY = e.clientY;
+
+        // 使用 requestAnimationFrame 节流，确保最流畅的渲染
+        if (rafId === null) {
+          rafId = requestAnimationFrame(updateSize);
+        }
       };
 
       const onMouseUp = () => {
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
 
-        dom.classList.remove('resizing');
+        // 取消可能待执行的 RAF
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
 
-        // 更新节点属性
+        dom.classList.remove('resizing');
+        document.body.style.cursor = ''; // 恢复鼠标样式
+
+        // 恢复样式
+        img.style.maxWidth = '100%';
+        img.style.transition = '';
+
+        // 更新节点属性到 Tiptap
         const pos = getPos();
+
         if (typeof pos === 'number') {
-          editor.commands.updateAttributes('resizableImage', {
-            width: parseInt(img.style.width),
-            height: parseInt(img.style.height),
+          const finalWidth = Math.round(parseFloat(img.style.width));
+          const finalHeight = Math.round(parseFloat(img.style.height));
+
+          // 使用底层 Transaction API 直接更新节点属性
+          const { state, view } = editor;
+          const { tr } = state;
+
+          // 设置新的节点属性
+          tr.setNodeMarkup(pos, undefined, {
+            ...node.attrs,
+            width: finalWidth,
+            height: finalHeight,
           });
+
+          // 应用 transaction
+          view.dispatch(tr);
         }
       };
 

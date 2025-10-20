@@ -62,8 +62,8 @@ const uploadImage = async (file: File): Promise<string> => {
   }
 };
 
-// 编辑器配置
-const extensions = [
+// 创建扩展配置的工厂函数（避免重复创建）
+const createExtensions = () => [
   StarterKit.configure({
     codeBlock: false,
     heading: {
@@ -75,6 +75,8 @@ const extensions = [
     listItem: {},
     hardBreak: {},
     horizontalRule: {},
+    // 禁用 StarterKit 内置的这些扩展，因为我们要自定义配置
+    strike: false,
   }),
   CodeBlockLowlight.configure({
     lowlight,
@@ -140,6 +142,9 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
   const [commandSearch, setCommandSearch] = useState('');
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 使用 useMemo 确保扩展只创建一次，避免重复警告
+  const extensions = React.useMemo(() => createExtensions(), []);
 
   const editor = useEditor({
     extensions,

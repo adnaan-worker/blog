@@ -27,8 +27,8 @@ const Blog = lazy(() => import('@/pages/blog'));
 const BlogDetail = lazy(() => import('@/pages/blog/detail'));
 const Notes = lazy(() => import('@/pages/notes'));
 const NoteDetail = lazy(() => import('@/pages/notes/detail'));
-const Projects = lazy(() => import('@/pages/project/Projects'));
-const ProjectDetail = lazy(() => import('@/pages/project/ProjectDetail'));
+const Projects = lazy(() => import('@/pages/project'));
+const ProjectDetail = lazy(() => import('@/pages/project/deatil'));
 
 // 个人中心相关页面
 const Profile = lazy(() => import('@/pages/user/Profile'));

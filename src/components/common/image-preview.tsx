@@ -10,6 +10,8 @@ interface ImagePreviewProps {
   className?: string;
   style?: React.CSSProperties;
   onClick?: () => void;
+  width?: number;
+  height?: number;
 }
 
 interface PreviewModalProps {
@@ -20,13 +22,17 @@ interface PreviewModalProps {
 }
 
 // 图片容器
-const ImageContainer = styled.span`
+const ImageContainer = styled.span<{ customWidth?: number; customHeight?: number }>`
   position: relative;
   display: inline-block;
   cursor: pointer;
   transition: all 0.3s ease;
   border-radius: 8px;
   overflow: hidden;
+  max-width: 100%;
+
+  ${(props) => props.customWidth && `width: ${props.customWidth}px;`}
+  ${(props) => props.customHeight && `height: ${props.customHeight}px;`}
 
   &:hover {
     transform: translateY(-2px);
@@ -67,9 +73,10 @@ const PreviewOverlay = styled.span`
 `;
 
 // 图片元素
-const Image = styled.img`
-  width: 100%;
+const Image = styled.img<{ hasCustomSize?: boolean }>`
+  width: ${(props) => (props.hasCustomSize ? 'auto' : '100%')};
   height: auto;
+  max-width: 100%;
   display: block;
   transition: all 0.3s ease;
 `;
@@ -373,7 +380,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, src, alt }
 };
 
 // 主组件
-const ImagePreview: React.FC<ImagePreviewProps> = ({ src, alt, className, style, onClick }) => {
+const ImagePreview: React.FC<ImagePreviewProps> = ({ src, alt, className, style, onClick, width, height }) => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const handleImageClick = useCallback(() => {
@@ -388,14 +395,31 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ src, alt, className, style,
     setIsPreviewOpen(false);
   }, []);
 
+  const hasCustomSize = width !== undefined || height !== undefined;
+
   return (
     <>
       <ImageContainer
         className={className}
-        style={{ ...style, margin: '1.5rem 0', textAlign: 'center' }}
+        style={style}
+        customWidth={width}
+        customHeight={height}
         onClick={handleImageClick}
       >
-        <Image src={src} alt={alt} loading="lazy" />
+        <Image
+          src={src}
+          alt={alt}
+          loading="lazy"
+          hasCustomSize={hasCustomSize}
+          style={
+            hasCustomSize
+              ? {
+                  width: width ? `${width}px` : 'auto',
+                  height: height ? `${height}px` : 'auto',
+                }
+              : undefined
+          }
+        />
         <PreviewOverlay className="preview-overlay">
           <span className="preview-icon">
             <FiMaximize2 size={20} />
