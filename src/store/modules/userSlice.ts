@@ -125,55 +125,40 @@ export const logoutUser = () => async (dispatch: any) => {
   }
 };
 
-// 临时添加注册API方法，后续应该添加到API中
-const registerApi = (data: { username: string; email: string; password: string }): Promise<any> => {
-  // 这里应该调用实际的注册API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        code: 200,
-        message: '注册成功',
-        data: {
-          user: {
-            id: Math.floor(Math.random() * 1000),
-            username: data.username,
-            email: data.email,
-            role: 'user',
-            status: 'active',
-          },
-          token: 'dummy-token-' + Math.random(),
-        },
-      });
-    }, 500);
-  });
-};
+export const register =
+  (username: string, email: string, password: string, confirmPassword: string, onSuccess?: () => void) =>
+  async (dispatch: any) => {
+    try {
+      dispatch(setLoading(true));
+      dispatch(setError(null));
 
-export const register = (username: string, email: string, password: string) => async (dispatch: any) => {
-  try {
-    dispatch(setLoading(true));
-    dispatch(setError(null));
+      // 使用真实的API进行注册
+      const response = await API.user.register({ username, email, password, confirmPassword });
 
-    // 使用临时的注册API方法，实际项目中应该替换为真实API
-    const response = await registerApi({ username, email, password });
+      if (response.code === 201) {
+        // 使用全局Toast显示注册成功
+        adnaan.toast.success('注册成功，正在为您登录...', '恭喜');
 
-    if (response.code === 200) {
-      // 使用全局Toast显示注册成功
-      adnaan.toast.success('注册成功，正在为您登录', '恭喜');
-      // 注册成功后自动登录
-      await dispatch(login(username, password));
-    } else {
-      dispatch(setError(response.message || '注册失败'));
-      // 使用全局Toast显示注册失败
-      adnaan.toast.error(response.message || '注册失败', '出错了');
+        // 注册成功后自动登录
+        await dispatch(login(username, password));
+
+        // 调用成功回调（关闭模态框）
+        if (onSuccess) {
+          onSuccess();
+        }
+      } else {
+        dispatch(setError(response.message || '注册失败'));
+        // 使用全局Toast显示注册失败
+        adnaan.toast.error(response.message || '注册失败', '出错了');
+      }
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || '注册失败，请稍后重试';
+      dispatch(setError(errorMessage));
+      // 使用全局Toast显示注册异常
+      adnaan.toast.error(errorMessage, '出错了');
+    } finally {
+      dispatch(setLoading(false));
     }
-  } catch (error) {
-    const errorMessage = '注册失败，请稍后重试';
-    dispatch(setError(errorMessage));
-    // 使用全局Toast显示注册异常
-    adnaan.toast.error(errorMessage, '出错了');
-  } finally {
-    dispatch(setLoading(false));
-  }
-};
+  };
 
 export default userSlice.reducer;

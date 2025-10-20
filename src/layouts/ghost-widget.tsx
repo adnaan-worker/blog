@@ -432,7 +432,7 @@ export const GhostWidget = () => {
   ];
 
   // 创建星星粒子效果
-  const createStarParticles = () => {
+  const createStarParticles = (withVibration = false) => {
     const stars = ['⭐', '✨', '💫', '🌟'];
     for (let i = 0; i < 5; i++) {
       const angle = (Math.PI * 2 * i) / 5;
@@ -447,6 +447,15 @@ export const GhostWidget = () => {
       setTimeout(() => {
         setParticles((prev) => prev.filter((p) => p.id !== particle.id));
       }, 800);
+    }
+
+    // 碰撞时的触觉反馈
+    if (withVibration && hasInteracted && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(15);
+      } catch (e) {
+        // 忽略震动错误
+      }
     }
   };
 
@@ -509,9 +518,9 @@ export const GhostWidget = () => {
           }
         }
 
-        // 碰撞时创建星星粒子
+        // 碰撞时创建星星粒子（带触觉反馈）
         if (collided) {
-          createStarParticles();
+          createStarParticles(true);
         }
 
         // 如果粘在墙上，停止移动
@@ -554,15 +563,15 @@ export const GhostWidget = () => {
     setShowHint(true);
   };
 
-  // 鼠标移动 - 眼睛跟随和拉线
+  // 鼠标/触摸移动 - 眼睛跟随和拉线
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMove = (clientX: number, clientY: number) => {
       // 更新拉线位置
       if (isPulling) {
-        setPullCurrent({ x: e.clientX, y: e.clientY });
+        setPullCurrent({ x: clientX, y: clientY });
       }
 
-      // 眼睛跟随鼠标
+      // 眼睛跟随
       if (isFlying) return;
 
       const ghostRect = document.querySelector('[data-ghost-body]')?.getBoundingClientRect();
@@ -571,8 +580,8 @@ export const GhostWidget = () => {
       const ghostCenterX = ghostRect.left + ghostRect.width / 2;
       const ghostCenterY = ghostRect.top + ghostRect.height / 2;
 
-      const dx = e.clientX - ghostCenterX;
-      const dy = e.clientY - ghostCenterY;
+      const dx = clientX - ghostCenterX;
+      const dy = clientY - ghostCenterY;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       const maxOffset = 1.5;
@@ -582,54 +591,92 @@ export const GhostWidget = () => {
       setEyeOffset({ x: offsetX, y: offsetY });
     };
 
+    const handleMouseMove = (e: MouseEvent) => {
+      handleMove(e.clientX, e.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        handleMove(touch.clientX, touch.clientY);
+      }
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
   }, [isPulling, isFlying]);
 
-  // 提示自动隐藏 + 关心气泡显示
+  // 提示自动隐藏
   useEffect(() => {
-    // 5秒后隐藏提示
     const hintTimer = setTimeout(() => {
       setShowHint(false);
     }, 5000);
 
-    // 定期检查是否显示关心气泡（15-30秒随机间隔）
-    const showCareBubble = () => {
+    return () => clearTimeout(hintTimer);
+  }, [launchCount]); // 每次发射后重新计时
+
+  // 关心气泡循环显示（独立逻辑，不依赖气泡状态）
+  useEffect(() => {
+    const checkAndShowBubble = () => {
       const now = Date.now();
       const timeSinceLastActivity = now - lastActivityRef.current;
 
-      // 如果超过10秒没活动，且当前没有气泡，显示关心
-      if (timeSinceLastActivity > 10000 && !careBubble) {
-        const randomMessage = careMessages[Math.floor(Math.random() * careMessages.length)];
-        setCareBubble(randomMessage);
+      setCareBubble((currentBubble) => {
+        // 如果已经有气泡了，不重复显示
+        if (currentBubble) return currentBubble;
 
-        // 5秒后隐藏气泡
-        setTimeout(() => {
-          setCareBubble(null);
-        }, 5000);
-      }
+        // 如果超过 10 秒没活动，显示关心
+        if (timeSinceLastActivity > 10000) {
+          const randomMessage = careMessages[Math.floor(Math.random() * careMessages.length)];
+
+          // 5秒后隐藏气泡
+          setTimeout(() => {
+            setCareBubble(null);
+          }, 5000);
+
+          return randomMessage;
+        }
+
+        return null;
+      });
     };
 
-    // 每15-30秒随机触发一次
-    const interval = 15000 + Math.random() * 15000;
-    bubbleTimeoutRef.current = setTimeout(function checkAndShow() {
-      showCareBubble();
-      bubbleTimeoutRef.current = setTimeout(checkAndShow, 15000 + Math.random() * 15000);
-    }, interval);
+    // 首次 5 秒后检查，之后每 20-40 秒检查一次
+    const firstCheck = setTimeout(checkAndShowBubble, 5000);
+
+    const interval = setInterval(
+      () => {
+        checkAndShowBubble();
+      },
+      20000 + Math.random() * 20000,
+    ); // 20-40秒随机间隔
 
     return () => {
-      clearTimeout(hintTimer);
+      clearTimeout(firstCheck);
+      clearInterval(interval);
       if (bubbleTimeoutRef.current) {
         clearTimeout(bubbleTimeoutRef.current);
       }
     };
-  }, [careBubble, careMessages]);
+  }, []); // 只在组件挂载时启动一次
 
-  // 处理鼠标按下 - 开始拉动
-  const handleMouseDown = (e: React.MouseEvent) => {
+  // 用户是否已交互（用于震动权限）
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // 处理开始拉动（统一处理鼠标和触摸）
+  const handlePullStart = (clientX: number, clientY: number) => {
     if (isFlying) return;
 
-    e.preventDefault();
+    // 标记用户已交互
+    if (!hasInteracted) {
+      setHasInteracted(true);
+    }
+
     updateActivity(); // 更新活动时间
     setIsPulling(true);
     const ghostRect = ghostRef.current?.getBoundingClientRect();
@@ -638,9 +685,42 @@ export const GhostWidget = () => {
         x: ghostRect.left + ghostRect.width / 2,
         y: ghostRect.top + ghostRect.height / 2,
       });
-      setPullCurrent({ x: e.clientX, y: e.clientY });
+      setPullCurrent({ x: clientX, y: clientY });
+    }
+
+    // 移动端触觉反馈（仅在用户已交互后）
+    if (hasInteracted && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(10);
+      } catch (e) {
+        // 忽略震动错误
+      }
     }
   };
+
+  // 处理鼠标按下
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handlePullStart(e.clientX, e.clientY);
+  };
+
+  // 触摸事件需要使用原生监听器来支持 preventDefault
+  useEffect(() => {
+    const element = ghostRef.current;
+    if (!element) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      e.preventDefault(); // 现在可以正常工作了
+      const touch = e.touches[0];
+      handlePullStart(touch.clientX, touch.clientY);
+    };
+
+    element.addEventListener('touchstart', handleTouchStart, { passive: false });
+
+    return () => {
+      element.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, [isFlying]);
 
   // 处理鼠标松开 - 发射
   const handleMouseUp = () => {
@@ -667,6 +747,16 @@ export const GhostWidget = () => {
 
     // 发射时创建星星粒子
     createStarParticles();
+
+    // 移动端触觉反馈（根据力度调整震动强度）
+    if (hasInteracted && 'vibrate' in navigator && distance > 10) {
+      try {
+        const vibrateDuration = Math.min(Math.floor(distance / 3), 50);
+        navigator.vibrate(vibrateDuration);
+      } catch (e) {
+        // 忽略震动错误
+      }
+    }
   };
 
   // 处理点击
@@ -692,16 +782,23 @@ export const GhostWidget = () => {
     }, 1000);
   };
 
-  // 全局鼠标松开事件
+  // 全局鼠标/触摸松开事件
   useEffect(() => {
-    const handleGlobalMouseUp = () => {
+    const handleGlobalEnd = () => {
       if (isPulling) {
         handleMouseUp();
       }
     };
 
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('mouseup', handleGlobalEnd);
+    window.addEventListener('touchend', handleGlobalEnd);
+    window.addEventListener('touchcancel', handleGlobalEnd);
+
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalEnd);
+      window.removeEventListener('touchend', handleGlobalEnd);
+      window.removeEventListener('touchcancel', handleGlobalEnd);
+    };
   }, [isPulling, pullStart, pullCurrent]);
 
   // 计算拉线距离和角度
@@ -800,6 +897,7 @@ export const GhostWidget = () => {
           left: position.x,
           top: position.y,
           cursor: isFlying ? 'default' : isPulling ? 'grabbing' : 'grab',
+          touchAction: 'none', // 防止移动端默认触摸行为
         }}
       >
         {/* 头顶提示 */}

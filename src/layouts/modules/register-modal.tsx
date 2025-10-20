@@ -139,11 +139,25 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ isOpen, onClose, onSwitch
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 验证密码是否匹配
     if (formData.password !== formData.confirmPassword) {
-      // 处理密码不匹配的情况
+      adnaan.toast.error('两次输入的密码不一致', '请检查');
       return;
     }
-    await dispatch(register(formData.username, formData.email, formData.password));
+
+    // 验证密码长度
+    if (formData.password.length < 6) {
+      adnaan.toast.error('密码长度至少为6位', '请检查');
+      return;
+    }
+
+    // 执行注册，成功后关闭模态框
+    await dispatch(
+      register(formData.username, formData.email, formData.password, formData.confirmPassword, () => {
+        onClose();
+      }),
+    );
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
