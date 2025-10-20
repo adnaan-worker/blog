@@ -1,23 +1,24 @@
 import styled from '@emotion/styled';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { useSelector } from 'react-redux';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { RootState } from '@/store';
+import { storage } from '@/utils';
 
-// 幽灵容器 - 缩小到原始的 45%
-const GhostContainer = styled(motion.div)`
+// 幽灵容器 - 缩小到原始的 45%，支持交互和拖拽
+const GhostContainer = styled(motion.div)<{ isDragging?: boolean }>`
   position: fixed;
-  left: 30px;
-  bottom: 50px;
-  z-index: 100;
+  z-index: 9999; /* 确保在最上层 */
   width: 36px;
   height: 45px;
-  pointer-events: none;
+  pointer-events: auto; /* 启用交互 */
+  cursor: ${(props) => (props.isDragging ? 'grabbing' : 'grab')};
   /* 确保光圈不被裁剪 */
   overflow: visible;
+  user-select: none;
+  will-change: left, top; /* 优化性能 */
 
   @media (max-width: 768px) {
-    left: 10px;
-    bottom: 60px;
     transform: scale(0.7);
   }
 `;
@@ -59,16 +60,27 @@ const Face = styled.div`
   height: 9.225px;
 `;
 
-// 眼睛
-const Eye = styled.div`
+// 眼睛容器
+const EyeContainer = styled.div`
+  width: 5.4px;
+  height: 5.4px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.left {
+    margin-right: 5.4px;
+  }
+`;
+
+// 眼睛 - 可以移动的瞳孔
+const Eye = styled(motion.div)`
   width: 4.5px;
   height: 4.5px;
   background-color: color-mix(in srgb, var(--accent-color) 80%, black);
   border-radius: 100%;
-
-  &.left {
-    margin-right: 7.2px;
-  }
+  transition: all 0.2s ease;
 `;
 
 // 微笑
@@ -169,6 +181,95 @@ const Shadow = styled(motion.div)`
   background-color: color-mix(in srgb, var(--accent-color) 40%, black);
 `;
 
+// 粒子容器
+const ParticlesContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+`;
+
+// 拉线指示器
+const PullLine = styled.svg`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+`;
+
+// 头顶提示
+const TopHint = styled(motion.div)`
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  background: rgba(var(--accent-rgb, 81, 131, 245), 0.9);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: rgba(var(--accent-rgb, 81, 131, 245), 0.9);
+  }
+`;
+
+// 关心气泡
+const CareBubble = styled(motion.div)`
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, rgba(255, 182, 193, 0.95) 0%, rgba(255, 192, 203, 0.95) 100%);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(255, 182, 193, 0.4);
+  max-width: 200px;
+  text-align: center;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(255, 192, 203, 0.95);
+  }
+`;
+
+// 小星星粒子
+const StarParticle = styled(motion.div)`
+  position: absolute;
+  font-size: 16px;
+  top: 50%;
+  left: 50%;
+  color: #ffd700;
+  text-shadow: 0 0 4px rgba(255, 215, 0, 0.6);
+`;
+
 // 动画变体 - 按照原始 CSS keyframes
 const floatVariants = {
   animate: {
@@ -239,42 +340,571 @@ const containerVariants = {
   },
 };
 
+// 粒子类型
+interface ParticleType {
+  id: number;
+  emoji: string;
+  x: number;
+  y: number;
+}
+
 export const GhostWidget = () => {
   const theme = useSelector((state: RootState) => state.theme.theme);
   const isDark = theme === 'dark';
 
+  // 常量定义
+  const GHOST_WIDTH = 36;
+  const GHOST_HEIGHT = 45;
+  const MARGIN = 10;
+
+  // 位置和速度状态
+  const [position, setPosition] = useState(() => {
+    const saved = storage.local.get<{ x: number; y: number }>('ghost_position');
+    // 默认位置在屏幕中央偏左下
+    const defaultPos = {
+      x: Math.min(100, window.innerWidth / 4),
+      y: window.innerHeight / 2,
+    };
+
+    if (!saved) return defaultPos;
+
+    return {
+      x: Math.max(MARGIN, Math.min(window.innerWidth - GHOST_WIDTH - MARGIN, saved.x)),
+      y: Math.max(MARGIN, Math.min(window.innerHeight - GHOST_HEIGHT - MARGIN, saved.y)),
+    };
+  });
+
+  const [velocity, setVelocity] = useState({ x: 0, y: 0 });
+  const [isFlying, setIsFlying] = useState(false);
+
+  // 弹射游戏状态
+  const [isPulling, setIsPulling] = useState(false);
+  const [pullStart, setPullStart] = useState({ x: 0, y: 0 });
+  const [pullCurrent, setPullCurrent] = useState({ x: 0, y: 0 });
+  const [launchCount, setLaunchCount] = useState(0);
+  const [showHint, setShowHint] = useState(true);
+
+  // 关心气泡状态
+  const [careBubble, setCareBubble] = useState<string | null>(null);
+  const lastActivityRef = useRef<number>(Date.now());
+  const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 交互状态
+  const [isHovered, setIsHovered] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [particles, setParticles] = useState<ParticleType[]>([]);
+  const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 });
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const particleIdRef = useRef(0);
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  // 保存位置到localStorage
+  useEffect(() => {
+    storage.local.set('ghost_position', position);
+  }, [position]);
+
+  // 窗口大小变化时，确保幽灵仍在可视区域内
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition((prev) => ({
+        x: Math.max(MARGIN, Math.min(window.innerWidth - GHOST_WIDTH - MARGIN, prev.x)),
+        y: Math.max(MARGIN, Math.min(window.innerHeight - GHOST_HEIGHT - MARGIN, prev.y)),
+      }));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [GHOST_WIDTH, GHOST_HEIGHT, MARGIN]);
+
+  // 关心文案数组
+  const careMessages = [
+    '工作累了吗？休息一下吧~',
+    '夜深了，早点休息哦💤',
+    '今天也要保持好心情呀！',
+    '记得多喝水哦💧',
+    '你真的很棒！',
+    '别熬夜啦，熬夜对身体不好~',
+    '明天又是元气满满的一天！',
+    '要相信自己！加油！',
+    '深夜了，注意保暖呀~',
+    '偶尔也要放松一下呢~',
+  ];
+
+  // 创建星星粒子效果
+  const createStarParticles = () => {
+    const stars = ['⭐', '✨', '💫', '🌟'];
+    for (let i = 0; i < 5; i++) {
+      const angle = (Math.PI * 2 * i) / 5;
+      const particle: ParticleType = {
+        id: particleIdRef.current++,
+        emoji: stars[Math.floor(Math.random() * stars.length)],
+        x: Math.cos(angle) * 25,
+        y: Math.sin(angle) * 25,
+      };
+      setParticles((prev) => [...prev, particle]);
+
+      setTimeout(() => {
+        setParticles((prev) => prev.filter((p) => p.id !== particle.id));
+      }, 800);
+    }
+  };
+
+  // 物理引擎 - 飞行和碰撞
+  useEffect(() => {
+    if (!isFlying) return;
+
+    const animate = () => {
+      setPosition((prev) => {
+        let newX = prev.x + velocity.x;
+        let newY = prev.y + velocity.y;
+        let newVelocityX = velocity.x;
+        let newVelocityY = velocity.y;
+
+        // 重力效果（降低重力，让飞行更轻盈）
+        newVelocityY += 0.3;
+
+        // 边界碰撞和反弹
+        let collided = false;
+        let stuckToWall = false; // 是否粘在墙上
+
+        if (newX <= MARGIN) {
+          newX = MARGIN;
+          newVelocityX = -newVelocityX * 0.6;
+          collided = true;
+          // 速度很小时粘在左墙
+          if (Math.abs(newVelocityX) < 3) {
+            newVelocityX = 0;
+            stuckToWall = true;
+          }
+        }
+        if (newX >= window.innerWidth - GHOST_WIDTH - MARGIN) {
+          newX = window.innerWidth - GHOST_WIDTH - MARGIN;
+          newVelocityX = -newVelocityX * 0.6;
+          collided = true;
+          // 速度很小时粘在右墙
+          if (Math.abs(newVelocityX) < 3) {
+            newVelocityX = 0;
+            stuckToWall = true;
+          }
+        }
+        if (newY <= MARGIN) {
+          newY = MARGIN;
+          newVelocityY = -newVelocityY * 0.6;
+          collided = true;
+          // 速度很小时粘在顶部
+          if (Math.abs(newVelocityY) < 3) {
+            newVelocityY = 0;
+            stuckToWall = true;
+          }
+        }
+        if (newY >= window.innerHeight - GHOST_HEIGHT - MARGIN) {
+          newY = window.innerHeight - GHOST_HEIGHT - MARGIN;
+          newVelocityY = -newVelocityY * 0.6;
+          collided = true;
+          // 速度很小时粘在底部
+          if (Math.abs(newVelocityY) < 3) {
+            newVelocityY = 0;
+            stuckToWall = true;
+          }
+        }
+
+        // 碰撞时创建星星粒子
+        if (collided) {
+          createStarParticles();
+        }
+
+        // 如果粘在墙上，停止移动
+        if (stuckToWall) {
+          setIsFlying(false);
+          setVelocity({ x: 0, y: 0 });
+          return { x: newX, y: newY };
+        }
+
+        // 摩擦力（增加空气阻力）
+        newVelocityX *= 0.97;
+        newVelocityY *= 0.97;
+
+        // 速度太小时停止
+        if (Math.abs(newVelocityX) < 0.2 && Math.abs(newVelocityY) < 0.2) {
+          setIsFlying(false);
+          setVelocity({ x: 0, y: 0 });
+          return { x: newX, y: newY };
+        }
+
+        setVelocity({ x: newVelocityX, y: newVelocityY });
+        return { x: newX, y: newY };
+      });
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [isFlying, velocity.x, velocity.y, MARGIN, GHOST_WIDTH, GHOST_HEIGHT]);
+
+  // 更新活动时间
+  const updateActivity = () => {
+    lastActivityRef.current = Date.now();
+    setShowHint(true);
+  };
+
+  // 鼠标移动 - 眼睛跟随和拉线
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      // 更新拉线位置
+      if (isPulling) {
+        setPullCurrent({ x: e.clientX, y: e.clientY });
+      }
+
+      // 眼睛跟随鼠标
+      if (isFlying) return;
+
+      const ghostRect = document.querySelector('[data-ghost-body]')?.getBoundingClientRect();
+      if (!ghostRect) return;
+
+      const ghostCenterX = ghostRect.left + ghostRect.width / 2;
+      const ghostCenterY = ghostRect.top + ghostRect.height / 2;
+
+      const dx = e.clientX - ghostCenterX;
+      const dy = e.clientY - ghostCenterY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      const maxOffset = 1.5;
+      const offsetX = Math.max(-maxOffset, Math.min(maxOffset, (dx / distance) * maxOffset));
+      const offsetY = Math.max(-maxOffset, Math.min(maxOffset, (dy / distance) * maxOffset));
+
+      setEyeOffset({ x: offsetX, y: offsetY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [isPulling, isFlying]);
+
+  // 提示自动隐藏 + 关心气泡显示
+  useEffect(() => {
+    // 5秒后隐藏提示
+    const hintTimer = setTimeout(() => {
+      setShowHint(false);
+    }, 5000);
+
+    // 定期检查是否显示关心气泡（15-30秒随机间隔）
+    const showCareBubble = () => {
+      const now = Date.now();
+      const timeSinceLastActivity = now - lastActivityRef.current;
+
+      // 如果超过10秒没活动，且当前没有气泡，显示关心
+      if (timeSinceLastActivity > 10000 && !careBubble) {
+        const randomMessage = careMessages[Math.floor(Math.random() * careMessages.length)];
+        setCareBubble(randomMessage);
+
+        // 5秒后隐藏气泡
+        setTimeout(() => {
+          setCareBubble(null);
+        }, 5000);
+      }
+    };
+
+    // 每15-30秒随机触发一次
+    const interval = 15000 + Math.random() * 15000;
+    bubbleTimeoutRef.current = setTimeout(function checkAndShow() {
+      showCareBubble();
+      bubbleTimeoutRef.current = setTimeout(checkAndShow, 15000 + Math.random() * 15000);
+    }, interval);
+
+    return () => {
+      clearTimeout(hintTimer);
+      if (bubbleTimeoutRef.current) {
+        clearTimeout(bubbleTimeoutRef.current);
+      }
+    };
+  }, [careBubble, careMessages]);
+
+  // 处理鼠标按下 - 开始拉动
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isFlying) return;
+
+    e.preventDefault();
+    updateActivity(); // 更新活动时间
+    setIsPulling(true);
+    const ghostRect = ghostRef.current?.getBoundingClientRect();
+    if (ghostRect) {
+      setPullStart({
+        x: ghostRect.left + ghostRect.width / 2,
+        y: ghostRect.top + ghostRect.height / 2,
+      });
+      setPullCurrent({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  // 处理鼠标松开 - 发射
+  const handleMouseUp = () => {
+    if (!isPulling) return;
+
+    setIsPulling(false);
+    updateActivity(); // 更新活动时间
+
+    // 计算发射速度
+    const dx = pullStart.x - pullCurrent.x;
+    const dy = pullStart.y - pullCurrent.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // 限制最大拉力（增加到300，支持更远距离瞄准）
+    const maxPull = 300;
+    const power = Math.min(distance, maxPull) / 8; // 除以8而不是10，增加力度
+
+    const velocityX = (dx / distance) * power || 0;
+    const velocityY = (dy / distance) * power || 0;
+
+    setVelocity({ x: velocityX, y: velocityY });
+    setIsFlying(true);
+    setLaunchCount((prev) => prev + 1);
+
+    // 发射时创建星星粒子
+    createStarParticles();
+  };
+
+  // 处理点击
+  const handleClick = () => {
+    updateActivity(); // 更新活动时间
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+
+    // 生成星星粒子
+    createStarParticles();
+
+    // 5连击时再多一次星星效果
+    if (newCount === 5) {
+      setTimeout(() => createStarParticles(), 200);
+    }
+
+    // 重置点击计数
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+    clickTimeoutRef.current = setTimeout(() => {
+      setClickCount(0);
+    }, 1000);
+  };
+
+  // 全局鼠标松开事件
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isPulling) {
+        handleMouseUp();
+      }
+    };
+
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [isPulling, pullStart, pullCurrent]);
+
+  // 计算拉线距离和角度
+  const pullDistance = isPulling
+    ? Math.sqrt(Math.pow(pullStart.x - pullCurrent.x, 2) + Math.pow(pullStart.y - pullCurrent.y, 2))
+    : 0;
+  const pullAngle = isPulling ? Math.atan2(pullCurrent.y - pullStart.y, pullCurrent.x - pullStart.x) : 0;
+
   // 只在深色模式下显示
   if (!isDark) return null;
 
+  // 点击跳跃动画
+  const jumpVariants = {
+    jump: {
+      y: [-40, 0],
+      rotate: clickCount >= 5 ? [0, 360] : [0, 15, -15, 0], // 连击5次旋转360度
+      transition: {
+        duration: 0.6,
+        ease: 'easeOut' as any,
+      },
+    },
+  };
+
+  // 悬停时害羞效果
+  const hoverBodyVariants = {
+    hover: {
+      scale: 1.1,
+      transition: { type: 'spring', stiffness: 300, damping: 20 },
+    },
+  };
+
   return (
-    <GhostContainer variants={containerVariants} initial="hidden" animate="visible">
-      <GhostBody variants={floatVariants} animate="animate">
-        {/* 脸部 */}
-        <Face>
-          <Eye className="left" />
-          <Eye className="right" />
-          <Smile />
-          {/* 腮红 */}
-          <Rosy className="left" />
-          <Rosy className="right" />
-        </Face>
+    <>
+      {/* 拉线指示器 */}
+      {isPulling && (
+        <PullLine>
+          {/* 主拉线 */}
+          <line
+            x1={pullStart.x}
+            y1={pullStart.y}
+            x2={pullCurrent.x}
+            y2={pullCurrent.y}
+            stroke="rgba(var(--accent-rgb, 81, 131, 245), 0.6)"
+            strokeWidth="3"
+            strokeDasharray="5,5"
+          />
 
-        {/* 手臂 - 完全按照原始HTML结构 */}
-        <ArmLeft variants={armLeftVariants} animate="animate" />
+          {/* 力度指示圆圈 */}
+          <circle
+            cx={pullStart.x}
+            cy={pullStart.y}
+            r={Math.min(pullDistance, 300) / 2.5}
+            fill="none"
+            stroke="rgba(var(--accent-rgb, 81, 131, 245), 0.3)"
+            strokeWidth="2"
+          />
 
-        <ArmRight variants={armRightVariants} animate="animate" />
+          {/* 方向箭头 */}
+          <polygon
+            points={`
+              ${pullStart.x + Math.cos(pullAngle + Math.PI) * 20},${pullStart.y + Math.sin(pullAngle + Math.PI) * 20}
+              ${pullStart.x + Math.cos(pullAngle + Math.PI) * 40 + Math.cos(pullAngle + Math.PI - 0.5) * 10},${pullStart.y + Math.sin(pullAngle + Math.PI) * 40 + Math.sin(pullAngle + Math.PI - 0.5) * 10}
+              ${pullStart.x + Math.cos(pullAngle + Math.PI) * 40 + Math.cos(pullAngle + Math.PI + 0.5) * 10},${pullStart.y + Math.sin(pullAngle + Math.PI) * 40 + Math.sin(pullAngle + Math.PI + 0.5) * 10}
+            `}
+            fill="rgba(var(--accent-rgb, 81, 131, 245), 0.8)"
+          />
 
-        {/* 底部波浪 */}
-        <Bottom>
-          {[0, 1, 2, 3, 4].map((i) => (
-            <BottomWave key={i} isOdd={i % 2 === 1} />
-          ))}
-        </Bottom>
-      </GhostBody>
+          {/* 力度文字提示 */}
+          <text
+            x={pullCurrent.x}
+            y={pullCurrent.y - 15}
+            fill="rgba(var(--accent-rgb, 81, 131, 245), 0.9)"
+            fontSize="14"
+            fontWeight="600"
+            textAnchor="middle"
+          >
+            {Math.round((Math.min(pullDistance, 300) / 300) * 100)}%
+          </text>
+        </PullLine>
+      )}
 
-      {/* 影子 */}
-      <Shadow variants={shadowVariants} animate="animate" />
-    </GhostContainer>
+      <GhostContainer
+        ref={ghostRef}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        onMouseDown={handleMouseDown}
+        onMouseEnter={() => {
+          setIsHovered(true);
+          updateActivity();
+        }}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={handleClick}
+        isDragging={isPulling}
+        style={{
+          left: position.x,
+          top: position.y,
+          cursor: isFlying ? 'default' : isPulling ? 'grabbing' : 'grab',
+        }}
+      >
+        {/* 头顶提示 */}
+        {showHint && !careBubble && launchCount > 0 && !isFlying && (
+          <TopHint initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}>
+            发射了 {launchCount} 次
+          </TopHint>
+        )}
+
+        {/* 关心气泡 */}
+        {careBubble && !isPulling && !isFlying && (
+          <CareBubble
+            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+          >
+            {careBubble}
+          </CareBubble>
+        )}
+
+        <GhostBody
+          variants={clickCount > 0 ? jumpVariants : floatVariants}
+          animate={clickCount > 0 ? 'jump' : 'animate'}
+          whileHover="hover"
+          onAnimationComplete={() => setClickCount(0)}
+          data-ghost-body
+        >
+          {/* 脸部 */}
+          <Face>
+            <EyeContainer className="left">
+              <Eye
+                animate={{
+                  x: eyeOffset.x,
+                  y: eyeOffset.y,
+                  scale: isHovered ? 1.3 : 1,
+                }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              />
+            </EyeContainer>
+            <EyeContainer className="right">
+              <Eye
+                animate={{
+                  x: eyeOffset.x,
+                  y: eyeOffset.y,
+                  scale: isHovered ? 1.3 : 1,
+                }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              />
+            </EyeContainer>
+            <Smile />
+            {/* 腮红 - 悬停时加深 */}
+            <Rosy
+              className="left"
+              style={{
+                opacity: isHovered ? 1 : 0.6,
+                transform: isHovered ? 'rotate(-8deg) scale(1.2)' : 'rotate(-8deg)',
+                transition: 'all 0.3s ease',
+              }}
+            />
+            <Rosy
+              className="right"
+              style={{
+                opacity: isHovered ? 1 : 0.6,
+                transform: isHovered ? 'rotate(8deg) scale(1.2)' : 'rotate(8deg)',
+                transition: 'all 0.3s ease',
+              }}
+            />
+          </Face>
+
+          {/* 手臂 */}
+          <ArmLeft variants={armLeftVariants} animate="animate" />
+          <ArmRight variants={armRightVariants} animate="animate" />
+
+          {/* 底部波浪 */}
+          <Bottom>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <BottomWave key={i} isOdd={i % 2 === 1} />
+            ))}
+          </Bottom>
+
+          {/* 星星粒子效果 */}
+          <ParticlesContainer>
+            {particles.map((particle) => (
+              <StarParticle
+                key={particle.id}
+                initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+                animate={{
+                  x: particle.x,
+                  y: particle.y,
+                  opacity: 0,
+                  scale: 1.2,
+                  rotate: 360,
+                }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+              >
+                {particle.emoji}
+              </StarParticle>
+            ))}
+          </ParticlesContainer>
+        </GhostBody>
+
+        {/* 影子 */}
+        <Shadow variants={shadowVariants} animate="animate" />
+      </GhostContainer>
+    </>
   );
 };
 
