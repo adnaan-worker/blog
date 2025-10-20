@@ -1,282 +1,315 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
-import ArticleList from '@/components/blog/article-list';
-import type { Article } from '@/components/blog/article-list';
-import BlogSidebar from '@/components/blog/blog-sidebar';
-import { API } from '@/utils/api';
+import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
+import { ListPageHeader } from '@/components/common/list-page-header';
+import useInfiniteScroll from '@/hooks/useInfiniteScroll';
+import { API, Article } from '@/utils/api';
+import { formatDate } from '@/utils';
+import { FiCalendar, FiEye, FiHeart, FiMessageSquare, FiClock } from 'react-icons/fi';
 
-// 页面容器
+// 页面样式组件
 const PageContainer = styled.div`
-  width: 100%;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding: 2rem 0;
+`;
+
+const Container = styled.div`
   max-width: var(--max-width);
   margin: 0 auto;
-  padding-top: 50px;
-`;
+  padding: 0 2rem;
 
-// 博客页面左右布局容器
-const BlogLayoutContainer = styled.div`
-  display: flex;
-  gap: 2rem;
-
-  @media (max-width: 860px) {
-    flex-direction: column;
+  @media (max-width: 768px) {
+    padding: 0 1rem;
   }
 `;
 
-// 博客主内容
-const BlogMainContent = styled.div`
-  flex: 1;
-`;
-
-// 分页控件
-const Pagination = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 3rem;
-  gap: 0.5rem;
-`;
-
-const PageButton = styled.button<{ active?: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid ${(props) => (props.active ? 'var(--accent-color)' : 'var(--border-color)')};
-  background: ${(props) => (props.active ? 'var(--accent-color-alpha)' : 'var(--bg-primary)')};
-  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  border-radius: 4px;
+// 文章项目样式 - 紧凑卡片风格
+const ArticleCard = styled.div`
+  background: var(--bg-primary);
+  border: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.4);
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  transition: all 0.2s ease;
 
   &:hover {
-    background: var(--accent-color-alpha);
-    color: var(--accent-color);
-    border-color: var(--accent-color);
+    background: var(--bg-secondary);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.08);
+    transform: translateY(-2px) translateX(2px);
   }
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  [data-theme='dark'] & {
+    border-color: rgba(255, 255, 255, 0.08);
 
     &:hover {
-      background: var(--bg-primary);
-      color: var(--text-secondary);
-      border-color: var(--border-color);
+      border-color: rgba(var(--accent-rgb), 0.4);
     }
   }
 `;
 
-// 排序选项
-const SORT_OPTIONS = ['最新发布', '最多浏览', '阅读时间'];
+const ArticleTitle = styled.h3`
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 
-// 提取所有标签
-const extractAllTags = (articles: Article[]): string[] => {
-  const tagSet = new Set<string>();
-  articles.forEach((article) => {
-    article.tags?.forEach((tag) => tagSet.add(tag.name));
-  });
-  return Array.from(tagSet);
-};
+  transition: color 0.2s ease;
 
-// 统计每个分类的文章数量并格式化为侧边栏需要的格式
-const formatCategories = (articles: Article[]): { name: string; count: number }[] => {
-  const counts: Record<string, number> = {
-    全部: articles.length,
-  };
+  ${ArticleCard}:hover & {
+    color: var(--accent-color);
+  }
+`;
 
-  articles.forEach((article) => {
-    const categoryName = article.category?.name || '未分类';
-    counts[categoryName] = (counts[categoryName] || 0) + 1;
-  });
+const ArticleExcerpt = styled.p`
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 1rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  opacity: 0.9;
+`;
 
-  return Object.entries(counts).map(([name, count]) => ({ name, count }));
-};
+const ArticleMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
+`;
 
-const Blog: React.FC = () => {
-  // 状态管理
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('全部');
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<string>('最新发布');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [viewMode, setViewMode] = useState<'timeline' | 'card'>('timeline');
-  const articlesPerPage = 5;
+const MetaItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  opacity: 0.85;
 
-  // 获取文章数据
+  svg {
+    font-size: 0.85rem;
+    opacity: 0.7;
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-left: 0.15rem;
+  }
+`;
+
+const CategoryBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-color);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: auto;
+`;
+
+const TagList = styled.div`
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+`;
+
+const Tag = styled.span`
+  color: var(--accent-color);
+  font-size: 0.7rem;
+  opacity: 0.75;
+  font-weight: 400;
+
+  &::before {
+    content: '#';
+    opacity: 0.6;
+    margin-right: 0.1em;
+  }
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 6rem 2rem;
+  color: var(--text-tertiary);
+
+  h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+`;
+
+const BlogPage: React.FC = () => {
+  const [articles, setArticles] = useState<TimelineItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // 初始数据加载
   useEffect(() => {
-    const fetchArticles = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await API.article.getArticles({ page: 1, limit: 100 });
-        const articleList = response.data || [];
-
-        if (articleList.length > 0) {
-          setArticles(articleList);
-          setFilteredArticles(articleList);
-        } else {
-          setError('暂无文章数据');
-        }
-      } catch (err) {
-        console.error('获取文章失败:', err);
-        setError('网络错误，请稍后重试');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchArticles();
+    loadArticles(1);
   }, []);
 
-  // 计算所有标签和分类
-  const allTags = useMemo(() => extractAllTags(articles), [articles]);
-  const categories = useMemo(() => formatCategories(articles), [articles]);
+  // 将Article转换为TimelineItem（保留完整的Article数据）
+  const convertArticleToTimelineItem = (article: Article): TimelineItem & Article => ({
+    ...article,
+    id: String(article.id),
+    createdAt: article.publishedAt || article.createdAt,
+  });
 
-  // 当筛选条件变化时更新文章列表
-  useEffect(() => {
-    let result = [...articles];
+  // 加载文章数据
+  const loadArticles = async (pageNum: number, append = false) => {
+    try {
+      if (!append) setIsLoading(true);
+      else setIsLoadingMore(true);
 
-    // 应用分类筛选
-    if (selectedCategory !== '全部') {
-      result = result.filter((article) => (article.category?.name || '未分类') === selectedCategory);
+      const response = await API.article.getArticles({
+        page: pageNum,
+        limit: 10,
+      });
+
+      const apiArticles = response.data || [];
+      const newArticles = apiArticles.map(convertArticleToTimelineItem);
+
+      if (append) {
+        setArticles((prev) => [...prev, ...newArticles]);
+      } else {
+        setArticles(newArticles);
+      }
+
+      const pagination = response.meta?.pagination || { page: pageNum, totalPages: 1, total: 0 };
+      setHasMore(pagination.page < pagination.totalPages);
+      setPage(pageNum);
+      setTotalCount(pagination.total || 0);
+    } catch (error: any) {
+      adnaan.toast.error(error.message || '加载文章失败');
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
     }
-
-    // 应用标签筛选
-    if (selectedTag) {
-      result = result.filter((article) => article.tags?.some((tag) => tag.name === selectedTag));
-    }
-
-    // 应用搜索筛选
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (article) =>
-          article.title.toLowerCase().includes(query) ||
-          article.summary?.toLowerCase().includes(query) ||
-          article.tags?.some((tag) => tag.name.toLowerCase().includes(query)),
-      );
-    }
-
-    // 应用排序
-    switch (sortBy) {
-      case '最新发布':
-        result.sort((a, b) => {
-          const dateA = new Date(a.publishedAt || a.createdAt).getTime();
-          const dateB = new Date(b.publishedAt || b.createdAt).getTime();
-          return dateB - dateA;
-        });
-        break;
-      case '最多浏览':
-        result.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
-        break;
-      case '阅读时间':
-        const getReadTime = (article: Article) => Math.ceil((article.content?.length || 0) / 200);
-        result.sort((a, b) => getReadTime(a) - getReadTime(b));
-        break;
-      default:
-        break;
-    }
-
-    setFilteredArticles(result);
-    setCurrentPage(1); // 重置为第一页
-  }, [selectedCategory, selectedTag, sortBy, searchQuery, articles]);
-
-  // 计算当前页面显示的文章
-  const indexOfLastArticle = currentPage * articlesPerPage;
-  const indexOfFirstArticle = indexOfLastArticle - articlesPerPage;
-  const currentArticles = filteredArticles.slice(indexOfFirstArticle, indexOfLastArticle);
-
-  // 计算页数
-  const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
-
-  // 页码变化处理
-  const handlePageChange = (pageNumber: number) => {
-    if (pageNumber < 1 || pageNumber > totalPages) return;
-    setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 搜索处理
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
+  // 加载更多数据
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+    await loadArticles(page + 1, true);
+  }, [page, isLoadingMore, hasMore]);
 
-  // 分类点击处理
-  const handleCategoryClick = (category: string) => {
-    setSelectedCategory(category);
-    setSelectedTag(null); // 重置标签选择
-  };
+  // 使用无限滚动Hook
+  useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore: loadMore,
+  });
 
-  // 标签点击处理
-  const handleTagClick = (tag: string) => {
-    setSelectedTag(selectedTag === tag ? null : tag);
-  };
+  // 渲染单个文章项目
+  const renderArticleItem = (article: Article, index: number) => (
+    <Link to={`/blog/${article.id}`} style={{ textDecoration: 'none' }}>
+      <ArticleCard>
+        <ArticleTitle>{article.title}</ArticleTitle>
 
-  // 排序点击处理
-  const handleSortClick = (sort: string) => {
-    setSortBy(sort);
-  };
+        {article.excerpt && <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>}
 
-  // 视图模式切换
-  const handleViewModeChange = (mode: 'timeline' | 'card') => {
-    setViewMode(mode);
-  };
+        {article.tags && article.tags.length > 0 && (
+          <TagList>
+            {article.tags.slice(0, 3).map((tag: any) => (
+              <Tag key={typeof tag === 'string' ? tag : tag.name}>{typeof tag === 'string' ? tag : tag.name}</Tag>
+            ))}
+          </TagList>
+        )}
+
+        <ArticleMeta>
+          <MetaItem>
+            <FiCalendar />
+            {formatDate(article.createdAt, 'MM-DD')}
+          </MetaItem>
+
+          {article.readTime && (
+            <MetaItem>
+              <FiClock />
+              {article.readTime} 分钟
+            </MetaItem>
+          )}
+
+          {article.viewCount && article.viewCount > 0 && (
+            <MetaItem>
+              <FiEye />
+              <strong>{article.viewCount}</strong>
+            </MetaItem>
+          )}
+
+          {article.likeCount && article.likeCount > 0 && (
+            <MetaItem>
+              <FiHeart />
+              <strong>{article.likeCount}</strong>
+            </MetaItem>
+          )}
+
+          {article.commentCount && article.commentCount > 0 && (
+            <MetaItem>
+              <FiMessageSquare />
+              <strong>{article.commentCount}</strong>
+            </MetaItem>
+          )}
+
+          {article.category && (
+            <CategoryBadge>
+              {typeof article.category === 'string' ? article.category : article.category.name}
+            </CategoryBadge>
+          )}
+        </ArticleMeta>
+      </ArticleCard>
+    </Link>
+  );
+
+  // 空状态组件
+  const emptyStateComponent = (
+    <EmptyState>
+      <h3>还没有文章</h3>
+      <p>开始创作你的第一篇文章吧</p>
+    </EmptyState>
+  );
 
   return (
     <PageContainer>
-      <BlogLayoutContainer>
-        {/* 侧边栏 */}
-        <BlogSidebar
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          selectedCategory={selectedCategory}
-          onCategoryClick={handleCategoryClick}
-          categories={categories}
-          selectedTag={selectedTag}
-          onTagClick={handleTagClick}
-          tags={allTags}
-          sortBy={sortBy}
-          onSortClick={handleSortClick}
-          sortOptions={SORT_OPTIONS}
-          viewMode={viewMode}
-          onViewModeChange={handleViewModeChange}
+      <Container>
+        {/* 页面头部 */}
+        <ListPageHeader title="技术文章" subtitle="探索代码世界，分享技术思考" count={totalCount} countUnit="篇文章" />
+
+        {/* 时间线列表 */}
+        <TimelineMasonry
+          items={articles}
+          renderItem={(item, index) => renderArticleItem(item as unknown as Article, index)}
+          loading={isLoading}
+          loadingMore={isLoadingMore}
+          hasMore={hasMore}
+          emptyState={emptyStateComponent}
         />
-
-        {/* 主内容区域 */}
-        <BlogMainContent>
-          {error ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--error-color)' }}>{error}</div>
-          ) : (
-            <ArticleList articles={currentArticles} viewMode={viewMode} loading={isLoading} />
-          )}
-
-          {/* 分页控件 - 只在非加载状态且有数据时显示 */}
-          {!isLoading && totalPages > 1 && (
-            <Pagination>
-              <PageButton onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
-                &lt;
-              </PageButton>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PageButton key={page} active={currentPage === page} onClick={() => handlePageChange(page)}>
-                  {page}
-                </PageButton>
-              ))}
-
-              <PageButton onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-                &gt;
-              </PageButton>
-            </Pagination>
-          )}
-        </BlogMainContent>
-      </BlogLayoutContainer>
+      </Container>
     </PageContainer>
   );
 };
 
-export default Blog;
+export default BlogPage;

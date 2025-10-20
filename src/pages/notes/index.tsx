@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
+import { ListPageHeader } from '@/components/common/list-page-header';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import { API, Note, NoteParams } from '@/utils/api';
 
@@ -19,35 +20,6 @@ const Container = styled.div`
 
   @media (max-width: 768px) {
     padding: 0 1rem;
-  }
-`;
-
-const Header = styled.div`
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-`;
-
-const Title = styled.h1`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.5rem 0;
-  letter-spacing: -0.01em;
-`;
-
-const StatsInfo = styled.div`
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-  margin-bottom: 0.5rem;
-
-  .count {
-    color: var(--accent-color);
-    font-weight: 600;
-    font-family: var(--font-code);
-  }
-
-  .text {
-    opacity: 0.8;
   }
 `;
 
@@ -224,16 +196,13 @@ const NotesPage: React.FC = () => {
   return (
     <PageContainer>
       <Container>
-        <Header>
-          <Title>这是一个手记页面</Title>
-          {notes.length > 0 && (
-            <StatsInfo>
-              <span className="text">共</span>
-              <span className="count">{notes.length}</span>
-              <span className="text">篇手记</span>
-            </StatsInfo>
-          )}
-        </Header>
+        {/* 页面头部 */}
+        <ListPageHeader
+          title="生活手记"
+          subtitle="记录时光片段，留住美好瞬间"
+          count={notes.length}
+          countUnit="篇手记"
+        />
 
         <TimelineMasonry
           items={notes}

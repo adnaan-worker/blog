@@ -7,6 +7,7 @@ import { API, Project } from '@/utils/api';
 import { formatDate } from '@/utils';
 import { Pagination } from 'adnaan-ui';
 import { SPRING_PRESETS } from '@/utils/animation-engine';
+import { ListPageHeader } from '@/components/common/list-page-header';
 
 // 动画变体 - 使用 Spring 系统
 const fadeInUpVariants: Variants = {
@@ -44,53 +45,6 @@ const PageContainer = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
   min-height: calc(100vh - 200px);
-`;
-
-const PageHeader = styled.div`
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
-`;
-
-const PageTitle = styled.h1`
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.75rem 0;
-  letter-spacing: -0.02em;
-
-  @media (max-width: 768px) {
-    font-size: 1.5rem;
-  }
-`;
-
-const PageDescription = styled.p`
-  font-size: 0.9rem;
-  color: var(--text-tertiary);
-  margin: 0;
-  line-height: 1.6;
-  opacity: 0.9;
-
-  @media (max-width: 768px) {
-    font-size: 0.85rem;
-  }
-`;
-
-const StatsInfo = styled.div`
-  font-size: 0.85rem;
-  color: var(--text-tertiary);
-  margin-top: 0.5rem;
-
-  .count {
-    color: var(--accent-color);
-    font-weight: 600;
-    font-family: var(--font-code, 'Consolas', 'Monaco', monospace);
-    font-size: 0.9rem;
-  }
-
-  .text {
-    opacity: 0.8;
-  }
 `;
 
 const FilterBar = styled.div`
@@ -565,15 +519,8 @@ const Projects: React.FC = () => {
 
   return (
     <PageContainer>
-      <PageHeader>
-        <PageTitle>开源项目</PageTitle>
-        <PageDescription>探索代码与创意，共建开发生态</PageDescription>
-        <StatsInfo>
-          <span className="text">共</span>
-          <span className="count"> {totalCount} </span>
-          <span className="text">个项目</span>
-        </StatsInfo>
-      </PageHeader>
+      {/* 页面头部 - 统一组件 */}
+      <ListPageHeader title="开源项目" subtitle="探索代码与创意，共建开发生态" count={totalCount} countUnit="个项目" />
 
       <FilterBar>
         <FilterLabel>筛选</FilterLabel>

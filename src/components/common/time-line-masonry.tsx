@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
+import { SPRING_PRESETS } from '@/utils/animation-engine';
 
 // 通用时间线项目接口
 export interface TimelineItem {
@@ -212,9 +213,12 @@ function TimelineMasonry<T extends TimelineItem>({
         {groupedItems.map((yearGroup, yearIndex) => (
           <YearTimeline
             key={yearGroup.year}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: yearIndex * 0.1 }}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              ...SPRING_PRESETS.gentle,
+              delay: yearIndex * 0.08,
+            }}
           >
             {renderYearHeader
               ? renderYearHeader(yearGroup.year, yearGroup.items.length)
@@ -224,9 +228,12 @@ function TimelineMasonry<T extends TimelineItem>({
               {yearGroup.items.map((item, itemIndex) => (
                 <TimelineItemWrapper
                   key={item.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: (yearIndex * 5 + itemIndex) * 0.05 }}
+                  initial={{ opacity: 0, x: -20, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  transition={{
+                    ...SPRING_PRESETS.snappy,
+                    delay: (yearIndex * 3 + itemIndex) * 0.03,
+                  }}
                 >
                   {renderItem(item, itemIndex)}
                 </TimelineItemWrapper>
