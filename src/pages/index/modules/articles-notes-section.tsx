@@ -129,6 +129,7 @@ interface ArticleLinkProps {
   variants?: any;
   custom?: any;
   whileHover?: any;
+  transition?: any;
 }
 
 const ArticleLink: React.FC<ArticleLinkProps> = ({ to, children, ...props }) => (
@@ -139,29 +140,11 @@ const ArticleLink: React.FC<ArticleLinkProps> = ({ to, children, ...props }) => 
 
 // 文章区域组件
 export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, loading }) => {
-  // 使用动画优化工具
-  const { variants } = useAnimationEngine();
-
-  // 卡片动画变体
-  const cardVariants: any = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.25, 1, 0.5, 1],
-      },
-    },
-  };
+  // 使用动画引擎 - Spring 系统
+  const { variants, springPresets } = useAnimationEngine();
 
   if (loading) {
-    return (
-      <ContentSection variants={variants.fadeIn}>
-        <SectionTitle>最新文章</SectionTitle>
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
-      </ContentSection>
-    );
+    return null; // 加载中不显示
   }
 
   return (
@@ -178,6 +161,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
               fontSize: '0.85rem',
             }}
             whileHover={{ x: 5 }}
+            transition={springPresets.bouncy}
           >
             还有更多 <FiArrowRight size={12} />
           </motion.span>
@@ -189,9 +173,10 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
           <ArticleLink
             to={`/blog/${article.id}`}
             key={article.id}
-            variants={cardVariants}
-            whileHover={{ x: 2 }}
+            variants={variants.listItem}
+            whileHover={{ x: 3, scale: 1.01 }}
             custom={index}
+            transition={springPresets.snappy}
           >
             <ArticleContent>
               <ArticleTitle>{article.title}</ArticleTitle>
@@ -206,29 +191,11 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
 
 // 笔记区域组件
 export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) => {
-  // 使用动画优化工具
-  const { variants } = useAnimationEngine();
-
-  // 卡片动画变体
-  const cardVariants: any = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.25, 1, 0.5, 1],
-      },
-    },
-  };
+  // 使用动画引擎 - Spring 系统
+  const { variants, springPresets } = useAnimationEngine();
 
   if (loading) {
-    return (
-      <ContentSection variants={variants.fadeIn}>
-        <SectionTitle>最近更新的手记</SectionTitle>
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
-      </ContentSection>
-    );
+    return null; // 加载中不显示
   }
 
   return (
@@ -245,6 +212,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
               fontSize: '0.85rem',
             }}
             whileHover={{ x: 5 }}
+            transition={springPresets.bouncy}
           >
             还有更多 <FiArrowRight size={12} />
           </motion.span>
@@ -256,9 +224,10 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
           <ArticleLink
             to={`/notes/${note.id}`}
             key={note.id}
-            variants={cardVariants}
-            whileHover={{ x: 2 }}
+            variants={variants.listItem}
+            whileHover={{ x: 3, scale: 1.01 }}
             custom={index}
+            transition={springPresets.snappy}
           >
             <ArticleContent>
               <ArticleTitle>{note.title || '无标题手记'}</ArticleTitle>

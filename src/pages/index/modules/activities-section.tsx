@@ -304,21 +304,8 @@ interface ActivitiesSectionProps {
 
 // 主组件
 export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities, loading }) => {
-  // 使用动画优化工具
-  const { variants } = useAnimationEngine();
-
-  // 卡片动画变体
-  const cardVariants: any = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.25, 1, 0.5, 1],
-      },
-    },
-  };
+  // 使用动画引擎 - Spring 系统
+  const { variants, springPresets } = useAnimationEngine();
 
   return (
     <ContentSection variants={variants.fadeIn}>
@@ -340,9 +327,10 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
                 <ActivityItem
                   key={activity.id}
                   href={activity.link || '#'}
-                  variants={cardVariants}
+                  variants={variants.listItem}
                   custom={index}
-                  whileHover={{ x: 2 }}
+                  whileHover={{ x: 3, scale: 1.01 }}
+                  transition={springPresets.snappy}
                 >
                   <ActivityIcon>{formatted.emoji}</ActivityIcon>
                   <ActivityContent>

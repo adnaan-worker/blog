@@ -649,26 +649,13 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
   selectedProjectIndex,
   onProjectChange,
 }) => {
-  // 使用动画引擎
-  const { variants } = useAnimationEngine();
+  // 使用动画引擎 - Spring 系统
+  const { variants, springPresets } = useAnimationEngine();
 
   // 使用 useMemo 根据 projects.length 动态计算布局
   const geometryLayouts = useMemo(() => {
     return generateGeometryLayout(projects.length);
   }, [projects.length]);
-
-  // 项目切换动画变体
-  const projectVariants: any = {
-    hidden: { opacity: 0, x: -20 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.23, 1, 0.32, 1],
-      },
-    },
-  };
 
   const handlePrevProject = () => {
     if (selectedProjectIndex > 0) {
@@ -705,9 +692,9 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
           ) : projects[selectedProjectIndex] ? (
             <ProjectDetailContainer
               key={projects[selectedProjectIndex].id}
-              variants={projectVariants}
-              initial="hidden"
-              animate="visible"
+              initial={{ opacity: 0, x: -30, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={springPresets.bouncy}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.2}

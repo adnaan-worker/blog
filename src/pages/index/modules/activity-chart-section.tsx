@@ -98,18 +98,17 @@ const ChartLabels = styled.div`
 
 // 主组件
 export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ chartData }) => {
-  // 使用动画优化工具
-  const { variants } = useAnimationEngine();
+  // 使用动画引擎 - Spring 系统
+  const { variants, springPresets } = useAnimationEngine();
 
-  // 柱状图动画变体
+  // 柱状图动画变体 - Spring 弹性
   const barVariants: any = {
     hidden: { scaleY: 0, transformOrigin: 'bottom' },
     visible: (custom: number) => ({
       scaleY: 1,
       transition: {
-        duration: 0.3,
-        delay: custom * 0.03,
-        ease: [0.25, 1, 0.5, 1],
+        ...springPresets.bouncy,
+        delay: custom * 0.02,
       },
     }),
   };
@@ -126,7 +125,7 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
         <SectionSubtitle variants={variants.fadeIn}>记录每一次创作的足迹</SectionSubtitle>
       </CreativeSectionHeader>
 
-      <ChartContainer variants={variants.fadeIn} whileHover={{ y: -3 }}>
+      <ChartContainer variants={variants.card} whileHover={{ y: -4, scale: 1.01 }} transition={springPresets.gentle}>
         <Chart>
           {chartData.map((item, index) => (
             <ChartBar
@@ -134,7 +133,8 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
               height={item.count}
               variants={barVariants}
               custom={index}
-              whileHover={{ opacity: 1, scaleY: 1.05 }}
+              whileHover={{ opacity: 1, scaleY: 1.08 }}
+              transition={springPresets.bouncy}
             />
           ))}
         </Chart>
