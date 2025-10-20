@@ -6,14 +6,15 @@ import { FiGithub, FiExternalLink, FiStar, FiGitBranch, FiCalendar } from 'react
 import { API, Project } from '@/utils/api';
 import { formatDate } from '@/utils';
 import { Pagination } from 'adnaan-ui';
+import { SPRING_PRESETS } from '@/utils/animation-engine';
 
-// 动画变体
+// 动画变体 - 使用 Spring 系统
 const fadeInUpVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] },
+    transition: SPRING_PRESETS.gentle,
   },
 };
 
@@ -22,7 +23,7 @@ const staggerContainerVariants: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.05,
     },
   },
 };
@@ -32,10 +33,7 @@ const cardVariants: Variants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 1, 0.5, 1],
-    },
+    transition: SPRING_PRESETS.smooth,
   },
 };
 
@@ -570,13 +568,11 @@ const Projects: React.FC = () => {
       <PageHeader>
         <PageTitle>开源项目</PageTitle>
         <PageDescription>探索代码与创意，共建开发生态</PageDescription>
-        {totalCount > 0 && (
-          <StatsInfo>
-            <span className="text">共</span>
-            <span className="count"> {totalCount} </span>
-            <span className="text">个项目</span>
-          </StatsInfo>
-        )}
+        <StatsInfo>
+          <span className="text">共</span>
+          <span className="count"> {totalCount} </span>
+          <span className="text">个项目</span>
+        </StatsInfo>
       </PageHeader>
 
       <FilterBar>
@@ -597,9 +593,8 @@ const Projects: React.FC = () => {
         </FilterTags>
       </FilterBar>
 
-      {loading ? (
-        <LoadingState>加载中...</LoadingState>
-      ) : projects.length > 0 ? (
+      {/* 只有加载完成后才显示内容或空状态 */}
+      {projects.length > 0 ? (
         <>
           <ProjectsList initial="hidden" animate="visible" variants={staggerContainerVariants}>
             {projects.map((project, index) => (
@@ -612,7 +607,7 @@ const Projects: React.FC = () => {
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
-                limit={limit}
+                pageSize={limit}
                 totalItems={totalCount}
                 onPageChange={handlePageChange}
                 showInfo={false}
@@ -622,11 +617,13 @@ const Projects: React.FC = () => {
           )}
         </>
       ) : (
-        <EmptyState variants={fadeInUpVariants} initial="hidden" animate="visible">
-          <FiGithub />
-          <h3>暂无项目</h3>
-          <p>还没有发布任何项目</p>
-        </EmptyState>
+        !loading && (
+          <EmptyState variants={fadeInUpVariants} initial="hidden" animate="visible">
+            <FiGithub />
+            <h3>暂无项目</h3>
+            <p>还没有发布任何项目</p>
+          </EmptyState>
+        )
       )}
     </PageContainer>
   );

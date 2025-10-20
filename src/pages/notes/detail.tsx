@@ -6,6 +6,8 @@ import styled from '@emotion/styled';
 import { API, Note } from '@/utils/api';
 import RichTextRenderer from '@/components/common/rich-text-renderer';
 import RichTextStats from '@/components/common/rich-text-stats';
+import { useAnimationEngine } from '@/utils/animation-engine';
+import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -473,7 +475,7 @@ const PageHeadGradient = styled.div`
   }
 `;
 
-// 纸张背景容器 - 完全基于主题系统
+// 纸张背景容器 - 完全基于主题系统 + 淡入动画
 const PaperBackground = styled.div`
   pointer-events: none;
   position: fixed;
@@ -482,6 +484,19 @@ const PaperBackground = styled.div`
   top: 0;
   bottom: 0;
   z-index: 1;
+
+  /* 淡入动画 - 防止白色闪烁 */
+  opacity: 0;
+  animation: paper-fade-in 0.4s ease 0.1s forwards;
+
+  @keyframes paper-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 
   /* 亮色模式：羊皮纸效果 */
   [data-theme='light'] & {
@@ -565,15 +580,6 @@ const PaperBackground = styled.div`
   }
 `;
 
-// 页面动画
-const pageVariants = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: { duration: 0.5 },
-  },
-};
-
 // 扩展Note接口以包含相关手记
 interface NoteWithRelated extends Note {
   relatedNotes?: Note[];
@@ -594,6 +600,9 @@ const NoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [note, setNote] = useState<NoteWithRelated | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // 使用动画引擎 - Spring 弹性动画
+  const { variants, springPresets } = useAnimationEngine();
 
   useEffect(() => {
     loadNote();
@@ -633,68 +642,36 @@ const NoteDetail: React.FC = () => {
     }
   };
 
-  // 加载中，显示骨架屏
+  // 加载中，不显示背景
   if (isLoading) {
-    return (
-      <>
-        <PageHeadGradient />
-        <PaperBackground />
-        <PageContainer>
-          <motion.div variants={pageVariants} initial="initial" animate="animate">
-            <BackLink to="/notes">
-              <FiArrowLeft size={16} /> 返回手记列表
-            </BackLink>
-            <div style={{ padding: '2rem 0', opacity: 0.5 }}>
-              <div
-                style={{
-                  height: '200px',
-                  background: 'var(--bg-secondary)',
-                  borderRadius: '12px',
-                  marginBottom: '1rem',
-                }}
-              />
-              <div style={{ height: '400px', background: 'var(--bg-secondary)', borderRadius: '12px' }} />
-            </div>
-          </motion.div>
-        </PageContainer>
-      </>
-    );
+    return null;
   }
 
   // 手记未找到
   if (!note) {
     return (
-      <>
-        <PageHeadGradient />
-        <PaperBackground />
-        <PageContainer>
-          <motion.div variants={pageVariants} initial="initial" animate="animate">
-            <BackLink to="/notes">
-              <FiArrowLeft size={16} /> 返回手记列表
-            </BackLink>
-            <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-              <h2>手记未找到</h2>
-              <p>抱歉，找不到您请求的手记</p>
-            </div>
-          </motion.div>
-        </PageContainer>
-      </>
+      <PageContainer>
+        <BackLink to="/notes">
+          <FiArrowLeft size={16} /> 返回手记列表
+        </BackLink>
+        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+          <h2>手记未找到</h2>
+          <p>抱歉，找不到您请求的手记</p>
+        </div>
+      </PageContainer>
     );
   }
 
   return (
-    <>
-      <PageHeadGradient />
-      <PaperBackground />
-
+    <DetailPageLayout showBackground={true} mainContent={<></>}>
       <PageContainer>
-        <motion.div variants={pageVariants} initial="initial" animate="animate">
-          <BackLink to="/notes">
-            <FiArrowLeft size={16} /> 返回手记列表
-          </BackLink>
+        <BackLink to="/notes">
+          <FiArrowLeft size={16} /> 返回手记列表
+        </BackLink>
 
-          <NoteLayout>
-            {/* 主内容区 */}
+        <NoteLayout>
+          {/* 主内容区 - 向上弹性划出 */}
+          <DetailMainContent>
             <NoteMain>
               {/* 标题和元数据卡片 */}
               <NoteHeader>
@@ -744,8 +721,10 @@ const NoteDetail: React.FC = () => {
                 </RelatedNotes>
               )}
             </NoteMain>
+          </DetailMainContent>
 
-            {/* 侧边栏 */}
+          {/* 侧边栏 - 快速淡入 */}
+          <DetailSidebar>
             <NoteSidebar>
               <NoteInfoCard>
                 <CardTitle>手记信息</CardTitle>
@@ -820,10 +799,10 @@ const NoteDetail: React.FC = () => {
                 </InfoList>
               </NoteInfoCard>
             </NoteSidebar>
-          </NoteLayout>
-        </motion.div>
+          </DetailSidebar>
+        </NoteLayout>
       </PageContainer>
-    </>
+    </DetailPageLayout>
   );
 };
 

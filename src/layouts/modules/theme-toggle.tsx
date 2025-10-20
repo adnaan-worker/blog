@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { cycleTheme } from '@/store/modules/themeSlice';
 import { getElementCenter } from '@/utils/theme-transition';
 import type { RootState } from '@/store';
+import { SPRING_PRESETS } from '@/utils/animation-engine';
 
 // 主题切换按钮容器
 const ThemeToggleContainer = styled(motion.div)`
@@ -83,7 +84,7 @@ const ThemeToggle: React.FC = () => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
 
-  // 太阳动画变体
+  // 太阳动画变体 - 使用 Spring 系统
   const sunVariants = {
     initial: {
       rotate: 0,
@@ -94,23 +95,17 @@ const ThemeToggle: React.FC = () => {
       rotate: 360,
       scale: 1,
       opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: 'easeInOut' as any,
-      },
+      transition: SPRING_PRESETS.bouncy,
     },
     exit: {
       rotate: -360,
       scale: 0.8,
       opacity: 0,
-      transition: {
-        duration: 0.5,
-        ease: 'easeInOut' as any,
-      },
+      transition: SPRING_PRESETS.snappy,
     },
   };
 
-  // 月亮动画变体
+  // 月亮动画变体 - 使用 Spring 系统
   const moonVariants = {
     initial: {
       rotate: 0,
@@ -121,23 +116,17 @@ const ThemeToggle: React.FC = () => {
       rotate: -360,
       scale: 1,
       opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: 'easeInOut' as any,
-      },
+      transition: SPRING_PRESETS.bouncy,
     },
     exit: {
       rotate: 360,
       scale: 0.8,
       opacity: 0,
-      transition: {
-        duration: 0.5,
-        ease: 'easeInOut' as any,
-      },
+      transition: SPRING_PRESETS.snappy,
     },
   };
 
-  // 光线动画变体
+  // 光线动画变体 - 使用 Spring 系统
   const raysVariants = {
     initial: {
       scale: 0.8,
@@ -146,22 +135,16 @@ const ThemeToggle: React.FC = () => {
     animate: {
       scale: 1.2,
       opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: 'easeInOut' as any,
-      },
+      transition: SPRING_PRESETS.floaty,
     },
     exit: {
       scale: 0.8,
       opacity: 0,
-      transition: {
-        duration: 0.5,
-        ease: 'easeInOut' as any,
-      },
+      transition: SPRING_PRESETS.snappy,
     },
   };
 
-  // 自动模式动画变体
+  // 自动模式动画变体 - 使用 Spring 系统
   const autoVariants = {
     initial: {
       scale: 0.8,
@@ -172,19 +155,13 @@ const ThemeToggle: React.FC = () => {
       scale: 1,
       opacity: 1,
       rotate: 0,
-      transition: {
-        duration: 0.5,
-        ease: 'easeInOut' as any,
-      },
+      transition: SPRING_PRESETS.bouncy,
     },
     exit: {
       scale: 0.8,
       opacity: 0,
       rotate: 90,
-      transition: {
-        duration: 0.5,
-        ease: 'easeInOut' as any,
-      },
+      transition: SPRING_PRESETS.snappy,
     },
   };
 

@@ -196,19 +196,10 @@ function TimelineMasonry<T extends TimelineItem>({
     </DefaultYearHeader>
   );
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          textAlign: 'center',
-          padding: '2rem',
-          color: 'var(--text-tertiary)',
-          fontSize: '0.875rem',
-        }}
-      >
-        加载中...
-      </div>
-    );
+  // 加载中时直接显示空状态或等待数据，不显示加载文字
+  if (loading && items.length === 0) {
+    // 首次加载且无数据时，不显示任何内容，让页面保持干净
+    return null;
   }
 
   if (items.length === 0 && emptyState) {

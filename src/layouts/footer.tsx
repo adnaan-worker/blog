@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiGithub, FiMail, FiRss, FiHeart } from 'react-icons/fi';
 import React from 'react';
+import { SPRING_PRESETS } from '@/utils/animation-engine';
 
 // 使用motion组件增强动画效果
 const MotionFooter = motion.footer;
@@ -267,10 +268,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.4,
-      ease: 'easeOut' as any,
-    },
+    transition: SPRING_PRESETS.gentle,
   },
 };
 

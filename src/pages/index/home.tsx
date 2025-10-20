@@ -619,8 +619,8 @@ const SkillTags = styled(motion.div)`
 
 // 组件
 const Home: React.FC = () => {
-  // 使用动画引擎
-  const { variants } = useAnimationEngine();
+  // 使用动画引擎 - Spring 动画系统
+  const { variants, springPresets } = useAnimationEngine();
 
   // 卡片翻转状态
   const [isFlipped, setIsFlipped] = useState(false);
@@ -790,6 +790,7 @@ const Home: React.FC = () => {
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
+                  transition={springPresets.bouncy}
                 >
                   <FiMail />
                 </SocialLink>
@@ -801,6 +802,7 @@ const Home: React.FC = () => {
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
+                  transition={springPresets.bouncy}
                 >
                   <FiGithub />
                 </SocialLink>
@@ -812,6 +814,7 @@ const Home: React.FC = () => {
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
+                  transition={springPresets.bouncy}
                   style={{
                     background:
                       'linear-gradient(135deg, rgba(var(--gradient-from), 0.08), rgba(var(--gradient-to), 0.08))',
@@ -827,6 +830,7 @@ const Home: React.FC = () => {
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
+                  transition={springPresets.bouncy}
                 >
                   <Icon name="telegram" size={18} />
                 </SocialLink>
@@ -836,6 +840,7 @@ const Home: React.FC = () => {
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
+                  transition={springPresets.bouncy}
                 >
                   <Icon name="rss" size={18} />
                 </SocialLink>
@@ -845,7 +850,7 @@ const Home: React.FC = () => {
             <HeroImage
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
+              transition={{ ...springPresets.gentle, delay: 0.2 }}
               className="card-container"
             >
               <ProfileCard className={isFlipped ? 'flipped' : ''} onClick={handleCardFlip}>
@@ -939,7 +944,11 @@ const Home: React.FC = () => {
             </HeroImage>
           </Hero>
 
-          <Quote initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} transition={{ duration: 0.8, delay: 0.5 }}>
+          <Quote
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.8 }}
+            transition={{ ...springPresets.floaty, delay: 0.5 }}
+          >
             {quote} {quoteAuthor && `—— ${quoteAuthor}`}
           </Quote>
 

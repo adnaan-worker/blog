@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { motion, Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   FiGithub,
@@ -23,26 +23,7 @@ import {
 import { API, Project } from '@/utils/api';
 import { formatDate } from '@/utils';
 import RichTextRenderer from '@/components/common/rich-text-renderer';
-
-// 动画变体
-const fadeInUpVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] },
-  },
-};
-
-const staggerContainerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
+import { useAnimationEngine } from '@/utils/animation-engine';
 
 // 样式组件
 const PageContainer = styled.div`
@@ -589,6 +570,9 @@ const ProjectDetail: React.FC = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 使用动画引擎 - 项目详情页专用动画
+  const { variants } = useAnimationEngine();
+
   useEffect(() => {
     const loadProject = async () => {
       if (!id) return;
@@ -607,12 +591,9 @@ const ProjectDetail: React.FC = () => {
     loadProject();
   }, [id]);
 
+  // 去掉加载中提示，直接等待数据加载
   if (loading) {
-    return (
-      <PageContainer>
-        <LoadingState>加载中...</LoadingState>
-      </PageContainer>
-    );
+    return null;
   }
 
   if (!project) {
@@ -630,215 +611,232 @@ const ProjectDetail: React.FC = () => {
         返回项目列表
       </BackButton>
 
-      <ProjectHeader>
-        <ProjectHeaderContent>
-          <ProjectMeta>
-            <StatusBadge status={project.status}>{statusTextMap[project.status]}</StatusBadge>
-            {project.language && <ProjectLanguage color={project.languageColor}>{project.language}</ProjectLanguage>}
-            {project.isOpenSource && (
-              <MetaBadge title="开源项目">
-                <FiCode /> 开源
-              </MetaBadge>
-            )}
-            {project.isFeatured && (
-              <MetaBadge title="精选项目">
-                <FiAward /> 精选
-              </MetaBadge>
-            )}
-          </ProjectMeta>
+      {/* 整体容器 - 交错动画 */}
+      <motion.div variants={variants.stagger} initial="hidden" animate="visible">
+        {/* 项目头部 - 从上方滑入 */}
+        <motion.div variants={variants.projectHeader}>
+          <ProjectHeader>
+            <ProjectHeaderContent>
+              <ProjectMeta>
+                <StatusBadge status={project.status}>{statusTextMap[project.status]}</StatusBadge>
+                {project.language && (
+                  <ProjectLanguage color={project.languageColor}>{project.language}</ProjectLanguage>
+                )}
+                {project.isOpenSource && (
+                  <MetaBadge title="开源项目">
+                    <FiCode /> 开源
+                  </MetaBadge>
+                )}
+                {project.isFeatured && (
+                  <MetaBadge title="精选项目">
+                    <FiAward /> 精选
+                  </MetaBadge>
+                )}
+              </ProjectMeta>
 
-          <ProjectTitle>{project.title}</ProjectTitle>
+              <ProjectTitle>{project.title}</ProjectTitle>
 
-          {project.description && <ProjectDescription>{project.description}</ProjectDescription>}
+              {project.description && <ProjectDescription>{project.description}</ProjectDescription>}
 
-          <ProjectActions>
-            {project.githubUrl && (
-              <ActionButton href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="primary">
-                <FiGithub /> GitHub
-              </ActionButton>
-            )}
-            {project.giteeUrl && (
-              <ActionButton href={project.giteeUrl} target="_blank" rel="noopener noreferrer" className="primary">
-                <FiGithub /> Gitee
-              </ActionButton>
-            )}
-            {project.demoUrl && (
-              <ActionButton href={project.demoUrl} target="_blank" rel="noopener noreferrer" className="secondary">
-                <FiExternalLink /> 在线演示
-              </ActionButton>
-            )}
-            {project.docsUrl && (
-              <ActionButton href={project.docsUrl} target="_blank" rel="noopener noreferrer" className="secondary">
-                <FiBook /> 文档
-              </ActionButton>
-            )}
-            {project.npmPackage && (
-              <ActionButton
-                href={`https://www.npmjs.com/package/${project.npmPackage}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="secondary"
-              >
-                <FiPackage /> NPM
-              </ActionButton>
-            )}
-          </ProjectActions>
-        </ProjectHeaderContent>
+              <ProjectActions>
+                {project.githubUrl && (
+                  <ActionButton href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="primary">
+                    <FiGithub /> GitHub
+                  </ActionButton>
+                )}
+                {project.giteeUrl && (
+                  <ActionButton href={project.giteeUrl} target="_blank" rel="noopener noreferrer" className="primary">
+                    <FiGithub /> Gitee
+                  </ActionButton>
+                )}
+                {project.demoUrl && (
+                  <ActionButton href={project.demoUrl} target="_blank" rel="noopener noreferrer" className="secondary">
+                    <FiExternalLink /> 在线演示
+                  </ActionButton>
+                )}
+                {project.docsUrl && (
+                  <ActionButton href={project.docsUrl} target="_blank" rel="noopener noreferrer" className="secondary">
+                    <FiBook /> 文档
+                  </ActionButton>
+                )}
+                {project.npmPackage && (
+                  <ActionButton
+                    href={`https://www.npmjs.com/package/${project.npmPackage}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="secondary"
+                  >
+                    <FiPackage /> NPM
+                  </ActionButton>
+                )}
+              </ProjectActions>
+            </ProjectHeaderContent>
 
-        {project.coverImage && <HeaderCoverImage src={project.coverImage} alt={project.title} />}
-      </ProjectHeader>
+            {project.coverImage && <HeaderCoverImage src={project.coverImage} alt={project.title} />}
+          </ProjectHeader>
+        </motion.div>
 
-      <ContentLayout>
-        <MainContent>
-          {project.content ? (
-            <MarkdownContent>
-              <RichTextRenderer content={project.content} />
-            </MarkdownContent>
-          ) : (
-            <MarkdownContent>
-              <p>暂无详细介绍</p>
-            </MarkdownContent>
-          )}
-        </MainContent>
+        <ContentLayout>
+          {/* 主内容 - 淡入上升 */}
+          <motion.div variants={variants.projectContent}>
+            <MainContent>
+              {project.content ? (
+                <MarkdownContent>
+                  <RichTextRenderer content={project.content} />
+                </MarkdownContent>
+              ) : (
+                <MarkdownContent>
+                  <p>暂无详细介绍</p>
+                </MarkdownContent>
+              )}
+            </MainContent>
+          </motion.div>
 
-        <Sidebar>
-          {/* 作者信息 */}
-          {project.author && (
-            <InfoCard>
-              <InfoTitle>
-                <FiUser />
-                作者
-              </InfoTitle>
-              <AuthorInfo>
-                <AuthorAvatar src={project.author.avatar} alt={project.author.fullName || project.author.username} />
-                <AuthorDetails>
-                  <AuthorName>{project.author.fullName || project.author.username}</AuthorName>
-                  <AuthorUsername>@{project.author.username}</AuthorUsername>
-                </AuthorDetails>
-              </AuthorInfo>
-            </InfoCard>
-          )}
+          {/* 侧边栏 - 从右侧滑入 */}
+          <motion.div variants={variants.projectSidebar}>
+            <Sidebar>
+              {/* 作者信息 */}
+              {project.author && (
+                <InfoCard>
+                  <InfoTitle>
+                    <FiUser />
+                    作者
+                  </InfoTitle>
+                  <AuthorInfo>
+                    <AuthorAvatar
+                      src={project.author.avatar}
+                      alt={project.author.fullName || project.author.username}
+                    />
+                    <AuthorDetails>
+                      <AuthorName>{project.author.fullName || project.author.username}</AuthorName>
+                      <AuthorUsername>@{project.author.username}</AuthorUsername>
+                    </AuthorDetails>
+                  </AuthorInfo>
+                </InfoCard>
+              )}
 
-          {/* 项目统计 */}
-          <InfoCard>
-            <InfoTitle>
-              <FiStar />
-              项目统计
-            </InfoTitle>
-            <InfoList>
-              {project.stars > 0 && (
-                <InfoItem>
+              {/* 项目统计 */}
+              <InfoCard>
+                <InfoTitle>
                   <FiStar />
-                  <strong>{project.stars}</strong> Stars
-                </InfoItem>
-              )}
-              {project.forks > 0 && (
-                <InfoItem>
-                  <FiGitBranch />
-                  <strong>{project.forks}</strong> Forks
-                </InfoItem>
-              )}
-              {project.watchers > 0 && (
-                <InfoItem>
-                  <FiEye />
-                  <strong>{project.watchers}</strong> Watchers
-                </InfoItem>
-              )}
-              {project.issues > 0 && (
-                <InfoItem>
-                  <FiAlertCircle />
-                  <strong>{project.issues}</strong> Issues
-                </InfoItem>
-              )}
-              {project.downloads > 0 && (
-                <InfoItem>
-                  <FiDownload />
-                  <strong>{project.downloads}</strong> 下载量
-                </InfoItem>
-              )}
-              {project.viewCount > 0 && (
-                <InfoItem>
-                  <FiEye />
-                  <strong>{project.viewCount}</strong> 浏览
-                </InfoItem>
-              )}
-            </InfoList>
-          </InfoCard>
+                  项目统计
+                </InfoTitle>
+                <InfoList>
+                  {project.stars > 0 && (
+                    <InfoItem>
+                      <FiStar />
+                      <strong>{project.stars}</strong> Stars
+                    </InfoItem>
+                  )}
+                  {project.forks > 0 && (
+                    <InfoItem>
+                      <FiGitBranch />
+                      <strong>{project.forks}</strong> Forks
+                    </InfoItem>
+                  )}
+                  {project.watchers > 0 && (
+                    <InfoItem>
+                      <FiEye />
+                      <strong>{project.watchers}</strong> Watchers
+                    </InfoItem>
+                  )}
+                  {project.issues > 0 && (
+                    <InfoItem>
+                      <FiAlertCircle />
+                      <strong>{project.issues}</strong> Issues
+                    </InfoItem>
+                  )}
+                  {project.downloads > 0 && (
+                    <InfoItem>
+                      <FiDownload />
+                      <strong>{project.downloads}</strong> 下载量
+                    </InfoItem>
+                  )}
+                  {project.viewCount > 0 && (
+                    <InfoItem>
+                      <FiEye />
+                      <strong>{project.viewCount}</strong> 浏览
+                    </InfoItem>
+                  )}
+                </InfoList>
+              </InfoCard>
 
-          {/* 时间信息 */}
-          <InfoCard>
-            <InfoTitle>
-              <FiClock />
-              时间线
-            </InfoTitle>
-            <InfoList>
-              {project.startedAt && (
-                <InfoItem>
-                  <FiCalendar />
-                  开始于 <strong>{formatDate(project.startedAt, 'YYYY-MM-DD')}</strong>
-                </InfoItem>
-              )}
-              {project.createdAt && (
-                <InfoItem>
-                  <FiCalendar />
-                  创建于 <strong>{formatDate(project.createdAt, 'YYYY-MM-DD')}</strong>
-                </InfoItem>
-              )}
-              {project.updatedAt && (
-                <InfoItem>
+              {/* 时间信息 */}
+              <InfoCard>
+                <InfoTitle>
                   <FiClock />
-                  更新于 <strong>{formatDate(project.updatedAt, 'YYYY-MM-DD')}</strong>
-                </InfoItem>
-              )}
-            </InfoList>
-          </InfoCard>
+                  时间线
+                </InfoTitle>
+                <InfoList>
+                  {project.startedAt && (
+                    <InfoItem>
+                      <FiCalendar />
+                      开始于 <strong>{formatDate(project.startedAt, 'YYYY-MM-DD')}</strong>
+                    </InfoItem>
+                  )}
+                  {project.createdAt && (
+                    <InfoItem>
+                      <FiCalendar />
+                      创建于 <strong>{formatDate(project.createdAt, 'YYYY-MM-DD')}</strong>
+                    </InfoItem>
+                  )}
+                  {project.updatedAt && (
+                    <InfoItem>
+                      <FiClock />
+                      更新于 <strong>{formatDate(project.updatedAt, 'YYYY-MM-DD')}</strong>
+                    </InfoItem>
+                  )}
+                </InfoList>
+              </InfoCard>
 
-          {/* 功能特性 */}
-          {project.features && project.features.length > 0 && (
-            <InfoCard>
-              <InfoTitle>
-                <FiCheckCircle />
-                功能特性
-              </InfoTitle>
-              <FeaturesList>
-                {project.features.map((feature, idx) => (
-                  <FeatureItem key={idx}>
+              {/* 功能特性 */}
+              {project.features && project.features.length > 0 && (
+                <InfoCard>
+                  <InfoTitle>
                     <FiCheckCircle />
-                    <span>{feature}</span>
-                  </FeatureItem>
-                ))}
-              </FeaturesList>
-            </InfoCard>
-          )}
+                    功能特性
+                  </InfoTitle>
+                  <FeaturesList>
+                    {project.features.map((feature, idx) => (
+                      <FeatureItem key={idx}>
+                        <FiCheckCircle />
+                        <span>{feature}</span>
+                      </FeatureItem>
+                    ))}
+                  </FeaturesList>
+                </InfoCard>
+              )}
 
-          {/* 技术栈 */}
-          {project.techStack && project.techStack.length > 0 && (
-            <InfoCard>
-              <InfoTitle>
-                <FiCode />
-                技术栈
-              </InfoTitle>
-              <TagsSection>
-                {project.techStack.map((tech, idx) => (
-                  <Tag key={idx}>{tech}</Tag>
-                ))}
-              </TagsSection>
-            </InfoCard>
-          )}
+              {/* 技术栈 */}
+              {project.techStack && project.techStack.length > 0 && (
+                <InfoCard>
+                  <InfoTitle>
+                    <FiCode />
+                    技术栈
+                  </InfoTitle>
+                  <TagsSection>
+                    {project.techStack.map((tech, idx) => (
+                      <Tag key={idx}>{tech}</Tag>
+                    ))}
+                  </TagsSection>
+                </InfoCard>
+              )}
 
-          {/* 标签 */}
-          {project.tags && project.tags.length > 0 && (
-            <InfoCard>
-              <InfoTitle>标签</InfoTitle>
-              <TagsSection>
-                {project.tags.map((tag, idx) => (
-                  <Tag key={idx}>{tag}</Tag>
-                ))}
-              </TagsSection>
-            </InfoCard>
-          )}
-        </Sidebar>
-      </ContentLayout>
+              {/* 标签 */}
+              {project.tags && project.tags.length > 0 && (
+                <InfoCard>
+                  <InfoTitle>标签</InfoTitle>
+                  <TagsSection>
+                    {project.tags.map((tag, idx) => (
+                      <Tag key={idx}>{tag}</Tag>
+                    ))}
+                  </TagsSection>
+                </InfoCard>
+              )}
+            </Sidebar>
+          </motion.div>
+        </ContentLayout>
+      </motion.div>
     </PageContainer>
   );
 };

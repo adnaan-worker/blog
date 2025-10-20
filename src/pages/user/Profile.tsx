@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine, SPRING_PRESETS } from '@/utils/animation-engine';
 
 // GPU 加速样式 - 已废弃，直接在各组件中使用优化的样式
 
-// 抽屉动画变体 - 优化性能
+// 抽屉动画变体 - 使用 Spring 系统
 const drawerVariants = {
   left: {
     hidden: { x: '-100%', opacity: 0 },
@@ -13,18 +13,14 @@ const drawerVariants = {
       x: 0,
       opacity: 1,
       transition: {
-        duration: 0.25,
-        ease: [0.25, 0.1, 0.25, 1] as any,
-        opacity: { duration: 0.15 },
+        ...SPRING_PRESETS.stiff,
+        opacity: { ...SPRING_PRESETS.stiff, damping: 50 },
       },
     },
     exit: {
       x: '-100%',
       opacity: 0,
-      transition: {
-        duration: 0.2,
-        ease: [0.4, 0, 1, 1] as any,
-      },
+      transition: SPRING_PRESETS.precise,
     },
   },
   right: {
@@ -33,27 +29,23 @@ const drawerVariants = {
       x: 0,
       opacity: 1,
       transition: {
-        duration: 0.25,
-        ease: [0.25, 0.1, 0.25, 1] as any,
-        opacity: { duration: 0.15 },
+        ...SPRING_PRESETS.stiff,
+        opacity: { ...SPRING_PRESETS.stiff, damping: 50 },
       },
     },
     exit: {
       x: '100%',
       opacity: 0,
-      transition: {
-        duration: 0.2,
-        ease: [0.4, 0, 1, 1] as any,
-      },
+      transition: SPRING_PRESETS.precise,
     },
   },
 };
 
-// 遮罩层动画变体 - 简化动画
+// 遮罩层动画变体 - 使用 Spring
 const overlayVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.15 } }, // 更快速的渐显
-  exit: { opacity: 0, transition: { duration: 0.15 } },
+  visible: { opacity: 1, transition: { ...SPRING_PRESETS.stiff, damping: 60 } },
+  exit: { opacity: 0, transition: { ...SPRING_PRESETS.stiff, damping: 60 } },
 };
 
 import {

@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMusic, FiArrowUp } from 'react-icons/fi';
 import MusicPlayer from './modules/music-player';
+import { SPRING_PRESETS } from '@/utils/animation-engine';
 
 // GPU加速优化
 const gpuAcceleration = {
@@ -321,10 +322,7 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{
-                    duration: 0.12, // 更快的动画
-                    ease: [0.4, 0, 0.2, 1], // 快速缓动
-                  }}
+                  transition={{ ...SPRING_PRESETS.stiff, damping: 60 }}
                 >
                   <LyricText>{currentLyric}</LyricText>
                 </LyricTextWrapper>
