@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDate } from '@/utils';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { UserActivity } from '@/utils/api';
@@ -127,9 +127,8 @@ const ActivityCard = styled(motion.div)`
   }
 `;
 
-const ActivityItem = styled(motion.a)`
-  text-decoration: none;
-  color: inherit;
+const ActivityItem = styled(motion.div)`
+  cursor: pointer;
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
@@ -306,6 +305,14 @@ interface ActivitiesSectionProps {
 export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities, loading }) => {
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
+  const navigate = useNavigate();
+
+  // 处理活动点击
+  const handleActivityClick = (link: string | null | undefined) => {
+    if (link && link !== '#') {
+      navigate(link);
+    }
+  };
 
   return (
     <ContentSection variants={variants.fadeIn}>
@@ -326,7 +333,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
               return (
                 <ActivityItem
                   key={activity.id}
-                  href={activity.link || '#'}
+                  onClick={() => handleActivityClick(activity.link)}
                   variants={variants.listItem}
                   custom={index}
                   whileHover={{ x: 3, scale: 1.01 }}

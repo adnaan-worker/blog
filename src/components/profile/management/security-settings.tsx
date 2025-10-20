@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { FiLock, FiDownload, FiTrash2, FiAlertTriangle, FiShield } from 'react-icons/fi';
 import { Button, Input } from 'adnaan-ui';
 import { API } from '@/utils/api';
@@ -137,6 +138,8 @@ interface SecuritySettingsProps {
 }
 
 const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
+  const navigate = useNavigate();
+
   // 修改密码状态
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -189,7 +192,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
 
       // 3秒后跳转到登录页
       setTimeout(() => {
-        window.location.href = '/#/login';
+        navigate('/login');
       }, 3000);
     } catch (error: any) {
       adnaan.toast.error(error.message || '密码修改失败');
@@ -257,7 +260,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
 
       // 跳转到首页
       setTimeout(() => {
-        window.location.href = '/';
+        navigate('/');
       }, 2000);
     } catch (error: any) {
       adnaan.toast.error(error.message || '账户删除失败');
