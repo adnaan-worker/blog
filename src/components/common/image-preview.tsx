@@ -21,18 +21,18 @@ interface PreviewModalProps {
   alt?: string;
 }
 
-// 图片容器
-const ImageContainer = styled.span<{ customWidth?: number; customHeight?: number }>`
+// 图片容器（自适应图片大小，无空白）
+const ImageContainer = styled.span<{ customWidth?: number }>`
   position: relative;
   display: inline-block;
   cursor: pointer;
   transition: all 0.3s ease;
   border-radius: 8px;
   overflow: hidden;
-  max-width: 100%;
+  line-height: 0; /* 消除inline-block的底部空白 */
 
-  ${(props) => props.customWidth && `width: ${props.customWidth}px;`}
-  ${(props) => props.customHeight && `height: ${props.customHeight}px;`}
+  /* 容器宽度与图片保持一致 */
+  ${(props) => (props.customWidth ? `width: min(${props.customWidth}px, 100%);` : 'max-width: 100%;')}
 
   &:hover {
     transform: translateY(-2px);
@@ -41,6 +41,11 @@ const ImageContainer = styled.span<{ customWidth?: number; customHeight?: number
     .preview-overlay {
       opacity: 1;
     }
+  }
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    width: 100% !important;
   }
 `;
 
@@ -73,12 +78,19 @@ const PreviewOverlay = styled.span`
 `;
 
 // 图片元素
-const Image = styled.img<{ hasCustomSize?: boolean }>`
-  width: ${(props) => (props.hasCustomSize ? 'auto' : '100%')};
+const Image = styled.img<{ customWidth?: number }>`
+  /* 智能宽度：有设置值时限制宽度，否则100%填充容器 */
+  width: ${(props) => (props.customWidth ? `min(${props.customWidth}px, 100%)` : '100%')};
   height: auto;
   max-width: 100%;
   display: block;
   transition: all 0.3s ease;
+
+  /* 移动端强制100%宽度 */
+  @media (max-width: 768px) {
+    width: 100% !important;
+    height: auto !important;
+  }
 `;
 
 // 模态框背景
@@ -395,31 +407,10 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ src, alt, className, style,
     setIsPreviewOpen(false);
   }, []);
 
-  const hasCustomSize = width !== undefined || height !== undefined;
-
   return (
     <>
-      <ImageContainer
-        className={className}
-        style={style}
-        customWidth={width}
-        customHeight={height}
-        onClick={handleImageClick}
-      >
-        <Image
-          src={src}
-          alt={alt}
-          loading="lazy"
-          hasCustomSize={hasCustomSize}
-          style={
-            hasCustomSize
-              ? {
-                  width: width ? `${width}px` : 'auto',
-                  height: height ? `${height}px` : 'auto',
-                }
-              : undefined
-          }
-        />
+      <ImageContainer className={className} style={style} customWidth={width} onClick={handleImageClick}>
+        <Image src={src} alt={alt} loading="lazy" customWidth={width} />
         <PreviewOverlay className="preview-overlay">
           <span className="preview-icon">
             <FiMaximize2 size={20} />

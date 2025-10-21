@@ -90,43 +90,6 @@ const ActivityLink = styled(Link)`
   display: block;
 `;
 
-const ActivityCard = styled(motion.div)`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.875rem 0;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.3);
-  transition: all 0.2s ease;
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    background: var(--accent-color);
-    border-radius: 50%;
-    opacity: 0.7;
-    transition: all 0.2s ease;
-  }
-
-  &:hover::before {
-    opacity: 1;
-    transform: translateY(-50%) scale(1.2);
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  [data-theme='dark'] & {
-    border-bottom-color: rgba(75, 85, 99, 0.3);
-  }
-`;
-
 const ActivityItem = styled(motion.div)`
   cursor: pointer;
   display: flex;
@@ -218,21 +181,9 @@ const ActivityTime = styled.span`
   }
 `;
 
-const ActivityDescription = styled.p`
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
-  margin: 0;
-  opacity: 0.8;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
 // 格式化活动文本
 const formatActivityText = (activity: UserActivity) => {
-  const username = activity.user?.username || '某人';
+  const username = activity.user?.username;
   const metadata = activity.metadata || {};
 
   switch (activity.type) {
@@ -287,7 +238,7 @@ const formatActivityText = (activity: UserActivity) => {
       };
     default:
       return {
-        primary: `${username}${activity.title || '进行了操作'}`,
+        primary: `${activity.title || '进行了操作'}`,
         secondary: activity.description || '',
         emoji: '📍',
         color: 'var(--text-secondary)',
@@ -315,12 +266,12 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
   };
 
   return (
-    <ContentSection variants={variants.fadeIn}>
+    <ContentSection initial="hidden" whileInView="visible" viewport={{ amount: 0.2 }} variants={variants.fadeIn}>
       <SectionTitle>最近发生的事</SectionTitle>
 
       <ActivityScrollContainer>
         <FadeMask className="top" />
-        <ActivityGrid variants={variants.stagger}>
+        <ActivityGrid initial="hidden" whileInView="visible" viewport={{ amount: 0.1 }} variants={variants.stagger}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
           ) : activities.length === 0 ? (

@@ -8,6 +8,16 @@ import Underline from '@tiptap/extension-underline';
 import Strike from '@tiptap/extension-strike';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
+import { TextStyle, Color } from '@tiptap/extension-text-style';
+import Highlight from '@tiptap/extension-highlight';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Subscript from '@tiptap/extension-subscript';
+import Superscript from '@tiptap/extension-superscript';
 import 'highlight.js/styles/github.css'; // 添加语法高亮样式
 import styled from '@emotion/styled';
 import '@/styles/rich-text.css';
@@ -31,7 +41,13 @@ import {
   FiMinus as FiStrikethrough,
   FiMessageSquare,
   FiUpload,
+  FiRotateCcw,
+  FiRotateCw,
+  FiCheckSquare,
+  FiGrid,
+  FiTrash2,
 } from 'react-icons/fi';
+import { MdFormatColorText, MdFormatColorFill } from 'react-icons/md';
 
 // 创建 lowlight 实例，支持更多语言
 const lowlight = createLowlight(common);
@@ -108,8 +124,27 @@ const createExtensions = () => [
       rel: 'noopener noreferrer',
     },
   }),
+  // 文字样式扩展（TextStyle 必须在 Color 之前）
+  TextStyle,
+  Color,
+  Highlight.configure({
+    multicolor: true,
+  }),
+  // 表格
+  Table,
+  TableRow,
+  TableHeader,
+  TableCell,
+  // 任务列表
+  TaskList,
+  TaskItem.configure({
+    nested: true,
+  }),
+  // 其他
   Underline,
   Strike,
+  Subscript,
+  Superscript,
 ];
 
 interface ModernEditorProps {
@@ -138,10 +173,17 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
   const [isInCodeBlock, setIsInCodeBlock] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // 新增功能状态
+  const [showTextColorPicker, setShowTextColorPicker] = useState(false);
+  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+
   const [commandMenuPosition, setCommandMenuPosition] = useState({ top: 0, left: 0 });
   const [commandSearch, setCommandSearch] = useState('');
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 用于跟踪组件挂载状态，防止在组件卸载后更新状态
+  const isMountedRef = useRef(true);
 
   // 使用 useMemo 确保扩展只创建一次，避免重复警告
   const extensions = React.useMemo(() => createExtensions(), []);
@@ -166,16 +208,20 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
             const file = item.getAsFile();
             if (file) {
               try {
-                setIsUploading(true);
+                if (isMountedRef.current) setIsUploading(true);
                 const url = await uploadImage(file);
 
-                // 插入图片到编辑器
-                editor?.commands.setImage({ src: url });
+                // 插入图片到编辑器（只在组件仍挂载时）
+                if (isMountedRef.current) {
+                  editor?.commands.setImage({ src: url });
+                }
               } catch (error: any) {
                 console.error('图片上传失败:', error);
-                adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
+                if (isMountedRef.current) {
+                  adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
+                }
               } finally {
-                setIsUploading(false);
+                if (isMountedRef.current) setIsUploading(false);
               }
             }
           });
@@ -198,16 +244,20 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
 
           imageFiles.forEach(async (file) => {
             try {
-              setIsUploading(true);
+              if (isMountedRef.current) setIsUploading(true);
               const url = await uploadImage(file);
 
-              // 在拖放位置插入图片
-              editor?.commands.setImage({ src: url });
+              // 在拖放位置插入图片（只在组件仍挂载时）
+              if (isMountedRef.current) {
+                editor?.commands.setImage({ src: url });
+              }
             } catch (error: any) {
               console.error('图片上传失败:', error);
-              adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
+              if (isMountedRef.current) {
+                adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
+              }
             } finally {
-              setIsUploading(false);
+              if (isMountedRef.current) setIsUploading(false);
             }
           });
 
@@ -225,10 +275,31 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
 
           // 获取光标位置
           const coords = view.coordsAtPos($from.pos);
-          setCommandMenuPosition({
-            top: coords.top - (editorRef.current?.getBoundingClientRect().top || 0) + 30,
-            left: coords.left - (editorRef.current?.getBoundingClientRect().left || 0),
-          });
+          const editorRect = editorRef.current?.getBoundingClientRect();
+
+          if (editorRect) {
+            const relativeTop = coords.top - editorRect.top;
+            const relativeLeft = coords.left - editorRect.left;
+
+            // 计算可用空间
+            const menuHeight = 400; // 菜单最大高度
+            const spaceBelow = editorRect.bottom - coords.top;
+            const spaceAbove = coords.top - editorRect.top;
+
+            // 智能判断显示在上方还是下方
+            let finalTop = relativeTop + 30;
+
+            if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+              // 下方空间不足且上方空间更大，显示在上方
+              finalTop = relativeTop - Math.min(menuHeight, spaceAbove);
+            }
+
+            setCommandMenuPosition({
+              top: finalTop,
+              left: relativeLeft,
+            });
+          }
+
           setCommandSearch('');
           setShowCommandMenu(true);
           return false;
@@ -287,6 +358,13 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
     },
   });
 
+  // 组件卸载清理
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // 同步外部内容变化
   useEffect(() => {
     if (editor && content && content !== editor.getHTML()) {
@@ -314,31 +392,63 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Element;
 
-      // 检查是否点击在编辑器内部
-      if (editorRef.current && editorRef.current.contains(target)) {
+      // 检查是否点击在快捷指令菜单内
+      const commandMenuElement = document.querySelector('[data-command-menu]');
+      if (showCommandMenu && commandMenuElement?.contains(target)) {
         return;
       }
 
+      // 检查是否点击在语言选择菜单内
+      const languageMenuElement = document.querySelector('[data-language-menu]');
+      if (showLanguageMenu && languageMenuElement?.contains(target)) {
+        return;
+      }
+
+      // 检查是否点击在标题菜单内
+      const headingMenuElement = document.querySelector('[data-heading-menu]');
+      if (showHeadingMenu && headingMenuElement?.contains(target)) {
+        return;
+      }
+
+      // 检查是否点击在颜色选择器内
+      const colorPickerElement = document.querySelector('[data-color-picker]');
+      if (showTextColorPicker && colorPickerElement?.contains(target)) {
+        return;
+      }
+
+      // 检查是否点击在高亮选择器内
+      const highlightPickerElement = document.querySelector('[data-highlight-picker]');
+      if (showHighlightPicker && highlightPickerElement?.contains(target)) {
+        return;
+      }
+
+      // 关闭所有菜单
       if (showCommandMenu) {
         setShowCommandMenu(false);
       }
       if (showLanguageMenu) {
         setShowLanguageMenu(false);
       }
+      if (showHeadingMenu) {
+        setShowHeadingMenu(false);
+      }
+      if (showTextColorPicker) {
+        setShowTextColorPicker(false);
+      }
+      if (showHighlightPicker) {
+        setShowHighlightPicker(false);
+      }
     };
 
-    if (showCommandMenu || showLanguageMenu) {
-      // 延迟添加事件监听器，避免立即触发
-      const timer = setTimeout(() => {
-        document.addEventListener('click', handleClickOutside);
-      }, 100);
+    if (showCommandMenu || showLanguageMenu || showHeadingMenu || showTextColorPicker || showHighlightPicker) {
+      // 立即添加事件监听器
+      document.addEventListener('mousedown', handleClickOutside);
 
       return () => {
-        clearTimeout(timer);
-        document.removeEventListener('click', handleClickOutside);
+        document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [showCommandMenu, showLanguageMenu]);
+  }, [showCommandMenu, showLanguageMenu, showHeadingMenu, showTextColorPicker, showHighlightPicker]);
 
   // 命令列表
   const commands: CommandItem[] = [
@@ -548,14 +658,20 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
 
       for (const file of imageFiles) {
         try {
-          setIsUploading(true);
+          if (isMountedRef.current) setIsUploading(true);
           const url = await uploadImage(file);
-          editor?.chain().focus().setImage({ src: url }).run();
+
+          // 只在组件仍挂载时插入图片
+          if (isMountedRef.current) {
+            editor?.chain().focus().setImage({ src: url }).run();
+          }
         } catch (error: any) {
           console.error('图片上传失败:', error);
-          adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
+          if (isMountedRef.current) {
+            adnaan?.toast.error(error.message || '图片上传失败', '上传失败');
+          }
         } finally {
-          setIsUploading(false);
+          if (isMountedRef.current) setIsUploading(false);
         }
       }
 
@@ -575,6 +691,27 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
     <EditorWrapper ref={editorRef} maxHeight={maxHeight}>
       {/* 浮动工具栏 */}
       <FloatingToolbar>
+        {/* 撤销/重做 */}
+        <ToolbarGroup>
+          <ToolbarButton
+            onClick={() => editor?.chain().focus().undo().run()}
+            disabled={!editor?.can().undo()}
+            title="撤销 (Ctrl+Z)"
+          >
+            <FiRotateCcw />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor?.chain().focus().redo().run()}
+            disabled={!editor?.can().redo()}
+            title="重做 (Ctrl+Shift+Z)"
+          >
+            <FiRotateCw />
+          </ToolbarButton>
+        </ToolbarGroup>
+
+        <Divider />
+
+        {/* 文本样式 */}
         <ToolbarGroup>
           <ToolbarButton onClick={toggleBold} active={editor.isActive('bold')} title="加粗 (Ctrl+B)">
             <FiBold />
@@ -591,6 +728,146 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
           <ToolbarButton onClick={toggleCode} active={editor.isActive('code')} title="行内代码">
             <FiCode />
           </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor?.chain().focus().toggleSubscript().run()}
+            active={editor.isActive('subscript')}
+            title="下标"
+          >
+            X<sub style={{ fontSize: '0.7em' }}>₂</sub>
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor?.chain().focus().toggleSuperscript().run()}
+            active={editor.isActive('superscript')}
+            title="上标"
+          >
+            X<sup style={{ fontSize: '0.7em' }}>²</sup>
+          </ToolbarButton>
+        </ToolbarGroup>
+
+        <Divider />
+
+        {/* 文字颜色和高亮 */}
+        <ToolbarGroup>
+          <ColorPickerDropdown>
+            <ToolbarButton onClick={() => setShowTextColorPicker(!showTextColorPicker)} title="文字颜色">
+              <MdFormatColorText />
+            </ToolbarButton>
+            {showTextColorPicker && (
+              <ColorPickerMenu data-color-picker>
+                <ColorPickerTitle>文字颜色</ColorPickerTitle>
+                <ColorGrid>
+                  {[
+                    '#000000',
+                    '#e60000',
+                    '#ff9900',
+                    '#ffff00',
+                    '#008a00',
+                    '#0066cc',
+                    '#9933ff',
+                    '#ffffff',
+                    '#facccc',
+                    '#ffebcc',
+                    '#ffffcc',
+                    '#cce8cc',
+                    '#cce0f5',
+                    '#ebd6ff',
+                    '#bbbbbb',
+                    '#f06666',
+                    '#ffc266',
+                    '#ffff66',
+                    '#66b966',
+                    '#66a3e0',
+                    '#c285ff',
+                    '#888888',
+                    '#a10000',
+                    '#b26b00',
+                    '#b2b200',
+                    '#006100',
+                    '#0047b2',
+                    '#6b24b2',
+                    '#444444',
+                    '#5c0000',
+                    '#663d00',
+                    '#666600',
+                    '#003700',
+                    '#002966',
+                    '#3d1466',
+                  ].map((color) => (
+                    <ColorOption
+                      key={color}
+                      color={color}
+                      onClick={() => {
+                        editor?.chain().focus().setColor(color).run();
+                        setShowTextColorPicker(false);
+                      }}
+                      active={editor.getAttributes('textStyle').color === color}
+                    />
+                  ))}
+                </ColorGrid>
+                <ColorPickerAction
+                  onClick={() => {
+                    editor?.chain().focus().unsetColor().run();
+                    setShowTextColorPicker(false);
+                  }}
+                >
+                  清除颜色
+                </ColorPickerAction>
+              </ColorPickerMenu>
+            )}
+          </ColorPickerDropdown>
+
+          <ColorPickerDropdown>
+            <ToolbarButton
+              onClick={() => setShowHighlightPicker(!showHighlightPicker)}
+              active={editor.isActive('highlight')}
+              title="文字高亮"
+            >
+              <MdFormatColorFill />
+            </ToolbarButton>
+            {showHighlightPicker && (
+              <ColorPickerMenu data-highlight-picker>
+                <ColorPickerTitle>背景高亮</ColorPickerTitle>
+                <ColorGrid>
+                  {[
+                    '#ffeb3b',
+                    '#ffc107',
+                    '#ff9800',
+                    '#ff5722',
+                    '#f44336',
+                    '#e91e63',
+                    '#9c27b0',
+                    '#673ab7',
+                    '#3f51b5',
+                    '#2196f3',
+                    '#03a9f4',
+                    '#00bcd4',
+                    '#009688',
+                    '#4caf50',
+                    '#8bc34a',
+                    '#cddc39',
+                  ].map((color) => (
+                    <ColorOption
+                      key={color}
+                      color={color}
+                      onClick={() => {
+                        editor?.chain().focus().setHighlight({ color }).run();
+                        setShowHighlightPicker(false);
+                      }}
+                      active={editor.getAttributes('highlight').color === color}
+                    />
+                  ))}
+                </ColorGrid>
+                <ColorPickerAction
+                  onClick={() => {
+                    editor?.chain().focus().unsetHighlight().run();
+                    setShowHighlightPicker(false);
+                  }}
+                >
+                  清除高亮
+                </ColorPickerAction>
+              </ColorPickerMenu>
+            )}
+          </ColorPickerDropdown>
         </ToolbarGroup>
 
         <Divider />
@@ -601,7 +878,7 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
               <FiType />
             </ToolbarButton>
             {showHeadingMenu && (
-              <HeadingMenu>
+              <HeadingMenu data-heading-menu>
                 <HeadingItem onClick={() => setHeading(2)}>
                   <h2 style={{ margin: 0, fontSize: '1.3em' }}>标题 2</h2>
                 </HeadingItem>
@@ -632,9 +909,53 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
           <ToolbarButton onClick={toggleOrderedList} active={editor.isActive('orderedList')} title="有序列表">
             <FiFileText />
           </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor?.chain().focus().toggleTaskList().run()}
+            active={editor.isActive('taskList')}
+            title="任务列表"
+          >
+            <FiCheckSquare />
+          </ToolbarButton>
           <ToolbarButton onClick={toggleBlockquote} active={editor.isActive('blockquote')} title="引用块">
             <FiMessageSquare />
           </ToolbarButton>
+        </ToolbarGroup>
+
+        <Divider />
+
+        {/* 表格操作 */}
+        <ToolbarGroup>
+          <ToolbarButton
+            onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+            title="插入表格"
+          >
+            <FiGrid />
+          </ToolbarButton>
+          {editor.isActive('table') && (
+            <>
+              <ToolbarButton onClick={() => editor?.chain().focus().addColumnBefore().run()} title="在左侧插入列">
+                ←
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor?.chain().focus().addColumnAfter().run()} title="在右侧插入列">
+                →
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor?.chain().focus().deleteColumn().run()} title="删除列">
+                <FiTrash2 />
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor?.chain().focus().addRowBefore().run()} title="在上方插入行">
+                ↑
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor?.chain().focus().addRowAfter().run()} title="在下方插入行">
+                ↓
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor?.chain().focus().deleteRow().run()} title="删除行">
+                <FiMinus />
+              </ToolbarButton>
+              <ToolbarButton onClick={() => editor?.chain().focus().deleteTable().run()} title="删除表格">
+                <FiTrash2 style={{ color: 'var(--error-color)' }} />
+              </ToolbarButton>
+            </>
+          )}
         </ToolbarGroup>
 
         <Divider />
@@ -706,6 +1027,7 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
           {/* 语言选择菜单 - 固定在工具栏下方 */}
           {showLanguageMenu && (
             <LanguageMenu
+              data-language-menu
               style={{
                 position: 'absolute',
                 top: '100%',
@@ -814,6 +1136,7 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
       {/* 斜杠命令菜单 */}
       {showCommandMenu && (
         <CommandMenu
+          data-command-menu
           style={{
             top: `${commandMenuPosition.top}px`,
             left: `${commandMenuPosition.left}px`,
@@ -1070,6 +1393,14 @@ const FloatingToolbar = styled.div`
   backdrop-filter: blur(8px);
   width: 100%;
   flex-shrink: 0; /* 防止工具栏被压缩 */
+  position: sticky;
+  top: 0;
+  z-index: 100; /* 确保工具栏始终在内容上方 */
+
+  /* 增强深色模式下的视觉效果 */
+  [data-theme='dark'] & {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
 `;
 
 const ToolbarGroup = styled.div`
@@ -1152,8 +1483,13 @@ const HeadingMenu = styled.div`
   border-radius: 8px;
   box-shadow: var(--shadow-md);
   overflow: hidden;
-  z-index: 100;
+  z-index: 200; /* 高于工具栏 */
   min-width: 160px;
+
+  /* 增强深色模式下的阴影 */
+  [data-theme='dark'] & {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const HeadingItem = styled.div`
@@ -1174,6 +1510,8 @@ const InputPanel = styled.div`
   padding: 12px 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
+  position: relative;
+  z-index: 90; /* 低于工具栏，但在编辑器内容之上 */
 
   input {
     flex: 1;
@@ -1187,6 +1525,7 @@ const InputPanel = styled.div`
     &:focus {
       outline: none;
       border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
     }
   }
 
@@ -1207,6 +1546,10 @@ const InputPanel = styled.div`
     &:last-child {
       background: var(--bg-tertiary);
       color: var(--text-primary);
+
+      &:hover {
+        background: var(--bg-secondary);
+      }
     }
   }
 `;
@@ -1220,7 +1563,30 @@ const CommandMenu = styled.div`
   min-width: 280px;
   max-height: 400px;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 150; /* 高于工具栏但低于子菜单 */
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
+  }
+
+  /* 深色模式增强 */
+  [data-theme='dark'] & {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const CommandMenuTitle = styled.div`
@@ -1289,8 +1655,31 @@ const LanguageMenu = styled.div`
   min-width: 200px;
   max-height: 300px;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 200; /* 高于工具栏 */
   margin-top: 4px;
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
+  }
+
+  /* 深色模式增强 */
+  [data-theme='dark'] & {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
 `;
 
 const LanguageMenuTitle = styled.div`
@@ -1327,6 +1716,97 @@ const LanguageMenuItem = styled.div<LanguageMenuItemProps>`
   &:last-of-type {
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
+  }
+`;
+
+// 颜色选择器样式
+const ColorPickerDropdown = styled.div`
+  position: relative;
+`;
+
+const ColorPickerMenu = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  z-index: 200;
+  min-width: 240px;
+
+  [data-theme='dark'] & {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+`;
+
+const ColorPickerTitle = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+`;
+
+const ColorGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+`;
+
+interface ColorOptionProps {
+  color: string;
+  active?: boolean;
+}
+
+const ColorOption = styled.div<ColorOptionProps>`
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background-color: ${(props) => props.color};
+  cursor: pointer;
+  border: 2px solid ${(props) => (props.active ? 'var(--accent-color)' : 'var(--border-color)')};
+  transition: all 0.2s ease;
+  position: relative;
+
+  &:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+  }
+
+  ${(props) =>
+    props.active &&
+    `
+    &::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: ${props.color === '#ffffff' || props.color === '#ffff00' ? '#000' : '#fff'};
+      font-size: 12px;
+      font-weight: bold;
+    }
+  `}
+`;
+
+const ColorPickerAction = styled.button`
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--bg-tertiary);
   }
 `;
 

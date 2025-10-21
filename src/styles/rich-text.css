@@ -265,27 +265,20 @@
 .rich-text-content img,
 .ProseMirror img {
   max-width: 100%;
+  height: auto;
   border-radius: 8px;
   margin: 1.5rem 0;
   display: block;
+  object-fit: contain;
 }
 
-/* 详情页显示 - 保持设置的宽高 */
-.rich-text-content img[width] {
-  width: auto;
-  max-width: 100%;
-}
-
-.rich-text-content img[height] {
-  height: auto;
-}
-
-/* 如果同时设置了宽高，优先使用设置的值 */
-.rich-text-content img[width][height] {
-  width: attr(width px);
-  height: attr(height px);
-  max-width: 100%;
-  height: auto;
+/* 移动端图片强制自适应 */
+@media (max-width: 768px) {
+  .rich-text-content img,
+  .ProseMirror img {
+    width: 100% !important;
+    height: auto !important;
+  }
 }
 
 /* 可调整大小的图片容器 */
@@ -720,4 +713,225 @@
   .ProseMirror blockquote {
     padding: 0.75rem 1rem;
   }
+}
+
+/* ===== 表格样式 ===== */
+.rich-text-content table,
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 2rem 0;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid var(--rich-text-border);
+  background: var(--rich-text-background);
+}
+
+[data-theme='dark'] .rich-text-content table,
+[data-theme='dark'] .ProseMirror table {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rich-text-content td,
+.rich-text-content th,
+.ProseMirror td,
+.ProseMirror th {
+  min-width: 1em;
+  border: 1px solid var(--rich-text-border);
+  padding: 0.75rem 1rem;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  color: var(--rich-text-secondary);
+}
+
+[data-theme='dark'] .rich-text-content td,
+[data-theme='dark'] .rich-text-content th,
+[data-theme='dark'] .ProseMirror td,
+[data-theme='dark'] .ProseMirror th {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #d4d4d4;
+}
+
+.rich-text-content th,
+.ProseMirror th {
+  font-weight: 600;
+  text-align: left;
+  background: var(--rich-text-background-secondary);
+  color: var(--rich-text-primary);
+}
+
+[data-theme='dark'] .rich-text-content th,
+[data-theme='dark'] .ProseMirror th {
+  background: rgba(129, 212, 250, 0.08);
+  color: #f0f0f0;
+}
+
+/* 表格单元格选中状态 */
+.ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: '';
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(var(--accent-rgb, 81, 131, 245), 0.1);
+  pointer-events: none;
+}
+
+/* 表格列调整大小手柄 */
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  z-index: 20;
+  background-color: var(--accent-color);
+  cursor: col-resize;
+  opacity: 0;
+}
+
+.ProseMirror .column-resize-handle:hover {
+  opacity: 1;
+}
+
+/* ===== 任务列表样式 ===== */
+.rich-text-content ul[data-type='taskList'],
+.ProseMirror ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0;
+  margin: 1.5rem 0;
+}
+
+.rich-text-content li[data-type='taskItem'],
+.ProseMirror li[data-type='taskItem'] {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.rich-text-content li[data-type='taskItem'] > label,
+.ProseMirror li[data-type='taskItem'] > label {
+  display: flex;
+  align-items: center;
+  user-select: none;
+  flex-shrink: 0;
+  margin-top: 0.2em;
+}
+
+.rich-text-content li[data-type='taskItem'] > label input[type='checkbox'],
+.ProseMirror li[data-type='taskItem'] > label input[type='checkbox'] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--rich-text-border);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  margin: 0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  background: var(--rich-text-background);
+}
+
+[data-theme='dark'] .rich-text-content li[data-type='taskItem'] > label input[type='checkbox'],
+[data-theme='dark'] .ProseMirror li[data-type='taskItem'] > label input[type='checkbox'] {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rich-text-content li[data-type='taskItem'] > label input[type='checkbox']:hover,
+.ProseMirror li[data-type='taskItem'] > label input[type='checkbox']:hover {
+  border-color: var(--accent-color);
+}
+
+.rich-text-content li[data-type='taskItem'] > label input[type='checkbox']:checked,
+.ProseMirror li[data-type='taskItem'] > label input[type='checkbox']:checked {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.rich-text-content li[data-type='taskItem'] > label input[type='checkbox']:checked::after,
+.ProseMirror li[data-type='taskItem'] > label input[type='checkbox']:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.rich-text-content li[data-type='taskItem'] > div,
+.ProseMirror li[data-type='taskItem'] > div {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 已完成任务的文字样式 */
+.rich-text-content li[data-type='taskItem'][data-checked='true'] > div,
+.ProseMirror li[data-type='taskItem'][data-checked='true'] > div {
+  color: var(--rich-text-secondary);
+  opacity: 0.6;
+}
+
+.rich-text-content li[data-type='taskItem'][data-checked='true'] > div p,
+.ProseMirror li[data-type='taskItem'][data-checked='true'] > div p {
+  text-decoration: line-through;
+}
+
+/* 嵌套任务列表 */
+.rich-text-content li[data-type='taskItem'] ul[data-type='taskList'],
+.ProseMirror li[data-type='taskItem'] ul[data-type='taskList'] {
+  margin-top: 0.5rem;
+  margin-left: 1.5rem;
+}
+
+/* 渲染模式下禁用复选框交互（保持视觉效果） */
+.rich-text-content li[data-type='taskItem'] > label input[type='checkbox'] {
+  pointer-events: none; /* 禁用点击 */
+  cursor: default;
+}
+
+/* ===== 文字颜色样式 ===== */
+/* 文字颜色由内联样式控制，无需额外CSS */
+
+/* ===== 高亮标记样式 ===== */
+.rich-text-content mark[data-color],
+.ProseMirror mark[data-color] {
+  padding: 0.1em 0.2em;
+  border-radius: 3px;
+}
+
+/* 深色模式高亮优化 */
+[data-theme='dark'] .rich-text-content mark[data-color],
+[data-theme='dark'] .ProseMirror mark[data-color] {
+  filter: brightness(0.8);
+}
+
+/* ===== 上标下标样式 ===== */
+.rich-text-content sub,
+.rich-text-content sup,
+.ProseMirror sub,
+.ProseMirror sup {
+  font-size: 0.75em;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.rich-text-content sup,
+.ProseMirror sup {
+  top: -0.5em;
+}
+
+.rich-text-content sub,
+.ProseMirror sub {
+  bottom: -0.25em;
 }

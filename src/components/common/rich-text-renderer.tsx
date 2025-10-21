@@ -263,7 +263,7 @@ interface SimpleCodeBlockProps {
   highlightedCode: string;
 }
 
-const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = ({ code, language, highlightedCode }) => {
+const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, language, highlightedCode }) => {
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -309,7 +309,10 @@ const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = ({ code, language, highl
       )}
     </CodeBlockContainer>
   );
-};
+});
+
+// 为 React.memo 组件设置 displayName
+SimpleCodeBlock.displayName = 'SimpleCodeBlock';
 
 // 富文本内容容器
 const RichTextContainer = styled.div`

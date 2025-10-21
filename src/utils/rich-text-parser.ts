@@ -3,12 +3,18 @@
  * 提供统一的富文本处理、清理、样式化功能
  */
 export class RichTextParser {
+  // LRU缓存，存储解析结果（最多缓存50个结果）
+  private static cache = new Map<string, { result: string; timestamp: number }>();
+  private static readonly CACHE_MAX_SIZE = 50;
+  private static readonly CACHE_TTL = 5 * 60 * 1000; // 5分钟过期
+
   // 系统支持的HTML标签白名单
   private static readonly ALLOWED_TAGS = [
     'div',
     'p',
     'span',
     'br',
+    'h1',
     'h2',
     'h3',
     'h4',
@@ -22,6 +28,7 @@ export class RichTextParser {
     'em',
     'i',
     'u',
+    's', // 删除线
     'blockquote',
     'code',
     'pre',
@@ -34,6 +41,11 @@ export class RichTextParser {
     'th',
     'td',
     'hr',
+    'mark', // 高亮
+    'sub', // 下标
+    'sup', // 上标
+    'label', // 任务列表用
+    'input', // 任务列表复选框
   ];
 
   // 系统支持的CSS类名白名单
@@ -47,6 +59,45 @@ export class RichTextParser {
     'rich-text-table-wrapper',
     'rich-text-table',
   ];
+
+  /**
+   * 从缓存获取结果
+   */
+  private static getCached(key: string): string | null {
+    const cached = this.cache.get(key);
+    if (!cached) return null;
+
+    // 检查是否过期
+    if (Date.now() - cached.timestamp > this.CACHE_TTL) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return cached.result;
+  }
+
+  /**
+   * 存入缓存（LRU策略）
+   */
+  private static setCache(key: string, result: string): void {
+    // 如果缓存已满，删除最旧的条目
+    if (this.cache.size >= this.CACHE_MAX_SIZE) {
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+    }
+
+    this.cache.set(key, {
+      result,
+      timestamp: Date.now(),
+    });
+  }
+
+  /**
+   * 清除所有缓存
+   */
+  static clearCache(): void {
+    this.cache.clear();
+  }
 
   /**
    * 验证URL是否安全
@@ -69,6 +120,57 @@ export class RichTextParser {
   }
 
   /**
+   * 清理并验证 style 属性，只保留安全的 CSS 属性
+   */
+  private static cleanStyleAttribute(style: string): string {
+    if (!style) return '';
+
+    // 安全的 CSS 属性白名单
+    const allowedStyles = [
+      'color',
+      'background-color',
+      'font-size',
+      'font-weight',
+      'font-style',
+      'text-decoration',
+      'text-align',
+      'width',
+      'height',
+      'max-width',
+      'max-height',
+      'margin',
+      'padding',
+      'display',
+      'float',
+    ];
+
+    // 解析 style 字符串
+    const styleRules = style.split(';').filter((rule) => rule.trim());
+    const cleanRules: string[] = [];
+
+    for (const rule of styleRules) {
+      const [property, value] = rule.split(':').map((s) => s.trim());
+
+      if (!property || !value) continue;
+
+      // 检查是否为允许的属性
+      if (allowedStyles.includes(property.toLowerCase())) {
+        // 防止 CSS 注入（禁止 url()、expression() 等）
+        if (
+          !value.toLowerCase().includes('url(') &&
+          !value.toLowerCase().includes('expression') &&
+          !value.toLowerCase().includes('javascript:') &&
+          !value.toLowerCase().includes('import')
+        ) {
+          cleanRules.push(`${property}: ${value}`);
+        }
+      }
+    }
+
+    return cleanRules.length > 0 ? cleanRules.join('; ') : '';
+  }
+
+  /**
    * 清理HTML属性，只保留安全的属性
    */
   private static cleanAttributes(attributes: string, tagName: string): string {
@@ -76,25 +178,46 @@ export class RichTextParser {
 
     const allowedAttributes: Record<string, string[]> = {
       div: ['class', 'data-language'],
+      p: ['class', 'style'], // 段落支持样式
+      span: ['class', 'style'], // span 支持样式（文字颜色等）
+      h1: ['class', 'style', 'id'],
+      h2: ['class', 'style', 'id'],
+      h3: ['class', 'style', 'id'],
+      h4: ['class', 'style', 'id'],
+      h5: ['class', 'style', 'id'],
+      h6: ['class', 'style', 'id'],
       a: ['href', 'target', 'rel', 'class'],
-      img: ['src', 'alt', 'loading', 'class', 'width', 'height', 'style', 'data-align'], // ✅ 添加图片尺寸和对齐属性
+      img: ['src', 'alt', 'loading', 'class', 'width', 'height', 'style', 'data-align'],
       code: ['class'],
       pre: ['class', 'data-language'],
       blockquote: ['class'],
       table: ['class'],
-      th: ['colspan', 'rowspan'],
-      td: ['colspan', 'rowspan'],
+      th: ['colspan', 'rowspan', 'class'],
+      td: ['colspan', 'rowspan', 'class'],
+      mark: ['class', 'style', 'data-color'], // 高亮支持样式和颜色标记
+      ul: ['class', 'data-type'], // 任务列表需要 data-type
+      li: ['class', 'data-type', 'data-checked'], // 任务项需要 data-type 和 data-checked
+      input: ['type', 'checked', 'disabled'], // 任务列表复选框
+      label: ['class'],
     };
 
     const allowed = allowedAttributes[tagName] || ['class'];
-    const attrRegex = /([\w-]+)=["']([^"']*)["']/g; // ✅ 支持包含连字符的属性名（如 data-align）
+
+    // 匹配两种格式：attr="value" 和 attr (布尔属性)
+    const attrWithValueRegex = /([\w-]+)=["']([^"']*)["']/g;
+    const attrBooleanRegex = /\s([\w-]+)(?=\s|$|>)/g;
     const cleanAttrs: string[] = [];
+    const processedAttrs = new Set<string>();
+
     let match;
 
-    while ((match = attrRegex.exec(attributes)) !== null) {
+    // 处理有值的属性
+    while ((match = attrWithValueRegex.exec(attributes)) !== null) {
       const [, attrName, attrValue] = match;
 
       if (allowed.includes(attrName)) {
+        processedAttrs.add(attrName);
+
         if (attrName === 'class') {
           const cleanClasses = attrValue
             .split(' ')
@@ -102,6 +225,12 @@ export class RichTextParser {
             .join(' ');
           if (cleanClasses) {
             cleanAttrs.push(`class="${cleanClasses}"`);
+          }
+        } else if (attrName === 'style') {
+          // 清理并验证 style 属性
+          const cleanStyle = this.cleanStyleAttribute(attrValue);
+          if (cleanStyle) {
+            cleanAttrs.push(`style="${cleanStyle}"`);
           }
         } else if (attrName === 'href' && this.isValidUrl(attrValue)) {
           cleanAttrs.push(`${attrName}="${attrValue}"`);
@@ -118,11 +247,26 @@ export class RichTextParser {
             'rowspan',
             'width',
             'height',
-            'style',
             'data-align',
+            'data-color',
+            'data-type',
+            'data-checked',
+            'type',
+            'id',
           ].includes(attrName)
         ) {
           cleanAttrs.push(`${attrName}="${attrValue}"`);
+        }
+      }
+    }
+
+    // 处理布尔属性（checked、disabled 等）
+    while ((match = attrBooleanRegex.exec(attributes)) !== null) {
+      const attrName = match[1];
+
+      if (allowed.includes(attrName) && !processedAttrs.has(attrName)) {
+        if (['checked', 'disabled'].includes(attrName)) {
+          cleanAttrs.push(attrName);
         }
       }
     }
@@ -216,6 +360,13 @@ export class RichTextParser {
    * 清理HTML内容，移除危险标签和属性
    */
   static sanitizeHtml(html: string): string {
+    if (!html) return '';
+
+    // 尝试从缓存获取
+    const cacheKey = `sanitize:${html}`;
+    const cached = this.getCached(cacheKey);
+    if (cached !== null) return cached;
+
     // 先进行基础安全清理
     let cleanHtml = html
       .replace(/<script[^>]*>.*?<\/script>/gi, '')
@@ -226,7 +377,12 @@ export class RichTextParser {
       .replace(/on\w+='[^']*'/gi, '')
       .replace(/javascript:/gi, '');
 
-    return this.validateAndCleanHtml(cleanHtml);
+    const result = this.validateAndCleanHtml(cleanHtml);
+
+    // 存入缓存
+    this.setCache(cacheKey, result);
+
+    return result;
   }
 
   /**
@@ -435,6 +591,11 @@ export class RichTextParser {
   static addContentStyles(html: string): string {
     if (!html) return '<div class="rich-text-content"></div>';
 
+    // 尝试从缓存获取
+    const cacheKey = `styles:${html}`;
+    const cached = this.getCached(cacheKey);
+    if (cached !== null) return cached;
+
     let styledHtml = html;
 
     // 如果是Markdown，先转换为HTML
@@ -509,7 +670,12 @@ export class RichTextParser {
     }
 
     const finalHtml = this.validateAndCleanHtml(styledHtml);
-    return `<div class="rich-text-content">${finalHtml}</div>`;
+    const result = `<div class="rich-text-content">${finalHtml}</div>`;
+
+    // 存入缓存
+    this.setCache(cacheKey, result);
+
+    return result;
   }
 
   /**

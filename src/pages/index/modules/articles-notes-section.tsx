@@ -148,7 +148,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
   }
 
   return (
-    <ContentSection variants={variants.fadeIn}>
+    <ContentSection initial="hidden" whileInView="visible" viewport={{ amount: 0.2 }} variants={variants.fadeIn}>
       <SectionTitle>
         最新文章
         <Link to="/blog" style={{ textDecoration: 'none' }}>
@@ -168,7 +168,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
         </Link>
       </SectionTitle>
 
-      <ArticleGrid variants={variants.stagger}>
+      <ArticleGrid initial="hidden" whileInView="visible" viewport={{ amount: 0.1 }} variants={variants.stagger}>
         {articles.slice(0, 3).map((article, index) => (
           <ArticleLink
             to={`/blog/${article.id}`}
@@ -199,7 +199,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
   }
 
   return (
-    <ContentSection variants={variants.fadeIn}>
+    <ContentSection initial="hidden" whileInView="visible" viewport={{ amount: 0.2 }} variants={variants.fadeIn}>
       <SectionTitle>
         最近更新的手记
         <Link to="/notes" style={{ textDecoration: 'none' }}>
@@ -219,7 +219,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
         </Link>
       </SectionTitle>
 
-      <ArticleGrid variants={variants.stagger}>
+      <ArticleGrid initial="hidden" whileInView="visible" viewport={{ amount: 0.1 }} variants={variants.stagger}>
         {notes.slice(0, 5).map((note, index) => (
           <ArticleLink
             to={`/notes/${note.id}`}
