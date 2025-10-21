@@ -22,6 +22,7 @@ export interface ArticleCardProps {
     slug: string;
   };
   createdAt: string;
+  publishedAt: string;
   viewCount?: number;
   commentCount?: number;
 }

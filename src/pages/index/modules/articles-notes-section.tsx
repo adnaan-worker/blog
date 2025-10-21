@@ -181,7 +181,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
             <ArticleContent>
               <ArticleTitle>{article.title}</ArticleTitle>
             </ArticleContent>
-            <ArticleTime>{formatDate(article.createdAt, 'YYYY-MM-DD')}</ArticleTime>
+            <ArticleTime>{formatDate(article.publishedAt, 'YYYY-MM-DD')}</ArticleTime>
           </ArticleLink>
         ))}
       </ArticleGrid>

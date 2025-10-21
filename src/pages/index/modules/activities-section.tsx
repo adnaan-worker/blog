@@ -208,13 +208,16 @@ const formatActivityText = (activity: UserActivity) => {
         emoji: '📌',
         color: '#f59e0b',
       };
-    case 'comment_created':
+    case 'comment_created': {
+      const targetAuthor = metadata.postAuthorUsername ? ` ${metadata.postAuthorUsername}` : '';
+      const secondaryTitle = metadata.postTitle ? `《${metadata.postTitle}》` : '';
       return {
-        primary: `${username}发表了评论`,
+        primary: `${username}评论了${targetAuthor}的文章${secondaryTitle}`.trim(),
         secondary: activity.description || '',
         emoji: '💬',
         color: '#8b5cf6',
       };
+    }
     case 'achievement_unlocked':
       return {
         primary: `${username}解锁了成就`,
@@ -236,13 +239,18 @@ const formatActivityText = (activity: UserActivity) => {
         emoji: '✨',
         color: '#06b6d4',
       };
-    default:
+    default: {
+      // 尝试去掉“你的/你”以适配公开展示
+      const neutralTitle = (activity.title || '进行了操作')
+        .replace(/你的/g, '其')
+        .replace(/你/g, '其');
       return {
-        primary: `${activity.title || '进行了操作'}`,
+        primary: neutralTitle,
         secondary: activity.description || '',
         emoji: '📍',
         color: 'var(--text-secondary)',
       };
+    }
   }
 };
 
