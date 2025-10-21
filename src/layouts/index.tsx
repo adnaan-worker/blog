@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
@@ -9,6 +9,7 @@ import GhostWidget from './ghost-widget';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
 import PageLoading from '@/components/common/page-loading';
+import { setupHttpConfig } from '@/utils/http-config';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -20,7 +21,7 @@ const MainContainer = styled.div`
   position: relative;
 `;
 
-// 内容区域样式 - 移除 motion，使用纯 CSS 过渡
+// 内容区域样式 - 完全移除动画，确保DOM立即可见
 const Content = styled.main`
   flex: 1;
   width: 100%;
@@ -28,18 +29,7 @@ const Content = styled.main`
   padding: 2rem 1.5rem;
   overflow: visible;
   margin-top: var(--header-height);
-
-  /* 简单的淡入淡出，不阻塞渲染 */
-  animation: fade-in 0.2s ease-out;
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+  min-height: calc(100vh - var(--header-height)); /* 确保内容区域始终占据剩余视口高度 */
 
   @media (max-width: 768px) {
     padding: 1.5rem 1.25rem;
@@ -57,27 +47,45 @@ const LoadingIndicator = styled(motion.div)`
   box-shadow: 0 0 10px var(--accent-color);
 `;
 
+// Suspense 加载占位符 - 确保有最小高度占位
+const SuspenseFallback = styled.div`
+  min-height: calc(100vh - var(--header-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 /**
  * 根布局组件，提供应用程序的基本结构
  * 包括页面过渡和滚动状态监听
  */
 const RootLayout = () => {
-  const [mounted, setMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // 加载指示器状态
   const [showLoader, setShowLoader] = useState(false);
+  const [showPageLoading, setShowPageLoading] = useState(false);
   const previousPathRef = useRef(location.pathname);
   const loaderTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isFirstLoadRef = useRef(true); // 标记是否是首次加载
 
   // 监听系统主题变化（自动在 auto 模式下启用）
   useSystemTheme();
 
-  // 组件挂载处理
+  // 配置HTTP未授权回调
   useEffect(() => {
-    setMounted(true);
+    setupHttpConfig(navigate);
+  }, [navigate]);
+
+  // 标记首次加载完成
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      isFirstLoadRef.current = false;
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   // 路由变化时的加载指示器 - 优化逻辑
@@ -93,14 +101,19 @@ const RootLayout = () => {
       loaderTimerRef.current = null;
     }
 
-    // 显示加载器（顶部进度条，不显示全屏loading）
-    setShowLoader(true);
+    // 只有在非首次加载时才显示loading
+    if (!isFirstLoadRef.current) {
+      // 显示顶部进度条和页面loading
+      setShowLoader(true);
+      setShowPageLoading(true);
 
-    // 更快的过渡时间 300ms
-    loaderTimerRef.current = setTimeout(() => {
-      setShowLoader(false);
-      loaderTimerRef.current = null;
-    }, 300);
+      // 延迟隐藏loading，确保页面已经渲染
+      loaderTimerRef.current = setTimeout(() => {
+        setShowLoader(false);
+        setShowPageLoading(false);
+        loaderTimerRef.current = null;
+      }, 300);
+    }
 
     // 更新路径引用
     previousPathRef.current = location.pathname;
@@ -137,9 +150,6 @@ const RootLayout = () => {
     };
   }, []); // 空依赖数组，只在挂载时执行
 
-  // 等待组件挂载完成
-  if (!mounted) return null;
-
   return (
     <MainContainer>
       {/* 简洁的顶部加载进度条 */}
@@ -160,12 +170,21 @@ const RootLayout = () => {
       {/* 头部导航 */}
       <Header scrolled={isScrolled} />
 
-      {/* 主内容区域 - 移除复杂动画，使用纯CSS淡入 */}
-      <Suspense fallback={createPortal(<PageLoading fullScreen />, document.body)}>
+      {/* 主内容区域 - 确保有占位内容 */}
+      <Suspense
+        fallback={
+          <Content>
+            <SuspenseFallback />
+          </Content>
+        }
+      >
         <Content key={location.pathname}>
           <Outlet />
         </Content>
       </Suspense>
+
+      {/* 页面切换时的全屏loading */}
+      {showPageLoading && createPortal(<PageLoading fullScreen variant="pulse" />, document.body)}
 
       {/* 页脚 */}
       <Footer />

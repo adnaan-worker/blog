@@ -691,6 +691,56 @@ export class AnimationVariants {
       },
     };
   }
+
+  // ============ 波浪文字动画 ============
+
+  // 🌊 波浪容器 - 交错显示子元素
+  static waveContainer(level: PerformanceMetrics['level']): Variants {
+    const stagger = level === 'minimal' ? 0 : 0.022;
+
+    return {
+      hidden: {
+        opacity: 0,
+      },
+      visible: {
+        opacity: 1,
+        transition: {
+          staggerChildren: stagger,
+          when: 'beforeChildren',
+        },
+      },
+    };
+  }
+
+  // 🌊 波浪字符 - 单个字符的弹性动画
+  static waveChar(level: PerformanceMetrics['level']): Variants {
+    if (level === 'minimal') {
+      return {
+        hidden: { opacity: 0 },
+        visible: {
+          opacity: 1,
+          transition: this.springConfigs[level],
+        },
+      };
+    }
+
+    return {
+      hidden: {
+        y: '0.7em', // 使用 em 相对位移，保证不同字号下摆动幅度一致
+        opacity: 0,
+      },
+      visible: {
+        y: 0,
+        opacity: 1,
+        transition: {
+          type: 'spring',
+          stiffness: 380,
+          damping: 24,
+          mass: 0.5,
+        },
+      },
+    };
+  }
 }
 
 // ==================== 主Hook ====================
@@ -747,6 +797,10 @@ export const useAnimationEngine = () => {
       projectHeader: AnimationVariants.projectHeader(metrics.level),
       projectContent: AnimationVariants.projectContent(metrics.level),
       projectSidebar: AnimationVariants.projectSidebar(metrics.level),
+
+      // 波浪文字动画
+      waveContainer: AnimationVariants.waveContainer(metrics.level),
+      waveChar: AnimationVariants.waveChar(metrics.level),
     }),
     [metrics.level],
   );

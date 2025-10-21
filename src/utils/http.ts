@@ -9,6 +9,7 @@ class HttpRequest {
   private isRefreshing: boolean = false; // 是否正在刷新token
   private hasShownUnauthorizedError: boolean = false; // 是否已显示401错误
   private errorToastTimers: Map<string, number> = new Map(); // 错误提示防抖计时器
+  private static unauthorizedCallback: (() => void) | null = null; // 未授权回调函数
 
   constructor(axiosConfig: AxiosRequestConfig = {}) {
     // 基础配置，根据环境变量设置
@@ -65,6 +66,47 @@ class HttpRequest {
     this.errorToastTimers.clear();
   }
 
+  /**
+   * 设置未授权回调函数（通常用于跳转到登录页）
+   * @param callback - 未授权时的回调函数
+   */
+  public static setUnauthorizedCallback(callback: () => void): void {
+    HttpRequest.unauthorizedCallback = callback;
+  }
+
+  /**
+   * 处理未授权错误
+   */
+  private handleUnauthorized(): void {
+    if (this.hasShownUnauthorizedError) {
+      return;
+    }
+
+    this.hasShownUnauthorizedError = true;
+
+    // 显示错误提示
+    if (typeof window !== 'undefined' && (window as any).adnaan) {
+      (window as any).adnaan.toast.error('登录已过期，请重新登录', '身份验证失败');
+    }
+
+    // 清除用户信息
+    storage.local.remove('user');
+    storage.local.remove('token');
+
+    // 执行回调函数（React Router导航）或直接跳转
+    if (HttpRequest.unauthorizedCallback) {
+      HttpRequest.unauthorizedCallback();
+    } else {
+      // 降级方案：直接跳转
+      window.location.href = '/';
+    }
+
+    // 重置标志，允许下次再显示（延迟重置以避免重复触发）
+    setTimeout(() => {
+      this.hasShownUnauthorizedError = false;
+    }, 1000);
+  }
+
   // 配置拦截器
   private setupInterceptors(): void {
     // 请求拦截器
@@ -110,21 +152,7 @@ class HttpRequest {
 
           // 特殊处理 401 错误，避免在这里和拦截器中重复提示
           if (data.code === 401) {
-            if (!this.hasShownUnauthorizedError) {
-              this.hasShownUnauthorizedError = true;
-
-              if (typeof window !== 'undefined' && (window as any).adnaan) {
-                (window as any).adnaan.toast.error('登录已过期，请重新登录', '身份验证失败');
-              }
-
-              storage.local.remove('user');
-              storage.local.remove('token');
-
-              setTimeout(() => {
-                window.location.href = '/';
-                this.hasShownUnauthorizedError = false;
-              }, 1500);
-            }
+            this.handleUnauthorized();
           }
 
           return Promise.reject({
@@ -158,26 +186,7 @@ class HttpRequest {
           switch (status) {
             case 401:
               // 未授权，清除token并跳转到登录页
-              // 只显示一次提示，避免多个请求同时失败导致多次弹窗
-              if (!this.hasShownUnauthorizedError) {
-                this.hasShownUnauthorizedError = true;
-
-                // 使用全局 toast 显示错误
-                if (typeof window !== 'undefined' && (window as any).adnaan) {
-                  (window as any).adnaan.toast.error('登录已过期，请重新登录', '身份验证失败');
-                }
-
-                // 清除用户信息
-                storage.local.remove('user');
-                storage.local.remove('token');
-
-                // 延迟跳转，让用户看到提示
-                setTimeout(() => {
-                  window.location.href = '/';
-                  // 重置标志，允许下次再显示
-                  this.hasShownUnauthorizedError = false;
-                }, 1500);
-              }
+              this.handleUnauthorized();
               break;
             case 403:
               // 禁止访问
@@ -372,21 +381,7 @@ class HttpRequest {
     if (!response.ok) {
       // 特殊处理 401 错误
       if (response.status === 401) {
-        if (!this.hasShownUnauthorizedError) {
-          this.hasShownUnauthorizedError = true;
-
-          if (typeof window !== 'undefined' && (window as any).adnaan) {
-            (window as any).adnaan.toast.error('登录已过期，请重新登录', '身份验证失败');
-          }
-
-          storage.local.remove('user');
-          storage.local.remove('token');
-
-          setTimeout(() => {
-            window.location.href = '/';
-            this.hasShownUnauthorizedError = false;
-          }, 1500);
-        }
+        this.handleUnauthorized();
       }
       throw new Error(`流式请求失败: ${response.status} ${response.statusText}`);
     }

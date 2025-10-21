@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiGithub, FiMail, FiRss, FiHeart } from 'react-icons/fi';
 import React from 'react';
-import { SPRING_PRESETS } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/animation-engine';
 
 // 使用motion组件增强动画效果
 const MotionFooter = motion.footer;
@@ -252,27 +252,24 @@ const PoweredBy = styled.div`
   }
 `;
 
-// 动画变量
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: SPRING_PRESETS.gentle,
-  },
-};
-
 const Footer = () => {
+  // 使用动画引擎
+  const { variants, springPresets } = useAnimationEngine();
+
+  // 动画变量 - 使用动画引擎的配置
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05,
+        ...springPresets.gentle,
+      },
+    },
+  };
+
+  const itemVariants = variants.fadeIn;
+
   // TODO: 添加 siteSettings Redux slice 后再使用动态配置
   return (
     <FooterContainer

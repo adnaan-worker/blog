@@ -1,6 +1,7 @@
 // 导出HTTP请求工具
 export { default as http } from './http';
 export { HttpRequest } from './http';
+export { setupHttpConfig } from './http-config';
 
 // 导出API封装
 export { default as API } from './api';
