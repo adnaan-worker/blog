@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { keyframes, css } from '@emotion/react';
-import { useSocket, useSocketEvent, useAutoConnect, useSocketEvents } from '@/hooks/useSocket';
+import { useSocket, useSocketEvent, useSocketEvents } from '@/hooks/useSocket';
 import { FiChrome, FiCode, FiMusic, FiMonitor, FiImage, FiZap, FiMessageCircle, FiVideo } from 'react-icons/fi';
 
 // 应用图标和颜色映射（简化版）
@@ -184,9 +184,8 @@ const Tooltip = styled.div<{ visible: boolean }>`
 
 // 主组件
 const AppStatus: React.FC = () => {
-  // 使用新的Socket Hooks
+  // 使用新的Socket Hooks（连接由RootLayout统一管理）
   const { isConnected, emit, error } = useSocket();
-  const { isConnected: autoConnected } = useAutoConnect(); // 自动连接
 
   const [statusData, setStatusData] = useState<StatusResponse>({ current: null, history: [] });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);

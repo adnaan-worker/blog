@@ -237,7 +237,11 @@ const CareBubble = styled(motion.div)`
   left: 50%;
   transform: translateX(-50%);
   margin-bottom: 12px;
-  background: linear-gradient(135deg, rgba(255, 182, 193, 0.95) 0%, rgba(255, 192, 203, 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent-color) 70%, white) 0%,
+    color-mix(in srgb, var(--accent-color) 50%, white) 100%
+  );
   color: #fff;
   padding: 8px 14px;
   border-radius: 16px;
@@ -256,7 +260,7 @@ const CareBubble = styled(motion.div)`
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: rgba(255, 192, 203, 0.95);
+    border-top-color: var(--accent-color);
   }
 `;
 
@@ -734,12 +738,37 @@ export const GhostWidget = () => {
     const dy = pullStart.y - pullCurrent.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // 限制最大拉力（增加到300，支持更远距离瞄准）
-    const maxPull = 300;
-    const power = Math.min(distance, maxPull) / 8; // 除以8而不是10，增加力度
+    // 小范围高力度：降低最大拉力距离，提高力度系数
+    const maxPull = 150; // 从300降到150，只需拉一半距离
+    let power = Math.min(distance, maxPull) / 4; // 从除以8改为除以4，力度翻倍
 
-    const velocityX = (dx / distance) * power || 0;
-    const velocityY = (dy / distance) * power || 0;
+    // 边界增强：如果幽灵在边界附近，增加该方向的拉力
+    const edgeThreshold = 100; // 距离边界100px内视为"靠近边界"
+    const edgeBoost = 1.5; // 边界增强系数
+
+    // 检测是否靠近边界，并根据拉动方向增强力度
+    let powerMultiplierX = 1;
+    let powerMultiplierY = 1;
+
+    // 靠近左边界且往左拉
+    if (position.x < edgeThreshold && dx > 0) {
+      powerMultiplierX = edgeBoost;
+    }
+    // 靠近右边界且往右拉
+    if (position.x > window.innerWidth - GHOST_WIDTH - edgeThreshold && dx < 0) {
+      powerMultiplierX = edgeBoost;
+    }
+    // 靠近顶部且往上拉
+    if (position.y < edgeThreshold && dy > 0) {
+      powerMultiplierY = edgeBoost;
+    }
+    // 靠近底部且往下拉（最常见的情况）
+    if (position.y > window.innerHeight - GHOST_HEIGHT - edgeThreshold && dy < 0) {
+      powerMultiplierY = edgeBoost;
+    }
+
+    const velocityX = (dx / distance) * power * powerMultiplierX || 0;
+    const velocityY = (dy / distance) * power * powerMultiplierY || 0;
 
     setVelocity({ x: velocityX, y: velocityY });
     setIsFlying(true);
@@ -802,10 +831,28 @@ export const GhostWidget = () => {
   }, [isPulling, pullStart, pullCurrent]);
 
   // 计算拉线距离和角度
+  const maxPullDisplay = 150; // 与力度计算保持一致
   const pullDistance = isPulling
     ? Math.sqrt(Math.pow(pullStart.x - pullCurrent.x, 2) + Math.pow(pullStart.y - pullCurrent.y, 2))
     : 0;
   const pullAngle = isPulling ? Math.atan2(pullCurrent.y - pullStart.y, pullCurrent.x - pullStart.x) : 0;
+
+  // 检测是否在边界附近（用于视觉反馈）
+  const edgeThreshold = 100;
+  const isNearEdge = useMemo(() => {
+    if (!isPulling) return false;
+
+    const dx = pullStart.x - pullCurrent.x;
+    const dy = pullStart.y - pullCurrent.y;
+
+    // 检查是否在边界附近并且朝边界方向拉
+    const nearLeftEdge = position.x < edgeThreshold && dx > 0;
+    const nearRightEdge = position.x > window.innerWidth - GHOST_WIDTH - edgeThreshold && dx < 0;
+    const nearTopEdge = position.y < edgeThreshold && dy > 0;
+    const nearBottomEdge = position.y > window.innerHeight - GHOST_HEIGHT - edgeThreshold && dy < 0;
+
+    return nearLeftEdge || nearRightEdge || nearTopEdge || nearBottomEdge;
+  }, [isPulling, position.x, position.y, pullStart, pullCurrent, edgeThreshold, GHOST_WIDTH, GHOST_HEIGHT]);
 
   // 只在深色模式下显示
   if (!isDark) return null;
@@ -835,47 +882,59 @@ export const GhostWidget = () => {
       {/* 拉线指示器 */}
       {isPulling && (
         <PullLine>
-          {/* 主拉线 */}
+          {/* 主拉线 - 边界增强时变为橙色 */}
           <line
             x1={pullStart.x}
             y1={pullStart.y}
             x2={pullCurrent.x}
             y2={pullCurrent.y}
-            stroke="rgba(var(--accent-rgb, 81, 131, 245), 0.6)"
-            strokeWidth="3"
+            stroke={isNearEdge ? 'rgba(251, 146, 60, 0.8)' : 'rgba(var(--accent-rgb, 81, 131, 245), 0.6)'}
+            strokeWidth={isNearEdge ? '4' : '3'}
             strokeDasharray="5,5"
           />
 
-          {/* 力度指示圆圈 */}
+          {/* 力度指示圆圈 - 边界增强时变为橙色 */}
           <circle
             cx={pullStart.x}
             cy={pullStart.y}
-            r={Math.min(pullDistance, 300) / 2.5}
+            r={Math.min(pullDistance, maxPullDisplay) / 2.5}
             fill="none"
-            stroke="rgba(var(--accent-rgb, 81, 131, 245), 0.3)"
+            stroke={isNearEdge ? 'rgba(251, 146, 60, 0.5)' : 'rgba(var(--accent-rgb, 81, 131, 245), 0.3)'}
             strokeWidth="2"
           />
 
-          {/* 方向箭头 */}
+          {/* 边界增强时的额外光圈效果 */}
+          {isNearEdge && (
+            <circle
+              cx={pullStart.x}
+              cy={pullStart.y}
+              r={Math.min(pullDistance, maxPullDisplay) / 2.5 + 10}
+              fill="none"
+              stroke="rgba(251, 146, 60, 0.2)"
+              strokeWidth="3"
+            />
+          )}
+
+          {/* 方向箭头 - 边界增强时变为橙色 */}
           <polygon
             points={`
               ${pullStart.x + Math.cos(pullAngle + Math.PI) * 20},${pullStart.y + Math.sin(pullAngle + Math.PI) * 20}
               ${pullStart.x + Math.cos(pullAngle + Math.PI) * 40 + Math.cos(pullAngle + Math.PI - 0.5) * 10},${pullStart.y + Math.sin(pullAngle + Math.PI) * 40 + Math.sin(pullAngle + Math.PI - 0.5) * 10}
               ${pullStart.x + Math.cos(pullAngle + Math.PI) * 40 + Math.cos(pullAngle + Math.PI + 0.5) * 10},${pullStart.y + Math.sin(pullAngle + Math.PI) * 40 + Math.sin(pullAngle + Math.PI + 0.5) * 10}
             `}
-            fill="rgba(var(--accent-rgb, 81, 131, 245), 0.8)"
+            fill={isNearEdge ? 'rgba(251, 146, 60, 0.9)' : 'rgba(var(--accent-rgb, 81, 131, 245), 0.8)'}
           />
 
-          {/* 力度文字提示 */}
+          {/* 力度文字提示 - 边界增强时显示提升 */}
           <text
             x={pullCurrent.x}
             y={pullCurrent.y - 15}
-            fill="rgba(var(--accent-rgb, 81, 131, 245), 0.9)"
+            fill={isNearEdge ? 'rgba(251, 146, 60, 1)' : 'rgba(var(--accent-rgb, 81, 131, 245), 0.9)'}
             fontSize="14"
             fontWeight="600"
             textAnchor="middle"
           >
-            {Math.round((Math.min(pullDistance, 300) / 300) * 100)}%
+            {Math.round((Math.min(pullDistance, maxPullDisplay) / maxPullDisplay) * 100)}%{isNearEdge && ' 🚀'}
           </text>
         </PullLine>
       )}

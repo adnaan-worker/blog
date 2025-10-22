@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiGithub, FiMail, FiRss, FiHeart } from 'react-icons/fi';
 import React from 'react';
 import { useAnimationEngine } from '@/utils/animation-engine';
+import { useOnlineUsers } from '@/hooks';
 
 // 使用motion组件增强动画效果
 const MotionFooter = motion.footer;
@@ -252,9 +253,112 @@ const PoweredBy = styled.div`
   }
 `;
 
+const OnlineUsers = styled(motion.span)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+  cursor: default;
+
+  &:hover {
+    color: var(--text-primary);
+
+    .pulse-dot {
+      animation-play-state: running;
+    }
+  }
+
+  .pulse-dot {
+    position: relative;
+    width: 6px;
+    height: 6px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation-play-state: paused;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 100%;
+      background: var(--accent-color);
+      border-radius: 50%;
+      opacity: 0.6;
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      animation-play-state: inherit;
+    }
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.5);
+      opacity: 0;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0;
+    }
+  }
+
+  .count {
+    font-weight: 600;
+    color: var(--accent-color);
+    font-feature-settings: 'tnum';
+    font-variant-numeric: tabular-nums;
+  }
+
+  .full-text {
+    display: inline;
+  }
+
+  .short-text {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+
+    .pulse-dot {
+      width: 5px;
+      height: 5px;
+    }
+
+    .full-text {
+      display: none;
+    }
+
+    .short-text {
+      display: inline;
+    }
+  }
+`;
+
 const Footer = () => {
   // 使用动画引擎
   const { variants, springPresets } = useAnimationEngine();
+
+  // 使用在线人数Hook
+  const { onlineCount } = useOnlineUsers();
 
   // 动画变量 - 使用动画引擎的配置
   const containerVariants = {
@@ -375,16 +479,41 @@ const Footer = () => {
             </span>
           </Copyright>
 
-          <PoweredBy>
-            由{' '}
-            <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-              React
-            </a>{' '}
-            强力驱动 |{' '}
-            <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
-              ICP备20236136号
-            </a>
-          </PoweredBy>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <PoweredBy>
+              由{' '}
+              <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
+                React
+              </a>{' '}
+              强力驱动 |{' '}
+              <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
+                ICP备20236136号
+              </a>
+              {/* 在线人数显示 - 响应式文案 */}
+              {onlineCount > 0 && (
+                <>
+                  {' | '}
+                  <OnlineUsers
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    title={`当前有 ${onlineCount} 位访客在线`}
+                  >
+                    <span className="pulse-dot" />
+                    {/* 桌面端：完整文案 */}
+                    <span className="full-text">
+                      此刻有 <span className="count">{onlineCount}</span> 位
+                      {onlineCount === 1 ? '朋友' : '朋友'}在博客里闲逛
+                    </span>
+                    {/* 移动端：简短文案 */}
+                    <span className="short-text">
+                      <span className="count">{onlineCount}</span> 人在线
+                    </span>
+                  </OnlineUsers>
+                </>
+              )}
+            </PoweredBy>
+          </div>
         </FooterBottom>
       </FooterContent>
     </FooterContainer>

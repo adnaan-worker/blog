@@ -11,6 +11,7 @@ export interface SocketState {
 }
 
 import { getSocketConfig } from '@/utils/socket-config';
+import { getDeviceId } from '@/utils/device-id';
 
 // Socket配置 - 使用统一的配置管理
 const SOCKET_CONFIG = {
@@ -226,6 +227,9 @@ class SocketManager {
         this.socket = null;
       }
 
+      // 获取设备唯一ID
+      const deviceId = getDeviceId();
+
       // 创建新连接
       const socket = io(SOCKET_CONFIG.url, {
         transports: ['polling', 'websocket'],
@@ -235,6 +239,7 @@ class SocketManager {
         auth: {
           token: SOCKET_CONFIG.authKey,
           client_type: 'web_client',
+          device_id: deviceId, // 添加设备ID用于精准统计在线人数
         },
         extraHeaders: {
           Authorization: SOCKET_CONFIG.authKey,

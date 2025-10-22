@@ -261,7 +261,7 @@ const Tag = styled.span`
   padding: 0.35rem 0.75rem;
   border-radius: 20px;
   background: var(--accent-color-alpha);
-  color: var(--accent-color);
+  color: var(--text-primary);
   font-size: 0.75rem;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -290,13 +290,13 @@ const MoodIndicator = styled.div<{ mood: string }>`
   font-weight: 500;
   transition: all 0.2s ease;
   cursor: default;
+  color: var(--text-primary);
 
   ${(props) => {
     switch (props.mood) {
       case '开心':
         return `
           background: var(--success-bg);
-          color: var(--success-color);
           &:hover {
             transform: scale(1.05);
             box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
@@ -305,7 +305,6 @@ const MoodIndicator = styled.div<{ mood: string }>`
       case '平静':
         return `
           background: var(--info-bg);
-          color: var(--info-color);
           &:hover {
             transform: scale(1.05);
             box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
@@ -314,7 +313,6 @@ const MoodIndicator = styled.div<{ mood: string }>`
       case '思考':
         return `
           background: var(--accent-color-alpha);
-          color: var(--accent-color);
           &:hover {
             transform: scale(1.05);
             box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.3);
@@ -323,7 +321,6 @@ const MoodIndicator = styled.div<{ mood: string }>`
       case '感慨':
         return `
           background: var(--warning-bg);
-          color: var(--warning-color);
           &:hover {
             transform: scale(1.05);
             box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
@@ -332,7 +329,6 @@ const MoodIndicator = styled.div<{ mood: string }>`
       default:
         return `
           background: var(--bg-tertiary);
-          color: var(--text-secondary);
           &:hover {
             transform: scale(1.05);
           }

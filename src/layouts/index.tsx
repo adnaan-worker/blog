@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
 import PageLoading from '@/components/common/page-loading';
 import { setupHttpConfig } from '@/utils/http-config';
+import { useAutoConnect } from '@/hooks/useSocket';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -74,6 +75,9 @@ const RootLayout = () => {
 
   // 监听系统主题变化（自动在 auto 模式下启用）
   useSystemTheme();
+
+  // 自动连接Socket.IO（用于在线人数统计等实时功能）
+  useAutoConnect(true);
 
   // 配置HTTP未授权回调
   useEffect(() => {
