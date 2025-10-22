@@ -89,7 +89,8 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
     filter,
   } = useManagementPage<Note>({
     fetchFunction: async (params: NoteParams) => {
-      const response = await API.note.getNotes(params);
+      // 使用个人中心专用接口：管理员看所有，普通用户看自己的
+      const response = await API.note.getMyNotes(params);
       return {
         success: response.success,
         code: response.code,

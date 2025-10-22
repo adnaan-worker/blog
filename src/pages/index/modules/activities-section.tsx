@@ -204,7 +204,7 @@ const formatActivityText = (activity: UserActivity) => {
     case 'note_created':
       return {
         primary: `${username}发布了手记`,
-        secondary: activity.description || '...',
+        secondary: activity.title || '...',
         emoji: '📌',
         color: '#f59e0b',
       };
@@ -213,7 +213,7 @@ const formatActivityText = (activity: UserActivity) => {
       const secondaryTitle = metadata.postTitle ? `《${metadata.postTitle}》` : '';
       return {
         primary: `${username}评论了${targetAuthor}的文章${secondaryTitle}`.trim(),
-        secondary: activity.description || '',
+        secondary: activity.title || '',
         emoji: '💬',
         color: '#8b5cf6',
       };
@@ -241,9 +241,7 @@ const formatActivityText = (activity: UserActivity) => {
       };
     default: {
       // 尝试去掉“你的/你”以适配公开展示
-      const neutralTitle = (activity.title || '进行了操作')
-        .replace(/你的/g, '其')
-        .replace(/你/g, '其');
+      const neutralTitle = (activity.title || '进行了操作').replace(/你的/g, '其').replace(/你/g, '其');
       return {
         primary: neutralTitle,
         secondary: activity.description || '',
@@ -274,12 +272,22 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
   };
 
   return (
-    <ContentSection initial="hidden" whileInView="visible" viewport={{ amount: 0.2 }} variants={variants.fadeIn}>
+    <ContentSection
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
+      variants={variants.fadeIn}
+    >
       <SectionTitle>最近发生的事</SectionTitle>
 
       <ActivityScrollContainer>
         <FadeMask className="top" />
-        <ActivityGrid initial="hidden" whileInView="visible" viewport={{ amount: 0.1 }} variants={variants.stagger}>
+        <ActivityGrid
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+          variants={variants.stagger}
+        >
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
           ) : activities.length === 0 ? (

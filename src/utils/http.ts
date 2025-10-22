@@ -84,27 +84,28 @@ class HttpRequest {
 
     this.hasShownUnauthorizedError = true;
 
-    // 显示错误提示
-    if (typeof window !== 'undefined' && (window as any).adnaan) {
-      (window as any).adnaan.toast.error('登录已过期，请重新登录', '身份验证失败');
-    }
-
     // 清除用户信息
     storage.local.remove('user');
     storage.local.remove('token');
 
-    // 执行回调函数（React Router导航）或直接跳转
+    // 立即执行跳转，避免在需要登录的页面停留
     if (HttpRequest.unauthorizedCallback) {
       HttpRequest.unauthorizedCallback();
     } else {
-      // 降级方案：直接跳转
       window.location.href = '/';
     }
+
+    // 跳转后在新页面显示提示（延迟确保页面已加载）
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && (window as any).adnaan?.toast) {
+        (window as any).adnaan.toast.error('您的登录已过期，请重新登录', '身份验证失败');
+      }
+    }, 500);
 
     // 重置标志，允许下次再显示（延迟重置以避免重复触发）
     setTimeout(() => {
       this.hasShownUnauthorizedError = false;
-    }, 1000);
+    }, 2000);
   }
 
   // 配置拦截器

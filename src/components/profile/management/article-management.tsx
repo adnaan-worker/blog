@@ -65,7 +65,8 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
     filter,
   } = useManagementPage<Article>({
     fetchFunction: async (params: ArticleParams) => {
-      const response = await API.article.getArticles(params);
+      // 使用个人中心专用接口：管理员看所有，普通用户看自己的
+      const response = await API.article.getMyArticles(params);
       // 转换 API 响应格式以匹配 hook 期望的格式
       return {
         success: response.success,

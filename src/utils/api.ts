@@ -575,15 +575,24 @@ export const API = {
   // 手记相关
   note: {
     /**
-     * 获取手记列表（统一接口）
-     * 未登录：返回所有公开手记
-     * 已登录普通用户：返回自己的所有手记（包括私密）
-     * 管理员：返回所有手记
+     * 获取公开手记列表（前台展示）
+     * 返回所有公开手记，不需要登录
      * @param params 查询参数
      * @returns Promise<ApiResponse<PaginationResult<Note>>>
      */
     getNotes: (params?: NoteParams): Promise<ApiResponse<PaginationResult<Note>>> => {
       return http.get('/notes', params);
+    },
+
+    /**
+     * 获取我的手记列表（个人中心管理）
+     * 普通用户：返回自己的所有手记（包括私密）
+     * 管理员：返回所有手记
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<Note>>>
+     */
+    getMyNotes: (params?: NoteParams): Promise<ApiResponse<PaginationResult<Note>>> => {
+      return http.get('/notes/my', params);
     },
 
     /**
@@ -665,15 +674,24 @@ export const API = {
   // 博客文章相关
   article: {
     /**
-     * 获取文章列表（统一接口）
-     * 未登录：返回所有已发布的文章
-     * 普通用户：返回自己的所有文章
-     * 管理员：返回所有文章
+     * 获取公开文章列表（前台展示）
+     * 返回所有已发布且审核通过的文章
      * @param params 查询参数
      * @returns Promise<ApiResponse<PaginationResult<Article>>>
      */
     getArticles: (params?: ArticleParams): Promise<ApiResponse<PaginationResult<Article>>> => {
       return http.get('/posts', params);
+    },
+
+    /**
+     * 获取我的文章列表（个人中心管理）
+     * 普通用户：返回自己的所有文章
+     * 管理员：返回所有文章（支持状态筛选）
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<PaginationResult<Article>>>
+     */
+    getMyArticles: (params?: ArticleParams): Promise<ApiResponse<PaginationResult<Article>>> => {
+      return http.get('/posts/my', params);
     },
 
     /**
