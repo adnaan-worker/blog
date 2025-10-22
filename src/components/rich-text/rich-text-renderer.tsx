@@ -5,7 +5,7 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import '@/styles/rich-text.css';
 import { RichTextParser } from '@/utils/rich-text-parser';
-import ImagePreview from './image-preview';
+import ImagePreview from '../common/image-preview';
 import { FiCopy, FiCheck, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
 // 代码块容器

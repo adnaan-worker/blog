@@ -22,8 +22,9 @@ import {
 } from 'react-icons/fi';
 import { API, Project } from '@/utils/api';
 import { formatDate } from '@/utils';
-import RichTextRenderer from '@/components/common/rich-text-renderer';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
+import { RichTextContent } from '@/components/rich-text/rich-text-content';
+import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
 
 // 样式组件
 const PageContainer = styled.div`
@@ -32,6 +33,10 @@ const PageContainer = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
   min-height: calc(100vh - 200px);
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 const BackButton = styled.button`
@@ -70,6 +75,8 @@ const ProjectHeader = styled.div`
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
   }
 `;
 
@@ -230,25 +237,38 @@ const ActionButton = styled.a`
   }
 `;
 
-const ContentLayout = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 3rem;
+// 项目布局容器 - 参考文章详情页的 ArticleLayout
+const ProjectLayout = styled.div`
+  display: flex;
+  gap: 2rem;
+  position: relative;
+  z-index: 3;
 
   @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    gap: 2.5rem;
   }
 `;
 
-const MainContent = styled.div`
+// 项目主内容区 - 参考文章详情页的 ArticleMain
+const ProjectMain = styled.div`
+  flex: 1;
   min-width: 0;
+
+  @media (max-width: 1024px) {
+    margin-right: 0;
+  }
 `;
 
-const Sidebar = styled.div`
+// 侧边栏容器 - 参考文章详情页的 ArticleSidebar
+const ProjectSidebar = styled.div`
   position: sticky;
-  top: calc(var(--header-height, 60px) + 20px); /* header高度 + 间距 */
-  align-self: start;
-  max-height: calc(100vh - var(--header-height, 60px) - 40px);
+  position: -webkit-sticky;
+  top: 150px;
+  width: 280px;
+  height: calc(100vh - 210px);
+  align-self: flex-start;
+  margin-top: 40px;
   overflow-y: auto;
 
   /* 自定义滚动条 */
@@ -271,8 +291,10 @@ const Sidebar = styled.div`
 
   @media (max-width: 1024px) {
     position: static;
+    width: 100%;
+    height: auto;
     max-height: none;
-    order: -1;
+    margin-top: 0;
   }
 `;
 
@@ -282,6 +304,13 @@ const InfoCard = styled.div`
 
   &:last-child {
     border-bottom: none;
+  }
+
+  /* 移动端隐藏（作者、统计、时间线在移动端显示在内容上方） */
+  &.mobile-hidden {
+    @media (max-width: 1024px) {
+      display: none;
+    }
   }
 `;
 
@@ -395,6 +424,95 @@ const AuthorInfo = styled.div`
   padding: 0.75rem 0;
 `;
 
+// 移动端信息卡片（作者、统计、时间线）
+const MobileInfoCard = styled.div`
+  display: none;
+  background: rgba(var(--bg-primary-rgb, 255, 255, 255), 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  [data-theme='dark'] & {
+    background: rgba(var(--bg-secondary-rgb, 30, 30, 30), 0.6);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  @media (max-width: 1024px) {
+    display: block;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+`;
+
+const MobileInfoSection = styled.div`
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
+
+  &:first-of-type {
+    padding-top: 0;
+  }
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+`;
+
+const MobileSectionTitle = styled.h3`
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  svg {
+    font-size: 0.85rem;
+  }
+`;
+
+const MobileAuthorInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const MobileAuthorAvatar = styled.img`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+`;
+
+const MobileAuthorDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+`;
+
+const MobileAuthorName = styled.div`
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  font-weight: 600;
+`;
+
+const MobileAuthorUsername = styled.div`
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  opacity: 0.8;
+`;
+
 const AuthorAvatar = styled.img`
   width: 32px;
   height: 32px;
@@ -420,137 +538,6 @@ const AuthorUsername = styled.span`
   opacity: 0.8;
 `;
 
-const MarkdownContent = styled.div`
-  padding: 2rem 0;
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    color: var(--text-primary);
-    margin: 2.5rem 0 1rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-
-    &:first-of-type {
-      margin-top: 0;
-    }
-  }
-
-  h1 {
-    font-size: 1.75rem;
-    border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.5);
-    padding-bottom: 0.75rem;
-  }
-
-  h2 {
-    font-size: 1.5rem;
-    border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
-    padding-bottom: 0.5rem;
-  }
-
-  h3 {
-    font-size: 1.25rem;
-  }
-
-  p {
-    color: var(--text-secondary);
-    line-height: 1.8;
-    margin: 1.25rem 0;
-    opacity: 0.9;
-  }
-
-  a {
-    color: var(--accent-color);
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  ul,
-  ol {
-    padding-left: 2rem;
-    margin: 1rem 0;
-    color: var(--text-secondary);
-    line-height: 1.8;
-  }
-
-  li {
-    margin: 0.5rem 0;
-  }
-
-  code {
-    background: rgba(var(--accent-rgb), 0.1);
-    padding: 0.2em 0.4em;
-    border-radius: 4px;
-    font-size: 0.9em;
-    font-family: 'Fira Code', monospace;
-    color: var(--accent-color);
-  }
-
-  pre {
-    margin: 1.5rem 0;
-    border-radius: 8px;
-    overflow: hidden;
-
-    code {
-      background: none;
-      padding: 0;
-      color: inherit;
-    }
-  }
-
-  blockquote {
-    border-left: 3px solid var(--accent-color);
-    padding-left: 1rem;
-    margin: 1.5rem 0;
-    color: var(--text-secondary);
-    font-style: italic;
-    opacity: 0.9;
-  }
-
-  img {
-    max-width: 100%;
-    border-radius: 4px;
-    margin: 2rem 0;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 2rem 0;
-    font-size: 0.9rem;
-
-    th,
-    td {
-      border: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.4);
-      padding: 0.75rem;
-      text-align: left;
-    }
-
-    th {
-      background: rgba(var(--accent-rgb), 0.05);
-      font-weight: 600;
-      color: var(--text-primary);
-      font-size: 0.85rem;
-    }
-
-    td {
-      color: var(--text-secondary);
-    }
-  }
-
-  hr {
-    border: none;
-    border-top: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
-    margin: 2.5rem 0;
-  }
-`;
-
 const LoadingState = styled.div`
   text-align: center;
   padding: 4rem 2rem;
@@ -569,9 +556,6 @@ const ProjectDetail: React.FC = () => {
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // 使用动画引擎 - 项目详情页专用动画
-  const { variants } = useAnimationEngine();
 
   useEffect(() => {
     const loadProject = async () => {
@@ -605,99 +589,224 @@ const ProjectDetail: React.FC = () => {
   }
 
   return (
-    <PageContainer>
-      <BackButton onClick={() => navigate('/projects')}>
-        <FiArrowLeft />
-        返回项目列表
-      </BackButton>
+    <DetailPageLayout showBackground={true} mainContent={<></>}>
+      <PageContainer>
+        <BackButton onClick={() => navigate('/projects')}>
+          <FiArrowLeft />
+          返回项目列表
+        </BackButton>
 
-      {/* 整体容器 - 交错动画 */}
-      <motion.div variants={variants.stagger} initial="hidden" animate="visible">
-        {/* 项目头部 - 从上方滑入 */}
-        <motion.div variants={variants.projectHeader}>
-          <ProjectHeader>
-            <ProjectHeaderContent>
-              <ProjectMeta>
-                <StatusBadge status={project.status}>{statusTextMap[project.status]}</StatusBadge>
-                {project.language && (
-                  <ProjectLanguage color={project.languageColor}>{project.language}</ProjectLanguage>
-                )}
-                {project.isOpenSource && (
-                  <MetaBadge title="开源项目">
-                    <FiCode /> 开源
-                  </MetaBadge>
-                )}
-                {project.isFeatured && (
-                  <MetaBadge title="精选项目">
-                    <FiAward /> 精选
-                  </MetaBadge>
-                )}
-              </ProjectMeta>
+        {/* 项目布局 - 参考手记详情页结构 */}
+        <ProjectLayout>
+          {/* 左侧：项目内容 */}
+          <DetailMainContent>
+            <ProjectMain>
+              {/* 项目头部卡片 */}
+              <ProjectHeader>
+                <ProjectHeaderContent>
+                  <ProjectMeta>
+                    <StatusBadge status={project.status}>{statusTextMap[project.status]}</StatusBadge>
+                    {project.language && (
+                      <ProjectLanguage color={project.languageColor}>{project.language}</ProjectLanguage>
+                    )}
+                    {project.isOpenSource && (
+                      <MetaBadge title="开源项目">
+                        <FiCode /> 开源
+                      </MetaBadge>
+                    )}
+                    {project.isFeatured && (
+                      <MetaBadge title="精选项目">
+                        <FiAward /> 精选
+                      </MetaBadge>
+                    )}
+                  </ProjectMeta>
 
-              <ProjectTitle>{project.title}</ProjectTitle>
+                  <ProjectTitle>{project.title}</ProjectTitle>
 
-              {project.description && <ProjectDescription>{project.description}</ProjectDescription>}
+                  {project.description && <ProjectDescription>{project.description}</ProjectDescription>}
 
-              <ProjectActions>
-                {project.githubUrl && (
-                  <ActionButton href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="primary">
-                    <FiGithub /> GitHub
-                  </ActionButton>
-                )}
-                {project.giteeUrl && (
-                  <ActionButton href={project.giteeUrl} target="_blank" rel="noopener noreferrer" className="primary">
-                    <FiGithub /> Gitee
-                  </ActionButton>
-                )}
-                {project.demoUrl && (
-                  <ActionButton href={project.demoUrl} target="_blank" rel="noopener noreferrer" className="secondary">
-                    <FiExternalLink /> 在线演示
-                  </ActionButton>
-                )}
-                {project.docsUrl && (
-                  <ActionButton href={project.docsUrl} target="_blank" rel="noopener noreferrer" className="secondary">
-                    <FiBook /> 文档
-                  </ActionButton>
-                )}
-                {project.npmPackage && (
-                  <ActionButton
-                    href={`https://www.npmjs.com/package/${project.npmPackage}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="secondary"
-                  >
-                    <FiPackage /> NPM
-                  </ActionButton>
-                )}
-              </ProjectActions>
-            </ProjectHeaderContent>
+                  <ProjectActions>
+                    {project.githubUrl && (
+                      <ActionButton
+                        href={project.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="primary"
+                      >
+                        <FiGithub /> GitHub
+                      </ActionButton>
+                    )}
+                    {project.giteeUrl && (
+                      <ActionButton
+                        href={project.giteeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="primary"
+                      >
+                        <FiGithub /> Gitee
+                      </ActionButton>
+                    )}
+                    {project.demoUrl && (
+                      <ActionButton
+                        href={project.demoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="secondary"
+                      >
+                        <FiExternalLink /> 在线演示
+                      </ActionButton>
+                    )}
+                    {project.docsUrl && (
+                      <ActionButton
+                        href={project.docsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="secondary"
+                      >
+                        <FiBook /> 文档
+                      </ActionButton>
+                    )}
+                    {project.npmPackage && (
+                      <ActionButton
+                        href={`https://www.npmjs.com/package/${project.npmPackage}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="secondary"
+                      >
+                        <FiPackage /> NPM
+                      </ActionButton>
+                    )}
+                  </ProjectActions>
+                </ProjectHeaderContent>
 
-            {project.coverImage && <HeaderCoverImage src={project.coverImage} alt={project.title} />}
-          </ProjectHeader>
-        </motion.div>
+                {project.coverImage && <HeaderCoverImage src={project.coverImage} alt={project.title} />}
+              </ProjectHeader>
 
-        <ContentLayout>
-          {/* 主内容 - 淡入上升 */}
-          <motion.div variants={variants.projectContent}>
-            <MainContent>
+              {/* 移动端信息卡片：作者、统计、时间线 */}
+              <MobileInfoCard>
+                {/* 作者信息 */}
+                {project.author && (
+                  <MobileInfoSection>
+                    <MobileSectionTitle>
+                      <FiUser />
+                      作者
+                    </MobileSectionTitle>
+                    <MobileAuthorInfo>
+                      <MobileAuthorAvatar
+                        src={project.author.avatar}
+                        alt={project.author.fullName || project.author.username}
+                      />
+                      <MobileAuthorDetails>
+                        <MobileAuthorName>{project.author.fullName || project.author.username}</MobileAuthorName>
+                        <MobileAuthorUsername>@{project.author.username}</MobileAuthorUsername>
+                      </MobileAuthorDetails>
+                    </MobileAuthorInfo>
+                  </MobileInfoSection>
+                )}
+
+                {/* 项目统计 */}
+                {(project.stars > 0 ||
+                  project.forks > 0 ||
+                  project.watchers > 0 ||
+                  project.issues > 0 ||
+                  project.downloads > 0 ||
+                  project.viewCount > 0) && (
+                  <MobileInfoSection>
+                    <MobileSectionTitle>
+                      <FiStar />
+                      项目统计
+                    </MobileSectionTitle>
+                    <InfoList>
+                      {project.stars > 0 && (
+                        <InfoItem>
+                          <FiStar />
+                          <strong>{project.stars}</strong> Stars
+                        </InfoItem>
+                      )}
+                      {project.forks > 0 && (
+                        <InfoItem>
+                          <FiGitBranch />
+                          <strong>{project.forks}</strong> Forks
+                        </InfoItem>
+                      )}
+                      {project.watchers > 0 && (
+                        <InfoItem>
+                          <FiEye />
+                          <strong>{project.watchers}</strong> Watchers
+                        </InfoItem>
+                      )}
+                      {project.issues > 0 && (
+                        <InfoItem>
+                          <FiAlertCircle />
+                          <strong>{project.issues}</strong> Issues
+                        </InfoItem>
+                      )}
+                      {project.downloads > 0 && (
+                        <InfoItem>
+                          <FiDownload />
+                          <strong>{project.downloads}</strong> 下载量
+                        </InfoItem>
+                      )}
+                      {project.viewCount > 0 && (
+                        <InfoItem>
+                          <FiEye />
+                          <strong>{project.viewCount}</strong> 浏览
+                        </InfoItem>
+                      )}
+                    </InfoList>
+                  </MobileInfoSection>
+                )}
+
+                {/* 时间线 */}
+                {(project.startedAt || project.createdAt || project.updatedAt) && (
+                  <MobileInfoSection>
+                    <MobileSectionTitle>
+                      <FiClock />
+                      时间线
+                    </MobileSectionTitle>
+                    <InfoList>
+                      {project.startedAt && (
+                        <InfoItem>
+                          <FiCalendar />
+                          开始于 <strong>{formatDate(project.startedAt, 'YYYY-MM-DD')}</strong>
+                        </InfoItem>
+                      )}
+                      {project.createdAt && (
+                        <InfoItem>
+                          <FiCalendar />
+                          创建于 <strong>{formatDate(project.createdAt, 'YYYY-MM-DD')}</strong>
+                        </InfoItem>
+                      )}
+                      {project.updatedAt && (
+                        <InfoItem>
+                          <FiClock />
+                          更新于 <strong>{formatDate(project.updatedAt, 'YYYY-MM-DD')}</strong>
+                        </InfoItem>
+                      )}
+                    </InfoList>
+                  </MobileInfoSection>
+                )}
+              </MobileInfoCard>
+
+              {/* 项目内容 */}
               {project.content ? (
-                <MarkdownContent>
-                  <RichTextRenderer content={project.content} />
-                </MarkdownContent>
+                <RichTextContent className="rich-text-content">
+                  <RichTextRenderer content={project.content} mode="article" />
+                </RichTextContent>
               ) : (
-                <MarkdownContent>
+                <RichTextContent className="rich-text-content">
                   <p>暂无详细介绍</p>
-                </MarkdownContent>
+                </RichTextContent>
               )}
-            </MainContent>
-          </motion.div>
+            </ProjectMain>
+          </DetailMainContent>
 
-          {/* 侧边栏 - 从右侧滑入 */}
-          <motion.div variants={variants.projectSidebar}>
-            <Sidebar>
-              {/* 作者信息 */}
+          {/* 右侧：项目信息 */}
+          <DetailSidebar>
+            <ProjectSidebar>
+              {/* 作者信息 - 桌面端显示，移动端隐藏 */}
               {project.author && (
-                <InfoCard>
+                <InfoCard className="mobile-hidden">
                   <InfoTitle>
                     <FiUser />
                     作者
@@ -715,8 +824,8 @@ const ProjectDetail: React.FC = () => {
                 </InfoCard>
               )}
 
-              {/* 项目统计 */}
-              <InfoCard>
+              {/* 项目统计 - 桌面端显示，移动端隐藏 */}
+              <InfoCard className="mobile-hidden">
                 <InfoTitle>
                   <FiStar />
                   项目统计
@@ -761,8 +870,8 @@ const ProjectDetail: React.FC = () => {
                 </InfoList>
               </InfoCard>
 
-              {/* 时间信息 */}
-              <InfoCard>
+              {/* 时间信息 - 桌面端显示，移动端隐藏 */}
+              <InfoCard className="mobile-hidden">
                 <InfoTitle>
                   <FiClock />
                   时间线
@@ -833,11 +942,11 @@ const ProjectDetail: React.FC = () => {
                   </TagsSection>
                 </InfoCard>
               )}
-            </Sidebar>
-          </motion.div>
-        </ContentLayout>
-      </motion.div>
-    </PageContainer>
+            </ProjectSidebar>
+          </DetailSidebar>
+        </ProjectLayout>
+      </PageContainer>
+    </DetailPageLayout>
   );
 };
 

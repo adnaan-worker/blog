@@ -45,6 +45,12 @@ const PageContainer = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
   min-height: calc(100vh - 200px);
+  /* 移动端优化 - 防止内容溢出 */
+  overflow-x: hidden;
+
+  @media (max-width: 768px) {
+    padding: 1rem 0.75rem;
+  }
 `;
 
 const FilterBar = styled.div`
@@ -132,6 +138,9 @@ const ProjectMain = styled.div`
   flex-direction: column;
   gap: 0.75rem;
   min-width: 0;
+  /* 移动端优化 - 防止内容溢出 */
+  max-width: 100%;
+  overflow-x: hidden;
 `;
 
 const ProjectTitleRow = styled.div`
@@ -267,6 +276,9 @@ const ProjectDescription = styled.p`
   -webkit-box-orient: vertical;
   overflow: hidden;
   letter-spacing: 0.01em;
+  /* 移动端优化 - 防止长单词溢出 */
+  word-break: break-word;
+  overflow-wrap: break-word;
 
   @media (max-width: 640px) {
     font-size: 0.9rem;

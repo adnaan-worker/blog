@@ -7,7 +7,7 @@ import { SiGitee } from 'react-icons/si';
 import { formatDate } from '@/utils';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { Icon } from '@/components/common/Icon';
-import { RadarChart } from '@/components/common/radar-chart';
+import { RadarChart } from '@/components/charts/radar-chart';
 import { getLanguageIcon, calculateProjectRadarData } from '@/utils/language-icons';
 import { ProjectsSectionProps } from './types';
 

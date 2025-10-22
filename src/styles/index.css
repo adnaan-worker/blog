@@ -306,6 +306,8 @@ html {
   scroll-behavior: smooth;
   letter-spacing: -0.01em;
   height: auto;
+  /* 禁用移动端双指缩放 */
+  touch-action: pan-y pan-x;
 }
 
 body {
@@ -321,6 +323,8 @@ body {
   letter-spacing: -0.01em;
   height: auto;
   overflow-x: hidden;
+  /* 禁用移动端双指缩放 */
+  touch-action: pan-y pan-x;
 }
 
 #root {

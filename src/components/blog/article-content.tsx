@@ -2,7 +2,8 @@ import React, { useEffect, useRef, memo, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { FiCalendar, FiClock, FiTag, FiUser } from 'react-icons/fi';
 import { RiRobot2Line } from 'react-icons/ri';
-import RichTextRenderer from '@/components/common/rich-text-renderer';
+import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
+import RichTextContent from '@/components/rich-text/rich-text-content';
 import ImagePreview from '@/components/common/image-preview';
 import type { Article } from '@/utils/api';
 
@@ -113,8 +114,8 @@ const AISummaryContent = styled.p`
   margin: 0;
 `;
 
-// 文章内容
-const ArticleContentWrapper = styled.div`
+// 文章内容容器 - 继承统一的 RichTextContent 并添加文章特定样式
+const ArticleContentWrapper = styled(RichTextContent)`
   font-size: 1.05rem;
   line-height: 1.8;
   color: var(--text-primary);
@@ -122,14 +123,8 @@ const ArticleContentWrapper = styled.div`
   height: auto;
   position: relative;
 
-  p {
-    margin-bottom: 1.5rem;
-  }
-
-  h2 {
-    font-size: 1.6rem;
-    font-weight: 600;
-    margin: 2.5rem 0 1rem;
+  /* 文章特定：H2标题下划线装饰 */
+  h2.article-heading {
     position: relative;
     padding-bottom: 0.5rem;
     scroll-margin-top: 100px;
@@ -146,65 +141,29 @@ const ArticleContentWrapper = styled.div`
     }
   }
 
-  h3 {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin: 2rem 0 1rem;
+  /* 文章特定：标题滚动偏移 */
+  h2.article-heading,
+  h3.article-heading,
+  h4.article-heading,
+  h5.article-heading,
+  h6.article-heading {
     scroll-margin-top: 100px;
   }
 
-  h4,
-  h5,
-  h6 {
-    scroll-margin-top: 100px;
-  }
-
-  ul,
-  ol {
-    margin-bottom: 1.5rem;
-    padding-left: 1.5rem;
-
-    li {
-      margin-bottom: 0.5rem;
-    }
-  }
-
-  blockquote {
-    margin: 1.5rem 0;
-    padding: 1rem 1.5rem;
-    border-left: 4px solid var(--accent-color);
-    background: var(--bg-secondary);
-    border-radius: 0 8px 8px 0;
-    font-style: italic;
-
-    p {
-      margin-bottom: 0;
-    }
-  }
-
-  /* 这些样式已经在 RichTextRenderer 中处理，这里不需要重复定义 */
-
-  img {
-    max-width: 100%;
-    border-radius: 8px;
-    margin: 1.5rem 0;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 1rem;
-  }
-
-  /* 为标题添加高亮效果 */
+  /* 文章特定：标题高亮效果 */
   .highlight-heading {
     transition: all 0.3s ease;
   }
 
-  /* 添加一个用于视觉反馈的目标样式 */
   .target-highlight {
     background-color: rgba(81, 131, 245, 0.1) !important;
     padding: 10px !important;
     border-radius: 4px !important;
     transition: all 0.3s ease !important;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
   }
 `;
 
@@ -332,7 +291,7 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
       )}
 
       {/* 使用RichTextRenderer处理所有内容 */}
-      <ArticleContentWrapper ref={contentRef}>
+      <ArticleContentWrapper ref={contentRef} className="rich-text-content">
         <RichTextRenderer
           content={article.content || ''}
           mode="article"

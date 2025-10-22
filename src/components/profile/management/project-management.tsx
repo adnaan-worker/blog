@@ -6,7 +6,7 @@ import { Button, Modal, Input, Textarea, RadioGroup, InfiniteScroll, Switch, Col
 import type { RadioOption } from 'adnaan-ui';
 import { API, Project, ProjectParams } from '@/utils/api';
 import { ManagementLayout, type StatItemData, type FilterOption } from '../common/management-layout';
-import ModernEditor from '@/components/common/modern-editor';
+import ModernEditor from '@/components/rich-text/modern-editor';
 import GitHubSyncModal from './github-sync-modal';
 import {
   ItemCard,

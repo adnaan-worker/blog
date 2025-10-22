@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
-import CodeBlock from '@/components/common/code-block';
-import RichTextRenderer from '@/components/common/rich-text-renderer';
+import CodeBlock from '@/components/rich-text/code-block';
+import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
 import { RichTextParser } from '@/utils/rich-text-parser';
 import React, { useState } from 'react';
 

@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import { FiArrowLeft, FiCalendar, FiTag, FiMapPin, FiCloud, FiHeart, FiEdit3, FiClock } from 'react-icons/fi';
 import styled from '@emotion/styled';
 import { API, Note } from '@/utils/api';
-import RichTextRenderer from '@/components/common/rich-text-renderer';
-import RichTextStats from '@/components/common/rich-text-stats';
+import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
+import RichTextContent from '@/components/rich-text/rich-text-content';
+import RichTextStats from '@/components/rich-text/rich-text-stats';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
 
@@ -693,13 +694,15 @@ const NoteDetail: React.FC = () => {
 
               {/* 手记内容 */}
               <NoteContentWrapper>
-                <RichTextRenderer
-                  content={note.content}
-                  mode="note"
-                  enableCodeHighlight={true}
-                  enableImagePreview={true}
-                  enableTableOfContents={false}
-                />
+                <RichTextContent className="rich-text-content">
+                  <RichTextRenderer
+                    content={note.content}
+                    mode="note"
+                    enableCodeHighlight={true}
+                    enableImagePreview={true}
+                    enableTableOfContents={false}
+                  />
+                </RichTextContent>
               </NoteContentWrapper>
 
               {/* 相关手记 */}
