@@ -42,6 +42,7 @@ interface StatusData {
   appIcon: string;
   appType: 'app' | 'music';
   displayInfo: string;
+  action: string; // 添加动作状态
   timestamp: string;
   computer_name: string;
 }
@@ -260,13 +261,9 @@ const AppStatus: React.FC = () => {
     (app: StatusData, index: number) => {
       const prefix = index === 0 ? '正在使用' : '最近使用';
 
-      // 获取应用状态（编辑/播放等）
+      // 直接使用小工具解析的动作状态
       const getAppAction = () => {
-        if (app.appType === 'music') return '播放';
-        if (app.appName.toLowerCase().includes('code') || app.appName.toLowerCase().includes('editor')) return '编辑';
-        if (app.appName.toLowerCase().includes('chrome') || app.appName.toLowerCase().includes('browser'))
-          return '浏览';
-        return '使用中';
+        return app.action || '使用中'; // 使用小工具推送的action字段
       };
 
       return {
