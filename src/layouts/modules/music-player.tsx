@@ -405,10 +405,20 @@ interface SongInfo {
   lrc: string;
 }
 
-// 从Meting-api获取歌曲信息
-const fetchSongInfo = async (songId: string): Promise<SongInfo | null> => {
+// 从Meting-api获取歌曲信息（✅ 带超时和取消支持）
+const fetchSongInfo = async (songId: string, signal?: AbortSignal): Promise<SongInfo | null> => {
   try {
-    const response = await fetch(`https://meting.qjqq.cn/?type=song&id=${songId}`);
+    const controller = new AbortController();
+    const abortSignal = signal || controller.signal;
+
+    // 10秒超时
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(`https://meting.qjqq.cn/?type=song&id=${songId}`, {
+      signal: abortSignal,
+    });
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
       throw new Error('获取歌曲信息失败');
     }
@@ -418,6 +428,10 @@ const fetchSongInfo = async (songId: string): Promise<SongInfo | null> => {
     }
     return null;
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('获取歌曲信息超时');
+      throw new Error('歌曲信息请求超时');
+    }
     console.error('获取歌曲信息失败:', error);
     throw error;
   }
@@ -546,8 +560,16 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
         throw new Error('无效的音频URL');
       }
 
-      // 验证URL是否可访问
-      const response = await fetch(audioUrl, { method: 'HEAD' });
+      // ✅ 验证URL是否可访问（带超时和取消支持）
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(audioUrl, {
+        method: 'HEAD',
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         throw new Error('音频源不可访问');
       }
@@ -571,15 +593,31 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
     return newAudio;
   };
 
-  // 初始化音频元素和事件
+  // 初始化音频元素和事件（✅ 修复内存泄漏）
   useEffect(() => {
     // 只在组件挂载时创建音频元素
     if (!audioRef.current) {
       const audio = new Audio();
       audio.volume = volume;
-      audio.preload = 'none'; // 初始时不预加载
+      audio.preload = 'none';
       audioRef.current = audio;
-      setupAudioEventListeners(audio);
+
+      // ✅ 使用返回的清理函数
+      const cleanup = setupAudioEventListeners(audio);
+
+      return () => {
+        cleanup(); // 清理所有事件监听器
+        audio.pause();
+        audio.src = '';
+        audio.load(); // 释放音频资源
+      };
+    }
+  }, []); // ✅ 只在挂载时运行一次
+
+  // ✅ volume 变化单独处理
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
     }
   }, [volume]);
 

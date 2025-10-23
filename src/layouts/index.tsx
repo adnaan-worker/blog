@@ -2,6 +2,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
+import { useDispatch } from 'react-redux';
 import Header from './header';
 import Footer from './footer';
 import FloatingToolbar from './floating-toolbar';
@@ -11,6 +12,7 @@ import { useSystemTheme } from '@/hooks/useSystemTheme';
 import PageLoading from '@/components/common/page-loading';
 import { setupHttpConfig } from '@/utils/http-config';
 import { useAutoConnect } from '@/hooks/useSocket';
+import { AppDispatch } from '@/store';
 
 // 定义页面主体样式
 const MainContainer = styled.div`
@@ -65,6 +67,7 @@ const RootLayout = () => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>(); // ✅ 获取 Redux dispatch
 
   // 加载指示器状态
   const [showLoader, setShowLoader] = useState(false);
@@ -79,10 +82,10 @@ const RootLayout = () => {
   // 自动连接Socket.IO（用于在线人数统计等实时功能）
   useAutoConnect(true);
 
-  // 配置HTTP未授权回调
+  // ✅ 配置HTTP未授权回调（传入 dispatch 以便清除 Redux 状态）
   useEffect(() => {
-    setupHttpConfig(navigate);
-  }, [navigate]);
+    setupHttpConfig(navigate, dispatch);
+  }, [navigate, dispatch]);
 
   // 标记首次加载完成
   useEffect(() => {

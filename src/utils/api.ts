@@ -96,6 +96,9 @@ export interface SiteSettings {
   };
   quote?: string;
   quoteAuthor?: string;
+  // GitHub 和 Gitee 用户名（用于贡献统计）
+  githubUsername?: string;
+  giteeUsername?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -117,6 +120,9 @@ export interface UpdateSiteSettingsParams {
   };
   quote?: string;
   quoteAuthor?: string;
+  // GitHub 和 Gitee 用户名（用于贡献统计）
+  githubUsername?: string;
+  giteeUsername?: string;
 }
 
 export interface UserActivity {
@@ -467,12 +473,26 @@ export interface ProjectParams extends PaginationParams {
   keyword?: string;
 }
 
+// 贡献统计数据类型
+export interface ContributionChartData {
+  month: string;
+  count: number;
+  color: string;
+}
+
 export const API = {
   // 活动相关（公开接口）
   activity: {
     // 获取全站最新活动（无需登录）
     getRecentActivities: (params?: PaginationParams & { type?: string }) =>
       http.get<UserActivity[]>('/activities/recent', params),
+  },
+
+  // 贡献统计相关API（公开接口）
+  contribution: {
+    // 获取 GitHub + Gitee 贡献统计
+    getContributions: (params?: { githubUsername?: string; giteeUsername?: string }) =>
+      http.get<ContributionChartData[]>('/contributions', params),
   },
 
   // 项目相关API

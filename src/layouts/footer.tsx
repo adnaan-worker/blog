@@ -502,8 +502,8 @@ const Footer = () => {
                     <span className="pulse-dot" />
                     {/* 桌面端：完整文案 */}
                     <span className="full-text">
-                      此刻有 <span className="count">{onlineCount}</span> 位
-                      {onlineCount === 1 ? '朋友' : '朋友'}在博客里闲逛
+                      此刻有 <span className="count">{onlineCount}</span> 位{onlineCount === 1 ? '朋友' : '朋友'}
+                      在博客里闲逛
                     </span>
                     {/* 移动端：简短文案 */}
                     <span className="short-text">

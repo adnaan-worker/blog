@@ -624,8 +624,10 @@ export const GhostWidget = () => {
     return () => clearTimeout(hintTimer);
   }, [launchCount]); // 每次发射后重新计时
 
-  // 关心气泡循环显示（独立逻辑，不依赖气泡状态）
+  // 关心气泡循环显示（✅ 修复嵌套 setTimeout 泄漏）
   useEffect(() => {
+    const timeouts = new Set<NodeJS.Timeout>(); // ✅ 收集所有嵌套的 setTimeout
+
     const checkAndShowBubble = () => {
       const now = Date.now();
       const timeSinceLastActivity = now - lastActivityRef.current;
@@ -638,10 +640,11 @@ export const GhostWidget = () => {
         if (timeSinceLastActivity > 10000) {
           const randomMessage = careMessages[Math.floor(Math.random() * careMessages.length)];
 
-          // 5秒后隐藏气泡
-          setTimeout(() => {
+          // ✅ 保存 setTimeout ID 以便清理
+          const hideTimeout = setTimeout(() => {
             setCareBubble(null);
           }, 5000);
+          timeouts.add(hideTimeout);
 
           return randomMessage;
         }
@@ -663,6 +666,9 @@ export const GhostWidget = () => {
     return () => {
       clearTimeout(firstCheck);
       clearInterval(interval);
+      // ✅ 清理所有嵌套的 setTimeout
+      timeouts.forEach((timeout) => clearTimeout(timeout));
+      timeouts.clear();
       if (bubbleTimeoutRef.current) {
         clearTimeout(bubbleTimeoutRef.current);
       }

@@ -48,6 +48,10 @@ class SocketManager {
   private connectionMonitor: NodeJS.Timeout | null = null;
   private lastActivity: Date = new Date();
 
+  // ✅ 引用计数和自动清理
+  private refCount = 0;
+  private cleanupTimer: NodeJS.Timeout | null = null;
+
   // 更新状态并通知所有监听器
   private updateState(updates: Partial<SocketState>) {
     this.state = { ...this.state, ...updates };
@@ -289,6 +293,7 @@ class SocketManager {
   public disconnect() {
     this.clearReconnectTimer();
     this.clearConnectionMonitor();
+    this.clearCleanupTimer(); // ✅ 清理自动断开定时器
 
     if (this.socket) {
       this.socket.disconnect();
@@ -316,24 +321,57 @@ class SocketManager {
     return false;
   }
 
-  // 添加状态监听器
+  // ✅ 清理自动断开定时器
+  private clearCleanupTimer() {
+    if (this.cleanupTimer) {
+      clearTimeout(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+  }
+
+  // ✅ 启动自动清理定时器
+  private startCleanupTimer() {
+    this.clearCleanupTimer();
+
+    // 60秒后如果没有监听器，自动断开连接
+    this.cleanupTimer = setTimeout(() => {
+      const totalListeners = this.stateListeners.size + this.eventListeners.size;
+      if (totalListeners === 0 && this.refCount === 0) {
+        console.log('📌 Socket无活跃监听器，自动断开连接');
+        this.disconnect();
+      }
+    }, 60000);
+  }
+
+  // 添加状态监听器（✅ 带引用计数）
   public addStateListener(listener: (state: SocketState) => void): () => void {
     this.stateListeners.add(listener);
+    this.refCount++;
+    this.clearCleanupTimer(); // 有新监听器，取消自动清理
+
     // 立即调用一次，提供当前状态
     listener(this.state);
 
     return () => {
       this.stateListeners.delete(listener);
+      this.refCount--;
+
+      // 如果没有监听器了，启动自动清理定时器
+      if (this.stateListeners.size === 0 && this.eventListeners.size === 0) {
+        this.startCleanupTimer();
+      }
     };
   }
 
-  // 添加事件监听器
+  // 添加事件监听器（✅ 带引用计数）
   public addEventListener(event: string, listener: (...args: any[]) => void): () => void {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
 
     this.eventListeners.get(event)!.add(listener);
+    this.refCount++;
+    this.clearCleanupTimer(); // 有新监听器，取消自动清理
 
     return () => {
       const listeners = this.eventListeners.get(event);
@@ -342,6 +380,12 @@ class SocketManager {
         if (listeners.size === 0) {
           this.eventListeners.delete(event);
         }
+      }
+      this.refCount--;
+
+      // 如果没有监听器了，启动自动清理定时器
+      if (this.stateListeners.size === 0 && this.eventListeners.size === 0) {
+        this.startCleanupTimer();
       }
     };
   }

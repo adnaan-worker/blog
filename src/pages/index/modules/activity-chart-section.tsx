@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { motion, Variants } from 'framer-motion';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { motion } from 'framer-motion';
 import { ActivityChartSectionProps } from './types';
 
 // Styled Components
@@ -50,97 +49,206 @@ const ChartContainer = styled(motion.div)`
   }
 `;
 
+// 活动图表容器
 const Chart = styled.div`
   height: 150px;
   display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  margin-top: 1rem;
+  align-items: stretch;
+  gap: 4px;
+  margin-top: 1.5rem;
+  padding: 1rem;
   position: relative;
+  overflow-x: auto;
+  border-radius: 8px;
+  box-sizing: border-box;
 
   &:after {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
     height: 1px;
     background-color: var(--border-color);
-    opacity: 0.6;
+    opacity: 0.3;
+  }
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.1);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--text-secondary);
+    }
+  }
+
+  @media (max-width: 768px) {
+    height: 120px;
+    gap: 3px;
+    padding: 0.75rem;
+
+    &:after {
+      bottom: 0.75rem;
+      left: 0.75rem;
+      right: 0.75rem;
+    }
   }
 `;
 
-const ChartBar = styled(motion.div)<{ height: number }>`
-  width: 6px;
-  height: ${(props) => props.height}%;
-  background-color: var(--accent-color);
+// 月份组容器（每个月均分空间）
+const MonthGroup = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: flex-end; /* 线条底部对齐 */
+  gap: 2px;
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    gap: 1.5px;
+  }
+`;
+
+// 每一天的线条（在月份组内均分空间）
+const DayLine = styled(motion.div)<{ height: number }>`
+  flex: 1;
+  min-width: 2px;
+  height: ${(props) => props.height}px; /* 使用绝对高度 */
+  background: linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.7) 100%);
   border-radius: 3px 3px 0 0;
-  opacity: 0.8;
-  transition: all 0.3s ease;
-  position: relative;
+  opacity: 0.85;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 
   &:hover {
     opacity: 1;
-    transform: scaleY(1.05);
-    background-color: var(--accent-color);
+    transform: scaleY(1.15) translateY(-2px);
+    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.6);
+    filter: brightness(1.1);
+  }
+
+  @media (max-width: 768px) {
+    min-width: 1.5px;
   }
 `;
 
+// 月份标签容器
 const ChartLabels = styled.div`
   display: flex;
-  justify-content: space-between;
-  margin-top: 0.75rem;
-  font-size: 0.75rem;
+  margin-top: 1rem;
+  padding: 0 1rem;
+  gap: 4px;
+
+  @media (max-width: 768px) {
+    padding: 0 0.75rem;
+    gap: 3px;
+  }
+`;
+
+// 单个月份标签（均分空间，和MonthGroup对应）
+const MonthLabel = styled.div`
+  flex: 1;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   opacity: 0.8;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 0.65rem;
+  }
 `;
 
 // 主组件
 export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ chartData }) => {
-  // 使用动画引擎 - Spring 系统
-  const { variants, springPresets } = useAnimationEngine();
+  if (!Array.isArray(chartData) || chartData.length === 0) {
+    return (
+      <ChartSection>
+        <CreativeSectionHeader>
+          <CreativeSectionTitle>年度活跃度一览</CreativeSectionTitle>
+          <SectionSubtitle>暂无数据</SectionSubtitle>
+        </CreativeSectionHeader>
+      </ChartSection>
+    );
+  }
 
-  // 柱状图动画变体 - Spring 弹性
-  const barVariants: any = {
-    hidden: { scaleY: 0, transformOrigin: 'bottom' },
-    visible: (custom: number) => ({
-      scaleY: 1,
-      transition: {
-        ...springPresets.bouncy,
-        delay: custom * 0.02,
-      },
-    }),
-  };
+  // 处理API返回的数据
+  const dailyData = chartData.map((item: any) => {
+    const date = new Date(item.date);
+    return {
+      date: item.date,
+      displayDate: `${date.getMonth() + 1}/${date.getDate()}`,
+      month: `${date.getMonth() + 1}月`,
+      count: item.count,
+    };
+  });
+
+  // 计算最大贡献数和图表高度
+  const maxCount = Math.max(...dailyData.map((item) => item.count), 1);
+  const chartHeight = window.innerWidth <= 768 ? 96 : 118;
+
+  // 标准化数据为绝对高度（避免百分比高度问题）
+  const normalizedData = dailyData.map((item) => ({
+    ...item,
+    heightPx:
+      item.count === 0
+        ? 3 // 无贡献时显示最小高度
+        : Math.max((item.count / maxCount) * chartHeight, 5), // 有贡献时至少5px
+  }));
+
+  // 按月份分组数据（用于月份均分布局）
+  const monthGroups = normalizedData.reduce(
+    (groups: Array<{ month: string; days: typeof normalizedData }>, item, index) => {
+      const lastGroup = groups[groups.length - 1];
+
+      if (!lastGroup || lastGroup.month !== item.month) {
+        groups.push({ month: item.month, days: [item] });
+      } else {
+        lastGroup.days.push(item);
+      }
+
+      return groups;
+    },
+    [],
+  );
 
   return (
-    <ChartSection
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      variants={variants.stagger}
-    >
+    <ChartSection>
       <CreativeSectionHeader>
-        <CreativeSectionTitle variants={variants.fadeIn}>年度活跃度一览</CreativeSectionTitle>
-        <SectionSubtitle variants={variants.fadeIn}>记录每一次创作的足迹</SectionSubtitle>
+        <CreativeSectionTitle>年度活跃度一览</CreativeSectionTitle>
+        <SectionSubtitle>记录每一次创作的足迹 ({normalizedData.length} 天)</SectionSubtitle>
       </CreativeSectionHeader>
 
-      <ChartContainer variants={variants.card} whileHover={{ y: -4, scale: 1.01 }} transition={springPresets.gentle}>
+      <ChartContainer>
         <Chart>
-          {chartData.map((item, index) => (
-            <ChartBar
-              key={item.month}
-              height={item.count}
-              variants={barVariants}
-              custom={index}
-              whileHover={{ opacity: 1, scaleY: 1.08 }}
-              transition={springPresets.bouncy}
-            />
+          {monthGroups.map((group, groupIndex) => (
+            <MonthGroup key={`${group.month}-${groupIndex}`}>
+              {group.days.map((item, dayIndex) => (
+                <DayLine
+                  key={`${item.date}-${dayIndex}`}
+                  height={item.heightPx}
+                  title={`${item.displayDate}: ${item.count} 次贡献`}
+                  style={{
+                    background: item.count === 0 ? 'rgba(var(--text-secondary-rgb, 107, 114, 126), 0.15)' : undefined,
+                    opacity: item.count === 0 ? 0.5 : 0.85,
+                  }}
+                />
+              ))}
+            </MonthGroup>
           ))}
         </Chart>
 
         <ChartLabels>
-          {chartData.map((item, index) => (index % 3 === 0 ? <span key={item.month}>{item.month}</span> : null))}
+          {monthGroups.map((group, index) => (
+            <MonthLabel key={`${group.month}-${index}`}>{group.month}</MonthLabel>
+          ))}
         </ChartLabels>
       </ChartContainer>
     </ChartSection>

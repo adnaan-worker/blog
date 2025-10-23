@@ -564,20 +564,8 @@ const RightColumn = styled.div`
   position: relative;
 `;
 
-const chartData = [
-  { month: '2025.5', count: 35, color: '' },
-  { month: '2025.6', count: 42, color: '' },
-  { month: '2025.7', count: 55, color: '' },
-  { month: '2025.8', count: 40, color: '' },
-  { month: '2025.9', count: 68, color: '' },
-  { month: '2025.10', count: 75, color: '' },
-  { month: '2025.11', count: 82, color: '' },
-  { month: '2025.12', count: 90, color: '' },
-  { month: '2026.1', count: 60, color: '' },
-  { month: '2026.2', count: 78, color: '' },
-  { month: '2026.3', count: 65, color: '' },
-  { month: '2026.4', count: 92, color: '' },
-];
+// ✅ 移除 mock 数据，使用真实 API 数据
+// const chartData = [ ... ];
 
 const SkillTags = styled(motion.div)`
   margin-top: 0.5rem;
@@ -639,6 +627,9 @@ const Home: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   // 当前选中的项目索引
   const [selectedProjectIndex, setSelectedProjectIndex] = useState(0);
+  // ✅ 贡献数据
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartLoading, setChartLoading] = useState(true);
 
   // 加载网站设置
   useEffect(() => {
@@ -714,6 +705,35 @@ const Home: React.FC = () => {
 
     loadProjects();
   }, []);
+
+  // ✅ 加载贡献统计数据
+  useEffect(() => {
+    const loadContributions = async () => {
+      try {
+        setChartLoading(true);
+        // 从网站设置中获取用户名，或使用默认值
+        const githubUsername = siteSettings?.githubUsername || 'adnaan';
+        const giteeUsername = siteSettings?.giteeUsername || 'adnaan';
+
+        const response = await API.contribution.getContributions({
+          githubUsername,
+          giteeUsername,
+        });
+        setChartData(response.data || []);
+      } catch (error) {
+        console.error('加载贡献数据失败:', error);
+        // 加载失败时使用空数据
+        setChartData([]);
+      } finally {
+        setChartLoading(false);
+      }
+    };
+
+    // 等待网站设置加载完成后再加载贡献数据
+    if (siteSettings) {
+      loadContributions();
+    }
+  }, [siteSettings]);
 
   const handleCardFlip = () => {
     setIsFlipped(!isFlipped);

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { FiGithub, FiCode, FiStar, FiGitBranch, FiDownload, FiRefreshCw } from 'react-icons/fi';
 import { SiGitee } from 'react-icons/si';
@@ -108,19 +108,36 @@ const GitHubSyncModal: React.FC<GitHubSyncModalProps> = ({ isOpen, onClose, onSy
     homepage: repo.homepage,
   });
 
-  // 获取仓库列表（支持 GitHub 和 Gitee）
+  // ✅ 使用 ref 存储 AbortController，支持取消请求
+  const fetchControllerRef = useRef<AbortController | null>(null);
+
+  // 获取仓库列表（✅ 支持 AbortController 取消）
   const handleFetchRepos = useCallback(async () => {
     if (!username.trim()) {
       adnaan.toast.error(`请输入 ${platform === 'github' ? 'GitHub' : 'Gitee'} 用户名`);
       return;
     }
 
+    // ✅ 取消之前的请求
+    if (fetchControllerRef.current) {
+      fetchControllerRef.current.abort();
+    }
+
+    // ✅ 创建新的 AbortController
+    const controller = new AbortController();
+    fetchControllerRef.current = controller;
+
     try {
       setLoading(true);
       let repoList: RepoInfo[] = [];
 
       if (platform === 'github') {
-        const response = await fetch(`https://api.github.com/users/${username.trim()}/repos?sort=updated&per_page=100`);
+        const response = await fetch(
+          `https://api.github.com/users/${username.trim()}/repos?sort=updated&per_page=100`,
+          {
+            signal: controller.signal,
+          },
+        );
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -135,6 +152,7 @@ const GitHubSyncModal: React.FC<GitHubSyncModalProps> = ({ isOpen, onClose, onSy
         // Gitee API
         const response = await fetch(
           `https://gitee.com/api/v5/users/${username.trim()}/repos?sort=updated&per_page=100`,
+          { signal: controller.signal },
         );
 
         if (!response.ok) {
@@ -151,13 +169,28 @@ const GitHubSyncModal: React.FC<GitHubSyncModalProps> = ({ isOpen, onClose, onSy
       setRepos(repoList);
       adnaan.toast.success(`成功获取 ${repoList.length} 个仓库`);
     } catch (error: any) {
+      // ✅ 忽略 AbortError
+      if (error.name === 'AbortError') {
+        console.log('请求已取消');
+        return;
+      }
       console.error(`获取 ${platform} 仓库失败:`, error);
       adnaan.toast.error(error.message || '获取仓库失败');
       setRepos([]);
     } finally {
       setLoading(false);
+      fetchControllerRef.current = null;
     }
   }, [username, platform]);
+
+  // ✅ 组件卸载时取消请求
+  useEffect(() => {
+    return () => {
+      if (fetchControllerRef.current) {
+        fetchControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // 同步单个仓库
   const handleSyncRepo = useCallback(
