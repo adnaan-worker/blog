@@ -38,6 +38,7 @@ export { default as BookmarkManagement } from './management/bookmark-management'
 export { default as LikeManagement } from './management/like-management';
 export { default as NoteLikeManagement } from './management/note-like-management';
 export { default as SecuritySettings } from './management/security-settings';
+export { default as SiteSettingsManagement } from './management/site-settings-management';
 export { default as UserManagement } from './management/user-management';
 export { default as CategoryManagement } from './management/category-management';
 export { default as TagManagement } from './management/tag-management';

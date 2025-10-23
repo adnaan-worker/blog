@@ -81,7 +81,6 @@ import {
   QuickActions,
   AchievementBadges,
   EditProfileModal,
-  EditSiteSettingsModal,
   NoteManagement,
   ArticleManagement,
   CommentManagement,
@@ -89,6 +88,7 @@ import {
   LikeManagement,
   NoteLikeManagement,
   SecuritySettings,
+  SiteSettingsManagement,
   UserManagement,
   CategoryManagement,
   TagManagement,
@@ -973,7 +973,6 @@ const Profile: React.FC = () => {
 
   // 状态管理
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isEditSiteSettingsModalOpen, setIsEditSiteSettingsModalOpen] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
@@ -1405,7 +1404,7 @@ const Profile: React.FC = () => {
         }
         break;
       case 'edit-site-settings':
-        setIsEditSiteSettingsModalOpen(true);
+        addTab('site-settings', '⚙️ 网站设置');
         break;
       case 'logout':
         adnaan.confirm.confirm('退出登录', '确定要退出登录吗？').then((confirmed) => {
@@ -1433,7 +1432,8 @@ const Profile: React.FC = () => {
       const response = await API.siteSettings.updateSiteSettings(settings);
       setSiteSettings(response.data);
       adnaan.toast.success('网站设置更新成功！');
-      setIsEditSiteSettingsModalOpen(false);
+      // 重新加载网站设置
+      await loadSiteSettings();
     } catch (error: any) {
       adnaan.toast.error(error.message || '更新失败，请重试');
     } finally {
@@ -1678,6 +1678,16 @@ const Profile: React.FC = () => {
       case 'security':
         return <SecuritySettings />;
 
+      case 'site-settings':
+        if (!isAdmin) return <div>无权限访问</div>;
+        return (
+          <SiteSettingsManagement
+            settings={siteSettings}
+            onSave={handleSaveSiteSettings}
+            isLoading={isSiteSettingsLoading}
+          />
+        );
+
       case 'users':
         if (!isAdmin) return <div>无权限访问</div>;
         return <UserManagement />;
@@ -1804,14 +1814,6 @@ const Profile: React.FC = () => {
           isLoading={isUserLoading}
         />
       )}
-
-      <EditSiteSettingsModal
-        isOpen={isEditSiteSettingsModalOpen}
-        settings={siteSettings}
-        onClose={() => setIsEditSiteSettingsModalOpen(false)}
-        onSave={handleSaveSiteSettings}
-        isLoading={isSiteSettingsLoading}
-      />
 
       {/* 移动端侧边箭头按钮 */}
       {isMobile && (

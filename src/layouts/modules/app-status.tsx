@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { keyframes, css } from '@emotion/react';
-import { useSocket, useSocketEvent, useSocketEvents } from '@/hooks/useSocket';
+import { useSocket, useSocketEvents } from '@/hooks/useSocket';
 import { FiChrome, FiCode, FiMusic, FiMonitor, FiImage, FiZap, FiMessageCircle, FiVideo } from 'react-icons/fi';
 
-// 应用图标和颜色映射（简化版）
+// 应用图标和颜色映射
 const APP_ICONS: Record<string, React.ReactNode> = {
   chrome: <FiChrome />,
   firefox: <FiChrome />,
@@ -156,17 +156,20 @@ const Tooltip = styled.div<{ visible: boolean }>`
   transform: translateX(-50%);
   background: var(--bg-secondary);
   color: var(--text-primary);
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  margin-top: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  margin-top: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   white-space: nowrap;
+  min-width: 200px;
   opacity: ${(props) => (props.visible ? 1 : 0)};
   pointer-events: ${(props) => (props.visible ? 'auto' : 'none')};
   z-index: 100;
   transition: opacity 0.2s ease;
   border: 1px solid var(--border-color);
+  text-align: left;
+  line-height: 1.6;
 
   &:before {
     content: '';
@@ -182,59 +185,61 @@ const Tooltip = styled.div<{ visible: boolean }>`
   }
 `;
 
+const TooltipHeader = styled.div`
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+`;
+
+const TooltipApp = styled.div`
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 2px;
+`;
+
+const TooltipDetail = styled.div`
+  opacity: 0.8;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+`;
+
 // 主组件
 const AppStatus: React.FC = () => {
-  // 使用新的Socket Hooks（连接由RootLayout统一管理）
-  const { isConnected, emit, error } = useSocket();
+  const { isConnected, emit } = useSocket();
 
   const [statusData, setStatusData] = useState<StatusResponse>({ current: null, history: [] });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [lastError, setLastError] = useState<string | null>(null);
 
-  // 使用批量事件监听，更简洁
+  // 使用useCallback优化事件处理器
+  const handleStatusUpdated = useCallback((response: SocketResponse<StatusResponse>) => {
+    if (response.success && response.data) {
+      setStatusData(response.data);
+    }
+  }, []);
+
+  const handleStatusCurrent = useCallback((response: SocketResponse<StatusResponse> & { isInactive?: boolean }) => {
+    if (response.success && response.data) {
+      setStatusData(response.data);
+    }
+  }, []);
+
+  const handleConnect = useCallback(() => {
+    emit('status:request');
+  }, [emit]);
+
+  // 使用批量事件监听
   const socketEvents = useMemo(
     () => ({
-      'status:updated': (response: SocketResponse<StatusResponse>) => {
-        console.log('📊 收到状态更新:', response);
-        if (response.success && response.data) {
-          setStatusData(response.data);
-          setLastError(null); // 清除错误状态
-        } else {
-          const errorMsg = response.error || response.message || '状态更新失败';
-          console.error('状态更新失败:', errorMsg);
-          setLastError(errorMsg);
-        }
-      },
-
-      'status:current': (response: SocketResponse<StatusResponse> & { isInactive?: boolean }) => {
-        console.log('📊 收到当前状态:', response);
-        if (response.success && response.data) {
-          setStatusData(response.data);
-          setLastError(null); // 清除错误状态
-
-          // 如果系统处于不活跃状态，显示相应信息
-          if (response.isInactive) {
-            console.log('⏸️ 系统处于不活跃状态');
-          }
-        } else {
-          const errorMsg = response.error || response.message || '获取状态失败';
-          console.error('获取状态失败:', errorMsg);
-          setLastError(errorMsg);
-        }
-      },
-
-      connect: () => {
-        console.log('✅ Socket已连接，请求状态');
-        emit('status:request');
-      },
+      'status:updated': handleStatusUpdated,
+      'status:current': handleStatusCurrent,
+      connect: handleConnect,
     }),
-    [emit],
+    [handleStatusUpdated, handleStatusCurrent, handleConnect],
   );
 
-  // 批量注册事件监听
   useSocketEvents(socketEvents);
 
-  // 构建显示数据 - 使用useMemo优化
+  // 构建显示数据
   const displayApps = useMemo(() => {
     if (!statusData.current) return [];
 
@@ -248,15 +253,29 @@ const AppStatus: React.FC = () => {
     }));
   }, [statusData]);
 
-  // 工具提示内容
+  const userName = 'adnaan';
+
+  // 格式化Tooltip内容
   const getTooltipContent = useCallback(
     (app: StatusData, index: number) => {
       const prefix = index === 0 ? '正在使用' : '最近使用';
-      const icon = app.appType === 'music' ? '🎵' : '🖥️';
-      const status = isConnected ? '实时推送' : '离线状态';
-      return `${prefix}: ${icon} ${app.displayInfo}\n${status}`;
+
+      // 获取应用状态（编辑/播放等）
+      const getAppAction = () => {
+        if (app.appType === 'music') return '播放';
+        if (app.appName.toLowerCase().includes('code') || app.appName.toLowerCase().includes('editor')) return '编辑';
+        if (app.appName.toLowerCase().includes('chrome') || app.appName.toLowerCase().includes('browser'))
+          return '浏览';
+        return '使用中';
+      };
+
+      return {
+        header: `${userName} ${prefix}:`,
+        app: `${app.appName} ${getAppAction()}`,
+        detail: app.displayInfo,
+      };
     },
-    [isConnected],
+    [userName],
   );
 
   // 如果没有数据，不渲染
@@ -266,21 +285,29 @@ const AppStatus: React.FC = () => {
 
   return (
     <StatusContainer>
-      {displayApps.map((app, index) => (
-        <AppIcon
-          key={`${app.timestamp}-${index}`}
-          color={app.color}
-          size={app.size as 'large' | 'medium' | 'small'}
-          isActive={app.isActive}
-          isNew={index === 0} // 第一个总是新的
-          onMouseEnter={() => setHoveredIndex(index)}
-          onMouseLeave={() => setHoveredIndex(null)}
-        >
-          {app.icon}
-          {app.isActive && <StatusIndicator connected={isConnected} />}
-          <Tooltip visible={hoveredIndex === index}>{getTooltipContent(app, index)}</Tooltip>
-        </AppIcon>
-      ))}
+      {displayApps.map((app, index) => {
+        const tooltipContent = getTooltipContent(app, index);
+
+        return (
+          <AppIcon
+            key={`${app.timestamp}-${index}`}
+            color={app.color}
+            size={app.size as 'large' | 'medium' | 'small'}
+            isActive={app.isActive}
+            isNew={index === 0}
+            onMouseEnter={() => setHoveredIndex(index)}
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
+            {app.icon}
+            {app.isActive && <StatusIndicator connected={isConnected} />}
+            <Tooltip visible={hoveredIndex === index}>
+              <TooltipHeader>{tooltipContent.header}</TooltipHeader>
+              <TooltipApp>{tooltipContent.app}</TooltipApp>
+              <TooltipDetail>{tooltipContent.detail}</TooltipDetail>
+            </Tooltip>
+          </AppIcon>
+        );
+      })}
     </StatusContainer>
   );
 };
