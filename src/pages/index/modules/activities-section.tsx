@@ -278,7 +278,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
       viewport={{ once: true, amount: 0.2 }}
       variants={variants.fadeIn}
     >
-      <SectionTitle>最近发生的事</SectionTitle>
+      <SectionTitle>创作的「实时热搜」</SectionTitle>
 
       <ActivityScrollContainer>
         <FadeMask className="top" />

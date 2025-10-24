@@ -155,7 +155,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
       variants={variants.fadeIn}
     >
       <SectionTitle>
-        最新文章
+        技术文思的「新地球」
         <Link to="/blog" style={{ textDecoration: 'none' }}>
           <motion.span
             style={{
@@ -216,7 +216,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
       variants={variants.fadeIn}
     >
       <SectionTitle>
-        最近更新的手记
+        思想的「裂缝中的阳光」
         <Link to="/notes" style={{ textDecoration: 'none' }}>
           <motion.span
             style={{

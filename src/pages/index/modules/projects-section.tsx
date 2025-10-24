@@ -677,8 +677,10 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
       variants={variants.stagger}
     >
       <CreativeSectionHeader>
-        <CreativeSectionTitle variants={variants.fadeIn}>开源项目</CreativeSectionTitle>
-        <SectionSubtitle variants={variants.fadeIn}>用代码构建更美好的世界</SectionSubtitle>
+        <CreativeSectionTitle variants={variants.fadeIn}>开源 “关键词”</CreativeSectionTitle>
+        <SectionSubtitle variants={variants.fadeIn}>
+          让每一项技术栈都成音符，在代码的 “伟大的渺小” 里，拼出独属的开发美学
+        </SectionSubtitle>
       </CreativeSectionHeader>
 
       <ProjectsGrid>

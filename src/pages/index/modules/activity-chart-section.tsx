@@ -197,8 +197,11 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
       variants={variants.stagger}
     >
       <CreativeSectionHeader>
-        <CreativeSectionTitle variants={variants.fadeIn}>年度活跃度一览</CreativeSectionTitle>
-        <SectionSubtitle variants={variants.fadeIn}>记录每一次创作的足迹 ({normalizedData.length} 天)</SectionSubtitle>
+        <CreativeSectionTitle variants={variants.fadeIn}>我的提交频次诗意图谱</CreativeSectionTitle>
+        <SectionSubtitle variants={variants.fadeIn}>
+          让每一次代码提交，都化作 {normalizedData[0].month + '-' + normalizedData[normalizedData.length - 1].month}
+          的诗意的编程韵律
+        </SectionSubtitle>
       </CreativeSectionHeader>
 
       <ChartContainer>
