@@ -286,7 +286,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.1 }}
-          variants={variants.stagger}
+          variants={variants.listItem}
         >
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
@@ -304,7 +304,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
                   variants={variants.listItem}
                   custom={index}
                   whileHover={{ x: 3, scale: 1.01 }}
-                  transition={springPresets.snappy}
+                  transition={springPresets.gentle}
                 >
                   <ActivityIcon>{formatted.emoji}</ActivityIcon>
                   <ActivityContent>

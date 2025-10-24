@@ -627,7 +627,7 @@ const Home: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   // 当前选中的项目索引
   const [selectedProjectIndex, setSelectedProjectIndex] = useState(0);
-  // ✅ 贡献数据
+  // 贡献数据
   const [chartData, setChartData] = useState<any[]>([]);
   const [chartLoading, setChartLoading] = useState(true);
 
@@ -706,7 +706,7 @@ const Home: React.FC = () => {
     loadProjects();
   }, []);
 
-  // ✅ 加载贡献统计数据
+  // 加载贡献统计数据
   useEffect(() => {
     const loadContributions = async () => {
       try {

@@ -12,8 +12,6 @@ const ScrollToTop = () => {
   useEffect(() => {
     // 使用三种方式确保跨浏览器兼容
     window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
   }, [location.pathname]);
 
   return null;
@@ -108,10 +106,5 @@ const router = createHashRouter([
     element: <NotFound />,
   },
 ]);
-
-// 禁用浏览器的自动滚动恢复功能
-if ('scrollRestoration' in window.history) {
-  window.history.scrollRestoration = 'manual';
-}
 
 export default router;

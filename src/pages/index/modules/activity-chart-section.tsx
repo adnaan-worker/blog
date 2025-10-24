@@ -2,6 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { ActivityChartSectionProps } from './types';
+import { useAnimationEngine } from '@/utils/animation-engine';
 
 // Styled Components
 const ChartSection = styled(motion.section)`
@@ -168,12 +169,18 @@ const MonthLabel = styled.div`
 
 // 主组件
 export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ chartData }) => {
+  const { variants, springPresets } = useAnimationEngine();
   if (!Array.isArray(chartData) || chartData.length === 0) {
     return (
-      <ChartSection>
+      <ChartSection
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={variants.stagger}
+      >
         <CreativeSectionHeader>
-          <CreativeSectionTitle>年度活跃度一览</CreativeSectionTitle>
-          <SectionSubtitle>暂无数据</SectionSubtitle>
+          <CreativeSectionTitle variants={variants.fadeIn}>年度活跃度一览</CreativeSectionTitle>
+          <SectionSubtitle variants={variants.fadeIn}>暂无数据</SectionSubtitle>
         </CreativeSectionHeader>
       </ChartSection>
     );
@@ -220,10 +227,15 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
   );
 
   return (
-    <ChartSection>
+    <ChartSection
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
+      variants={variants.stagger}
+    >
       <CreativeSectionHeader>
-        <CreativeSectionTitle>年度活跃度一览</CreativeSectionTitle>
-        <SectionSubtitle>记录每一次创作的足迹 ({normalizedData.length} 天)</SectionSubtitle>
+        <CreativeSectionTitle variants={variants.fadeIn}>年度活跃度一览</CreativeSectionTitle>
+        <SectionSubtitle variants={variants.fadeIn}>记录每一次创作的足迹 ({normalizedData.length} 天)</SectionSubtitle>
       </CreativeSectionHeader>
 
       <ChartContainer>
