@@ -2,7 +2,6 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiLock, FiInfo } from 'react-icons/fi';
-import { useAnimationEngine } from '@/utils/animation-engine';
 import type { Achievement } from './types';
 
 interface AchievementBadgesProps {

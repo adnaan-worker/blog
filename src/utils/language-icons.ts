@@ -1,5 +1,3 @@
-import { FiCode } from 'react-icons/fi';
-
 // 编程语言到图标的映射
 export const languageIconMap: Record<string, { icon: string; color: string }> = {
   JavaScript: { icon: 'javascript', color: '#f7df1e' },

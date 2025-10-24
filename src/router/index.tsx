@@ -29,7 +29,7 @@ const Projects = lazy(() => import('@/pages/project'));
 const ProjectDetail = lazy(() => import('@/pages/project/deatil'));
 
 // 个人中心相关页面
-const Profile = lazy(() => import('@/pages/user/Profile'));
+const Profile = lazy(() => import('@/pages/user/profile'));
 
 // 编辑器页面
 const ArticleEditor = lazy(() => import('@/pages/editor/article'));
