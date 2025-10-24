@@ -692,8 +692,8 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
           ) : projects[selectedProjectIndex] ? (
             <ProjectDetailContainer
               key={projects[selectedProjectIndex].id}
-              initial={{ opacity: 0, x: -30, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={springPresets.bouncy}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}

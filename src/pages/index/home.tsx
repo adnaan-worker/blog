@@ -137,8 +137,6 @@ const ProfileCard = styled.div`
   border-radius: 16px;
   box-shadow: 0 8px 24px var(--accent-color-alpha);
   cursor: pointer;
-
-  /* 性能优化 - 但不影响3D翻转 */
   will-change: transform;
 
   &:hover:not(.flipped) {
@@ -150,7 +148,6 @@ const ProfileCard = styled.div`
     transform: rotateY(180deg) translateZ(0);
   }
 
-  /* 确保翻转动画始终工作，即使有减少动画偏好 */
   @media (prefers-reduced-motion: reduce) {
     &.flipped {
       transform: rotateY(180deg) translateZ(0);
@@ -564,9 +561,6 @@ const RightColumn = styled.div`
   position: relative;
 `;
 
-// ✅ 移除 mock 数据，使用真实 API 数据
-// const chartData = [ ... ];
-
 const SkillTags = styled(motion.div)`
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
@@ -588,8 +582,6 @@ const SkillTags = styled(motion.div)`
   }
 `;
 
-// ==================== 字符动画组件 ====================
-
 /**
  * 单个字符容器 - 支持波浪动画
  *
@@ -599,8 +591,6 @@ const SkillTags = styled(motion.div)`
 const AnimatedChar = styled(MotionSpan)`
   display: inline-block;
 `;
-
-// ==================== 主组件 ====================
 
 const Home: React.FC = () => {
   // 使用动画引擎 - 统一的 Spring 动画系统
@@ -632,108 +622,102 @@ const Home: React.FC = () => {
   const [chartLoading, setChartLoading] = useState(true);
 
   // 加载网站设置
-  useEffect(() => {
-    const loadSiteSettings = async () => {
-      try {
-        const response = await API.siteSettings.getSiteSettings();
-        setSiteSettings(response.data);
-      } catch (error) {
-        console.error('加载网站设置失败:', error);
-      } finally {
-      }
-    };
-
-    loadSiteSettings();
-  }, []);
+  const loadSiteSettings = async () => {
+    try {
+      const response = await API.siteSettings.getSiteSettings();
+      setSiteSettings(response.data);
+    } catch (error) {
+      console.error('加载网站设置失败:', error);
+    } finally {
+    }
+  };
 
   // 加载文章列表
-  useEffect(() => {
-    const loadArticles = async () => {
-      try {
-        const response = await API.article.getArticles({ page: 1, limit: 3 });
-        setArticles(response.data || []);
-      } catch (error) {
-        console.error('加载文章失败:', error);
-      }
-    };
-
-    loadArticles();
-  }, []);
+  const loadArticles = async () => {
+    try {
+      const response = await API.article.getArticles({ page: 1, limit: 3 });
+      setArticles(response.data || []);
+    } catch (error) {
+      console.error('加载文章失败:', error);
+    }
+  };
 
   // 加载手记列表
-  useEffect(() => {
-    const loadNotes = async () => {
-      try {
-        const response = await API.note.getNotes({ page: 1, limit: 5, isPrivate: false });
-        setNotes(response.data || []);
-      } catch (error) {
-        console.error('加载手记失败:', error);
-      }
-    };
-
-    loadNotes();
-  }, []);
+  const loadNotes = async () => {
+    try {
+      const response = await API.note.getNotes({ page: 1, limit: 5, isPrivate: false });
+      setNotes(response.data || []);
+    } catch (error) {
+      console.error('加载手记失败:', error);
+    }
+  };
 
   // 加载全站活动
-  useEffect(() => {
-    const loadActivities = async () => {
-      try {
-        setActivitiesLoading(true);
-        const response = await API.activity.getRecentActivities({ page: 1, limit: 10 });
-        setActivities(Array.isArray(response.data) ? response.data : []);
-      } catch (error) {
-        console.error('加载活动失败:', error);
-        setActivities([]);
-      } finally {
-        setActivitiesLoading(false);
-      }
-    };
-
-    loadActivities();
-  }, []);
+  const loadActivities = async () => {
+    try {
+      setActivitiesLoading(true);
+      const response = await API.activity.getRecentActivities({ page: 1, limit: 10 });
+      setActivities(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('加载活动失败:', error);
+      setActivities([]);
+    } finally {
+      setActivitiesLoading(false);
+    }
+  };
 
   // 加载精选项目
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const response = await API.project.getFeaturedProjects({ page: 1, limit: 100 });
-        setProjects(response.data || []);
-      } catch (error) {
-        console.error('加载项目失败:', error);
-      }
-    };
-
-    loadProjects();
-  }, []);
+  const loadProjects = async () => {
+    try {
+      const response = await API.project.getFeaturedProjects({ page: 1, limit: 100 });
+      setProjects(response.data || []);
+    } catch (error) {
+      console.error('加载项目失败:', error);
+    }
+  };
 
   // 加载贡献统计数据
-  useEffect(() => {
-    const loadContributions = async () => {
-      try {
-        setChartLoading(true);
-        // 从网站设置中获取用户名，或使用默认值
-        const githubUsername = siteSettings?.githubUsername || 'adnaan';
-        const giteeUsername = siteSettings?.giteeUsername || 'adnaan';
+  const loadContributions = async () => {
+    try {
+      setChartLoading(true);
+      // 从网站设置中获取用户名，或使用默认值
+      const githubUsername = siteSettings?.githubUsername || 'adnaan';
+      const giteeUsername = siteSettings?.giteeUsername || 'adnaan';
 
-        const response = await API.contribution.getContributions({
-          githubUsername,
-          giteeUsername,
-        });
-        setChartData(response.data || []);
-      } catch (error) {
-        console.error('加载贡献数据失败:', error);
-        // 加载失败时使用空数据
-        setChartData([]);
-      } finally {
-        setChartLoading(false);
-      }
-    };
-
-    // 等待网站设置加载完成后再加载贡献数据
-    if (siteSettings) {
-      loadContributions();
+      const response = await API.contribution.getContributions({
+        githubUsername,
+        giteeUsername,
+      });
+      setChartData(response.data || []);
+    } catch (error) {
+      console.error('加载贡献数据失败:', error);
+      // 加载失败时使用空数据
+      setChartData([]);
+    } finally {
+      setChartLoading(false);
     }
-  }, [siteSettings]);
+  };
+  useEffect(() => {
+    let isMounted = true;
+    const initialize = async () => {
+      if (!isMounted) return;
+      await loadSiteSettings();
+      if (!isMounted) return;
+      await loadArticles();
+      if (!isMounted) return;
+      await loadNotes();
+      if (!isMounted) return;
+      await loadActivities();
+      if (!isMounted) return;
+      await loadProjects();
+      if (!isMounted) return;
+      await loadContributions();
+    };
+    initialize();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleCardFlip = () => {
     setIsFlipped(!isFlipped);

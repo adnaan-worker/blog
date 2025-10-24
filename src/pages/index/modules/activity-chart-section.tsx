@@ -43,7 +43,7 @@ const SectionSubtitle = styled(motion.p)`
 `;
 
 const ChartContainer = styled(motion.div)`
-  padding: 1.25rem;
+  padding: 1.25rem 0;
 
   [data-theme='dark'] & {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -59,49 +59,12 @@ const Chart = styled.div`
   margin-top: 1.5rem;
   padding: 1rem;
   position: relative;
-  overflow-x: auto;
-  border-radius: 8px;
   box-sizing: border-box;
-
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
-    height: 1px;
-    background-color: var(--border-color);
-    opacity: 0.3;
-  }
-
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.1);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
-
-    &:hover {
-      background: var(--text-secondary);
-    }
-  }
 
   @media (max-width: 768px) {
     height: 120px;
     gap: 3px;
     padding: 0.75rem;
-
-    &:after {
-      bottom: 0.75rem;
-      left: 0.75rem;
-      right: 0.75rem;
-    }
   }
 `;
 
