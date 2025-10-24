@@ -25,34 +25,19 @@ export { StickyDebugger, useStickyDebug } from './sticky-debug';
 // 导出滚动锁定工具
 export { default as scrollLock } from './scroll-lock';
 
-// 导出一些常用的工具函数
-export const formatDate = (
-  date: Date | string | number | null | undefined,
-  format: string = 'YYYY-MM-DD HH:mm:ss',
-): string => {
-  // 处理空值
-  if (!date) return '-';
-
-  const d = new Date(date);
-
-  // 检查日期是否有效
-  if (isNaN(d.getTime())) return '-';
-
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  const seconds = String(d.getSeconds()).padStart(2, '0');
-
-  return format
-    .replace('YYYY', String(year))
-    .replace('MM', month)
-    .replace('DD', day)
-    .replace('HH', hours)
-    .replace('mm', minutes)
-    .replace('ss', seconds);
-};
+// 导出日期格式化工具
+export {
+  formatDate,
+  getTimeAgo,
+  formatDateShort,
+  formatDateFull,
+  formatTime,
+  formatDateChinese,
+  isToday,
+  isYesterday,
+  getTimestamp,
+  getDaysDiff,
+} from './format-date';
 
 // 防抖函数
 export const debounce = <T extends (...args: any[]) => any>(

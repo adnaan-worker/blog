@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
-import { formatDate } from '@/utils';
+import { formatDate, getTimeAgo } from '@/utils';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { ArticlesSectionProps, NotesSectionProps } from './types';
 
@@ -191,7 +191,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
             <ArticleContent>
               <ArticleTitle>{article.title}</ArticleTitle>
             </ArticleContent>
-            <ArticleTime>{formatDate(article.publishedAt, 'YYYY-MM-DD')}</ArticleTime>
+            <ArticleTime>{getTimeAgo(article.publishedAt)}</ArticleTime>
           </ArticleLink>
         ))}
       </ArticleGrid>
@@ -252,7 +252,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
             <ArticleContent>
               <ArticleTitle>{note.title || '无标题手记'}</ArticleTitle>
             </ArticleContent>
-            <ArticleTime>{formatDate(note.createdAt, 'YYYY-MM-DD')}</ArticleTime>
+            <ArticleTime>{getTimeAgo(note.createdAt)}</ArticleTime>
           </ArticleLink>
         ))}
       </ArticleGrid>

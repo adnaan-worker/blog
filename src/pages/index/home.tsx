@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
 import { FiGithub, FiMail, FiCode } from 'react-icons/fi';
-import { API, SiteSettings, UserActivity, Project } from '@/utils/api';
+import { API, UserActivity, Project } from '@/utils/api';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { Icon } from '@/components/common/Icon';
 import { WaveText } from '@/components/common';
+import { useSiteSettings } from '@/layouts';
 import {
   ArticlesSection,
   NotesSection,
@@ -605,8 +606,8 @@ const Home: React.FC = () => {
 
   // 卡片翻转状态
   const [isFlipped, setIsFlipped] = useState(false);
-  // 网站设置数据
-  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+  // 使用网站设置Hook
+  const { siteSettings } = useSiteSettings();
   // 文章和手记数据
   const [articles, setArticles] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
@@ -620,17 +621,6 @@ const Home: React.FC = () => {
   // 贡献数据
   const [chartData, setChartData] = useState<any[]>([]);
   const [chartLoading, setChartLoading] = useState(true);
-
-  // 加载网站设置
-  const loadSiteSettings = async () => {
-    try {
-      const response = await API.siteSettings.getSiteSettings();
-      setSiteSettings(response.data);
-    } catch (error) {
-      console.error('加载网站设置失败:', error);
-    } finally {
-    }
-  };
 
   // 加载文章列表
   const loadArticles = async () => {
@@ -701,8 +691,6 @@ const Home: React.FC = () => {
     let isMounted = true;
     const initialize = async () => {
       if (!isMounted) return;
-      await loadSiteSettings();
-      if (!isMounted) return;
       await loadArticles();
       if (!isMounted) return;
       await loadNotes();
@@ -722,18 +710,6 @@ const Home: React.FC = () => {
   const handleCardFlip = () => {
     setIsFlipped(!isFlipped);
   };
-
-  // 使用网站设置或默认值（仅用于介绍卡片）
-  const authorName = siteSettings?.authorName || '';
-  const authorTitle = siteSettings?.authorTitle || '';
-  const authorBio = siteSettings?.authorBio || '';
-  const mbti = siteSettings?.mbti || '';
-  const location = siteSettings?.location || '';
-  const occupation = siteSettings?.occupation || '';
-  const skills = siteSettings?.skills || [];
-  const quote = siteSettings?.quote || '';
-  const quoteAuthor = siteSettings?.quoteAuthor || '';
-  const socialLinks = siteSettings?.socialLinks || [];
 
   return (
     <>
@@ -926,7 +902,7 @@ const Home: React.FC = () => {
                 transition={{ ...springPresets.gentle, delay: 0.2 }}
               >
                 <SocialLink
-                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.email}
+                  href={siteSettings?.socialLinks?.email ? `mailto:${siteSettings.socialLinks.email}` : undefined}
                   aria-label="Email"
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
@@ -936,7 +912,7 @@ const Home: React.FC = () => {
                   <FiMail />
                 </SocialLink>
                 <SocialLink
-                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.github}
+                  href={siteSettings?.socialLinks?.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="GitHub"
@@ -948,7 +924,7 @@ const Home: React.FC = () => {
                   <FiGithub />
                 </SocialLink>
                 <SocialLink
-                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.bilibili}
+                  href={siteSettings?.socialLinks?.bilibili}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Bilibili"
@@ -964,7 +940,7 @@ const Home: React.FC = () => {
                   <Icon name="bilibili" size={18} />
                 </SocialLink>
                 <SocialLink
-                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.twitter}
+                  href={siteSettings?.socialLinks?.twitter}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Twitter"
@@ -976,7 +952,7 @@ const Home: React.FC = () => {
                   <Icon name="telegram" size={18} />
                 </SocialLink>
                 <SocialLink
-                  href={Array.isArray(socialLinks) ? undefined : socialLinks?.rss}
+                  href={siteSettings?.socialLinks?.rss}
                   aria-label="RSS Feed"
                   initial={{ opacity: 1, scale: 1 }}
                   whileHover={{ y: -3, scale: 1.1 }}
@@ -1000,35 +976,35 @@ const Home: React.FC = () => {
                   <ProfileImage>
                     <img
                       src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100"
-                      alt={authorName}
+                      alt={siteSettings?.authorName || '头像'}
                     />
                   </ProfileImage>
-                  <ProfileName>{authorName}</ProfileName>
-                  <ProfileTitle>{authorTitle}</ProfileTitle>
+                  <ProfileName>{siteSettings?.authorName || ''}</ProfileName>
+                  <ProfileTitle>{siteSettings?.authorTitle || ''}</ProfileTitle>
 
                   <ProfileInfoList>
-                    {mbti && (
+                    {siteSettings?.mbti && (
                       <ProfileInfoItem>
                         <span>MBTI</span>
-                        <span>{mbti}</span>
+                        <span>{siteSettings.mbti}</span>
                       </ProfileInfoItem>
                     )}
-                    {location && (
+                    {siteSettings?.location && (
                       <ProfileInfoItem>
                         <span>地点</span>
-                        <span>{location}</span>
+                        <span>{siteSettings.location}</span>
                       </ProfileInfoItem>
                     )}
-                    {occupation && (
+                    {siteSettings?.occupation && (
                       <ProfileInfoItem>
                         <span>职业</span>
-                        <span>{occupation}</span>
+                        <span>{siteSettings.occupation}</span>
                       </ProfileInfoItem>
                     )}
-                    {skills && skills.length > 0 && (
+                    {siteSettings?.skills && siteSettings.skills.length > 0 && (
                       <ProfileInfoItem>
                         <span>技能</span>
-                        <span>{skills.join(', ')}</span>
+                        <span>{siteSettings.skills.join(', ')}</span>
                       </ProfileInfoItem>
                     )}
                   </ProfileInfoList>
@@ -1058,12 +1034,12 @@ const Home: React.FC = () => {
                       color: 'var(--text-secondary)',
                     }}
                   >
-                    {authorBio}
+                    {siteSettings?.authorBio || ''}
                   </p>
 
                   <CardTitle>技能标签</CardTitle>
                   <SkillList>
-                    {skills.map((skill, index) => (
+                    {siteSettings?.skills?.map((skill, index) => (
                       <SkillItem key={index}>{skill}</SkillItem>
                     ))}
                   </SkillList>
@@ -1091,7 +1067,7 @@ const Home: React.FC = () => {
             animate={{ opacity: 0.8 }}
             transition={{ ...springPresets.floaty, delay: 0.5 }}
           >
-            {quote} {quoteAuthor && `—— ${quoteAuthor}`}
+            {siteSettings?.quote || ''} {siteSettings?.quoteAuthor && `—— ${siteSettings.quoteAuthor}`}
           </Quote>
 
           {/* 滚动指示器 */}

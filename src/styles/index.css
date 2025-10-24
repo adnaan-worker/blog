@@ -1,8 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Fira+Code&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 @import './rich-text.css';
-
+@import './font.css';
 /**
  * 1. CSS变量定义
  */
@@ -110,6 +109,12 @@
   --mobile: 768px; /* 移动端断点 */
   --tablet: 992px; /* 平板断点 */
   --desktop: 1200px; /* 桌面断点 */
+
+  /* 主题过渡 */
+  --theme-transition-duration: 800ms;
+  --theme-transition-x: 50%;
+  --theme-transition-y: 50%;
+  --theme-transition-radius: 100vmax;
 }
 
 /**
@@ -184,17 +189,69 @@
 }
 
 /**
+ * 全局重置和基础样式
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* 禁用移动端点击高亮 */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 400;
+  scroll-behavior: smooth;
+  letter-spacing: -0.01em;
+  height: auto;
+  /* 禁用移动端双指缩放 */
+  touch-action: pan-y pan-x;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 400;
+  scroll-behavior: smooth;
+  letter-spacing: -0.01em;
+  height: auto;
+  overflow-x: hidden;
+  /* 禁用移动端双指缩放 */
+  touch-action: pan-y pan-x;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+
+  /* 暗黑模式下确保透明 */
+  [data-theme='dark'] & {
+    background: transparent;
+  }
+}
+
+/**
  * View Transitions API - 主题切换动画
  * 实现圆形扩散效果，从点击位置开始扩散
  */
-
-/* 定义动画变量 */
-:root {
-  --theme-transition-duration: 800ms;
-  --theme-transition-x: 50%;
-  --theme-transition-y: 50%;
-  --theme-transition-radius: 100vmax;
-}
 
 /* View Transition 容器 - 控制整个过渡的容器背景 */
 ::view-transition-group(root) {
@@ -283,66 +340,6 @@
     box-shadow 0.3s ease;
 }
 
-/**
- * 全局重置和基础样式
- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  /* 禁用移动端点击高亮 */
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-}
-
-html {
-  font-family: var(--font-sans);
-  color: var(--text-primary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-size: 15px;
-  line-height: 1.6;
-  font-weight: 400;
-  scroll-behavior: smooth;
-  letter-spacing: -0.01em;
-  height: auto;
-  /* 禁用移动端双指缩放 */
-  touch-action: pan-y pan-x;
-}
-
-body {
-  font-family: var(--font-sans);
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-size: 15px;
-  line-height: 1.6;
-  font-weight: 400;
-  scroll-behavior: smooth;
-  letter-spacing: -0.01em;
-  height: auto;
-  overflow-x: hidden;
-  /* 禁用移动端双指缩放 */
-  touch-action: pan-y pan-x;
-}
-
-#root {
-  min-height: 100vh;
-  width: 100%;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background: transparent;
-
-  /* 暗黑模式下确保透明 */
-  [data-theme='dark'] & {
-    background: transparent;
-  }
-}
-
 a {
   color: var(--accent-color);
   text-decoration: none;
@@ -396,12 +393,6 @@ p {
   line-height: 1.7;
   margin-bottom: 1rem;
   color: var(--text-secondary);
-}
-
-input,
-textarea,
-select {
-  font-family: inherit;
 }
 
 code,
@@ -706,87 +697,6 @@ pre,
 }
 
 /**
- * 按钮样式
- */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.6rem 1.2rem;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.2s var(--bezier-accelerate);
-  border: none;
-  background-color: var(--accent-color);
-  color: white;
-}
-
-.btn:hover {
-  background-color: var(--accent-color-hover);
-  transform: translateY(-2px);
-}
-
-.btn-secondary {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.btn-secondary:hover {
-  background-color: var(--bg-tertiary);
-}
-
-/**
- * 动画和过渡
- */
-.page-transition-enter {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.page-transition-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition:
-    opacity 0.3s,
-    transform 0.3s;
-}
-
-.page-transition-exit {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.page-transition-exit-active {
-  opacity: 0;
-  transform: translateY(10px);
-  transition:
-    opacity 0.3s,
-    transform 0.3s;
-}
-
-.fade-in {
-  animation: fadeIn 0.4s var(--bezier-accelerate) forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/**
  * 滚动条样式 - 简约版本
  */
 /* Webkit浏览器 (Chrome, Safari, Edge) */
@@ -863,122 +773,4 @@ pre,
   border-radius: 4px;
   padding: 0.2rem 0.5rem;
   margin-left: -0.5rem;
-}
-
-/* 手记页面专用样式 */
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200px 0;
-  }
-  100% {
-    background-position: calc(200px + 100%) 0;
-  }
-}
-
-/* 手记时间线专用样式 */
-.notes-timeline {
-  /* 时间线渐变效果 */
-  .timeline-gradient::before {
-    background: linear-gradient(
-      180deg,
-      transparent 0%,
-      var(--accent-color) 10%,
-      var(--accent-color) 90%,
-      transparent 100%
-    );
-  }
-
-  /* 手记卡片悬浮效果 */
-  .note-card {
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-
-  .note-card:hover {
-    transform: translateY(-4px) scale(1.01);
-  }
-
-  /* 标签悬浮效果 */
-  .note-tag {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .note-tag::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s;
-  }
-
-  .note-tag:hover::before {
-    left: 100%;
-  }
-
-  /* 元信息图标动画 */
-  .meta-icon {
-    transition: transform 0.2s ease;
-  }
-
-  .meta-icon:hover {
-    transform: scale(1.2) rotate(5deg);
-  }
-}
-
-/* 响应式优化 */
-@media (max-width: 768px) {
-  .notes-timeline .timeline-item {
-    padding-left: 50px;
-  }
-
-  .notes-timeline .timeline-dot {
-    left: 10px;
-    width: 8px;
-    height: 8px;
-  }
-}
-
-/* 深色模式优化 */
-[data-theme='dark'] {
-  .notes-timeline .note-card {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow:
-      0 4px 16px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(255, 255, 255, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-
-  .notes-timeline .note-card:hover {
-    background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(255, 255, 255, 0.1),
-      0 0 16px rgba(var(--accent-rgb), 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  }
 }

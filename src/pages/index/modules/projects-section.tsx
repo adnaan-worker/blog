@@ -315,7 +315,7 @@ const DataItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0;
+  padding: 0.75rem;
   border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.5);
 
   &:last-child {

@@ -380,7 +380,10 @@ export class AnimationVariants {
         hidden: { opacity: 0 },
         visible: {
           opacity: 1,
-          transition: spring,
+          transition: {
+            ...spring,
+            duration: 0.3, // 添加最小持续时间确保动画完成
+          },
         },
       };
     }
@@ -391,7 +394,11 @@ export class AnimationVariants {
         opacity: 1,
         y: 0,
         scale: 1,
-        transition: spring,
+        transition: {
+          ...spring,
+          duration: 0.5, // 添加最小持续时间确保动画完成
+          opacity: { duration: 0.3, ease: 'easeOut' }, // 单独控制透明度动画
+        },
       },
     };
   }
@@ -458,7 +465,13 @@ export class AnimationVariants {
     if (level === 'minimal') {
       return {
         hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: spring },
+        visible: {
+          opacity: 1,
+          transition: {
+            ...spring,
+            duration: 0.3, // 添加最小持续时间确保动画完成
+          },
+        },
       };
     }
 
@@ -468,7 +481,11 @@ export class AnimationVariants {
         opacity: 1,
         x: 0,
         scale: 1,
-        transition: spring,
+        transition: {
+          ...spring,
+          duration: 0.4, // 添加最小持续时间确保动画完成
+          opacity: { duration: 0.2, ease: 'easeOut' }, // 单独控制透明度动画
+        },
       },
     };
   }
@@ -480,7 +497,13 @@ export class AnimationVariants {
     if (level === 'minimal') {
       return {
         hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: spring },
+        visible: {
+          opacity: 1,
+          transition: {
+            ...spring,
+            duration: 0.3, // 添加最小持续时间确保动画完成
+          },
+        },
       };
     }
 
@@ -490,7 +513,11 @@ export class AnimationVariants {
         opacity: 1,
         y: 0,
         scale: 1,
-        transition: spring,
+        transition: {
+          ...spring,
+          duration: 0.5, // 添加最小持续时间确保动画完成
+          opacity: { duration: 0.3, ease: 'easeOut' }, // 单独控制透明度动画
+        },
       },
     };
   }
@@ -831,6 +858,28 @@ export const useAnimationEngine = () => {
     };
   }, [metrics.level, metrics.prefersReducedMotion]);
 
+  // 稳健的动画状态管理
+  const getSafeAnimationProps = useCallback((variant: any, initial?: any, animate?: any) => {
+    // 确保动画状态正确切换，避免 opacity: 0 卡住
+    return {
+      initial: initial || 'hidden',
+      animate: animate || 'visible',
+      variants: variant,
+      transition: {
+        duration: 0.3, // 最小持续时间
+        ease: 'easeOut', // 降级缓动
+        ...variant?.visible?.transition, // 合并自定义过渡
+      },
+      // 添加动画完成回调，确保状态正确
+      onAnimationComplete: (definition: string) => {
+        if (definition === 'visible') {
+          // 动画完成后的清理工作
+          console.log('[Animation Engine] Animation completed successfully');
+        }
+      },
+    };
+  }, []);
+
   return {
     // 性能指标
     metrics,
@@ -851,6 +900,7 @@ export const useAnimationEngine = () => {
     // 工具方法
     scheduleAnimation,
     hoverProps,
+    getSafeAnimationProps, // 新增：稳健的动画属性获取方法
   };
 };
 

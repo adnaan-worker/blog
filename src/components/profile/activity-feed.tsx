@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiRefreshCw, FiExternalLink } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
-import { useAnimationEngine } from '@/utils/animation-engine';
 import type { Activity } from './types';
 
 interface ActivityFeedProps {

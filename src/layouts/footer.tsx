@@ -5,6 +5,7 @@ import { FiGithub, FiMail, FiRss, FiHeart } from 'react-icons/fi';
 import React from 'react';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { useOnlineUsers } from '@/hooks';
+import { useSiteSettings } from './index';
 
 // 使用motion组件增强动画效果
 const MotionFooter = motion.footer;
@@ -360,6 +361,9 @@ const Footer = () => {
   // 使用在线人数Hook
   const { onlineCount } = useOnlineUsers();
 
+  // 使用网站设置Hook
+  const { siteSettings } = useSiteSettings();
+
   // 动画变量 - 使用动画引擎的配置
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -386,18 +390,18 @@ const Footer = () => {
         <FooterTop>
           <FooterLeft>
             <motion.div variants={itemVariants}>
-              <FooterLogo to="/">adnaan's Blog</FooterLogo>
+              <FooterLogo to="/">Turn of The Page</FooterLogo>
             </motion.div>
 
             <motion.div variants={itemVariants}>
               <FooterDescription>
-                分享编程知识、设计理念与生活感悟。一个记录思考与成长的空间，希望能为你带来一些启发和帮助。
+                "分享编程知识、设计理念与生活感悟。一个记录思考与成长的空间，希望能为你带来一些启发和帮助。"
               </FooterDescription>
             </motion.div>
 
             <SocialLinks>
               <SocialLink
-                href="https://github.com/yourusername"
+                href={siteSettings?.socialLinks?.github}
                 target="_blank"
                 rel="noopener noreferrer"
                 variants={itemVariants}
@@ -408,7 +412,9 @@ const Footer = () => {
                 <FiGithub size={18} />
               </SocialLink>
               <SocialLink
-                href="mailto:your.email@example.com"
+                href={`mailto:${siteSettings?.socialLinks?.email}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 variants={itemVariants}
                 whileHover={{ y: -2, scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
@@ -474,7 +480,7 @@ const Footer = () => {
           <Copyright>
             <span>© {new Date().getFullYear()}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              Design by adnaan.
+              Design by {siteSettings?.authorName || 'adnaan'}.
               <FiHeart style={{ color: 'var(--error-color)' }} size={12} />
             </span>
           </Copyright>
@@ -487,7 +493,7 @@ const Footer = () => {
               </a>{' '}
               强力驱动 |{' '}
               <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
-                ICP备20236136号
+                '陇ICP备2025016896号'
               </a>
               {/* 在线人数显示 - 响应式文案 */}
               {onlineCount > 0 && (
