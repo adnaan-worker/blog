@@ -13,7 +13,7 @@ import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components
 // 页面容器
 const PageContainer = styled.div`
   width: 100%;
-  max-width: 1280px;
+  max-width: var(--max-width);
   margin: 0 auto;
   padding: 20px 1.5rem 4rem;
   position: relative;

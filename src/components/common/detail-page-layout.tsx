@@ -151,6 +151,7 @@ export const DetailMainContent: React.FC<{ children: React.ReactNode }> = ({ chi
 
   return (
     <motion.div
+      style={{ width: '100%' }}
       initial={{ opacity: 0, y: 40, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ ...springPresets.bouncy, delay: 0.1 }}
