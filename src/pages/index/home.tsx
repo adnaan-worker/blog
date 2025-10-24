@@ -29,7 +29,6 @@ const PageContainer = styled.div`
   padding: 0 1rem;
 `;
 
-// 添加首屏容器
 const HeroSection = styled.div`
   min-height: 100vh;
   display: flex;
@@ -37,8 +36,6 @@ const HeroSection = styled.div`
   position: relative;
 
   @media (max-width: 768px) {
-    min-height: 100vh;
-
     padding-bottom: 2rem;
   }
 `;
@@ -120,6 +117,7 @@ const HeroImage = styled(MotionDiv)`
   position: relative;
   z-index: 1;
   perspective: 1000px;
+  perspective-origin: center center;
 
   @media (max-width: 768px) {
     width: 280px;
@@ -134,24 +132,31 @@ const ProfileCard = styled.div`
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
+  transform-origin: center center;
   transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border-radius: 16px;
-  box-shadow: 0 8px 24px var(--accent-color-alpha);
+  box-shadow:
+    0 8px 32px rgba(var(--accent-rgb), 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
   cursor: pointer;
   will-change: transform;
 
   &:hover:not(.flipped) {
-    transform: translateY(-8px) translateZ(0);
-    box-shadow: 0 12px 28px var(--accent-color-alpha);
+    transform: translateY(-8px);
+    box-shadow:
+      0 16px 48px rgba(var(--accent-rgb), 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
   }
 
   &.flipped {
-    transform: rotateY(180deg) translateZ(0);
+    transform: rotateY(180deg);
   }
 
   @media (prefers-reduced-motion: reduce) {
     &.flipped {
-      transform: rotateY(180deg) translateZ(0);
+      transform: rotateY(180deg);
     }
   }
 `;
@@ -167,32 +172,42 @@ const CardFace = styled.div`
 `;
 
 const CardFront = styled(CardFace)`
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(81, 131, 245, 0.1) 100%);
-  border: 1px solid rgba(81, 131, 245, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 1.5rem 1rem;
   transform: rotateY(0deg);
-
-  [data-theme='dark'] & {
-    background: linear-gradient(135deg, rgba(30, 30, 30, 0.5) 0%, rgba(81, 131, 245, 0.15) 100%);
-    border: 1px solid rgba(81, 131, 245, 0.2);
-  }
 `;
 
 const CardBack = styled(CardFace)`
-  background: linear-gradient(135deg, rgba(81, 131, 245, 0.1) 0%, rgba(255, 255, 255, 0.1) 100%);
-  border: 1px solid rgba(81, 131, 245, 0.1);
   transform: rotateY(180deg);
   display: flex;
   flex-direction: column;
+`;
+
+const CardBackContent = styled.div`
   padding: 1.2rem 1rem;
   overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+  position: relative;
+  z-index: 1;
 
-  [data-theme='dark'] & {
-    background: linear-gradient(135deg, rgba(81, 131, 245, 0.15) 0%, rgba(30, 30, 30, 0.5) 100%);
-    border: 1px solid rgba(81, 131, 245, 0.2);
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--accent-rgb), 0.3);
+    border-radius: 2px;
+
+    &:hover {
+      background: rgba(var(--accent-rgb), 0.5);
+    }
   }
 `;
 
@@ -201,15 +216,29 @@ const ProfileImage = styled.div`
   height: 100px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid rgba(81, 131, 245, 0.3);
+  border: 3px solid rgba(255, 255, 255, 0.5);
   margin-bottom: 1.2rem;
   flex-shrink: 0;
+  box-shadow:
+    0 8px 24px rgba(var(--accent-rgb), 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  position: relative;
+  z-index: 1;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: all 0.5s ease;
+  }
+
+  [data-theme='dark'] & {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 4px 12px rgba(var(--accent-rgb), 0.2),
+      inset 0 2px 4px rgba(255, 255, 255, 0.15);
   }
 `;
 
@@ -288,12 +317,38 @@ const SkillList = styled.div`
 const SkillItem = styled.span`
   font-size: 0.8rem;
   padding: 0.3rem 0.6rem;
-  background: rgba(81, 131, 245, 0.1);
-  border-radius: 4px;
+  background: rgba(var(--accent-rgb), 0.12);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-radius: 6px;
   color: var(--accent-color);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 2px 8px rgba(var(--accent-rgb), 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    background: rgba(var(--accent-rgb), 0.18);
+    transform: translateY(-1px);
+    box-shadow:
+      0 4px 12px rgba(var(--accent-rgb), 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
 
   [data-theme='dark'] & {
-    background: rgba(81, 131, 245, 0.15);
+    background: rgba(var(--accent-rgb), 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+    &:hover {
+      background: rgba(var(--accent-rgb), 0.22);
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
   }
 `;
 
@@ -477,7 +532,6 @@ const Quote = styled(MotionDiv)`
   margin-bottom: 0.5rem;
 `;
 
-// 新增滚动指示器组件
 const ScrollIndicator = styled(motion.div)`
   display: flex;
   flex-direction: column;
@@ -532,7 +586,6 @@ const scrollWheelVariants: Variants = {
   },
 };
 
-// 两栏布局样式
 const TwoColumnLayout = styled(motion.div)`
   display: grid;
   grid-template-columns: 1fr 400px;
@@ -964,15 +1017,14 @@ const Home: React.FC = () => {
               </SocialLinks>
             </HeroContent>
 
-            {/* 个人卡片 - 立即弹出 */}
+            {/* 个人卡片 */}
             <HeroImage
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={springPresets.bouncy}
-              className="card-container"
             >
               <ProfileCard className={isFlipped ? 'flipped' : ''} onClick={handleCardFlip}>
-                <CardFront className="card-face">
+                <CardFront className="glass glass-highlight">
                   <ProfileImage>
                     <img
                       src="https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100"
@@ -1024,39 +1076,41 @@ const Home: React.FC = () => {
                   </CardFlipHint>
                 </CardFront>
 
-                <CardBack className="card-face card-back">
-                  <CardTitle>关于我</CardTitle>
-                  <p
-                    style={{
-                      fontSize: '0.85rem',
-                      lineHeight: '1.5',
-                      marginBottom: '0.8rem',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {siteSettings?.authorBio || ''}
-                  </p>
-
-                  <CardTitle>技能标签</CardTitle>
-                  <SkillList>
-                    {siteSettings?.skills?.map((skill, index) => (
-                      <SkillItem key={index}>{skill}</SkillItem>
-                    ))}
-                  </SkillList>
-
-                  <CardFlipHint>
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                <CardBack className="glass glass-highlight">
+                  <CardBackContent>
+                    <CardTitle>关于我</CardTitle>
+                    <p
+                      style={{
+                        fontSize: '0.85rem',
+                        lineHeight: '1.5',
+                        marginBottom: '0.8rem',
+                        color: 'var(--text-secondary)',
+                      }}
                     >
-                      <path d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                    </svg>
-                    返回正面
-                  </CardFlipHint>
+                      {siteSettings?.authorBio || ''}
+                    </p>
+
+                    <CardTitle>技能标签</CardTitle>
+                    <SkillList>
+                      {siteSettings?.skills?.map((skill, index) => (
+                        <SkillItem key={index}>{skill}</SkillItem>
+                      ))}
+                    </SkillList>
+
+                    <CardFlipHint>
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                      </svg>
+                      返回正面
+                    </CardFlipHint>
+                  </CardBackContent>
                 </CardBack>
               </ProfileCard>
             </HeroImage>

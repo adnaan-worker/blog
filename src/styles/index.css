@@ -474,14 +474,20 @@ pre,
   z-index: 60;
   margin-left: auto;
 
-  /* 初始胶囊状态 - 浮动效果 */
-  background: rgba(255, 255, 255, 0.98);
+  /* 使用玻璃态样式 */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(var(--accent-rgb), 0.15) 100%
+  );
+  backdrop-filter: blur(60px) saturate(220%);
+  -webkit-backdrop-filter: blur(60px) saturate(220%);
   box-shadow:
-    0 4px 12px 0 rgba(0, 0, 0, 0.08),
-    0 8px 32px 0 rgba(var(--accent-rgb, 81, 131, 245), 0.25),
-    0 0 0 1px rgba(var(--accent-rgb, 81, 131, 245), 0.1),
-    0 1px 2px 0 rgba(var(--accent-rgb, 81, 131, 245), 0.15);
-  backdrop-filter: blur(16px);
+    0 12px 40px 0 rgba(var(--accent-rgb), 0.2),
+    0 6px 20px 0 rgba(0, 0, 0, 0.1),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.15);
 
   /* 高性能动画 - 丝滑的缓动曲线 */
   transition:
@@ -490,7 +496,7 @@ pre,
     border-radius 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     backdrop-filter 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.7s cubic-bezier(0.4, 0, 0.1, 1); /* 丝滑的减速曲线 */
+    transform 0.7s cubic-bezier(0.4, 0, 0.1, 1);
 
   /* GPU加速 */
   transform: translateZ(0) scale(1);
@@ -500,13 +506,18 @@ pre,
 
 /* 暗色模式胶囊 - 增强发光效果 */
 [data-theme='dark'] .nav-card {
-  background: rgba(26, 26, 26, 0.98);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(var(--accent-rgb), 0.1) 100%
+  );
   box-shadow:
-    0 8px 32px 0 rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 4px 16px 0 rgba(var(--accent-rgb, 123, 136, 216), 0.5),
-    0 0 56px 0 rgba(var(--accent-rgb, 123, 136, 216), 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 12px 40px 0 rgba(0, 0, 0, 0.5),
+    0 4px 16px 0 rgba(var(--accent-rgb), 0.5),
+    0 0 56px 0 rgba(var(--accent-rgb), 0.2),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
 /* 滚动后胶囊融入 header - 丝滑过渡 + 轻柔下沉效果 */
@@ -553,13 +564,12 @@ pre,
 
 /* 未滚动时胶囊有微妙的浮动效果 */
 .header:not(.scrolled) .nav-card {
-  animation: floatGentle 4s ease-in-out infinite;
+  animation: floatGentle 2s ease-in-out infinite;
 }
 
 /* 滚动时停止浮动动画，应用下沉变换 */
 .header.scrolled .nav-card {
   animation: none;
-  /* 下沉效果在上面的样式中定义 */
 }
 
 /* 鼠标跟随聚光灯效果  */
@@ -644,6 +654,123 @@ pre,
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
   z-index: 90;
+}
+
+/**
+ * 玻璃态效果样式 - 公共类
+ */
+/* 基础玻璃态 */
+.glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(var(--accent-rgb), 0.1) 100%
+  );
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 8px 32px 0 rgba(var(--accent-rgb), 0.15),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    rgba(var(--accent-rgb), 0.08) 100%
+  );
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 增强玻璃态 - 更强的模糊效果 */
+.glass-strong {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(var(--accent-rgb), 0.15) 100%
+  );
+  backdrop-filter: blur(60px) saturate(220%);
+  -webkit-backdrop-filter: blur(60px) saturate(220%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 12px 40px 0 rgba(var(--accent-rgb), 0.2),
+    0 6px 20px 0 rgba(0, 0, 0, 0.1),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+[data-theme='dark'] .glass-strong {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(var(--accent-rgb), 0.1) 100%
+  );
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 12px 40px 0 rgba(0, 0, 0, 0.5),
+    inset 0 2px 0 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+/* 轻量玻璃态 - 更透明 */
+.glass-light {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    rgba(var(--accent-rgb), 0.08) 100%
+  );
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 4px 16px 0 rgba(var(--accent-rgb), 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+}
+
+[data-theme='dark'] .glass-light {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(var(--accent-rgb), 0.05) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 4px 16px 0 rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+/* 玻璃态高光效果 - 可选添加 */
+.glass-highlight::before,
+.glass-strong-highlight::before,
+.glass-light-highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+  border-radius: 16px 16px 0 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme='dark'] .glass-highlight::before,
+[data-theme='dark'] .glass-strong-highlight::before,
+[data-theme='dark'] .glass-light-highlight::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
 }
 
 /**
