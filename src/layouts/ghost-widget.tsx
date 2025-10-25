@@ -463,16 +463,29 @@ export const GhostWidget = () => {
     }
   };
 
+  // 使用 useRef 存储速度，避免频繁重新创建 useEffect
+  const velocityRef = useRef(velocity);
+  useEffect(() => {
+    velocityRef.current = velocity;
+  }, [velocity]);
+
   // 物理引擎 - 飞行和碰撞
   useEffect(() => {
-    if (!isFlying) return;
+    if (!isFlying) {
+      // 确保停止时取消动画
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      return;
+    }
 
     const animate = () => {
       setPosition((prev) => {
-        let newX = prev.x + velocity.x;
-        let newY = prev.y + velocity.y;
-        let newVelocityX = velocity.x;
-        let newVelocityY = velocity.y;
+        let newX = prev.x + velocityRef.current.x;
+        let newY = prev.y + velocityRef.current.y;
+        let newVelocityX = velocityRef.current.x;
+        let newVelocityY = velocityRef.current.y;
 
         // 重力效果（降低重力，让飞行更轻盈）
         newVelocityY += 0.3;
@@ -557,9 +570,10 @@ export const GhostWidget = () => {
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
     };
-  }, [isFlying, velocity.x, velocity.y, MARGIN, GHOST_WIDTH, GHOST_HEIGHT]);
+  }, [isFlying]); // ✅ 移除 velocity 依赖，使用 useRef 避免频繁重新创建
 
   // 更新活动时间
   const updateActivity = () => {
@@ -624,10 +638,11 @@ export const GhostWidget = () => {
     return () => clearTimeout(hintTimer);
   }, [launchCount]); // 每次发射后重新计时
 
+  // 使用 useRef 存储 setTimeout ID，确保正确清理
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // 关心气泡循环显示（✅ 修复嵌套 setTimeout 泄漏）
   useEffect(() => {
-    const timeouts = new Set<NodeJS.Timeout>(); // ✅ 收集所有嵌套的 setTimeout
-
     const checkAndShowBubble = () => {
       const now = Date.now();
       const timeSinceLastActivity = now - lastActivityRef.current;
@@ -640,11 +655,16 @@ export const GhostWidget = () => {
         if (timeSinceLastActivity > 10000) {
           const randomMessage = careMessages[Math.floor(Math.random() * careMessages.length)];
 
-          // ✅ 保存 setTimeout ID 以便清理
-          const hideTimeout = setTimeout(() => {
+          // ✅ 清理之前的 timeout
+          if (hideTimeoutRef.current) {
+            clearTimeout(hideTimeoutRef.current);
+          }
+
+          // ✅ 保存新的 setTimeout ID
+          hideTimeoutRef.current = setTimeout(() => {
             setCareBubble(null);
+            hideTimeoutRef.current = null;
           }, 5000);
-          timeouts.add(hideTimeout);
 
           return randomMessage;
         }
@@ -666,11 +686,10 @@ export const GhostWidget = () => {
     return () => {
       clearTimeout(firstCheck);
       clearInterval(interval);
-      // ✅ 清理所有嵌套的 setTimeout
-      timeouts.forEach((timeout) => clearTimeout(timeout));
-      timeouts.clear();
-      if (bubbleTimeoutRef.current) {
-        clearTimeout(bubbleTimeoutRef.current);
+      // ✅ 清理隐藏气泡的 timeout
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
       }
     };
   }, []); // 只在组件挂载时启动一次
@@ -817,11 +836,78 @@ export const GhostWidget = () => {
     }, 1000);
   };
 
+  // 使用 useRef 存储状态，减少事件监听器的频繁挂载/卸载
+  const isPullingRef = useRef(isPulling);
+  const pullStartRef = useRef(pullStart);
+  const pullCurrentRef = useRef(pullCurrent);
+  const positionRef = useRef(position);
+
+  useEffect(() => {
+    isPullingRef.current = isPulling;
+    pullStartRef.current = pullStart;
+    pullCurrentRef.current = pullCurrent;
+    positionRef.current = position;
+  }, [isPulling, pullStart, pullCurrent, position]);
+
   // 全局鼠标/触摸松开事件
   useEffect(() => {
     const handleGlobalEnd = () => {
-      if (isPulling) {
-        handleMouseUp();
+      if (isPullingRef.current) {
+        // 使用 ref 中的最新值
+        const currentPullStart = pullStartRef.current;
+        const currentPullCurrent = pullCurrentRef.current;
+        const currentPosition = positionRef.current;
+
+        setIsPulling(false);
+        updateActivity();
+
+        // 计算发射速度
+        const dx = currentPullStart.x - currentPullCurrent.x;
+        const dy = currentPullStart.y - currentPullCurrent.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // 小范围高力度：降低最大拉力距离，提高力度系数
+        const maxPull = 150;
+        let power = Math.min(distance, maxPull) / 4;
+
+        // 边界增强
+        const edgeThreshold = 100;
+        const edgeBoost = 1.5;
+        let powerMultiplierX = 1;
+        let powerMultiplierY = 1;
+
+        if (currentPosition.x < edgeThreshold && dx > 0) {
+          powerMultiplierX = edgeBoost;
+        }
+        if (currentPosition.x > window.innerWidth - GHOST_WIDTH - edgeThreshold && dx < 0) {
+          powerMultiplierX = edgeBoost;
+        }
+        if (currentPosition.y < edgeThreshold && dy > 0) {
+          powerMultiplierY = edgeBoost;
+        }
+        if (currentPosition.y > window.innerHeight - GHOST_HEIGHT - edgeThreshold && dy < 0) {
+          powerMultiplierY = edgeBoost;
+        }
+
+        const velocityX = (dx / distance) * power * powerMultiplierX || 0;
+        const velocityY = (dy / distance) * power * powerMultiplierY || 0;
+
+        setVelocity({ x: velocityX, y: velocityY });
+        setIsFlying(true);
+        setLaunchCount((prev) => prev + 1);
+
+        // 发射时创建星星粒子
+        createStarParticles();
+
+        // 移动端触觉反馈
+        if (hasInteracted && 'vibrate' in navigator && distance > 10) {
+          try {
+            const vibrateDuration = Math.min(Math.floor(distance / 3), 50);
+            navigator.vibrate(vibrateDuration);
+          } catch (e) {
+            // 忽略震动错误
+          }
+        }
       }
     };
 
@@ -834,7 +920,7 @@ export const GhostWidget = () => {
       window.removeEventListener('touchend', handleGlobalEnd);
       window.removeEventListener('touchcancel', handleGlobalEnd);
     };
-  }, [isPulling, pullStart, pullCurrent]);
+  }, []); // 空依赖，仅在挂载/卸载时执行
 
   // 计算拉线距离和角度
   const maxPullDisplay = 150; // 与力度计算保持一致

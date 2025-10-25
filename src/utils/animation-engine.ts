@@ -381,8 +381,8 @@ export class AnimationVariants {
         visible: {
           opacity: 1,
           transition: {
-            ...spring,
-            duration: 0.3, // 添加最小持续时间确保动画完成
+            duration: 0.3,
+            ease: 'easeOut',
           },
         },
       };
@@ -394,11 +394,7 @@ export class AnimationVariants {
         opacity: 1,
         y: 0,
         scale: 1,
-        transition: {
-          ...spring,
-          duration: 0.5, // 添加最小持续时间确保动画完成
-          opacity: { duration: 0.3, ease: 'easeOut' }, // 单独控制透明度动画
-        },
+        transition: spring, // 直接使用 Spring 配置
       },
     };
   }
@@ -468,8 +464,8 @@ export class AnimationVariants {
         visible: {
           opacity: 1,
           transition: {
-            ...spring,
-            duration: 0.3, // 添加最小持续时间确保动画完成
+            duration: 0.3,
+            ease: 'easeOut',
           },
         },
       };
@@ -481,11 +477,7 @@ export class AnimationVariants {
         opacity: 1,
         x: 0,
         scale: 1,
-        transition: {
-          ...spring,
-          duration: 0.4, // 添加最小持续时间确保动画完成
-          opacity: { duration: 0.2, ease: 'easeOut' }, // 单独控制透明度动画
-        },
+        transition: spring, // 直接使用 Spring 配置，不要混合 duration
       },
     };
   }
@@ -500,8 +492,8 @@ export class AnimationVariants {
         visible: {
           opacity: 1,
           transition: {
-            ...spring,
-            duration: 0.3, // 添加最小持续时间确保动画完成
+            duration: 0.3,
+            ease: 'easeOut',
           },
         },
       };
@@ -513,11 +505,7 @@ export class AnimationVariants {
         opacity: 1,
         y: 0,
         scale: 1,
-        transition: {
-          ...spring,
-          duration: 0.5, // 添加最小持续时间确保动画完成
-          opacity: { duration: 0.3, ease: 'easeOut' }, // 单独控制透明度动画
-        },
+        transition: spring, // 直接使用 Spring 配置
       },
     };
   }

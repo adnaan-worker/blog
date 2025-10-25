@@ -8,90 +8,72 @@ import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
 import { useAnimationEngine } from '@/utils/animation-engine';
 
-// 页面头部渐变背景
+// 页面头部渐变背景 - 诗意朦胧光晕
 const PageHeadGradient = styled.div`
   pointer-events: none;
   position: fixed;
   left: 0;
   right: 0;
   top: 0;
-  height: 500px;
+  height: 600px;
   width: 100%;
-  background: linear-gradient(to right, rgba(var(--gradient-from), 0.3) 0%, rgba(var(--gradient-to), 0.3) 100%);
-  mask-image: linear-gradient(var(--mask-gradient-start), var(--mask-gradient-end) 70%);
+  overflow: hidden;
   z-index: 2;
-`;
 
-// 纸张背景容器
-const PaperBackground = styled.div`
-  pointer-events: none;
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 1;
-
-  /* 亮色模式：羊皮纸效果 */
-  [data-theme='light'] & {
-    background: linear-gradient(
-      180deg,
-      var(--paper-bg-light-start) 0%,
-      var(--paper-bg-light-mid) 50%,
-      var(--paper-bg-light-end) 100%
-    );
-
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.01) 2px, rgba(0, 0, 0, 0.01) 4px),
-        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.01) 2px, rgba(0, 0, 0, 0.01) 4px);
-      opacity: 0.3;
-    }
+  /* 多层光晕效果 */
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
   }
 
-  /* 暗色模式：深色纸张质感 */
-  [data-theme='dark'] & {
-    background:
-      radial-gradient(ellipse 1000px 800px at 50% 0%, rgba(var(--gradient-from), 0.06), transparent 60%),
-      linear-gradient(
-        180deg,
-        var(--paper-bg-dark-start) 0%,
-        var(--paper-bg-dark-mid) 50%,
-        var(--paper-bg-dark-end) 100%
-      );
+  /* 主要光晕层 - 从左侧渐变 */
+  &::before {
+    background: radial-gradient(
+      ellipse 120% 80% at 10% 20%,
+      rgba(var(--gradient-from), 0.5) 0%,
+      rgba(var(--gradient-from), 0.2) 40%,
+      transparent 70%
+    );
+  }
+
+  /* 次要光晕层 - 从右侧渐变 */
+  &::after {
+    background: radial-gradient(
+      ellipse 100% 60% at 90% 30%,
+      rgba(var(--gradient-to), 0.4) 0%,
+      rgba(var(--gradient-to), 0.18) 45%,
+      transparent 75%
+    );
+  }
+
+  /* 整体渐变遮罩 */
+  mask-image: radial-gradient(ellipse 80% 100% at 50% 0%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 100% at 50% 0%, black 0%, transparent 70%);
+
+  /* 响应式调整 */
+  @media (max-width: 768px) {
+    height: 400px;
 
     &::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 3px,
-          rgba(var(--gradient-from), 0.02) 3px,
-          rgba(var(--gradient-from), 0.02) 4px
-        ),
-        repeating-linear-gradient(
-          90deg,
-          transparent,
-          transparent 3px,
-          rgba(var(--gradient-to), 0.02) 3px,
-          rgba(var(--gradient-to), 0.02) 4px
-        );
-      opacity: 0.4;
+      background: radial-gradient(
+        ellipse 150% 100% at 10% 20%,
+        rgba(var(--gradient-from), 0.45) 0%,
+        rgba(var(--gradient-from), 0.18) 50%,
+        transparent 80%
+      );
     }
 
     &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 30%, rgba(var(--gradient-from), 0.03), transparent 40%),
-        radial-gradient(circle at 80% 60%, rgba(var(--gradient-to), 0.03), transparent 40%);
+      background: radial-gradient(
+        ellipse 120% 80% at 90% 30%,
+        rgba(var(--gradient-to), 0.35) 0%,
+        rgba(var(--gradient-to), 0.15) 50%,
+        transparent 80%
+      );
     }
   }
 `;
@@ -119,21 +101,14 @@ export const DetailPageLayout: React.FC<DetailPageLayoutProps> = ({
     <>
       {showBackground && (
         <>
-          {/* 背景装饰 - 轻盈淡入 */}
+          {/* 背景装饰 - Spring 弹性淡入 */}
           <motion.div
             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 2 }}
-          >
-            <PageHeadGradient />
-          </motion.div>
-
-          {/* 纸张背景 - 温柔淡入 */}
-          <motion.div
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 1 }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: -100, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={springPresets.gentle}
           >
-            <PaperBackground />
+            <PageHeadGradient />
           </motion.div>
         </>
       )}

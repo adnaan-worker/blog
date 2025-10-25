@@ -128,6 +128,8 @@ interface ArticleLinkProps {
   children: React.ReactNode;
   variants?: any;
   custom?: any;
+  initial?: string;
+  animate?: string;
   whileHover?: any;
   transition?: any;
 }
@@ -148,12 +150,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
   }
 
   return (
-    <ContentSection
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      variants={variants.fadeIn}
-    >
+    <ContentSection initial="hidden" animate="visible" variants={variants.fadeIn}>
       <SectionTitle>
         技术文思的「新地球」
         <Link to="/blog" style={{ textDecoration: 'none' }}>
@@ -173,20 +170,14 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
         </Link>
       </SectionTitle>
 
-      <ArticleGrid
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.1 }}
-        variants={variants.stagger}
-      >
+      <ArticleGrid initial="hidden" animate="visible" variants={variants.stagger}>
         {articles.slice(0, 3).map((article, index) => (
           <ArticleLink
             to={`/blog/${article.id}`}
             key={article.id}
             variants={variants.listItem}
-            whileHover={{ x: 3, scale: 1.01 }}
             custom={index}
-            transition={springPresets.snappy}
+            whileHover={{ x: 3, scale: 1.01 }}
           >
             <ArticleContent>
               <ArticleTitle>{article.title}</ArticleTitle>
@@ -209,12 +200,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
   }
 
   return (
-    <ContentSection
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      variants={variants.fadeIn}
-    >
+    <ContentSection initial="hidden" animate="visible" variants={variants.fadeIn}>
       <SectionTitle>
         思想的「裂缝中的阳光」
         <Link to="/notes" style={{ textDecoration: 'none' }}>
@@ -234,20 +220,14 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
         </Link>
       </SectionTitle>
 
-      <ArticleGrid
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.1 }}
-        variants={variants.stagger}
-      >
+      <ArticleGrid initial="hidden" animate="visible" variants={variants.stagger}>
         {notes.slice(0, 5).map((note, index) => (
           <ArticleLink
             to={`/notes/${note.id}`}
             key={note.id}
             variants={variants.listItem}
-            whileHover={{ x: 3, scale: 1.01 }}
             custom={index}
-            transition={springPresets.snappy}
+            whileHover={{ x: 3, scale: 1.01 }}
           >
             <ArticleContent>
               <ArticleTitle>{note.title || '无标题手记'}</ArticleTitle>

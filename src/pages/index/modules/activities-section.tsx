@@ -272,22 +272,12 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
   };
 
   return (
-    <ContentSection
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
-      variants={variants.fadeIn}
-    >
+    <ContentSection initial="hidden" animate="visible" variants={variants.fadeIn}>
       <SectionTitle>创作的「实时热搜」</SectionTitle>
 
       <ActivityScrollContainer>
         <FadeMask className="top" />
-        <ActivityGrid
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-          variants={variants.listItem}
-        >
+        <ActivityGrid initial="hidden" animate="visible" variants={variants.stagger}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
           ) : activities.length === 0 ? (
@@ -304,7 +294,6 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
                   variants={variants.listItem}
                   custom={index}
                   whileHover={{ x: 3, scale: 1.01 }}
-                  transition={springPresets.gentle}
                 >
                   <ActivityIcon>{formatted.emoji}</ActivityIcon>
                   <ActivityContent>

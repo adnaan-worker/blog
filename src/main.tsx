@@ -7,7 +7,7 @@ import store, { AppDispatch } from './store';
 import { initializeTheme } from './store/modules/themeSlice';
 import { preloadTransitionStyles } from './utils/theme-transition';
 import './styles/index.css';
-import AccentColorStyleInjector from './components/theme/accent-color-style-injector';
+import AccentColorStyleInjector from './theme/theme-color';
 import { ToastProvider, ToastListener, initAdnaanUI } from 'adnaan-ui';
 
 // 初始化UI组件库

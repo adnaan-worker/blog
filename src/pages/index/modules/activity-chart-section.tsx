@@ -44,10 +44,6 @@ const SectionSubtitle = styled(motion.p)`
 
 const ChartContainer = styled(motion.div)`
   padding: 1.25rem 0;
-
-  [data-theme='dark'] & {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
 `;
 
 // 活动图表容器

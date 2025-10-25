@@ -771,12 +771,29 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
         );
       });
 
-      // 替换旧的音频元素
+      // 完全清理旧的音频元素
       if (audioRef.current) {
-        const oldAudio = audioRef.current;
+        let oldAudio = audioRef.current;
+
+        // 停止播放
         oldAudio.pause();
-        oldAudio.removeAttribute('src');
+        oldAudio.currentTime = 0;
+
+        // 清空 src
+        oldAudio.src = '';
+        oldAudio.srcObject = null;
+
+        // 移除所有事件监听器
+        const events = ['canplay', 'error', 'timeupdate', 'loadedmetadata', 'play', 'pause', 'ended'];
+        events.forEach((event) => {
+          oldAudio.removeEventListener(event, () => {});
+        });
+
+        // 重新加载以释放资源
         oldAudio.load();
+
+        // 显式设置 null 帮助垃圾回收
+        oldAudio = null as any;
       }
       audioRef.current = newAudio;
 

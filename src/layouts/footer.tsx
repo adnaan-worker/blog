@@ -13,7 +13,7 @@ const MotionFooter = motion.footer;
 const FooterContainer = styled(MotionFooter)`
   width: 100%;
   padding: 3rem 0 1.5rem;
-  background: var(--bg-primary);
+  background: transparent;
   margin-top: 3rem;
   position: relative;
   border-top: 1px solid var(--border-color);

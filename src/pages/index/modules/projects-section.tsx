@@ -14,16 +14,6 @@ import { ProjectsSectionProps } from './types';
 // Styled Components
 const ProjectsWrapper = styled(motion.section)`
   margin: 3rem 0 4rem;
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 50% 50%, rgba(var(--accent-rgb), 0.03) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: -1;
-  }
 `;
 
 const CreativeSectionHeader = styled.div`

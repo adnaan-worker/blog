@@ -19,18 +19,16 @@
   --text-secondary: #606060; /* 次文本颜色 */
   --text-tertiary: #767676; /* 三级文本颜色 */
   --text-on-accent: #ffffff; /* 主题色上的文本颜色 */
-  --bg-primary: #ffffff; /* 主背景颜色 */
+  --bg-primary: oklch(100% 0 0/1); /* 主背景颜色 */
   --bg-secondary: #f7f9fb; /* 次背景颜色 */
   --bg-tertiary: #efefef; /* 三级背景颜色 */
   /* 主题色默认值 - 在动态注入前使用 */
   --accent-color-light: #5183f5; /* 默认亮色主题 */
-  --accent-bg-color-light: #e3ecff; /* 默认亮色背景 */
   --accent-color-light-assistant: #7ea0f7; /* 默认亮色辅助 */
   --accent-color-light-hover: #3d6fd9; /* 默认亮色悬停 */
   --accent-color-light-alpha: rgba(81, 131, 245, 0.1); /* 默认亮色透明 */
 
   --accent-color: var(--accent-color-light); /* 主题主色 */
-  --accent-bg-color: var(--accent-bg-color-light); /* 主题背景色 */
   --accent-color-assistant: var(--accent-color-light-assistant); /* 辅助色 */
   --accent-color-hover: var(--accent-color-light-hover); /* 悬停色 */
   --accent-color-alpha: var(--accent-color-light-alpha); /* 透明色 */
@@ -128,7 +126,7 @@
   --text-on-accent: #ffffff; /* 主题色上的文本颜色 */
 
   /* 背景颜色 - 使用更现代的深色调色板 */
-  --bg-primary: #0f0f0f; /* 主背景 - 纯黑偏灰 */
+  --bg-primary: oklch(22.728% 0.003823 285.091612/1); /* 主背景 - 纯黑偏灰 */
   --bg-secondary: #1a1a1a; /* 次背景 - 深灰 */
   --bg-tertiary: #2a2a2a; /* 三级背景 - 中灰 */
 
@@ -149,14 +147,13 @@
 
   /* 暗色主题默认值 - 在动态注入前使用 */
   --accent-color-dark: #7b88d8; /* 默认暗色主题 */
-  --accent-bg-color-dark: #2a2a3a; /* 默认暗色背景 */
   --accent-color-dark-assistant: #8f9be5; /* 默认暗色辅助 */
   --accent-color-dark-hover: #9ba7e8; /* 默认暗色悬停 */
   --accent-color-dark-alpha: rgba(123, 136, 216, 0.15); /* 默认暗色透明 */
 
   /* 主题色 */
   --accent-color: var(--accent-color-dark);
-  --accent-bg-color: var(--accent-bg-color-dark);
+
   --accent-color-assistant: var(--accent-color-dark-assistant);
   --accent-color-hover: var(--accent-color-dark-hover);
   --accent-color-alpha: var(--accent-color-dark-alpha);
@@ -232,6 +229,15 @@ body {
   overflow-x: hidden;
   /* 禁用移动端双指缩放 */
   touch-action: pan-y pan-x;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  content: '';
+  opacity: 0.02;
+  background-repeat: repeat;
+  background-image: var(--noise-bg);
 }
 
 #root {
@@ -443,7 +449,7 @@ pre,
 
 /* 滚动后的状态毛玻璃效果 */
 .header.scrolled {
-  background: rgba(255, 255, 255, 0.85);
+  background: transparent;
   backdrop-filter: saturate(180%) blur(20px);
   box-shadow:
     0 4px 16px 0 rgba(var(--accent-rgb), 0.08),
@@ -454,7 +460,7 @@ pre,
 
 /* 暗色模式滚动后状态 */
 [data-theme='dark'] .header.scrolled {
-  background: rgba(15, 15, 15, 0.85);
+  background: transparent;
   backdrop-filter: saturate(180%) blur(20px);
   box-shadow:
     0 6px 24px 0 rgba(0, 0, 0, 0.5),

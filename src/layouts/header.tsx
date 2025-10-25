@@ -152,6 +152,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { user, isLoggedIn } = useSelector((state: RootState) => state.user);
   const [internalScrolled, setInternalScrolled] = useState(scrolled);
+  const [scrollProgress, setScrollProgress] = useState(0); // 滚动进度 0-1
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -189,7 +190,14 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
     // 如果没有传入scrolled属性，则自行监听滚动
     if (scrolled === undefined) {
       const handleScroll = () => {
-        if (window.scrollY > 10) {
+        const scrollY = window.scrollY;
+        const scrollThreshold = 100; // 100px滚动后完全展开
+
+        // 计算滚动进度 0-1
+        const progress = Math.min(scrollY / scrollThreshold, 1);
+        setScrollProgress(progress);
+
+        if (scrollY > 10) {
           setInternalScrolled(true);
         } else {
           setInternalScrolled(false);
@@ -311,8 +319,18 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
           <AppStatus />
         </div>
 
-        {/* 桌面导航 */}
-        <div className="nav-card" ref={navCardRef}>
+        {/* 桌面导航 - 根据滚动进度动态调整 */}
+        <div
+          className="nav-card"
+          ref={navCardRef}
+          style={{
+            // 不设置width，让它保持auto自适应，只调整圆角和padding
+            borderRadius: `${28 - scrollProgress * 28}px`, // 从28px缩小到0px
+            paddingLeft: `${1.25 - scrollProgress * 0.5}rem`,
+            paddingRight: `${1.25 - scrollProgress * 0.5}rem`,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // 平滑过渡
+          }}
+        >
           <NavLinks
             mainNavItems={mainNavItems}
             onLinkClick={handleLinkClick}

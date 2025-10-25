@@ -78,19 +78,6 @@ const HeroContent = styled(MotionDiv)`
     filter: blur(10px);
   }
 
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 10%;
-    right: -60px;
-    width: 180px;
-    height: 180px;
-    background: radial-gradient(circle, rgba(var(--gradient-to), 0.08) 0%, transparent 70%);
-    border-radius: 50%;
-    z-index: -1;
-    filter: blur(20px);
-  }
-
   @media (max-width: 768px) {
     max-width: 100%;
     text-align: center;
