@@ -408,7 +408,7 @@ pre,
  */
 .header {
   position: fixed;
-  top: 0;
+  top: 10px;
   left: 0;
   right: 0;
   z-index: 100;
@@ -446,7 +446,8 @@ pre,
     0 4px 16px 0 rgba(var(--accent-rgb), 0.08),
     0 2px 8px 0 rgba(0, 0, 0, 0.04),
     0 0 0 1px rgba(0, 0, 0, 0.02);
-  border-radius: 0 0 24px 24px;
+  border-radius: 24px;
+  margin: 0 20px;
 }
 
 /* 暗色模式滚动后状态 */
@@ -459,17 +460,14 @@ pre,
     0 2px 8px 0 rgba(var(--accent-rgb), 0.2);
 }
 
-/* 导航胶囊 - 核心动画元素 */
+/* 导航胶囊  */
 .nav-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 28px;
-  padding: 0.3rem 1.25rem;
   height: 44px;
   position: relative;
   z-index: 60;
   margin-left: auto;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
 
   /* 使用玻璃态样式 */
   background: linear-gradient(
@@ -486,19 +484,15 @@ pre,
     inset 0 2px 0 0 rgba(255, 255, 255, 0.5),
     inset 0 -1px 0 0 rgba(255, 255, 255, 0.15);
 
-  /* 高性能动画 - 丝滑的缓动曲线 */
+  /* 高性能动画 - 丝滑的缓动曲线（border-radius、scale、padding 由 Framer Motion 控制） */
   transition:
     background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    border-radius 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     backdrop-filter 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.7s cubic-bezier(0.4, 0, 0.1, 1);
+    opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* GPU加速 */
-  transform: translateZ(0) scale(1);
-  transform-origin: center center;
-  will-change: background-color, box-shadow, border-radius, transform;
+  will-change: background-color, box-shadow, backdrop-filter;
 }
 
 /* 暗色模式胶囊 - 增强发光效果 */
@@ -517,15 +511,12 @@ pre,
     inset 0 -1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
-/* 滚动后胶囊融入 header - 丝滑过渡 + 轻柔下沉效果 */
+/* 滚动后胶囊融入 header */
 .header.scrolled .nav-card {
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
-  border-radius: 0;
   opacity: 1;
-  /* 更轻微的下沉和收缩，减少生硬感 */
-  transform: translateZ(0) translateY(4px) scale(0.99);
 }
 
 /* 暗色模式滚动后 */
@@ -533,7 +524,6 @@ pre,
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
-  transform: translateZ(0) translateY(4px) scale(0.99);
 }
 
 /* 导航链接悬停效果 */
@@ -552,21 +542,21 @@ pre,
 @keyframes floatGentle {
   0%,
   100% {
-    transform: translateZ(0) translateY(0);
+    transform: translateY(0);
   }
   50% {
-    transform: translateZ(0) translateY(-2px);
+    transform: translateY(-5px);
   }
 }
 
-/* 未滚动时胶囊有微妙的浮动效果 */
+/* 未滚动时整个胶囊有轻柔的浮动效果 */
 .header:not(.scrolled) .nav-card {
-  animation: floatGentle 2s ease-in-out infinite;
+  animation: floatGentle 4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
 }
 
-/* 滚动时停止浮动动画，应用下沉变换 */
+/* 滚动时停止浮动动画，Framer Motion 接管控制 */
 .header.scrolled .nav-card {
-  animation: none;
+  animation: none !important;
 }
 
 /* 鼠标跟随聚光灯效果  */

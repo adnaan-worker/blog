@@ -26,6 +26,7 @@ import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
 import { RichTextContent } from '@/components/rich-text/rich-text-content';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
 import DetailNoiseBackground from '@/components/common/detail-noise-background';
+import { usePageInfo } from '@/hooks/usePageInfo';
 
 // 样式组件
 const PageContainer = styled.div`
@@ -558,6 +559,9 @@ const ProjectDetail: React.FC = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 使用智能导航栏
+  const { setPageInfo } = usePageInfo();
+
   useEffect(() => {
     const loadProject = async () => {
       if (!id) return;
@@ -566,15 +570,27 @@ const ProjectDetail: React.FC = () => {
         setLoading(true);
         const response = await API.project.getProjectDetail(id);
         setProject(response.data);
+
+        // 设置智能导航栏信息
+        setPageInfo({
+          title: response.data.title,
+          tags: response.data.tags || [],
+        });
       } catch (error) {
         console.error('加载项目详情失败:', error);
+        setPageInfo(null);
       } finally {
         setLoading(false);
       }
     };
 
     loadProject();
-  }, [id]);
+
+    // 组件卸载时重置页面信息
+    return () => {
+      setPageInfo(null);
+    };
+  }, [id, setPageInfo]);
 
   // 去掉加载中提示，直接等待数据加载
   if (loading) {

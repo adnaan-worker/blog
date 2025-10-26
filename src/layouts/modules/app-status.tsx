@@ -4,36 +4,68 @@ import { keyframes, css } from '@emotion/react';
 import { useSocket, useSocketEvents } from '@/hooks/useSocket';
 import { FiChrome, FiCode, FiMusic, FiMonitor, FiImage, FiZap, FiMessageCircle, FiVideo } from 'react-icons/fi';
 
-// 应用图标和颜色映射
-const APP_ICONS: Record<string, React.ReactNode> = {
-  chrome: <FiChrome />,
-  firefox: <FiChrome />,
-  edge: <FiChrome />,
-  vscode: <FiCode />,
-  notepad: <FiCode />,
-  sublime: <FiCode />,
-  photoshop: <FiImage />,
-  steam: <FiZap />,
-  discord: <FiMessageCircle />,
-  spotify: <FiMusic />,
-  netease: <FiMusic />,
-  qqmusic: <FiMusic />,
-  potplayer: <FiVideo />,
-  vlc: <FiVideo />,
-  default: <FiMonitor />,
+// 应用图片映射（根据 appName 匹配）
+const APP_IMAGES: Record<string, string> = {
+  Cursor: 'https://cursor.com/marketing-static/favicon.svg',
+  'VS Code': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg',
+  PyCharm: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/pycharm/pycharm-original.svg',
+  'IntelliJ IDEA': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/intellij/intellij-original.svg',
+  WebStorm: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/webstorm/webstorm-original.svg',
+  'Sublime Text': 'https://www.sublimetext.com/images/icon.svg',
+  Chrome: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/chrome/chrome-original.svg',
+  Firefox: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firefox/firefox-original.svg',
+  Edge: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg',
+  Spotify: 'https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg',
+  Discord:
+    'https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.svg',
+  网易云音乐:
+    'https://p6.music.126.net/obj/wonDlsKUwrLClGjCm8Kx/12494165869/fe27/1e09/1dbe/2e61d7d2bd06b1dad7cd892c21d55b74.png',
+  QQ音乐: 'https://y.qq.com/favicon.ico',
+  PotPlayer: 'https://potplayer.daum.net/img/logo.png',
+  VLC: 'https://images.videolan.org/images/vlc-ios-icon.png',
+  微信: 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico',
 };
 
+// 应用颜色映射
 const APP_COLORS: Record<string, string> = {
-  chrome: '#4285F4',
-  firefox: '#FF7139',
-  edge: '#0078D4',
-  vscode: '#007ACC',
-  photoshop: '#31A8FF',
-  steam: '#1B2838',
-  discord: '#5865F2',
-  spotify: '#1DB954',
-  netease: '#C20C0C',
+  Cursor: '#007ACC',
+  'VS Code': '#007ACC',
+  PyCharm: '#FCF84A',
+  'IntelliJ IDEA': '#fe315d',
+  WebStorm: '#00CDD7',
+  'Sublime Text': '#FF9800',
+  Chrome: '#4285F4',
+  Firefox: '#FF7139',
+  Edge: '#0078D4',
+  Spotify: '#1DB954',
+  Discord: '#5865F2',
+  网易云音乐: '#C20C0C',
+  QQ音乐: '#31C27C',
+  PotPlayer: '#0090C6',
+  VLC: '#FF8800',
+  微信: '#09B83E',
   default: '#666666',
+};
+
+// 备用图标（当图片加载失败时使用）
+const FALLBACK_ICONS: Record<string, React.ReactNode> = {
+  Cursor: <FiCode />,
+  'VS Code': <FiCode />,
+  PyCharm: <FiCode />,
+  'IntelliJ IDEA': <FiCode />,
+  WebStorm: <FiCode />,
+  'Sublime Text': <FiCode />,
+  Chrome: <FiChrome />,
+  Firefox: <FiChrome />,
+  Edge: <FiChrome />,
+  Spotify: <FiMusic />,
+  Discord: <FiMessageCircle />,
+  网易云音乐: <FiMusic />,
+  QQ音乐: <FiMusic />,
+  PotPlayer: <FiVideo />,
+  VLC: <FiVideo />,
+  微信: <FiMessageCircle />,
+  default: <FiMonitor />,
 };
 
 // 状态数据接口
@@ -105,7 +137,6 @@ const AppIcon = styled.div<{
   position: relative;
   cursor: pointer;
   opacity: ${(props) => (props.size === 'large' ? 1 : props.size === 'medium' ? 0.8 : 0.6)};
-  border: 2px solid ${(props) => (props.isActive ? props.color : 'transparent')};
 
   ${(props) =>
     props.isNew &&
@@ -124,6 +155,15 @@ const AppIcon = styled.div<{
     background: ${(props) => props.color}30;
     box-shadow: 0 2px 8px ${(props) => props.color}40;
     opacity: 1;
+  }
+
+  /* 图片样式 */
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: ${(props) => (props.size === 'large' ? '4px' : '3px')};
+    border-radius: inherit;
   }
 
   @media (max-width: 768px) {
@@ -165,9 +205,10 @@ const Tooltip = styled.div<{ visible: boolean }>`
   white-space: nowrap;
   min-width: 200px;
   opacity: ${(props) => (props.visible ? 1 : 0)};
+  visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
   pointer-events: ${(props) => (props.visible ? 'auto' : 'none')};
-  z-index: 100;
-  transition: opacity 0.2s ease;
+  z-index: 1000;
+  transition: all 0.2s ease;
   border: 1px solid var(--border-color);
   text-align: left;
   line-height: 1.6;
@@ -210,6 +251,7 @@ const AppStatus: React.FC = () => {
 
   const [statusData, setStatusData] = useState<StatusResponse>({ current: null, history: [] });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
   // 使用useCallback优化事件处理器
   const handleStatusUpdated = useCallback((response: SocketResponse<StatusResponse>) => {
@@ -240,19 +282,42 @@ const AppStatus: React.FC = () => {
 
   useSocketEvents(socketEvents);
 
-  // 构建显示数据
+  // 图片加载错误处理
+  const handleImageError = useCallback((appName: string) => {
+    setImageErrors((prev) => new Set(prev).add(appName));
+  }, []);
+
+  // 构建显示数据（去重：只显示不同的应用）
   const displayApps = useMemo(() => {
     if (!statusData.current) return [];
 
-    const apps = [statusData.current, ...statusData.history.slice(0, 2)];
-    return apps.map((app, index) => ({
+    // 合并当前状态和历史记录
+    const allApps = [statusData.current, ...statusData.history];
+
+    // 去重：只保留应用名称不同的记录
+    const uniqueApps: StatusData[] = [];
+    const seenApps = new Set<string>();
+
+    for (const app of allApps) {
+      if (!seenApps.has(app.appName)) {
+        seenApps.add(app.appName);
+        uniqueApps.push(app);
+        // 最多显示3个不同的应用
+        if (uniqueApps.length >= 3) break;
+      }
+    }
+
+    // 映射为显示数据
+    return uniqueApps.map((app, index) => ({
       ...app,
       size: index === 0 ? 'large' : index === 1 ? 'medium' : 'small',
       isActive: index === 0,
-      color: APP_COLORS[app.appIcon] || APP_COLORS.default,
-      icon: APP_ICONS[app.appIcon] || APP_ICONS.default,
+      color: APP_COLORS[app.appName] || APP_COLORS.default,
+      imageUrl: APP_IMAGES[app.appName],
+      fallbackIcon: FALLBACK_ICONS[app.appName] || FALLBACK_ICONS.default,
+      hasImageError: imageErrors.has(app.appName),
     }));
-  }, [statusData]);
+  }, [statusData, imageErrors]);
 
   const userName = 'adnaan';
 
@@ -295,7 +360,12 @@ const AppStatus: React.FC = () => {
             onMouseEnter={() => setHoveredIndex(index)}
             onMouseLeave={() => setHoveredIndex(null)}
           >
-            {app.icon}
+            {/* 优先显示图片，加载失败则显示备用图标 */}
+            {app.imageUrl && !app.hasImageError ? (
+              <img src={app.imageUrl} alt={app.appName} onError={() => handleImageError(app.appName)} loading="lazy" />
+            ) : (
+              app.fallbackIcon
+            )}
             {app.isActive && <StatusIndicator connected={isConnected} />}
             <Tooltip visible={hoveredIndex === index}>
               <TooltipHeader>{tooltipContent.header}</TooltipHeader>

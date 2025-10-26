@@ -361,8 +361,13 @@ const Footer = () => {
   // 使用在线人数Hook
   const { onlineCount } = useOnlineUsers();
 
-  // 使用网站设置Hook
-  const { siteSettings } = useSiteSettings();
+  // 使用网站设置Hook - 增加加载状态检查
+  const { siteSettings, loading } = useSiteSettings();
+
+  // 如果还在加载中，返回 null 或显示加载占位符
+  if (loading) {
+    return null;
+  }
 
   // 动画变量 - 使用动画引擎的配置
   const containerVariants = {
@@ -493,7 +498,7 @@ const Footer = () => {
               </a>{' '}
               强力驱动 |{' '}
               <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
-                '陇ICP备2025016896号'
+                陇ICP备2025016896号
               </a>
               {/* 在线人数显示 - 响应式文案 */}
               {onlineCount > 0 && (

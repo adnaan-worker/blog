@@ -1,21 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import styled from '@emotion/styled';
-import {
-  FiMenu,
-  FiX,
-  FiHome,
-  FiBookOpen,
-  FiCode,
-  FiInfo,
-  FiMail,
-  FiLogIn,
-  FiUserPlus,
-  FiUser,
-  FiEdit,
-} from 'react-icons/fi';
+import { FiMenu, FiX, FiUser, FiTag, FiBookOpen } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import { logoutUser } from '@/store/modules/userSlice';
 import type { AppDispatch, RootState } from '@/store';
+import { storage } from '@/utils';
 import LoginModal from './modules/login-model';
 import RegisterModal from './modules/register-modal';
 import NavLinks from './modules/nav-links';
@@ -24,28 +14,35 @@ import ThemeToggle from './modules/theme-toggle';
 import MobileMenu from './modules/mobile-menu';
 import AppStatus from './modules/app-status';
 import AnimatedLogo from './modules/animated-logo';
+import {
+  mainNavItems as defaultMainNavItems,
+  accountMenuItems,
+  getBaseMobileMenuGroups,
+  getLoggedInMobileMenuGroups,
+  type MenuItem,
+  type MenuGroup,
+} from '@/config/menu.config';
 
-// 定义菜单数据类型
-interface MenuItem {
-  path: string;
-  title: string;
-  icon: React.ReactNode;
-  isExternal?: boolean;
-  isDropdown?: boolean;
-  children?: MenuItem[];
+/* ==================== 类型定义 ==================== */
+
+export interface PageInfo {
+  title?: string;
+  tags?: (string | { id?: string | number; name?: string })[];
+  category?: string;
 }
 
-interface MenuGroup {
-  title: string;
-  items: MenuItem[];
+interface HeaderProps {
+  scrolled?: boolean;
+  pageInfo?: PageInfo;
 }
 
-// 定义Header容器组件样式
+/* ==================== 样式组件 ==================== */
+
 const HeaderContainer = styled.header<{ scrolled: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100vw;
+  width: 100%;
   height: var(--header-height);
   padding: 0 5rem;
 
@@ -54,7 +51,15 @@ const HeaderContainer = styled.header<{ scrolled: boolean }>`
   }
 `;
 
-// 移动端菜单按钮样式
+const DesktopNavWrapper = styled.div`
+  display: flex;
+  margin-left: auto;
+
+  @media (max-width: 768px) {
+    display: none !important;
+  }
+`;
+
 const MenuButton = styled.button`
   display: none;
   align-items: center;
@@ -73,164 +78,321 @@ const MenuButton = styled.button`
   }
 `;
 
-// Header组件接口定义
-interface HeaderProps {
-  scrolled?: boolean;
-}
+// 桌面端页面信息样式
+const PageInfoContainer = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 2rem;
+  padding-left: 2rem;
+  border-left: 1px solid rgba(var(--accent-rgb), 0.15);
+  max-width: 400px;
 
-// 定义主导航菜单数据
-const mainNavItems: MenuItem[] = [
-  {
-    path: '/',
-    title: '首页',
-    icon: <FiHome size={16} />,
-  },
-  {
-    path: '/blog',
-    title: '文稿',
-    icon: <FiBookOpen size={16} />,
-  },
-  {
-    path: '/notes',
-    title: '手记',
-    icon: <FiEdit size={16} />,
-  },
-  {
-    path: '/projects',
-    title: '项目',
-    icon: <FiCode size={16} />,
-  },
-  {
-    path: '#',
-    title: '更多',
-    icon: <FiInfo size={16} />,
-    isDropdown: true,
-    children: [
-      {
-        path: '/code',
-        title: '开发字体',
-        icon: <FiCode size={16} />,
-      },
-      {
-        path: '/about',
-        title: '关于我',
-        icon: <FiInfo size={16} />,
-      },
-      {
-        path: '/contact',
-        title: '联系方式',
-        icon: <FiMail size={16} />,
-      },
-    ],
-  },
-];
+  @media (max-width: 1024px) {
+    display: none;
+  }
+`;
 
-// 定义基础移动端菜单分组数据
-const getBaseMobileMenuGroups = (): MenuGroup[] => [
-  {
-    title: '主导航',
-    items: mainNavItems,
-  },
-];
+const PageTitle = styled(motion.h1)`
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+`;
 
-// 定义账户菜单项
-const accountMenuItems: MenuItem[] = [
-  {
-    path: '#login',
-    title: '登录',
-    icon: <FiLogIn size={16} />,
-  },
-  {
-    path: '#register',
-    title: '注册',
-    icon: <FiUserPlus size={16} />,
-  },
-];
+const TagsContainer = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+`;
 
-// Header组件
-const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
+const Tag = styled(motion.span)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-color);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+
+  svg {
+    font-size: 0.7rem;
+  }
+`;
+
+// 移动端页面信息样式
+const MobilePageInfo = styled(motion.div)`
+  display: none;
+  position: fixed;
+  top: calc(var(--header-height) + 10px);
+  left: 20px;
+  right: 20px;
+  z-index: 45;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.88) 100%);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border-radius: 16px;
+  border: 1px solid rgba(var(--accent-rgb), 0.12);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.04);
+
+  @media (max-width: 1024px) {
+    display: block;
+  }
+
+  /* 暗色模式 */
+  [data-theme='dark'] & {
+    background: linear-gradient(135deg, rgba(30, 30, 35, 0.92) 0%, rgba(20, 20, 25, 0.88) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+`;
+
+const MobilePageTitle = styled.div`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  svg {
+    flex-shrink: 0;
+    color: var(--accent-color);
+    opacity: 0.8;
+  }
+`;
+
+const MobileTagsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid rgba(var(--border-rgb, 226, 232, 240), 0.3);
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 暗色模式 */
+  [data-theme='dark'] & {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+`;
+
+const MobileTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.625rem;
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-color);
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  svg {
+    font-size: 0.7rem;
+    opacity: 0.8;
+  }
+
+  /* 暗色模式 */
+  [data-theme='dark'] & {
+    background: rgba(var(--accent-rgb), 0.15);
+  }
+`;
+
+/* ==================== 常量配置 ==================== */
+
+// LocalStorage 键
+const STORAGE_KEYS = {
+  SELECTED_MENU: 'header_selected_menu_item',
+} as const;
+
+// 滚动动画配置
+const SCROLL_CONFIG = {
+  start: 5,
+  end: 100,
+} as const;
+
+// Spring 动画配置
+const SPRING_CONFIGS = {
+  nav: {
+    stiffness: 300,
+    damping: 30,
+    mass: 0.3,
+    restDelta: 0.01,
+    restSpeed: 0.5,
+  },
+  pageInfo: {
+    stiffness: 220,
+    damping: 26,
+    mass: 0.7,
+    restDelta: 0.001,
+    restSpeed: 0.01,
+  },
+  tag: {
+    type: 'spring' as const,
+    stiffness: 350,
+    damping: 22,
+    mass: 0.5,
+  },
+} as const;
+
+/* ==================== 辅助函数 ==================== */
+
+/**
+ * 提取标签文本和键
+ */
+const extractTagInfo = (tag: string | any, index: number) => {
+  const tagText = typeof tag === 'string' ? tag : tag?.name || '';
+  const tagKey = typeof tag === 'string' ? tag : tag?.id || index;
+  return { tagText, tagKey };
+};
+
+/**
+ * 替换菜单中的"更多"项为选中的子菜单项
+ */
+const replaceMoreMenuItem = (items: MenuItem[], selectedChild: MenuItem): MenuItem[] => {
+  return items.map((item) => {
+    if (item.isDropdown && item.children) {
+      // 将选中的子项放到父级位置，保留下拉功能
+      return {
+        ...selectedChild,
+        isDropdown: true,
+        children: item.children,
+      };
+    }
+    return item;
+  });
+};
+
+/* ==================== Header 组件 ==================== */
+
+const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
+  // Redux
   const dispatch = useDispatch<AppDispatch>();
   const { user, isLoggedIn } = useSelector((state: RootState) => state.user);
+
+  // 菜单状态 - 从 localStorage 恢复选中的菜单项
+  const [mainNavItems, setMainNavItems] = useState<MenuItem[]>(() => {
+    const saved = storage.local.get<MenuItem>(STORAGE_KEYS.SELECTED_MENU);
+    return saved ? replaceMoreMenuItem(defaultMainNavItems, saved) : defaultMainNavItems;
+  });
+
+  // 其他状态
   const [internalScrolled, setInternalScrolled] = useState(scrolled);
-  const [scrollProgress, setScrollProgress] = useState(0); // 滚动进度 0-1
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
+
+  // Refs
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const navCardRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // 根据登录状态动态生成移动端菜单分组
-  const mobileMenuGroups: MenuGroup[] = isLoggedIn
-    ? [
-        ...getBaseMobileMenuGroups(),
-        {
-          title: '用户中心',
-          items: [
+  // ==================== 滚动动画 ====================
+  const { scrollY } = useScroll();
+
+  // 滚动进度转换 (0-1)
+  const scrollProgress = useTransform(scrollY, [SCROLL_CONFIG.start, SCROLL_CONFIG.end], [0, 1], { clamp: true });
+
+  // 添加 Spring 弹性
+  const smoothProgress = useSpring(scrollProgress, SPRING_CONFIGS.nav);
+
+  // 导航栏动画属性
+  const borderRadius = useTransform(smoothProgress, [0, 1], [28, 24]);
+  const paddingXValue = useTransform(smoothProgress, [0, 1], [20, 16]);
+  const scale = useTransform(smoothProgress, [0, 1], [1, 1]);
+
+  // 页面信息动画属性
+  const pageInfoOpacityRaw = useTransform(scrollProgress, [0, 1], [0, 1]);
+  const pageInfoOpacity = useSpring(pageInfoOpacityRaw, SPRING_CONFIGS.pageInfo);
+
+  const pageInfoXRaw = useTransform(scrollProgress, [0, 1], [-20, 0]);
+  const pageInfoX = useSpring(pageInfoXRaw, SPRING_CONFIGS.pageInfo);
+
+  // ==================== 移动端菜单配置 ====================
+  const mobileMenuGroups = useMemo<MenuGroup[]>(
+    () =>
+      isLoggedIn
+        ? [
+            ...getBaseMobileMenuGroups(),
             {
-              path: '/profile',
-              title: '个人中心',
-              icon: <FiUser size={16} />,
+              title: '用户中心',
+              items: [{ path: '/profile', title: '个人中心', icon: <FiUser size={16} /> }],
             },
-          ],
-        },
-      ]
-    : getBaseMobileMenuGroups();
+          ]
+        : getBaseMobileMenuGroups(),
+    [isLoggedIn],
+  );
 
-  // 如果scrolled属性被传入，则使用它，否则自行监听滚动
+  // ==================== 回调函数 ====================
+
+  /**
+   * 处理下拉菜单项点击 - 替换父菜单
+   */
+  const handleDropdownItemClick = useCallback((item: MenuItem) => {
+    const newMainNavItems = replaceMoreMenuItem(defaultMainNavItems, item);
+    setMainNavItems(newMainNavItems);
+    storage.local.set(STORAGE_KEYS.SELECTED_MENU, item);
+    setMoreDropdownOpen(false);
+  }, []);
+
+  // ==================== 副作用 ====================
+
+  // 监听滚动位置
   useEffect(() => {
-    setInternalScrolled(scrolled);
-  }, [scrolled]);
+    const currentScroll = window.scrollY;
+    setInternalScrolled(scrolled !== undefined ? scrolled : currentScroll > 10);
 
-  useEffect(() => {
-    // 如果没有传入scrolled属性，则自行监听滚动
-    if (scrolled === undefined) {
-      const handleScroll = () => {
-        const scrollY = window.scrollY;
-        const scrollThreshold = 100; // 100px滚动后完全展开
+    const unsubscribe = scrollY.on('change', (latest) => {
+      setInternalScrolled(scrolled !== undefined ? scrolled : latest > 10);
+    });
 
-        // 计算滚动进度 0-1
-        const progress = Math.min(scrollY / scrollThreshold, 1);
-        setScrollProgress(progress);
+    return unsubscribe;
+  }, [scrollY, scrolled]);
 
-        if (scrollY > 10) {
-          setInternalScrolled(true);
-        } else {
-          setInternalScrolled(false);
-        }
-      };
-
-      window.addEventListener('scroll', handleScroll);
-      return () => {
-        window.removeEventListener('scroll', handleScroll);
-      };
-    }
-  }, [scrolled]);
-
+  // 点击外部关闭用户下拉菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setMoreDropdownOpen(false);
-      }
-      if (mobileDropdownRef.current && !mobileDropdownRef.current.contains(event.target as Node)) {
-        setMoreDropdownOpen(false);
-      }
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setUserDropdownOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 高性能鼠标跟随聚光灯效果
+  // 鼠标聚光灯效果
   useEffect(() => {
     const navCard = navCardRef.current;
     if (!navCard || internalScrolled) return;
@@ -239,7 +401,6 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
     let mouseY = 0;
 
     const updateSpotlight = () => {
-      // 使用 CSS 变量更新位置，性能优于直接修改 background
       navCard.style.setProperty('--spotlight-x', `${mouseX}px`);
       navCard.style.setProperty('--spotlight-y', `${mouseY}px`);
       rafRef.current = null;
@@ -250,7 +411,6 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
       mouseX = e.clientX - rect.left;
       mouseY = e.clientY - rect.top;
 
-      // 使用 requestAnimationFrame 优化性能
       if (!rafRef.current) {
         rafRef.current = requestAnimationFrame(updateSpotlight);
       }
@@ -266,110 +426,196 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
     };
   }, [internalScrolled]);
 
-  // 关闭所有下拉菜单和移动菜单
-  const handleLinkClick = () => {
+  // ==================== 事件处理 ====================
+
+  const handleLinkClick = useCallback(() => {
+    // 点击普通菜单项时，重置"更多"菜单到默认状态
+    setMainNavItems(defaultMainNavItems);
+    storage.local.remove(STORAGE_KEYS.SELECTED_MENU);
+
     setMoreDropdownOpen(false);
     setMobileMenuOpen(false);
     setUserDropdownOpen(false);
-  };
+  }, []);
 
-  // 切换更多下拉菜单
-  const toggleMoreDropdown = (e?: React.MouseEvent<Element, MouseEvent>) => {
+  const toggleUserDropdown = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setMoreDropdownOpen(!moreDropdownOpen);
-  };
+    setUserDropdownOpen((prev) => !prev);
+  }, []);
 
-  // 切换用户下拉菜单
-  const toggleUserDropdown = (e?: React.MouseEvent<Element, MouseEvent>) => {
-    e?.stopPropagation();
-    setUserDropdownOpen(!userDropdownOpen);
-  };
-
-  // 处理登录
-  const handleLogin = () => {
+  const handleLogin = useCallback(() => {
     setLoginModalOpen(true);
     setUserDropdownOpen(false);
-  };
+  }, []);
 
-  // 处理注册
-  const handleRegister = () => {
+  const handleRegister = useCallback(() => {
     setRegisterModalOpen(true);
     setUserDropdownOpen(false);
-  };
+  }, []);
 
-  // 切换到注册
-  const handleSwitchToRegister = () => {
+  const handleSwitchToRegister = useCallback(() => {
     setLoginModalOpen(false);
     setRegisterModalOpen(true);
-  };
+  }, []);
 
-  // 切换到登录
-  const handleSwitchToLogin = () => {
+  const handleSwitchToLogin = useCallback(() => {
     setRegisterModalOpen(false);
     setLoginModalOpen(true);
-  };
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    dispatch(logoutUser());
+    handleLinkClick();
+  }, [dispatch, handleLinkClick]);
+
+  // ==================== 渲染 ====================
 
   return (
     <div className={`header ${internalScrolled ? 'scrolled' : ''}`}>
       <HeaderContainer scrolled={internalScrolled}>
+        {/* Logo 和状态 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <AnimatedLogo />
-
-          {/* Logo右侧的应用状态 */}
           <AppStatus />
         </div>
 
-        {/* 桌面导航 - 根据滚动进度动态调整 */}
-        <div
-          className="nav-card"
-          ref={navCardRef}
-          style={{
-            // 不设置width，让它保持auto自适应，只调整圆角和padding
-            borderRadius: `${28 - scrollProgress * 28}px`, // 从28px缩小到0px
-            paddingLeft: `${1.25 - scrollProgress * 0.5}rem`,
-            paddingRight: `${1.25 - scrollProgress * 0.5}rem`,
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // 平滑过渡
-          }}
-        >
-          <NavLinks
-            mainNavItems={mainNavItems}
-            onLinkClick={handleLinkClick}
-            moreDropdownOpen={moreDropdownOpen}
-            toggleMoreDropdown={toggleMoreDropdown}
-            dropdownRef={dropdownRef as React.RefObject<HTMLDivElement>}
-          />
+        {/* 桌面导航 */}
+        <DesktopNavWrapper>
+          <motion.div
+            className="nav-card"
+            ref={navCardRef}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius,
+              paddingLeft: paddingXValue,
+              paddingRight: paddingXValue,
+            }}
+          >
+            <div className="nav-card-inner" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              <NavLinks
+                mainNavItems={mainNavItems}
+                onLinkClick={handleLinkClick}
+                moreDropdownOpen={moreDropdownOpen}
+                onDropdownOpen={() => setMoreDropdownOpen(true)}
+                onDropdownClose={() => setMoreDropdownOpen(false)}
+                onDropdownItemClick={handleDropdownItemClick}
+                dropdownRef={dropdownRef as React.RefObject<HTMLDivElement>}
+              />
 
-          {/* 桌面版主题切换和用户头像 */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <ThemeToggle />
+              {/* 桌面端页面信息 */}
+              <AnimatePresence>
+                {pageInfo && (pageInfo.title || pageInfo.tags) && internalScrolled && (
+                  <PageInfoContainer
+                    key="page-info"
+                    style={{ opacity: pageInfoOpacity, x: pageInfoX }}
+                    initial={{ scale: 0.95 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                  >
+                    {pageInfo.title && <PageTitle>{pageInfo.title}</PageTitle>}
 
-            {/* 用户头像 */}
-            <UserMenu
-              userDropdownOpen={userDropdownOpen}
-              toggleUserDropdown={toggleUserDropdown}
-              userDropdownRef={userDropdownRef as React.RefObject<HTMLDivElement>}
-              handleLogin={handleLogin}
-              handleRegister={handleRegister}
-              handleLinkClick={handleLinkClick}
-            />
-          </div>
-        </div>
+                    {pageInfo.tags && pageInfo.tags.length > 0 && (
+                      <TagsContainer>
+                        {pageInfo.tags.slice(0, 2).map((tag, index) => {
+                          const { tagText, tagKey } = extractTagInfo(tag, index);
+                          return (
+                            <Tag
+                              key={tagKey}
+                              initial={{ opacity: 0, scale: 0.85, y: 5 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              transition={{ ...SPRING_CONFIGS.tag, delay: index * 0.08 }}
+                            >
+                              <FiTag />
+                              {tagText}
+                            </Tag>
+                          );
+                        })}
+                        {pageInfo.tags.length > 2 && (
+                          <Tag
+                            initial={{ opacity: 0, scale: 0.85, y: 5 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            transition={{ ...SPRING_CONFIGS.tag, delay: 0.16 }}
+                          >
+                            +{pageInfo.tags.length - 2}
+                          </Tag>
+                        )}
+                      </TagsContainer>
+                    )}
+                  </PageInfoContainer>
+                )}
+              </AnimatePresence>
 
-        {/* 移动端菜单按钮和头像 */}
+              {/* 主题切换和用户菜单 */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <ThemeToggle />
+                <UserMenu
+                  userDropdownOpen={userDropdownOpen}
+                  toggleUserDropdown={toggleUserDropdown}
+                  userDropdownRef={userDropdownRef as React.RefObject<HTMLDivElement>}
+                  handleLogin={handleLogin}
+                  handleRegister={handleRegister}
+                  handleLinkClick={handleLinkClick}
+                />
+              </div>
+            </div>
+          </motion.div>
+        </DesktopNavWrapper>
+
+        {/* 移动端按钮 */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <MobileAvatar onClick={(e) => toggleUserDropdown(e)} hasImage={!!user?.avatar}>
+          <MobileAvatar onClick={toggleUserDropdown} hasImage={!!user?.avatar}>
             {isLoggedIn && user?.avatar ? (
               <img src={user.avatar} alt={user.username} />
             ) : (
               <FiUser color="var(--text-secondary)" />
             )}
           </MobileAvatar>
-
           <MenuButton onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <FiX /> : <FiMenu />}
           </MenuButton>
         </div>
       </HeaderContainer>
+
+      {/* 移动端页面信息 */}
+      <AnimatePresence>
+        {pageInfo && (pageInfo.title || pageInfo.tags) && internalScrolled && (
+          <MobilePageInfo
+            key="mobile-page-info"
+            initial={{ opacity: 0, y: -15, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -15, scale: 0.96 }}
+            transition={{
+              duration: 0.4,
+              ease: [0.23, 1, 0.32, 1],
+              opacity: { duration: 0.3 },
+            }}
+          >
+            {pageInfo.title && (
+              <MobilePageTitle>
+                <FiBookOpen size={14} />
+                {pageInfo.title}
+              </MobilePageTitle>
+            )}
+
+            {pageInfo.tags && pageInfo.tags.length > 0 && (
+              <MobileTagsRow>
+                {pageInfo.tags.slice(0, 3).map((tag) => {
+                  const { tagText, tagKey } = extractTagInfo(tag, 0);
+                  return (
+                    <MobileTag key={tagKey}>
+                      <FiTag />
+                      {tagText}
+                    </MobileTag>
+                  );
+                })}
+                {pageInfo.tags.length > 3 && <MobileTag>+{pageInfo.tags.length - 3}</MobileTag>}
+              </MobileTagsRow>
+            )}
+          </MobilePageInfo>
+        )}
+      </AnimatePresence>
 
       {/* 移动端菜单 */}
       <MobileMenu
@@ -379,19 +625,15 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false }) => {
         onLinkClick={handleLinkClick}
         handleLogin={handleLogin}
         handleRegister={handleRegister}
-        handleLogout={() => {
-          dispatch(logoutUser());
-          handleLinkClick();
-        }}
+        handleLogout={handleLogout}
       />
 
-      {/* 登录和注册模态框 */}
+      {/* 模态框 */}
       <LoginModal
         isOpen={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
         onSwitchToRegister={handleSwitchToRegister}
       />
-
       <RegisterModal
         isOpen={registerModalOpen}
         onClose={() => setRegisterModalOpen(false)}

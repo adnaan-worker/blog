@@ -11,6 +11,7 @@ import { API, Article as ApiArticle } from '@/utils/api';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
 import DetailNoiseBackground from '@/components/common/detail-noise-background';
+import { usePageInfo } from '@/hooks/usePageInfo';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -362,6 +363,17 @@ const BlogDetail: React.FC = () => {
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
+
+  // 使用页面信息 Hook
+  const { setPageInfo } = usePageInfo();
+
+  // 组件卸载时清除页面信息
+  useEffect(() => {
+    return () => {
+      setPageInfo(null);
+    };
+  }, [setPageInfo]);
+
   const [prevArticle, setPrevArticle] = useState<Article | null>(null);
   const [nextArticle, setNextArticle] = useState<Article | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -403,6 +415,13 @@ const BlogDetail: React.FC = () => {
 
       if (apiArticle) {
         setArticle(apiArticle);
+
+        // 更新 Header 的页面信息
+        setPageInfo({
+          title: apiArticle.title,
+          tags: apiArticle.tags || [],
+          category: apiArticle.category,
+        });
 
         // 获取文章列表用于导航
         const listResponse = await API.article.getArticles({ page: 1, limit: 100 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAnimationEngine } from '@/utils/animation-engine';
@@ -106,7 +106,9 @@ interface NavLinksProps {
   mainNavItems: MenuItem[];
   onLinkClick: () => void;
   moreDropdownOpen: boolean;
-  toggleMoreDropdown: (e: React.MouseEvent<Element, MouseEvent>) => void;
+  onDropdownOpen: () => void;
+  onDropdownClose: () => void;
+  onDropdownItemClick?: (item: MenuItem) => void;
   dropdownRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -114,10 +116,13 @@ const NavLinks: React.FC<NavLinksProps> = ({
   mainNavItems,
   onLinkClick,
   moreDropdownOpen,
-  toggleMoreDropdown,
+  onDropdownOpen,
+  onDropdownClose,
+  onDropdownItemClick,
   dropdownRef,
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { variants } = useAnimationEngine();
 
   // 检查菜单项是否激活
@@ -138,15 +143,20 @@ const NavLinks: React.FC<NavLinksProps> = ({
       {/* 渲染所有导航菜单项 */}
       {mainNavItems.map((item) => {
         if (item.isDropdown && item.children) {
-          // 渲染下拉菜单
+          // 渲染下拉菜单 - 通过 hover 触发
           return (
-            <div key={item.path} ref={dropdownRef} style={{ position: 'relative' }}>
+            <div
+              key={item.path}
+              ref={dropdownRef}
+              style={{ position: 'relative' }}
+              onMouseEnter={onDropdownOpen}
+              onMouseLeave={onDropdownClose}
+            >
               <NavLinkWithHover
                 to="#"
                 active={isItemActive(item)}
                 onClick={(e) => {
                   e.preventDefault();
-                  toggleMoreDropdown(e);
                 }}
                 icon={item.icon}
               >
@@ -157,7 +167,17 @@ const NavLinks: React.FC<NavLinksProps> = ({
                 {moreDropdownOpen && (
                   <DropdownContent initial="hidden" animate="visible" exit="exit" variants={variants.dropdown}>
                     {item.children.map((childItem) => (
-                      <DropdownItem key={childItem.path} to={childItem.path} onClick={onLinkClick}>
+                      <DropdownItem
+                        key={childItem.path}
+                        to={childItem.path}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // 先替换父菜单
+                          onDropdownItemClick?.(childItem);
+                          // 再跳转到目标页面
+                          navigate(childItem.path);
+                        }}
+                      >
                         {childItem.icon}
                         {childItem.title}
                       </DropdownItem>

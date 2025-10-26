@@ -14,6 +14,7 @@ import { setupHttpConfig } from '@/utils/http-config';
 import { useAutoConnect } from '@/hooks/useSocket';
 import { AppDispatch } from '@/store';
 import { API, SiteSettings } from '@/utils/api';
+import { PageInfoContext, usePageInfoState } from '@/hooks/usePageInfo';
 
 // 创建网站设置Context
 const SiteSettingsContext = createContext<{
@@ -34,6 +35,7 @@ const MainContainer = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 `;
 
 // 内容区域样式 - 完全移除动画，确保DOM立即可见
@@ -79,11 +81,13 @@ const RootLayout = () => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>(); // ✅ 获取 Redux dispatch
+  const dispatch = useDispatch<AppDispatch>();
 
   // 网站设置状态
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [siteSettingsLoading, setSiteSettingsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
 
   // 加载指示器状态
   const [showLoader, setShowLoader] = useState(false);
@@ -91,6 +95,9 @@ const RootLayout = () => {
   const previousPathRef = useRef(location.pathname);
   const loaderTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isFirstLoadRef = useRef(true); // 标记是否是首次加载
+
+  // 页面信息状态
+  const pageInfoState = usePageInfoState();
 
   // 监听系统主题变化（自动在 auto 模式下启用）
   useSystemTheme();
@@ -103,17 +110,32 @@ const RootLayout = () => {
     setupHttpConfig(navigate, dispatch);
   }, [navigate, dispatch]);
 
-  // 加载网站设置
-  const loadSiteSettings = async () => {
+  // 加载网站设置 - 增加重试机制
+  const loadSiteSettings = async (retry = 0) => {
     try {
       setSiteSettingsLoading(true);
       const response = await API.siteSettings.getSiteSettings();
       setSiteSettings(response.data);
-    } catch (error) {
-      console.error('加载网站设置失败:', error);
-      setSiteSettings(null);
-    } finally {
+      setRetryCount(0); // 成功后重置重试次数
       setSiteSettingsLoading(false);
+    } catch (error) {
+      console.error(`加载网站设置失败 (尝试 ${retry + 1}/${maxRetries}):`, error);
+
+      // 如果还有重试次数，延迟后重试
+      if (retry < maxRetries - 1) {
+        setRetryCount(retry + 1);
+        setTimeout(
+          () => {
+            loadSiteSettings(retry + 1);
+          },
+          1000 * (retry + 1),
+        ); // 递增延迟：1s, 2s, 3s
+      } else {
+        // 达到最大重试次数，使用默认值或显示错误
+        console.warn('网站设置加载失败，使用默认配置');
+        setSiteSettings(null);
+        setSiteSettingsLoading(false);
+      }
     }
   };
 
@@ -194,50 +216,52 @@ const RootLayout = () => {
 
   return (
     <SiteSettingsContext.Provider value={{ siteSettings, loading: siteSettingsLoading }}>
-      <MainContainer>
-        {/* 简洁的顶部加载进度条 */}
-        <AnimatePresence>
-          {showLoader && (
-            <LoadingIndicator
-              initial={{ width: 0 }}
-              animate={{ width: '100%' }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.25,
-                ease: 'easeOut',
-              }}
-            />
-          )}
-        </AnimatePresence>
+      <PageInfoContext.Provider value={pageInfoState}>
+        <MainContainer>
+          {/* 简洁的顶部加载进度条 */}
+          <AnimatePresence>
+            {showLoader && (
+              <LoadingIndicator
+                initial={{ width: 0 }}
+                animate={{ width: '100%' }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: 0.25,
+                  ease: 'easeOut',
+                }}
+              />
+            )}
+          </AnimatePresence>
 
-        {/* 头部导航 */}
-        <Header scrolled={isScrolled} />
+          {/* 头部导航 - 传递页面信息 */}
+          <Header scrolled={isScrolled} pageInfo={pageInfoState.pageInfo || undefined} />
 
-        {/* 主内容区域 - 确保有占位内容 */}
-        <Suspense
-          fallback={
-            <Content>
-              <SuspenseFallback />
+          {/* 主内容区域 - 确保有占位内容 */}
+          <Suspense
+            fallback={
+              <Content>
+                <SuspenseFallback />
+              </Content>
+            }
+          >
+            <Content key={location.pathname}>
+              <Outlet />
             </Content>
-          }
-        >
-          <Content key={location.pathname}>
-            <Outlet />
-          </Content>
-        </Suspense>
+          </Suspense>
 
-        {/* 页面切换时的全屏loading */}
-        {showPageLoading && createPortal(<PageLoading fullScreen variant="pulse" />, document.body)}
+          {/* 页面切换时的全屏loading */}
+          {showPageLoading && createPortal(<PageLoading fullScreen variant="pulse" />, document.body)}
 
-        {/* 页脚 */}
-        <Footer />
+          {/* 页脚 */}
+          <Footer />
 
-        {/* 悬浮工具栏 */}
-        <FloatingToolbar scrollPosition={scrollPosition} />
+          {/* 悬浮工具栏 */}
+          <FloatingToolbar scrollPosition={scrollPosition} />
 
-        {/* 幽灵小部件 */}
-        <GhostWidget />
-      </MainContainer>
+          {/* 幽灵小部件 */}
+          <GhostWidget />
+        </MainContainer>
+      </PageInfoContext.Provider>
     </SiteSettingsContext.Provider>
   );
 };

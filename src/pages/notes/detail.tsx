@@ -10,6 +10,7 @@ import RichTextStats from '@/components/rich-text/rich-text-stats';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
 import DetailNoiseBackground from '@/components/common/detail-noise-background';
+import { usePageInfo } from '@/hooks/usePageInfo';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -602,6 +603,9 @@ const NoteDetail: React.FC = () => {
   // 使用动画引擎 - Spring 弹性动画
   const { variants, springPresets } = useAnimationEngine();
 
+  // 使用智能导航栏
+  const { setPageInfo } = usePageInfo();
+
   useEffect(() => {
     loadNote();
 
@@ -618,12 +622,14 @@ const NoteDetail: React.FC = () => {
 
     return () => {
       clearTimeout(timer);
+      // 组件卸载时重置页面信息
+      setPageInfo(null);
       // 组件卸载时确保滚动状态正常
       if (process.env.NODE_ENV === 'development') {
         console.log('🧹 手记详情页卸载，检查滚动状态');
       }
     };
-  }, [id]);
+  }, [id, setPageInfo]);
 
   const loadNote = async () => {
     if (!id) return;
@@ -632,9 +638,16 @@ const NoteDetail: React.FC = () => {
       setIsLoading(true);
       const response = await API.note.getNoteDetail(id);
       setNote(response.data);
+
+      // 设置智能导航栏信息
+      setPageInfo({
+        title: response.data.title,
+        tags: response.data.tags || [],
+      });
     } catch (error: any) {
       adnaan.toast.error(error.message || '加载手记失败');
       setNote(null);
+      setPageInfo(null);
     } finally {
       setIsLoading(false);
     }

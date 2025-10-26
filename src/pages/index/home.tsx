@@ -646,8 +646,8 @@ const Home: React.FC = () => {
 
   // 卡片翻转状态
   const [isFlipped, setIsFlipped] = useState(false);
-  // 使用网站设置Hook
-  const { siteSettings } = useSiteSettings();
+  // 使用网站设置Hook - 增加加载状态检查
+  const { siteSettings, loading: siteSettingsLoading } = useSiteSettings();
   // 文章和手记数据
   const [articles, setArticles] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
@@ -727,6 +727,8 @@ const Home: React.FC = () => {
       setChartLoading(false);
     }
   };
+
+  // 初始数据加载
   useEffect(() => {
     let isMounted = true;
     const initialize = async () => {
@@ -738,14 +740,19 @@ const Home: React.FC = () => {
       await loadActivities();
       if (!isMounted) return;
       await loadProjects();
-      if (!isMounted) return;
-      await loadContributions();
     };
     initialize();
     return () => {
       isMounted = false;
     };
   }, []);
+
+  // 当 siteSettings 加载完成后，加载贡献数据
+  useEffect(() => {
+    if (!siteSettingsLoading && siteSettings) {
+      loadContributions();
+    }
+  }, [siteSettings, siteSettingsLoading]);
 
   const handleCardFlip = () => {
     setIsFlipped(!isFlipped);
