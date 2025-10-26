@@ -2,8 +2,10 @@ import styled from '@emotion/styled';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { RootState } from '@/store';
 import { storage } from '@/utils';
+import { buildSmartContext, getSmartMessage, SmartContext } from '@/utils/smart-companion';
 
 // 幽灵容器 - 缩小到原始的 45%，支持交互和拖拽
 const GhostContainer = styled(motion.div)<{ isDragging?: boolean }>`
@@ -202,34 +204,6 @@ const PullLine = styled.svg`
   z-index: 9998;
 `;
 
-// 头顶提示
-const TopHint = styled(motion.div)`
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 8px;
-  background: rgba(var(--accent-rgb, 81, 131, 245), 0.9);
-  color: white;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 4px solid transparent;
-    border-top-color: rgba(var(--accent-rgb, 81, 131, 245), 0.9);
-  }
-`;
-
 // 关心气泡
 const CareBubble = styled(motion.div)`
   position: absolute;
@@ -243,15 +217,25 @@ const CareBubble = styled(motion.div)`
     color-mix(in srgb, var(--accent-color) 50%, white) 100%
   );
   color: #fff;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-radius: 16px;
   font-size: 13px;
   font-weight: 500;
-  white-space: nowrap;
+  line-height: 1.5;
+  white-space: pre-wrap; /* 允许换行 */
+  word-break: break-word; /* 自动换行 */
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(255, 182, 193, 0.4);
-  max-width: 200px;
+  min-width: 120px; /* 最小宽度 */
+  max-width: 280px; /* 增大最大宽度，适应长文本 */
   text-align: center;
+
+  /* 适应移动端 */
+  @media (max-width: 768px) {
+    max-width: 220px;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
 
   &::after {
     content: '';
@@ -355,6 +339,7 @@ interface ParticleType {
 export const GhostWidget = () => {
   const theme = useSelector((state: RootState) => state.theme.theme);
   const isDark = theme === 'dark';
+  const location = useLocation();
 
   // 常量定义
   const GHOST_WIDTH = 36;
@@ -385,13 +370,15 @@ export const GhostWidget = () => {
   const [isPulling, setIsPulling] = useState(false);
   const [pullStart, setPullStart] = useState({ x: 0, y: 0 });
   const [pullCurrent, setPullCurrent] = useState({ x: 0, y: 0 });
-  const [launchCount, setLaunchCount] = useState(0);
-  const [showHint, setShowHint] = useState(true);
 
-  // 关心气泡状态
+  // 智能系统状态
+  const [smartContext, setSmartContext] = useState<SmartContext | null>(null);
   const [careBubble, setCareBubble] = useState<string | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
   const bubbleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pageLoadTimeRef = useRef<number>(Date.now());
+  const scrollCountRef = useRef<number>(0);
+  const hasTypedRef = useRef<boolean>(false);
 
   // 交互状态
   const [isHovered, setIsHovered] = useState(false);
@@ -421,19 +408,30 @@ export const GhostWidget = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [GHOST_WIDTH, GHOST_HEIGHT, MARGIN]);
 
-  // 关心文案数组
-  const careMessages = [
-    '工作累了吗？休息一下吧~',
-    '夜深了，早点休息哦💤',
-    '今天也要保持好心情呀！',
-    '记得多喝水哦💧',
-    '你真的很棒！',
-    '别熬夜啦，熬夜对身体不好~',
-    '明天又是元气满满的一天！',
-    '要相信自己！加油！',
-    '深夜了，注意保暖呀~',
-    '偶尔也要放松一下呢~',
-  ];
+  // 获取当前页面类型
+  const getCurrentPageType = (): SmartContext['userActivity']['currentPage'] => {
+    const path = location.pathname;
+    if (path === '/' || path === '/home') return 'home';
+    if (path.includes('/blog/') || path.includes('/article/')) return 'article';
+    if (path.includes('/notes')) return 'notes';
+    if (path.includes('/project')) return 'project';
+    if (path.includes('/profile')) return 'profile';
+    return 'other';
+  };
+
+  // 构建用户活动上下文
+  const buildUserActivity = (): SmartContext['userActivity'] => {
+    const now = Date.now();
+    return {
+      isActive: now - lastActivityRef.current < 10000,
+      idleTime: now - lastActivityRef.current,
+      scrollCount: scrollCountRef.current,
+      readingTime: now - pageLoadTimeRef.current,
+      lastInteraction: lastActivityRef.current,
+      currentPage: getCurrentPageType(),
+      hasTyped: hasTypedRef.current,
+    };
+  };
 
   // 创建星星粒子效果
   const createStarParticles = (withVibration = false) => {
@@ -578,7 +576,6 @@ export const GhostWidget = () => {
   // 更新活动时间
   const updateActivity = () => {
     lastActivityRef.current = Date.now();
-    setShowHint(true);
   };
 
   // 鼠标/触摸移动 - 眼睛跟随和拉线
@@ -629,21 +626,58 @@ export const GhostWidget = () => {
     };
   }, [isPulling, isFlying]);
 
-  // 提示自动隐藏
+  // 智能系统初始化和更新
   useEffect(() => {
-    const hintTimer = setTimeout(() => {
-      setShowHint(false);
-    }, 5000);
+    const updateSmartContext = async () => {
+      const userActivity = buildUserActivity();
+      const context = await buildSmartContext(userActivity);
+      setSmartContext(context);
+    };
 
-    return () => clearTimeout(hintTimer);
-  }, [launchCount]); // 每次发射后重新计时
+    // 初始化
+    updateSmartContext();
+
+    // 每分钟更新一次上下文
+    const interval = setInterval(updateSmartContext, 60000);
+
+    return () => clearInterval(interval);
+  }, [location.pathname]); // 页面切换时重新初始化
+
+  // 页面加载时重置计时器
+  useEffect(() => {
+    pageLoadTimeRef.current = Date.now();
+    scrollCountRef.current = 0;
+    hasTypedRef.current = false;
+  }, [location.pathname]);
+
+  // 监听滚动事件
+  useEffect(() => {
+    const handleScroll = () => {
+      scrollCountRef.current++;
+      updateActivity();
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // 监听键盘输入
+  useEffect(() => {
+    const handleKeyDown = () => {
+      hasTypedRef.current = true;
+      updateActivity();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // 使用 useRef 存储 setTimeout ID，确保正确清理
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 关心气泡循环显示（✅ 修复嵌套 setTimeout 泄漏）
+  // 智能气泡循环显示
   useEffect(() => {
-    const checkAndShowBubble = () => {
+    const checkAndShowBubble = async () => {
       const now = Date.now();
       const timeSinceLastActivity = now - lastActivityRef.current;
 
@@ -651,9 +685,9 @@ export const GhostWidget = () => {
         // 如果已经有气泡了，不重复显示
         if (currentBubble) return currentBubble;
 
-        // 如果超过 10 秒没活动，显示关心
-        if (timeSinceLastActivity > 10000) {
-          const randomMessage = careMessages[Math.floor(Math.random() * careMessages.length)];
+        // 如果超过 10 秒没活动，显示智能关心
+        if (timeSinceLastActivity > 10000 && smartContext) {
+          const smartMessage = getSmartMessage(smartContext);
 
           // ✅ 清理之前的 timeout
           if (hideTimeoutRef.current) {
@@ -664,9 +698,9 @@ export const GhostWidget = () => {
           hideTimeoutRef.current = setTimeout(() => {
             setCareBubble(null);
             hideTimeoutRef.current = null;
-          }, 5000);
+          }, 6000); // 显示6秒
 
-          return randomMessage;
+          return smartMessage;
         }
 
         return null;
@@ -692,7 +726,7 @@ export const GhostWidget = () => {
         hideTimeoutRef.current = null;
       }
     };
-  }, []); // 只在组件挂载时启动一次
+  }, [smartContext]); // 依赖智能上下文
 
   // 用户是否已交互（用于震动权限）
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -797,7 +831,6 @@ export const GhostWidget = () => {
 
     setVelocity({ x: velocityX, y: velocityY });
     setIsFlying(true);
-    setLaunchCount((prev) => prev + 1);
 
     // 发射时创建星星粒子
     createStarParticles();
@@ -894,7 +927,6 @@ export const GhostWidget = () => {
 
         setVelocity({ x: velocityX, y: velocityY });
         setIsFlying(true);
-        setLaunchCount((prev) => prev + 1);
 
         // 发射时创建星星粒子
         createStarParticles();
@@ -1051,13 +1083,6 @@ export const GhostWidget = () => {
           touchAction: 'none', // 防止移动端默认触摸行为
         }}
       >
-        {/* 头顶提示 */}
-        {showHint && !careBubble && launchCount > 0 && !isFlying && (
-          <TopHint initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}>
-            发射了 {launchCount} 次
-          </TopHint>
-        )}
-
         {/* 关心气泡 */}
         {careBubble && !isPulling && !isFlying && (
           <CareBubble

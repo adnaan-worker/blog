@@ -7,6 +7,7 @@ import Header from './header';
 import Footer from './footer';
 import FloatingToolbar from './floating-toolbar';
 import GhostWidget from './ghost-widget';
+import MeteorBackground from '@/components/common/meteor-background';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
 import PageLoading from '@/components/common/page-loading';
@@ -232,6 +233,9 @@ const RootLayout = () => {
               />
             )}
           </AnimatePresence>
+
+          {/* 萤火虫背景动效（仅暗黑模式） */}
+          <MeteorBackground />
 
           {/* 头部导航 - 传递页面信息 */}
           <Header scrolled={isScrolled} pageInfo={pageInfoState.pageInfo || undefined} />
