@@ -25,6 +25,7 @@ import { formatDate } from '@/utils';
 import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
 import { RichTextContent } from '@/components/rich-text/rich-text-content';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
+import DetailNoiseBackground from '@/components/common/detail-noise-background';
 
 // 样式组件
 const PageContainer = styled.div`
@@ -590,6 +591,8 @@ const ProjectDetail: React.FC = () => {
 
   return (
     <DetailPageLayout showBackground={true} mainContent={<></>}>
+      {/* 噪点背景 - 仅详情页使用 */}
+      <DetailNoiseBackground />
       <PageContainer>
         <BackButton onClick={() => navigate('/projects')}>
           <FiArrowLeft />

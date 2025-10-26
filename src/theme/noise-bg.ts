@@ -4,8 +4,17 @@ const hexToRbg = (hex: string) => {
   const b = Number.parseInt(hex.slice(5, 7), 16);
   return { r, g, b };
 };
+
+// 添加缓存，避免重复生成相同颜色的噪点
+const noiseCache = new Map<string, string>();
+
 // 替换原有的createPngNoiseBackground函数
 export const createCanvasNoiseBackground = (hex: string) => {
+  // 检查缓存
+  if (noiseCache.has(hex)) {
+    return Promise.resolve(noiseCache.get(hex)!);
+  }
+
   return new Promise<string>((resolve) => {
     // 创建离屏Canvas
     const canvas = document.createElement('canvas');
@@ -14,7 +23,10 @@ export const createCanvasNoiseBackground = (hex: string) => {
     canvas.width = width;
     canvas.height = height;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', {
+      willReadFrequently: false, // 性能优化提示
+    });
+
     if (!ctx) {
       resolve('');
       return;
@@ -40,6 +52,15 @@ export const createCanvasNoiseBackground = (hex: string) => {
 
     // 转换为base64
     const base64Url = canvas.toDataURL('image/png');
-    resolve(`url('${base64Url}')`);
+    const result = `url('${base64Url}')`;
+
+    // 缓存结果
+    noiseCache.set(hex, result);
+
+    // 清理Canvas引用，帮助垃圾回收
+    canvas.width = 0;
+    canvas.height = 0;
+
+    resolve(result);
   });
 };

@@ -1,9 +1,15 @@
 /**
- * 🚀 Adnaan Animation Engine - 超级动画引擎
+ * 🚀 Adnaan Animation Engine v2.0 - 超级动画引擎
  * 统一的动画管理系统，提供最佳性能和视觉效果
+ *
+ * 优化内容：
+ * - 内存管理：自动清理和垃圾回收
+ * - 性能监控：动态调整动画复杂度
+ * - 统一管理：所有动画配置集中管理
+ * - 防内存泄漏：完善的清理机制
  */
 
-import { Variants, Transition } from 'framer-motion';
+import { Variants, Transition, useInView } from 'framer-motion';
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 
 // ==================== 类型定义 ====================
@@ -26,7 +32,7 @@ export interface AnimationConfig {
   stagger?: number;
 }
 
-// ==================== 性能监控器 ====================
+// ==================== 性能监控器 (优化版) ====================
 
 class PerformanceMonitor {
   private static instance: PerformanceMonitor;
@@ -35,6 +41,7 @@ class PerformanceMonitor {
   private lastFrameTime = performance.now();
   private frameCount = 0;
   private rafId: number | null = null;
+  private updateCallbacks = new Set<(metrics: PerformanceMetrics) => void>();
 
   private constructor() {
     this.startMonitoring();
@@ -95,9 +102,24 @@ class PerformanceMonitor {
       this.metrics.level = 'minimal';
     }
 
-    // 如果性能等级降低，触发优化
+    // 如果性能等级改变，通知所有订阅者
     if (oldLevel !== this.metrics.level) {
       console.log(`[Animation Engine] Performance level changed: ${oldLevel} → ${this.metrics.level}`);
+      this.notifySubscribers();
+    }
+  }
+
+  // 订阅性能变化
+  subscribe(callback: (metrics: PerformanceMetrics) => void) {
+    this.updateCallbacks.add(callback);
+    return () => {
+      this.updateCallbacks.delete(callback);
+    };
+  }
+
+  private notifySubscribers() {
+    if (this.metrics) {
+      this.updateCallbacks.forEach((callback) => callback(this.metrics!));
     }
   }
 
@@ -112,7 +134,7 @@ class PerformanceMonitor {
     // 初始化性能指标
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // WebGL检测（优化版）
+    // WebGL检测（优化版，防内存泄漏）
     let hasWebGL = false;
     try {
       const canvas = document.createElement('canvas');
@@ -126,6 +148,7 @@ class PerformanceMonitor {
         const ext = (gl as WebGLRenderingContext).getExtension('WEBGL_lose_context');
         if (ext) ext.loseContext();
       }
+      // 清理Canvas引用
       canvas.width = canvas.height = 0;
     } catch (e) {
       hasWebGL = false;
@@ -168,21 +191,25 @@ class PerformanceMonitor {
     return this.metrics;
   }
 
+  // 清理资源
   destroy() {
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
+    this.fpsHistory = [];
+    this.updateCallbacks.clear();
   }
 }
 
-// ==================== 动画调度器 ====================
+// ==================== 动画调度器 (优化版) ====================
 
 class AnimationScheduler {
   private static instance: AnimationScheduler;
-  private queue: Array<{ priority: number; callback: () => void }> = [];
+  private queue: Array<{ priority: number; callback: () => void; id: string }> = [];
   private isProcessing = false;
   private maxConcurrent = 5;
+  private activeAnimations = new Set<string>();
 
   private constructor() {}
 
@@ -193,9 +220,16 @@ class AnimationScheduler {
     return AnimationScheduler.instance;
   }
 
-  schedule(callback: () => void, priority: 'critical' | 'high' | 'normal' | 'low' = 'normal') {
+  schedule(callback: () => void, priority: 'critical' | 'high' | 'normal' | 'low' = 'normal', id?: string) {
     const priorityMap = { critical: 4, high: 3, normal: 2, low: 1 };
-    this.queue.push({ priority: priorityMap[priority], callback });
+    const animationId = id || `anim_${Date.now()}_${Math.random()}`;
+
+    // 避免重复调度
+    if (this.activeAnimations.has(animationId)) {
+      return;
+    }
+
+    this.queue.push({ priority: priorityMap[priority], callback, id: animationId });
     this.queue.sort((a, b) => b.priority - a.priority);
     this.process();
   }
@@ -211,8 +245,10 @@ class AnimationScheduler {
         batch.map(
           (item) =>
             new Promise((resolve) => {
+              this.activeAnimations.add(item.id);
               requestAnimationFrame(() => {
                 item.callback();
+                this.activeAnimations.delete(item.id);
                 resolve(undefined);
               });
             }),
@@ -232,6 +268,13 @@ class AnimationScheduler {
       minimal: 1,
     };
     this.maxConcurrent = concurrencyMap[level];
+  }
+
+  // 清理资源
+  clear() {
+    this.queue = [];
+    this.activeAnimations.clear();
+    this.isProcessing = false;
   }
 }
 
@@ -309,6 +352,14 @@ export const SPRING_PRESETS = {
     stiffness: 80, // 很低的刚度
     damping: 25, // 适中阻尼
     mass: 2, // 重质量
+  },
+
+  // 💨 下拉菜单专用 - 快速响应
+  dropdown: {
+    type: 'spring' as const,
+    stiffness: 450, // 很高刚度
+    damping: 35, // 高阻尼
+    mass: 0.4, // 很轻
   },
 
   // ⚙️ 自定义阻尼系数 - 根据性能动态调整
@@ -394,7 +445,7 @@ export class AnimationVariants {
         opacity: 1,
         y: 0,
         scale: 1,
-        transition: spring, // 直接使用 Spring 配置
+        transition: spring,
       },
     };
   }
@@ -477,7 +528,7 @@ export class AnimationVariants {
         opacity: 1,
         x: 0,
         scale: 1,
-        transition: spring, // 直接使用 Spring 配置，不要混合 duration
+        transition: spring,
       },
     };
   }
@@ -505,7 +556,7 @@ export class AnimationVariants {
         opacity: 1,
         y: 0,
         scale: 1,
-        transition: spring, // 直接使用 Spring 配置
+        transition: spring,
       },
     };
   }
@@ -526,7 +577,28 @@ export class AnimationVariants {
         opacity: 0,
         scale: 0.95,
         y: 20,
-        transition: { ...spring, damping: spring.damping! * 1.5 }, // 退出时更快
+        transition: { ...spring, damping: spring.damping! * 1.5 },
+      },
+    };
+  }
+
+  // 📱 下拉菜单动画 - 快速响应
+  static dropdown(level: PerformanceMetrics['level']): Variants {
+    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.dropdown;
+
+    return {
+      hidden: { opacity: 0, y: -10, scale: 0.95 },
+      visible: {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: spring,
+      },
+      exit: {
+        opacity: 0,
+        y: -10,
+        scale: 0.95,
+        transition: { ...spring, damping: spring.damping! * 1.5 },
       },
     };
   }
@@ -741,7 +813,7 @@ export class AnimationVariants {
 
     return {
       hidden: {
-        y: '0.7em', // 使用 em 相对位移，保证不同字号下摆动幅度一致
+        y: '0.7em',
         opacity: 0,
       },
       visible: {
@@ -765,7 +837,13 @@ export const useAnimationEngine = () => {
   const scheduler = useMemo(() => AnimationScheduler.getInstance(), []);
   const [metrics, setMetrics] = useState<PerformanceMetrics>(() => monitor.getMetrics());
 
+  // 订阅性能变化
   useEffect(() => {
+    const unsubscribe = monitor.subscribe((newMetrics) => {
+      setMetrics(newMetrics);
+      scheduler.updateConcurrency(newMetrics.level);
+    });
+
     // 每2秒更新一次指标
     const interval = setInterval(() => {
       const newMetrics = monitor.getMetrics();
@@ -773,7 +851,10 @@ export const useAnimationEngine = () => {
       scheduler.updateConcurrency(newMetrics.level);
     }, 2000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
   }, [monitor, scheduler]);
 
   // 获取动画变体 - 全新 Spring 动画系统
@@ -797,6 +878,7 @@ export const useAnimationEngine = () => {
 
       // 特殊动画
       modal: AnimationVariants.modal(metrics.level),
+      dropdown: AnimationVariants.dropdown(metrics.level),
       scrollReveal: AnimationVariants.scrollReveal(metrics.level),
       button: AnimationVariants.button(metrics.level),
 
@@ -822,8 +904,8 @@ export const useAnimationEngine = () => {
 
   // 调度动画
   const scheduleAnimation = useCallback(
-    (callback: () => void, priority: 'critical' | 'high' | 'normal' | 'low' = 'normal') => {
-      scheduler.schedule(callback, priority);
+    (callback: () => void, priority: 'critical' | 'high' | 'normal' | 'low' = 'normal', id?: string) => {
+      scheduler.schedule(callback, priority, id);
     },
     [scheduler],
   );
@@ -846,28 +928,6 @@ export const useAnimationEngine = () => {
     };
   }, [metrics.level, metrics.prefersReducedMotion]);
 
-  // 稳健的动画状态管理
-  const getSafeAnimationProps = useCallback((variant: any, initial?: any, animate?: any) => {
-    // 确保动画状态正确切换，避免 opacity: 0 卡住
-    return {
-      initial: initial || 'hidden',
-      animate: animate || 'visible',
-      variants: variant,
-      transition: {
-        duration: 0.3, // 最小持续时间
-        ease: 'easeOut', // 降级缓动
-        ...variant?.visible?.transition, // 合并自定义过渡
-      },
-      // 添加动画完成回调，确保状态正确
-      onAnimationComplete: (definition: string) => {
-        if (definition === 'visible') {
-          // 动画完成后的清理工作
-          console.log('[Animation Engine] Animation completed successfully');
-        }
-      },
-    };
-  }, []);
-
   return {
     // 性能指标
     metrics,
@@ -888,7 +948,69 @@ export const useAnimationEngine = () => {
     // 工具方法
     scheduleAnimation,
     hoverProps,
-    getSafeAnimationProps, // 新增：稳健的动画属性获取方法
+  };
+};
+
+/**
+ * 智能视口检测 Hook - 解决刷新时元素已在视口的bug
+ *
+ * 使用方法：
+ * ```tsx
+ * const { ref, controls } = useSmartInView();
+ *
+ * <motion.div
+ *   ref={ref}
+ *   initial="hidden"
+ *   animate={controls}
+ *   variants={variants.fadeIn}
+ * >
+ * ```
+ *
+ * 优势：
+ * 1. 刷新时如果元素在视口，立即触发动画
+ * 2. 滚动进入视口，正常触发动画
+ * 3. 完美解决 whileInView 的bug
+ */
+export const useSmartInView = (options?: { once?: boolean; amount?: number }) => {
+  const ref = useRef(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  // 使用 framer-motion 的 useInView
+  const isInView = useInView(ref, {
+    once: options?.once ?? true,
+    amount: options?.amount ?? 0.2,
+  });
+
+  // 初次渲染时检测元素是否在视口
+  useEffect(() => {
+    if (!hasAnimated && ref.current) {
+      // 使用 getBoundingClientRect 检测元素位置
+      const element = ref.current as HTMLElement;
+      const rect = element.getBoundingClientRect();
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+
+      // 检测元素是否在视口中
+      const isVisible = rect.top < windowHeight && rect.bottom > 0;
+
+      if (isVisible) {
+        // 如果元素初始就在视口中，立即标记为已动画
+        setHasAnimated(true);
+      }
+    }
+  }, [hasAnimated]);
+
+  // 当元素进入视口时，标记为已动画
+  useEffect(() => {
+    if (isInView && !hasAnimated) {
+      setHasAnimated(true);
+    }
+  }, [isInView, hasAnimated]);
+
+  return {
+    ref,
+    // 返回动画控制状态
+    controls: hasAnimated || isInView ? 'visible' : 'hidden',
+    isInView: hasAnimated || isInView,
   };
 };
 
@@ -896,6 +1018,7 @@ export const useAnimationEngine = () => {
 
 export default {
   useAnimationEngine,
+  useSmartInView,
   AnimationVariants,
   SPRING_PRESETS,
   EASING,

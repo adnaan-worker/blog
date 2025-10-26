@@ -8,19 +8,22 @@ import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
 import { useAnimationEngine } from '@/utils/animation-engine';
 
-// 页面头部渐变背景 - 诗意朦胧光晕
+// 页面头部渐变背景 - 流光溢彩诗意光晕 ✨
 const PageHeadGradient = styled.div`
   pointer-events: none;
   position: fixed;
   left: 0;
   right: 0;
   top: 0;
-  height: 600px;
+  height: 700px;
   width: 100%;
   overflow: hidden;
   z-index: 2;
 
-  /* 多层光晕效果 */
+  /* 毛玻璃质感（可选） */
+  /* backdrop-filter: blur(80px); */
+
+  /* 三层光晕效果叠加 */
   &::before,
   &::after {
     content: '';
@@ -28,52 +31,156 @@ const PageHeadGradient = styled.div`
     width: 100%;
     height: 100%;
     pointer-events: none;
+    will-change: transform;
   }
 
-  /* 主要光晕层 - 从左侧渐变 */
+  /* 第一层：主光晕 - 从左上方扩散，如晨曦 */
   &::before {
     background: radial-gradient(
-      ellipse 120% 80% at 10% 20%,
-      rgba(var(--gradient-from), 0.5) 0%,
-      rgba(var(--gradient-from), 0.2) 40%,
-      transparent 70%
-    );
-  }
-
-  /* 次要光晕层 - 从右侧渐变 */
-  &::after {
-    background: radial-gradient(
-      ellipse 100% 60% at 90% 30%,
-      rgba(var(--gradient-to), 0.4) 0%,
-      rgba(var(--gradient-to), 0.18) 45%,
+      ellipse 160% 110% at 15% 10%,
+      rgba(var(--gradient-from), 0.38) 0%,
+      rgba(var(--gradient-from), 0.22) 25%,
+      rgba(var(--gradient-from), 0.08) 50%,
       transparent 75%
     );
+    transform-origin: 15% 10%;
+    animation: breatheGlow1 25s ease-in-out infinite;
   }
 
-  /* 整体渐变遮罩 */
-  mask-image: radial-gradient(ellipse 80% 100% at 50% 0%, black 0%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 100% at 50% 0%, black 0%, transparent 70%);
+  /* 第二层：次光晕 - 从右上方流动，如晚霞 */
+  &::after {
+    background: radial-gradient(
+      ellipse 140% 95% at 85% 15%,
+      rgba(var(--gradient-to), 0.32) 0%,
+      rgba(var(--gradient-to), 0.18) 30%,
+      rgba(var(--gradient-to), 0.06) 55%,
+      transparent 80%
+    );
+    transform-origin: 85% 15%;
+    animation: breatheGlow2 30s ease-in-out infinite;
+    animation-delay: 8s;
+  }
+
+  /* 第三层：中央光晕（使用子元素） */
+  & > div {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      ellipse 110% 80% at 50% 20%,
+      rgba(var(--accent-rgb), 0.15) 0%,
+      rgba(var(--accent-rgb), 0.08) 35%,
+      transparent 65%
+    );
+    mix-blend-mode: screen;
+    transform-origin: 50% 20%;
+    animation: pulseGlow 20s ease-in-out infinite;
+    animation-delay: 4s;
+  }
+
+  /* 整体渐变遮罩 - 更柔和的过渡 */
+  mask-image: radial-gradient(
+    ellipse 90% 100% at 50% 0%,
+    black 0%,
+    rgba(0, 0, 0, 0.7) 40%,
+    rgba(0, 0, 0, 0.3) 60%,
+    transparent 80%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 90% 100% at 50% 0%,
+    black 0%,
+    rgba(0, 0, 0, 0.7) 40%,
+    rgba(0, 0, 0, 0.3) 60%,
+    transparent 80%
+  );
+
+  /* 呼吸动画 - 左侧光晕（缩放+微旋转+透明度） */
+  @keyframes breatheGlow1 {
+    0%,
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    33% {
+      transform: scale(1.08) rotate(1deg);
+      opacity: 0.92;
+    }
+    66% {
+      transform: scale(0.96) rotate(-0.5deg);
+      opacity: 0.96;
+    }
+  }
+
+  /* 呼吸动画 - 右侧光晕（错落节奏） */
+  @keyframes breatheGlow2 {
+    0%,
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    40% {
+      transform: scale(1.06) rotate(-1deg);
+      opacity: 0.88;
+    }
+    75% {
+      transform: scale(0.98) rotate(0.8deg);
+      opacity: 0.94;
+    }
+  }
+
+  /* 脉动动画 - 中央光晕（柔和呼吸） */
+  @keyframes pulseGlow {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.65;
+    }
+    50% {
+      transform: scale(1.15);
+      opacity: 0.35;
+    }
+  }
 
   /* 响应式调整 */
   @media (max-width: 768px) {
-    height: 400px;
+    height: 500px;
 
     &::before {
       background: radial-gradient(
-        ellipse 150% 100% at 10% 20%,
-        rgba(var(--gradient-from), 0.45) 0%,
-        rgba(var(--gradient-from), 0.18) 50%,
+        ellipse 200% 130% at 15% 10%,
+        rgba(var(--gradient-from), 0.35) 0%,
+        rgba(var(--gradient-from), 0.18) 30%,
+        rgba(var(--gradient-from), 0.06) 55%,
         transparent 80%
       );
     }
 
     &::after {
       background: radial-gradient(
-        ellipse 120% 80% at 90% 30%,
-        rgba(var(--gradient-to), 0.35) 0%,
-        rgba(var(--gradient-to), 0.15) 50%,
-        transparent 80%
+        ellipse 170% 115% at 85% 15%,
+        rgba(var(--gradient-to), 0.28) 0%,
+        rgba(var(--gradient-to), 0.15) 35%,
+        rgba(var(--gradient-to), 0.05) 60%,
+        transparent 85%
       );
+    }
+
+    & > div {
+      background: radial-gradient(
+        ellipse 140% 100% at 50% 20%,
+        rgba(var(--accent-rgb), 0.12) 0%,
+        rgba(var(--accent-rgb), 0.06) 40%,
+        transparent 70%
+      );
+    }
+  }
+
+  /* 性能优化 */
+  @media (prefers-reduced-motion: reduce) {
+    &::before,
+    &::after,
+    & > div {
+      animation: none;
     }
   }
 `;
@@ -101,14 +208,17 @@ export const DetailPageLayout: React.FC<DetailPageLayoutProps> = ({
     <>
       {showBackground && (
         <>
-          {/* 背景装饰 - Spring 弹性淡入 */}
+          {/* 流光溢彩背景 - Spring 弹性淡入 ✨ */}
           <motion.div
             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 2 }}
             initial={{ opacity: 0, y: -100, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={springPresets.gentle}
           >
-            <PageHeadGradient />
+            <PageHeadGradient>
+              {/* 第三层中央光晕 */}
+              <div />
+            </PageHeadGradient>
           </motion.div>
         </>
       )}

@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDate } from '@/utils';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine, useSmartInView } from '@/utils/animation-engine';
 import { UserActivity } from '@/utils/api';
 
 // Styled Components
@@ -264,6 +264,11 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
   const { variants, springPresets } = useAnimationEngine();
   const navigate = useNavigate();
 
+  // 使用智能视口检测 - 解决刷新bug
+  const containerView = useSmartInView({ amount: 0.2 });
+  const titleView = useSmartInView({ amount: 0.3 });
+  const gridView = useSmartInView({ amount: 0.1 });
+
   // 处理活动点击
   const handleActivityClick = (link: string | null | undefined) => {
     if (link && link !== '#') {
@@ -272,12 +277,25 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
   };
 
   return (
-    <ContentSection initial="hidden" animate="visible" variants={variants.fadeIn}>
-      <SectionTitle>创作的「实时热搜」</SectionTitle>
+    <ContentSection
+      ref={containerView.ref}
+      initial="hidden"
+      animate={containerView.controls}
+      variants={variants.fadeIn}
+    >
+      <SectionTitle
+        ref={titleView.ref}
+        initial="hidden"
+        animate={titleView.controls}
+        variants={variants.slideInLeft}
+        transition={springPresets.gentle}
+      >
+        创作的「实时热搜」
+      </SectionTitle>
 
       <ActivityScrollContainer>
         <FadeMask className="top" />
-        <ActivityGrid initial="hidden" animate="visible" variants={variants.stagger}>
+        <ActivityGrid ref={gridView.ref} initial="hidden" animate={gridView.controls} variants={variants.stagger}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
           ) : activities.length === 0 ? (
@@ -294,6 +312,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
                   variants={variants.listItem}
                   custom={index}
                   whileHover={{ x: 3, scale: 1.01 }}
+                  transition={springPresets.snappy}
                 >
                   <ActivityIcon>{formatted.emoji}</ActivityIcon>
                   <ActivityContent>

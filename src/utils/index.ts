@@ -131,3 +131,6 @@ export const storage = {
     },
   },
 };
+
+// 导出时间线工具
+export * from './timeline';

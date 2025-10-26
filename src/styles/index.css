@@ -231,15 +231,6 @@ body {
   touch-action: pan-y pan-x;
 }
 
-body::before {
-  position: fixed;
-  inset: 0;
-  content: '';
-  opacity: 0.02;
-  background-repeat: repeat;
-  background-image: var(--noise-bg);
-}
-
 #root {
   min-height: 100vh;
   width: 100%;

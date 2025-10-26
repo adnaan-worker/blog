@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 import { formatDate, getTimeAgo } from '@/utils';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine, useSmartInView } from '@/utils/animation-engine';
 import { ArticlesSectionProps, NotesSectionProps } from './types';
 
 // Styled Components
@@ -145,13 +145,29 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
 
+  // 使用智能视口检测 - 解决刷新bug
+  const containerView = useSmartInView({ amount: 0.2 });
+  const titleView = useSmartInView({ amount: 0.3 });
+  const gridView = useSmartInView({ amount: 0.1 });
+
   if (loading) {
     return null; // 加载中不显示
   }
 
   return (
-    <ContentSection initial="hidden" animate="visible" variants={variants.fadeIn}>
-      <SectionTitle>
+    <ContentSection
+      ref={containerView.ref}
+      initial="hidden"
+      animate={containerView.controls}
+      variants={variants.fadeIn}
+    >
+      <SectionTitle
+        ref={titleView.ref}
+        initial="hidden"
+        animate={titleView.controls}
+        variants={variants.slideInLeft}
+        transition={springPresets.gentle}
+      >
         技术文思的「新地球」
         <Link to="/blog" style={{ textDecoration: 'none' }}>
           <motion.span
@@ -170,7 +186,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
         </Link>
       </SectionTitle>
 
-      <ArticleGrid initial="hidden" animate="visible" variants={variants.stagger}>
+      <ArticleGrid ref={gridView.ref} initial="hidden" animate={gridView.controls} variants={variants.stagger}>
         {articles.slice(0, 3).map((article, index) => (
           <ArticleLink
             to={`/blog/${article.id}`}
@@ -178,6 +194,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
             variants={variants.listItem}
             custom={index}
             whileHover={{ x: 3, scale: 1.01 }}
+            transition={springPresets.snappy}
           >
             <ArticleContent>
               <ArticleTitle>{article.title}</ArticleTitle>
@@ -195,13 +212,29 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
 
+  // 使用智能视口检测 - 解决刷新bug
+  const containerView = useSmartInView({ amount: 0.2 });
+  const titleView = useSmartInView({ amount: 0.3 });
+  const gridView = useSmartInView({ amount: 0.1 });
+
   if (loading) {
     return null; // 加载中不显示
   }
 
   return (
-    <ContentSection initial="hidden" animate="visible" variants={variants.fadeIn}>
-      <SectionTitle>
+    <ContentSection
+      ref={containerView.ref}
+      initial="hidden"
+      animate={containerView.controls}
+      variants={variants.fadeIn}
+    >
+      <SectionTitle
+        ref={titleView.ref}
+        initial="hidden"
+        animate={titleView.controls}
+        variants={variants.slideInLeft}
+        transition={springPresets.gentle}
+      >
         思想的「裂缝中的阳光」
         <Link to="/notes" style={{ textDecoration: 'none' }}>
           <motion.span
@@ -220,7 +253,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
         </Link>
       </SectionTitle>
 
-      <ArticleGrid initial="hidden" animate="visible" variants={variants.stagger}>
+      <ArticleGrid ref={gridView.ref} initial="hidden" animate={gridView.controls} variants={variants.stagger}>
         {notes.slice(0, 5).map((note, index) => (
           <ArticleLink
             to={`/notes/${note.id}`}
@@ -228,6 +261,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
             variants={variants.listItem}
             custom={index}
             whileHover={{ x: 3, scale: 1.01 }}
+            transition={springPresets.snappy}
           >
             <ArticleContent>
               <ArticleTitle>{note.title || '无标题手记'}</ArticleTitle>

@@ -9,6 +9,7 @@ import RichTextContent from '@/components/rich-text/rich-text-content';
 import RichTextStats from '@/components/rich-text/rich-text-stats';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
+import DetailNoiseBackground from '@/components/common/detail-noise-background';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -661,6 +662,8 @@ const NoteDetail: React.FC = () => {
 
   return (
     <DetailPageLayout showBackground={true} mainContent={<></>}>
+      {/* 噪点背景 - 仅详情页使用 */}
+      <DetailNoiseBackground />
       <PageContainer>
         <BackLink to="/notes">
           <FiArrowLeft size={16} /> 返回手记列表

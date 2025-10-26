@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
 import { getRoleDisplayName, getRoleColor } from '@/utils/role-helper';
+import { useAnimationEngine } from '@/utils/animation-engine';
 
 // 用户头像样式
 const Avatar = styled.div<{ hasImage?: boolean }>`
@@ -140,29 +141,6 @@ const UserDropdownLogout = styled.button`
   }
 `;
 
-// 定义动画变体
-export const dropdownVariants = {
-  hidden: { opacity: 0, y: -10, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.2,
-      ease: [0.4, 0, 0.2, 1] as any,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -10,
-    scale: 0.95,
-    transition: {
-      duration: 0.15,
-      ease: [0.4, 0, 1, 1] as any,
-    },
-  },
-};
-
 interface UserMenuProps {
   userDropdownOpen: boolean;
   toggleUserDropdown: (e: React.MouseEvent<Element, MouseEvent>) => void;
@@ -182,6 +160,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { user, isLoggedIn } = useSelector((state: RootState) => state.user);
+  const { variants } = useAnimationEngine();
 
   // 处理登出
   const handleLogout = () => {
@@ -203,7 +182,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
 
       <AnimatePresence>
         {userDropdownOpen && (
-          <UserDropdownContent initial="hidden" animate="visible" exit="exit" variants={dropdownVariants}>
+          <UserDropdownContent initial="hidden" animate="visible" exit="exit" variants={variants.dropdown}>
             {isLoggedIn ? (
               <>
                 <UserDropdownHeader>

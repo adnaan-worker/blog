@@ -2,19 +2,10 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { SPRING_PRESETS } from '@/utils/animation-engine';
+import { groupItemsByYear, type TimelineItem, type YearGroup } from '@/utils/timeline';
 
-// 通用时间线项目接口
-export interface TimelineItem {
-  id: string;
-  createdAt: string;
-  [key: string]: any; // 允许其他自定义字段
-}
-
-// 年份分组数据结构
-export interface YearGroup<T extends TimelineItem> {
-  year: string;
-  items: T[];
-}
+// 重新导出类型，方便其他组件使用
+export type { TimelineItem, YearGroup };
 
 // 组件Props
 interface TimelineMasonryProps<T extends TimelineItem> {
@@ -153,27 +144,6 @@ const NoMoreData = styled.div`
   font-size: 0.75rem;
   opacity: 0.6;
 `;
-
-// 按年份分组工具函数
-export const groupItemsByYear = <T extends TimelineItem>(items: T[]): YearGroup<T>[] => {
-  const grouped: Record<string, T[]> = {};
-
-  items.forEach((item) => {
-    const year = new Date(item.createdAt).getFullYear().toString();
-    if (!grouped[year]) {
-      grouped[year] = [];
-    }
-    grouped[year].push(item);
-  });
-
-  // 按年份降序排列
-  const sortedYears = Object.keys(grouped).sort((a, b) => parseInt(b) - parseInt(a));
-
-  return sortedYears.map((year) => ({
-    year,
-    items: grouped[year].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-  }));
-};
 
 // 时间线瀑布流组件
 function TimelineMasonry<T extends TimelineItem>({

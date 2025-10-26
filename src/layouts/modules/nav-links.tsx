@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAnimationEngine } from '@/utils/animation-engine';
 
 // 定义菜单项接口
 interface MenuItem {
@@ -61,29 +62,6 @@ const DropdownContent = styled(motion.div)`
   }
 `;
 
-// 下拉菜单动画变体
-const dropdownVariants = {
-  hidden: { opacity: 0, y: -10, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.2,
-      ease: [0.4, 0, 0.2, 1] as any,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -10,
-    scale: 0.95,
-    transition: {
-      duration: 0.15,
-      ease: [0.4, 0, 1, 1] as any,
-    },
-  },
-};
-
 const DropdownItem = styled(Link)`
   display: flex;
   align-items: center;
@@ -140,6 +118,7 @@ const NavLinks: React.FC<NavLinksProps> = ({
   dropdownRef,
 }) => {
   const location = useLocation();
+  const { variants } = useAnimationEngine();
 
   // 检查菜单项是否激活
   const isItemActive = (item: MenuItem) => {
@@ -176,7 +155,7 @@ const NavLinks: React.FC<NavLinksProps> = ({
 
               <AnimatePresence>
                 {moreDropdownOpen && (
-                  <DropdownContent initial="hidden" animate="visible" exit="exit" variants={dropdownVariants}>
+                  <DropdownContent initial="hidden" animate="visible" exit="exit" variants={variants.dropdown}>
                     {item.children.map((childItem) => (
                       <DropdownItem key={childItem.path} to={childItem.path} onClick={onLinkClick}>
                         {childItem.icon}

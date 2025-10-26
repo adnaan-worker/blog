@@ -6,26 +6,10 @@ import { FiCalendar, FiClock, FiTag, FiArrowRight } from 'react-icons/fi';
 import type { Article } from '@/utils/api';
 import ImageError from '@/assets/images/image-error.png';
 import { formatDate } from '@/utils';
+import { useAnimationEngine } from '@/utils/animation-engine';
 
-// 动画变体定义
-export const fadeInUpVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] },
-  },
-};
-
-export const staggerContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
+export const fadeInUpVariants = {};
+export const staggerContainerVariants = {};
 
 // 导出 Article 类型供其他组件使用
 export type { Article };
@@ -285,6 +269,7 @@ export const TimelineArticleComponent: React.FC<{ article: Article }> = ({ artic
 
 // 卡片文章组件
 export const BlogCardComponent: React.FC<{ article: Article }> = ({ article }) => {
+  const { springPresets } = useAnimationEngine();
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     return new Date(dateStr).toISOString().split('T')[0];
@@ -294,7 +279,7 @@ export const BlogCardComponent: React.FC<{ article: Article }> = ({ article }) =
   const imageUrl = article.coverImage ? `/api/uploads/${article.coverImage}` : ImageError;
 
   return (
-    <ArticleCard whileHover={{ y: -5 }}>
+    <ArticleCard whileHover={{ y: -5 }} transition={springPresets.snappy}>
       <ArticleImage>
         <img
           src={imageUrl}
@@ -337,6 +322,8 @@ interface ArticleListProps {
 }
 
 const ArticleList: React.FC<ArticleListProps> = ({ articles, viewMode = 'timeline', loading = false }) => {
+  const { variants, springPresets } = useAnimationEngine();
+
   // 加载中不显示空状态
   if (loading) {
     return null;
@@ -345,7 +332,7 @@ const ArticleList: React.FC<ArticleListProps> = ({ articles, viewMode = 'timelin
   // 数据加载完成后才判断是否为空
   if (articles.length === 0) {
     return (
-      <NoArticles initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+      <NoArticles initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={springPresets.gentle}>
         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>😕</div>
         <h3>没有找到匹配的文章</h3>
         <p>尝试修改搜索条件或查看其他分类</p>
@@ -355,9 +342,9 @@ const ArticleList: React.FC<ArticleListProps> = ({ articles, viewMode = 'timelin
 
   if (viewMode === 'timeline') {
     return (
-      <TimelineContainer variants={staggerContainerVariants} initial="hidden" animate="visible">
+      <TimelineContainer variants={variants.stagger} initial="hidden" animate="visible">
         {articles.map((article, index) => (
-          <motion.div key={article.id} variants={fadeInUpVariants} custom={index}>
+          <motion.div key={article.id} variants={variants.listItem} custom={index}>
             <TimelineArticleComponent article={article} />
           </motion.div>
         ))}
@@ -366,9 +353,9 @@ const ArticleList: React.FC<ArticleListProps> = ({ articles, viewMode = 'timelin
   }
 
   return (
-    <ArticleGrid variants={staggerContainerVariants} initial="hidden" animate="visible">
+    <ArticleGrid variants={variants.stagger} initial="hidden" animate="visible">
       {articles.map((article, index) => (
-        <motion.div key={article.id} variants={fadeInUpVariants} custom={index}>
+        <motion.div key={article.id} variants={variants.card} custom={index}>
           <BlogCardComponent article={article} />
         </motion.div>
       ))}
