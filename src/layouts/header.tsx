@@ -620,12 +620,14 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
       {/* 移动端菜单 */}
       <MobileMenu
         isOpen={mobileMenuOpen}
+        scrolled={internalScrolled}
         menuGroups={mobileMenuGroups}
         accountItems={accountMenuItems}
         onLinkClick={handleLinkClick}
         handleLogin={handleLogin}
         handleRegister={handleRegister}
         handleLogout={handleLogout}
+        themeToggle={<ThemeToggle />}
       />
 
       {/* 模态框 */}
