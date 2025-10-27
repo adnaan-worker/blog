@@ -2,7 +2,20 @@ import React, { useState, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { keyframes, css } from '@emotion/react';
 import { useSocket, useSocketEvents } from '@/hooks/useSocket';
-import { FiChrome, FiCode, FiMusic, FiMonitor, FiImage, FiZap, FiMessageCircle, FiVideo } from 'react-icons/fi';
+import {
+  FiChrome,
+  FiCode,
+  FiMusic,
+  FiMonitor,
+  FiImage,
+  FiZap,
+  FiMessageCircle,
+  FiVideo,
+  FiMoon,
+  FiSun,
+  FiCoffee,
+  FiStar,
+} from 'react-icons/fi';
 
 // 应用图片映射（根据 appName 匹配）
 const APP_IMAGES: Record<string, string> = {
@@ -44,6 +57,13 @@ const APP_COLORS: Record<string, string> = {
   PotPlayer: '#0090C6',
   VLC: '#FF8800',
   微信: '#09B83E',
+  // 默认状态颜色
+  深夜休息: '#9333EA', // 紫色
+  早晨时光: '#F59E0B', // 橙色
+  工作状态: '#10B981', // 绿色
+  午间休息: '#06B6D4', // 青色
+  夜间时光: '#6366F1', // 靛蓝
+  深夜时光: '#8B5CF6', // 紫罗兰
   default: '#666666',
 };
 
@@ -65,6 +85,13 @@ const FALLBACK_ICONS: Record<string, React.ReactNode> = {
   PotPlayer: <FiVideo />,
   VLC: <FiVideo />,
   微信: <FiMessageCircle />,
+  // 默认状态图标
+  深夜休息: <FiMoon />,
+  早晨时光: <FiCoffee />,
+  工作状态: <FiCode />,
+  午间休息: <FiSun />,
+  夜间时光: <FiMoon />,
+  深夜时光: <FiStar />,
   default: <FiMonitor />,
 };
 
@@ -77,6 +104,7 @@ interface StatusData {
   action: string; // 添加动作状态
   timestamp: string;
   computer_name: string;
+  active_app?: string; // 原始应用窗口标题（包含歌曲信息等）
 }
 
 // 统一的Socket响应格式
@@ -245,6 +273,92 @@ const TooltipDetail = styled.div`
   color: var(--text-secondary);
 `;
 
+// 获取默认状态（当没有实时推送时）
+const getDefaultStatus = (): StatusData => {
+  const now = new Date();
+  const hour = now.getHours();
+
+  // 定义时间段和对应状态
+  if (hour >= 0 && hour < 6) {
+    // 深夜 0-6点
+    return {
+      appName: '深夜休息',
+      appIcon: 'rest',
+      appType: 'app',
+      displayInfo: '夜深了，梦中编织着明天的代码~ 😴',
+      action: '休息中',
+      timestamp: new Date().toISOString(),
+      computer_name: 'Default',
+    };
+  } else if (hour >= 6 && hour < 9) {
+    // 早晨 6-9点
+    return {
+      appName: '早晨时光',
+      appIcon: 'morning',
+      appType: 'app',
+      displayInfo: '晨光微熹，新的一天即将开启~ ☕',
+      action: '准备中',
+      timestamp: new Date().toISOString(),
+      computer_name: 'Default',
+    };
+  } else if (hour >= 9 && hour < 12) {
+    // 上午工作 9-12点
+    return {
+      appName: '工作状态',
+      appIcon: 'work',
+      appType: 'app',
+      displayInfo: '上午工作时光，专注创造价值~ 💻',
+      action: '工作中',
+      timestamp: new Date().toISOString(),
+      computer_name: 'Default',
+    };
+  } else if (hour >= 12 && hour < 14) {
+    // 午休 12-14点
+    return {
+      appName: '午间休息',
+      appIcon: 'lunch',
+      appType: 'app',
+      displayInfo: '享受午餐，为下午储备能量~ 🍱',
+      action: '午休中',
+      timestamp: new Date().toISOString(),
+      computer_name: 'Default',
+    };
+  } else if (hour >= 14 && hour < 18) {
+    // 下午工作 14-18点
+    return {
+      appName: '工作状态',
+      appIcon: 'work',
+      appType: 'app',
+      displayInfo: '下午时光，让代码如诗般优雅~ ⌨️',
+      action: '工作中',
+      timestamp: new Date().toISOString(),
+      computer_name: 'Default',
+    };
+  } else if (hour >= 18 && hour < 22) {
+    // 傍晚 18-22点
+    return {
+      appName: '夜间时光',
+      appIcon: 'evening',
+      appType: 'app',
+      displayInfo: '夜幕降临，是学习充电还是放松娱乐？🌙',
+      action: '自由时间',
+      timestamp: new Date().toISOString(),
+      computer_name: 'Default',
+    };
+  } else {
+    // 深夜 22-24点
+    return {
+      appName: '深夜时光',
+      appIcon: 'late',
+      appType: 'app',
+      displayInfo: '夜深了，要不要早点休息呀？✨',
+      action: '夜猫子',
+      timestamp: new Date().toISOString(),
+      computer_name: 'Default',
+    };
+  }
+};
+
 // 主组件
 const AppStatus: React.FC = () => {
   const { isConnected, emit } = useSocket();
@@ -289,10 +403,11 @@ const AppStatus: React.FC = () => {
 
   // 构建显示数据（去重：只显示不同的应用）
   const displayApps = useMemo(() => {
-    if (!statusData.current) return [];
+    // 如果没有实时数据，使用默认状态
+    const currentStatus = statusData.current || getDefaultStatus();
 
     // 合并当前状态和历史记录
-    const allApps = [statusData.current, ...statusData.history];
+    const allApps = [currentStatus, ...statusData.history];
 
     // 去重：只保留应用名称不同的记录
     const uniqueApps: StatusData[] = [];
@@ -324,6 +439,19 @@ const AppStatus: React.FC = () => {
   // 格式化Tooltip内容
   const getTooltipContent = useCallback(
     (app: StatusData, index: number) => {
+      // 判断是否是默认状态（没有实时推送）
+      const isDefaultStatus = app.computer_name === 'Default';
+
+      // 默认状态使用特殊文案
+      if (isDefaultStatus) {
+        return {
+          header: `${userName} 当前状态:`,
+          app: app.action, // 直接显示状态（如"休息中"、"工作中"）
+          detail: app.displayInfo,
+        };
+      }
+
+      // 实时状态使用原有逻辑
       const prefix = index === 0 ? '正在使用' : '最近使用';
 
       // 直接使用小工具解析的动作状态
@@ -331,19 +459,30 @@ const AppStatus: React.FC = () => {
         return app.action || '使用中'; // 使用小工具推送的action字段
       };
 
+      // 对于音乐类应用，提取歌曲信息
+      const getDetailInfo = () => {
+        if (app.appType === 'music' && app.active_app) {
+          // 从 active_app 中提取歌曲信息
+          // 格式: "QQ音乐 - 一千年以后 (2025王者荣耀共创之夜现场) - 林俊杰"
+          const parts = app.active_app.split(' - ');
+          if (parts.length >= 2) {
+            // parts[0]: 应用名, parts[1]: 歌曲名, parts[2]: 艺术家
+            const songName = parts[1] || '';
+            const artist = parts.slice(2).join(' - ') || '';
+            return artist ? `${songName} - ${artist}` : songName;
+          }
+        }
+        return app.displayInfo;
+      };
+
       return {
         header: `${userName} ${prefix}:`,
         app: `${app.appName} ${getAppAction()}`,
-        detail: app.displayInfo,
+        detail: getDetailInfo(),
       };
     },
     [userName],
   );
-
-  // 如果没有数据，不渲染
-  if (!statusData.current) {
-    return null;
-  }
 
   return (
     <StatusContainer>

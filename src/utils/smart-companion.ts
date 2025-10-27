@@ -303,37 +303,37 @@ export const careMessages: CareMessage[] = [
   {
     text: '清晨好呀！新的一天，让我们用代码书写优雅 ☕',
     type: 'greeting',
-    priority: 8,
+    priority: 6,
     conditions: (ctx) => ctx.time.period === 'morning' && ctx.time.hour < 9,
   },
   {
     text: '美好的早晨！记得享用早餐，元气满满开启新一天 🥐',
     type: 'greeting',
-    priority: 7,
+    priority: 6,
     conditions: (ctx) => ctx.time.period === 'morning' && ctx.time.hour >= 9,
   },
   {
     text: '午间时光，劳逸结合才是高效的秘诀哦 🌤️',
     type: 'greeting',
-    priority: 7,
+    priority: 6,
     conditions: (ctx) => ctx.time.period === 'noon',
   },
   {
     text: '下午好~让我陪你度过这段静谧的时光 📚',
     type: 'greeting',
-    priority: 6,
+    priority: 5,
     conditions: (ctx) => ctx.time.period === 'afternoon',
   },
   {
     text: '夕阳无限好，不过黄昏近。该歇歇了~ 🌇',
     type: 'greeting',
-    priority: 7,
+    priority: 6,
     conditions: (ctx) => ctx.time.period === 'evening',
   },
   {
     text: '夜幕降临，愿繁星陪你入眠，梦境如诗 🌙',
     type: 'greeting',
-    priority: 8,
+    priority: 7,
     conditions: (ctx) => ctx.time.period === 'night',
   },
   {
@@ -453,13 +453,13 @@ export const careMessages: CareMessage[] = [
   {
     text: '探索文章的你，像是在知识的海洋遨游 🌊',
     type: 'care',
-    priority: 5,
+    priority: 6,
     conditions: (ctx) => ctx.userActivity.currentPage === 'article',
   },
   {
     text: '手记承载着思想的轨迹，每一笔都弥足珍贵 📝',
     type: 'care',
-    priority: 5,
+    priority: 6,
     conditions: (ctx) => ctx.userActivity.currentPage === 'notes',
   },
   {
@@ -467,6 +467,24 @@ export const careMessages: CareMessage[] = [
     type: 'encouragement',
     priority: 6,
     conditions: (ctx) => ctx.userActivity.currentPage === 'project',
+  },
+  {
+    text: '感觉到你的专注，这种状态真好~ 🎯',
+    type: 'care',
+    priority: 6,
+    conditions: (ctx) => ctx.userActivity.readingTime > 5 * 60 * 1000 && ctx.userActivity.isActive,
+  },
+  {
+    text: '在首页闲逛？随便看看也是一种放松呀 🏠',
+    type: 'care',
+    priority: 5,
+    conditions: (ctx) => ctx.userActivity.currentPage === 'home',
+  },
+  {
+    text: '个人主页里藏着你的足迹和故事 👤',
+    type: 'care',
+    priority: 5,
+    conditions: (ctx) => ctx.userActivity.currentPage === 'profile',
   },
 
   // ==================== 节日祝福 ====================
@@ -493,44 +511,62 @@ export const careMessages: CareMessage[] = [
   {
     text: '每一行代码，都是对美好世界的编织 💻',
     type: 'encouragement',
-    priority: 5,
+    priority: 6,
     conditions: () => true,
   },
   {
     text: '你的坚持，终将美好 🌟',
     type: 'encouragement',
-    priority: 5,
+    priority: 7,
     conditions: () => true,
   },
   {
     text: '保持热爱，奔赴山海 🏔️',
     type: 'encouragement',
-    priority: 5,
+    priority: 6,
     conditions: () => true,
   },
   {
     text: '慢一点没关系，重要的是一直在前进 🚶',
     type: 'encouragement',
-    priority: 5,
+    priority: 6,
     conditions: () => true,
   },
   {
     text: '代码如诗，bug如画，都是成长的痕迹~ 🎨',
     type: 'encouragement',
-    priority: 5,
+    priority: 7,
     conditions: () => true,
   },
   {
     text: '你的努力，时光会看见，岁月会铭记 ⏳',
     type: 'encouragement',
-    priority: 5,
+    priority: 6,
     conditions: () => true,
   },
   {
     text: '像星辰一样，在暗夜中也要发光 ✨',
     type: 'encouragement',
-    priority: 6,
+    priority: 7,
     conditions: (ctx) => ctx.time.period === 'midnight' || ctx.time.period === 'night',
+  },
+  {
+    text: '温柔而坚定，是最美的力量 💪',
+    type: 'encouragement',
+    priority: 6,
+    conditions: () => true,
+  },
+  {
+    text: '每一次尝试，都是勇气的证明 🎯',
+    type: 'encouragement',
+    priority: 6,
+    conditions: () => true,
+  },
+  {
+    text: '世界因你的创造而更加精彩 🌈',
+    type: 'encouragement',
+    priority: 6,
+    conditions: () => true,
   },
 
   // ==================== 健康提醒 ====================
@@ -556,8 +592,13 @@ export const careMessages: CareMessage[] = [
 
 // ==================== 智能匹配算法 ====================
 
+// 消息历史记录（避免重复显示）
+const messageHistory: string[] = [];
+const MAX_HISTORY = 5; // 记住最近5条消息
+
 /**
  * 根据当前上下文智能选择最合适的关怀文案
+ * 优化：增加随机性和多样性，避免消息重复
  */
 export const getSmartMessage = (context: SmartContext): string => {
   // 筛选符合条件的文案
@@ -573,12 +614,32 @@ export const getSmartMessage = (context: SmartContext): string => {
     return '我在这里，一直陪着你~ 💙';
   }
 
-  // 按优先级排序
-  validMessages.sort((a, b) => b.priority - a.priority);
+  // 过滤掉最近显示过的消息（避免重复）
+  const freshMessages = validMessages.filter((msg) => !messageHistory.includes(msg.text));
+  const candidateMessages = freshMessages.length > 0 ? freshMessages : validMessages;
 
-  // 从高优先级中随机选择一个（前3个）
-  const topMessages = validMessages.slice(0, Math.min(3, validMessages.length));
+  // 🎲 增强随机性：使用加权随机选择，而不是只选前3个
+  // 优先级越高，被选中的概率越大，但低优先级也有机会
+  const weightedMessages = candidateMessages.map((msg) => ({
+    ...msg,
+    // 权重 = 优先级 * 随机因子（0.5-1.5）
+    // 这样即使优先级低的消息也有机会被选中
+    weight: msg.priority * (0.5 + Math.random()),
+  }));
+
+  // 按权重排序
+  weightedMessages.sort((a, b) => b.weight - a.weight);
+
+  // 从前30%的消息中随机选择（增加多样性）
+  const topCount = Math.max(3, Math.ceil(weightedMessages.length * 0.3));
+  const topMessages = weightedMessages.slice(0, topCount);
   const selected = topMessages[Math.floor(Math.random() * topMessages.length)];
+
+  // 记录到历史
+  messageHistory.push(selected.text);
+  if (messageHistory.length > MAX_HISTORY) {
+    messageHistory.shift(); // 移除最旧的记录
+  }
 
   // 替换模板变量
   let text = selected.text;
