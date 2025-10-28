@@ -29,7 +29,7 @@ const MobileMenuContainer = styled(motion.div)<{ scrolled?: boolean }>`
   touch-action: none;
 
   /* 背景和模糊效果 - 增强模糊，防止内容穿透 */
-  background: rgba(var(--bg-primary-rgb, 255, 255, 255), 0.7);
+  background: var(--bg-primary);
   backdrop-filter: saturate(180%) blur(40px);
   -webkit-backdrop-filter: saturate(180%) blur(40px);
 
@@ -65,7 +65,7 @@ const MobileMenuContainer = styled(motion.div)<{ scrolled?: boolean }>`
 
   /* 暗色模式 - 增强模糊 */
   [data-theme='dark'] & {
-    background: rgba(var(--bg-primary-rgb, 0, 0, 0), 0.75);
+    background: var(--bg-primary);
     box-shadow:
       0 6px 24px 0 rgba(0, 0, 0, 0.5),
       0 0 0 1px rgba(255, 255, 255, 0.08),
@@ -159,7 +159,7 @@ const MobileMenuDivider = styled.div`
 
 // 定义动画变体 - 使用封装的 Spring 配置
 // 滚动状态：胶囊向下扩展（限制高度）
-export const mobileMenuScrolledVariants = {
+const mobileMenuScrolledVariants = {
   hidden: {
     height: 'var(--header-height)',
     opacity: 1,
@@ -194,7 +194,7 @@ export const mobileMenuScrolledVariants = {
 };
 
 // 非滚动状态：从 header 底部展开（限制高度）
-export const mobileMenuNormalVariants = {
+const mobileMenuNormalVariants = {
   hidden: {
     height: 0,
     opacity: 0,
@@ -230,7 +230,7 @@ export const mobileMenuNormalVariants = {
 };
 
 // 背景遮罩动画 - 平滑淡入淡出
-export const overlayVariants = {
+const overlayVariants = {
   hidden: {
     opacity: 0,
   },
