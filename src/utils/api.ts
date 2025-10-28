@@ -495,6 +495,38 @@ export const API = {
       http.get<ContributionChartData[]>('/contributions', params),
   },
 
+  // 代理服务相关API（解决CORS跨域问题）
+  proxy: {
+    /**
+     * 天气API代理
+     * @param city 城市名称
+     * @param type 返回类型 (json|text)
+     * @returns Promise<ApiResponse<any>>
+     */
+    getWeather: (city: string, type: 'json' | 'text' = 'json') => http.get<any>('/proxy/weather', { city, type }),
+
+    /**
+     * GET请求代理
+     * @param url 目标URL
+     * @param params 查询参数
+     * @returns Promise<ApiResponse<any>>
+     */
+    proxyGet: (url: string, params?: Record<string, any>) => http.get<any>('/proxy/get', { url, ...params }),
+
+    /**
+     * 通用代理请求
+     * @param options 代理选项
+     * @returns Promise<ApiResponse<any>>
+     */
+    proxy: (options: {
+      url: string;
+      method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+      headers?: Record<string, string>;
+      params?: Record<string, any>;
+      data?: any;
+    }) => http.post<any>('/proxy', options),
+  },
+
   // 项目相关API
   project: {
     // 获取项目列表

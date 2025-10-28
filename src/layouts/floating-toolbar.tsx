@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMusic, FiArrowUp } from 'react-icons/fi';
@@ -81,16 +81,21 @@ const CapsuleContent = styled.div`
   height: 100%;
   overflow: hidden;
   padding: 0 16px 0 0;
+  position: relative;
+  z-index: 2;
 `;
 
 // 音乐按钮
-const MusicButton = styled(motion.button)`
+const MusicButton = styled(motion.button)<{ $isPlaying?: boolean; $hasCover?: boolean }>`
   width: 48px;
   height: 48px;
   min-width: 48px;
   min-height: 48px;
+  margin-left: -1px; /* 向左突出，避开外层容器边框 */
   border-radius: 50%;
   border: none;
+  outline: none;
+  box-shadow: none;
   background-color: transparent;
   color: white;
   cursor: pointer;
@@ -100,14 +105,41 @@ const MusicButton = styled(motion.button)`
   padding: 0;
   flex-shrink: 0;
   position: relative;
+  overflow: hidden;
 
+  /* 移除所有可能的边框效果 */
+  &:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+
+  /* 遮盖外层容器的边框 - 最底层 */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -2px; /* 向外扩展，覆盖外层边框 */
+    border-radius: 50%;
+    background: transparent;
+    z-index: -1;
+  }
+
+  /* hover效果（仅在没有封面时显示） */
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: 50%;
+    border: none;
     background: rgba(255, 255, 255, 0);
     transition: background 0.2s ease;
+    z-index: 0;
+    /* 有封面时隐藏 hover 效果 */
+    opacity: ${(props) => (props.$hasCover ? 0 : 1)};
+    pointer-events: ${(props) => (props.$hasCover ? 'none' : 'auto')};
   }
 
   &:hover::before {
@@ -119,6 +151,33 @@ const MusicButton = styled(motion.button)`
     height: 22px;
     display: block;
     z-index: 1;
+  }
+
+  /* CD旋转动画 */
+  @keyframes cd-rotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    z-index: 1;
+    display: block;
+
+    /* 播放时应用旋转动画 */
+    animation: ${(props) => (props.$isPlaying ? 'cd-rotate 3s linear infinite' : 'none')};
   }
 
   @media (max-width: 768px) {
@@ -225,6 +284,13 @@ interface FloatingToolbarProps {
 const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMusicPlayerOpen, setIsMusicPlayerOpen] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState<{
+    title: string;
+    artist: string;
+    pic: string;
+    isPlaying: boolean;
+  } | null>(null);
+  const [coverImageError, setCoverImageError] = useState(false);
   const [currentLyric, setCurrentLyric] = useState<string | null>(null);
   const [isLyricBubbleEnabled, setIsLyricBubbleEnabled] = useState(true);
   const [isCapsuleExpanded, setIsCapsuleExpanded] = useState(false);
@@ -266,18 +332,30 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
     setIsMusicPlayerOpen(!isMusicPlayerOpen);
   };
 
-  const handleLyricChange = (lyric: string) => {
-    if (isLyricBubbleEnabled) {
-      setCurrentLyric(lyric);
-    }
-  };
+  const handleTrackChange = useCallback((track: { title: string; artist: string; pic: string; isPlaying: boolean }) => {
+    setCurrentTrack(track);
+    setCoverImageError(false); // 曲目变化时重置图片错误状态
+  }, []);
 
-  const handleLyricBubbleToggle = (isEnabled: boolean) => {
+  const handleLyricChange = useCallback(
+    (lyric: string) => {
+      setCurrentLyric((prevLyric) => {
+        // 只在歌词气泡启用时更新
+        if (isLyricBubbleEnabled) {
+          return lyric;
+        }
+        return prevLyric;
+      });
+    },
+    [isLyricBubbleEnabled],
+  );
+
+  const handleLyricBubbleToggle = useCallback((isEnabled: boolean) => {
     setIsLyricBubbleEnabled(isEnabled);
     if (!isEnabled) {
       setCurrentLyric(null);
     }
-  };
+  }, []);
 
   return (
     <>
@@ -310,8 +388,18 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
           }
         >
           <CapsuleContent>
-            <MusicButton onClick={handleMusicPlayerToggle} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <FiMusic />
+            <MusicButton
+              onClick={handleMusicPlayerToggle}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              $isPlaying={currentTrack?.isPlaying}
+              $hasCover={!!(currentTrack?.isPlaying && currentTrack.pic && !coverImageError)}
+            >
+              {currentTrack?.isPlaying && currentTrack.pic && !coverImageError ? (
+                <img src={currentTrack.pic} alt="专辑封面" onError={() => setCoverImageError(true)} />
+              ) : (
+                <FiMusic />
+              )}
             </MusicButton>
 
             {/* 歌词文本 - 快速淡入淡出，避免与容器动画冲突 */}
@@ -358,6 +446,7 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
         onClose={() => setIsMusicPlayerOpen(false)}
         onLyricChange={handleLyricChange}
         onLyricBubbleToggle={handleLyricBubbleToggle}
+        onTrackChange={handleTrackChange}
       />
     </>
   );

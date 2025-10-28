@@ -31,12 +31,13 @@ export const useSiteSettings = () => useContext(SiteSettingsContext);
 
 // 定义页面主体样式
 const MainContainer = styled.div`
-  width: 100vw;
+  width: 100%;
+  max-width: 100vw;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  /* 移除 overflow 限制以支持 position: sticky */
 `;
 
 // 内容区域样式 - 完全移除动画，确保DOM立即可见
@@ -234,7 +235,7 @@ const RootLayout = () => {
             )}
           </AnimatePresence>
 
-          {/* 萤火虫背景动效（仅暗黑模式） */}
+          {/* 流星背景动效（仅暗黑模式） */}
           <MeteorBackground />
 
           {/* 头部导航 - 传递页面信息 */}

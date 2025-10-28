@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -77,6 +77,26 @@ const PlayerPanel = styled(motion.div)`
     right: 0;
     height: 4px;
     background: linear-gradient(90deg, var(--accent-color), var(--accent-color-hover));
+  }
+`;
+
+// 移动端拖拽指示器
+const DragIndicator = styled.div`
+  display: none;
+  width: 36px;
+  height: 4px;
+  background: var(--text-secondary);
+  opacity: 0.3;
+  border-radius: 2px;
+  margin: 0 auto 12px;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  @media (max-width: 768px) {
+    display: block;
   }
 `;
 
@@ -405,7 +425,7 @@ interface SongInfo {
   lrc: string;
 }
 
-// 从Meting-api获取歌曲信息（✅ 带超时和取消支持）
+// 从Meting-api获取歌曲信息
 const fetchSongInfo = async (songId: string, signal?: AbortSignal): Promise<SongInfo | null> => {
   try {
     const controller = new AbortController();
@@ -414,7 +434,7 @@ const fetchSongInfo = async (songId: string, signal?: AbortSignal): Promise<Song
     // 10秒超时
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const response = await fetch(`https://meting.qjqq.cn/?type=song&id=${songId}`, {
+    const response = await fetch(`https://meting.qjqq.cn/?server=tencent&type=song&id=${songId}`, {
       signal: abortSignal,
     });
     clearTimeout(timeoutId);
@@ -492,16 +512,24 @@ const fetchLyrics = async (
   }
 };
 
-const musicList = [...initialMusicList];
-
 interface MusicPlayerProps {
   isOpen: boolean;
   onClose: () => void;
   onLyricChange?: (lyric: string) => void;
   onLyricBubbleToggle?: (isEnabled: boolean) => void;
+  onTrackChange?: (track: { title: string; artist: string; pic: string; isPlaying: boolean }) => void;
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChange, onLyricBubbleToggle }) => {
+const MusicPlayer: React.FC<MusicPlayerProps> = ({
+  isOpen,
+  onClose,
+  onLyricChange,
+  onLyricBubbleToggle,
+  onTrackChange,
+}) => {
+  // 音乐列表常量
+  const musicList = initialMusicList;
+
   const [currentTrack, setCurrentTrack] = useState(musicList[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -514,6 +542,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null); // 保存清理函数
 
   // 加载歌曲信息
   const loadSongInfo = async (track: (typeof musicList)[0]) => {
@@ -560,7 +589,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
         throw new Error('无效的音频URL');
       }
 
-      // ✅ 验证URL是否可访问（带超时和取消支持）
+      // 验证URL是否可访问（带超时和取消支持）
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -593,7 +622,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
     return newAudio;
   };
 
-  // 初始化音频元素和事件（✅ 修复内存泄漏）
+  // 初始化音频元素和事件
   useEffect(() => {
     // 只在组件挂载时创建音频元素
     if (!audioRef.current) {
@@ -602,19 +631,20 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
       audio.preload = 'none';
       audioRef.current = audio;
 
-      // ✅ 使用返回的清理函数
       const cleanup = setupAudioEventListeners(audio);
+      cleanupRef.current = cleanup; // 保存清理函数引用
 
       return () => {
-        cleanup(); // 清理所有事件监听器
+        if (cleanupRef.current) {
+          cleanupRef.current(); // 清理所有事件监听器
+        }
         audio.pause();
         audio.src = '';
         audio.load(); // 释放音频资源
       };
     }
-  }, []); // ✅ 只在挂载时运行一次
+  }, []);
 
-  // ✅ volume 变化单独处理
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
@@ -743,11 +773,26 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
         throw new Error('无效的音频URL');
       }
 
+      // 先清理旧的音频元素（避免触发error事件）
+      if (audioRef.current && cleanupRef.current) {
+        // 调用清理函数移除所有事件监听器
+        cleanupRef.current();
+        cleanupRef.current = null;
+
+        // 停止播放并清理资源
+        const oldAudio = audioRef.current;
+        oldAudio.pause();
+        oldAudio.currentTime = 0;
+        oldAudio.src = '';
+        oldAudio.load();
+      }
+
       // 创建新的音频元素
       const newAudio = createAudioElement(audioUrl);
 
       // 设置事件监听器
       const cleanup = setupAudioEventListeners(newAudio);
+      cleanupRef.current = cleanup; // 保存清理函数引用
 
       // 等待音频源加载
       await new Promise<void>((resolve, reject) => {
@@ -771,42 +816,21 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
         );
       });
 
-      // 完全清理旧的音频元素
-      if (audioRef.current) {
-        let oldAudio = audioRef.current;
-
-        // 停止播放
-        oldAudio.pause();
-        oldAudio.currentTime = 0;
-
-        // 清空 src
-        oldAudio.src = '';
-        oldAudio.srcObject = null;
-
-        // 移除所有事件监听器
-        const events = ['canplay', 'error', 'timeupdate', 'loadedmetadata', 'play', 'pause', 'ended'];
-        events.forEach((event) => {
-          oldAudio.removeEventListener(event, () => {});
-        });
-
-        // 重新加载以释放资源
-        oldAudio.load();
-
-        // 显式设置 null 帮助垃圾回收
-        oldAudio = null as any;
-      }
+      // 替换音频元素
       audioRef.current = newAudio;
 
       // 播放音频
       await newAudio.play();
 
-      // 返回清理函数
       return cleanup;
     } catch (error) {
       console.error('播放出错:', error);
       setIsLoading(false);
       setIsPlaying(false);
-      setErrorMessage(error instanceof Error ? error.message : '播放失败，请重试');
+
+      const errorMsg = error instanceof Error ? error.message : '播放失败，请重试';
+      setErrorMessage(errorMsg);
+
       return () => {};
     }
   };
@@ -856,11 +880,24 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
 
       // 如果URL不同或音频元素没有源，需要重新加载
       if (audioRef.current.src !== audioUrl || !audioRef.current.src) {
+        // 先清理旧的音频元素
+        if (audioRef.current && cleanupRef.current) {
+          cleanupRef.current();
+          cleanupRef.current = null;
+
+          const oldAudio = audioRef.current;
+          oldAudio.pause();
+          oldAudio.currentTime = 0;
+          oldAudio.src = '';
+          oldAudio.load();
+        }
+
         // 创建新的音频元素
         const newAudio = createAudioElement(audioUrl);
 
         // 设置事件监听器
-        setupAudioEventListeners(newAudio);
+        const cleanup = setupAudioEventListeners(newAudio);
+        cleanupRef.current = cleanup;
 
         // 等待音频源加载
         await new Promise<void>((resolve, reject) => {
@@ -884,13 +921,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
           );
         });
 
-        // 替换旧的音频元素
-        if (audioRef.current) {
-          const oldAudio = audioRef.current;
-          oldAudio.pause();
-          oldAudio.removeAttribute('src');
-          oldAudio.load();
-        }
+        // 替换音频元素
         audioRef.current = newAudio;
       }
 
@@ -900,21 +931,23 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
       console.error('播放出错:', error);
       setIsLoading(false);
       setIsPlaying(false);
-      setErrorMessage(error instanceof Error ? error.message : '播放失败，请重试');
+
+      const errorMsg = error instanceof Error ? error.message : '播放失败，请重试';
+      setErrorMessage(errorMsg);
     }
   };
 
   // 更新音量
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
     if (audioRef.current) {
       audioRef.current.volume = newVolume;
     }
-  };
+  }, []);
 
-  // 获取当前播放的歌词
-  const getCurrentLyric = () => {
+  // 获取当前播放的歌词 - 使用 useMemo 缓存
+  const currentLyric = useMemo(() => {
     if (!currentTrack.lyrics || currentTrack.lyrics.length === 0) {
       return null;
     }
@@ -926,9 +959,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
     }
 
     return currentTrack.lyrics[0];
-  };
-
-  const currentLyric = getCurrentLyric();
+  }, [currentTrack.lyrics, currentTime]);
 
   // 监听播放状态变化
   useEffect(() => {
@@ -946,6 +977,20 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
       onLyricChange(currentLyric.text);
     }
   }, [currentLyric, onLyricChange, isLyricBubbleEnabled, isPlaying]);
+
+  // 监听曲目或播放状态变化，通知父组件
+  // 注意：不要把 onTrackChange 放入依赖数组，避免无限循环
+  useEffect(() => {
+    if (onTrackChange) {
+      onTrackChange({
+        title: currentTrack.title,
+        artist: currentTrack.artist,
+        pic: currentTrack.pic,
+        isPlaying,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTrack.title, currentTrack.artist, currentTrack.pic, isPlaying]);
 
   // 切换歌词气泡显示
   const toggleLyricBubble = () => {
@@ -967,18 +1012,21 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
   };
 
   // 处理进度条点击
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!audioRef.current || !duration) return;
+  const handleProgressClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!audioRef.current || !duration) return;
 
-    const progressBar = e.currentTarget;
-    const rect = progressBar.getBoundingClientRect();
-    const clickPosition = e.clientX - rect.left;
-    const progressPercentage = clickPosition / rect.width;
-    const newTime = duration * progressPercentage;
+      const progressBar = e.currentTarget;
+      const rect = progressBar.getBoundingClientRect();
+      const clickPosition = e.clientX - rect.left;
+      const progressPercentage = clickPosition / rect.width;
+      const newTime = duration * progressPercentage;
 
-    setCurrentTime(newTime);
-    audioRef.current.currentTime = newTime;
-  };
+      setCurrentTime(newTime);
+      audioRef.current.currentTime = newTime;
+    },
+    [duration],
+  );
 
   return (
     <AnimatePresence>
@@ -991,7 +1039,19 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ isOpen, onClose, onLyricChang
             duration: ANIMATION_DURATION.normal,
             ease: EASING.ease,
           }}
+          drag="y"
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={0.2}
+          onDragEnd={(e, info) => {
+            // 向下拖拽超过 100px 则关闭面板（仅移动端）
+            if (window.innerWidth <= 768 && info.offset.y > 100) {
+              onClose();
+            }
+          }}
         >
+          {/* 移动端拖拽指示器 */}
+          <DragIndicator />
+
           <PlayerHeader>
             <h4>
               {currentTrack.title}

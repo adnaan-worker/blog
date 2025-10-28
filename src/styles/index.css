@@ -212,6 +212,8 @@ html {
   height: auto;
   /* 禁用移动端双指缩放 */
   touch-action: pan-y pan-x;
+  overflow-y: scroll;
+  overflow-x: clip; /* 使用 clip 而不是 hidden，不会影响 sticky 定位 */
 }
 
 body {
@@ -226,7 +228,6 @@ body {
   scroll-behavior: smooth;
   letter-spacing: -0.01em;
   height: auto;
-  overflow-x: hidden;
   /* 禁用移动端双指缩放 */
   touch-action: pan-y pan-x;
 }
@@ -234,6 +235,7 @@ body {
 #root {
   min-height: 100vh;
   width: 100%;
+  max-width: 100vw; /* 防止横向溢出 */
   position: relative;
   display: flex;
   flex-direction: column;

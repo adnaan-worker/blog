@@ -227,54 +227,66 @@ export const getLocation = async (): Promise<SmartContext['location'] | undefine
 };
 
 /**
- * 获取天气信息（使用 wttr.in 免费API）
- * 完全免费，无需注册，支持全球城市
+ * 获取天气信息（使用后端代理服务）
+ * 通过后端代理解决 CORS 跨域问题
  */
 export const getWeather = async (location?: SmartContext['location']): Promise<SmartContext['weather'] | undefined> => {
   if (!location) return undefined;
 
   try {
-    // 对城市名称进行URL编码，支持中文城市名
-    const cityName = encodeURIComponent(location.city);
-    const url = `https://wttr.in/${cityName}?format=j1`;
+    // 动态导入 API 对象（避免循环依赖）
+    const { API } = await import('./api');
 
-    console.log('🌤️ 正在获取天气信息:', location.city, url);
+    console.log('🌤️ 正在获取天气信息:', location.city);
 
-    const response = await fetch(url);
+    // 使用封装的 API 调用代理服务
+    const result = await API.proxy.getWeather(location.city, 'json');
 
-    if (!response.ok) {
-      return undefined;
-    }
+    console.log('✅ 天气API返回数据:', result);
 
-    const data = await response.json();
-    console.log('✅ 天气API返回数据:', data);
+    // 解析后端代理返回的数据结构
+    const data = result.data || result;
 
-    if (data.current_condition && data.current_condition[0]) {
-      const current = data.current_condition[0];
-      const weatherCode = parseInt(current.weatherCode);
+    // 解析山河天气API返回的数据
+    if (data && data.code === 1 && data.data && data.data.current) {
+      const current = data.data.current;
 
-      // 天气代码映射
+      // 解析天气状况
       let condition: 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'foggy' | 'windy' | 'stormy' = 'cloudy';
-      if (weatherCode === 113) condition = 'sunny';
-      else if ([116, 119, 122].includes(weatherCode)) condition = 'cloudy';
-      else if (
-        [
-          176, 179, 182, 185, 263, 266, 281, 284, 293, 296, 299, 302, 305, 308, 311, 314, 317, 320, 323, 326, 329, 332,
-          335, 338, 350, 353, 356, 359, 362, 365, 368, 371, 374, 377,
-        ].includes(weatherCode)
-      )
+
+      const weatherText = (current.weather || current.weatherEnglish || '').toLowerCase();
+
+      // 根据天气描述判断天气类型
+      if (weatherText.includes('晴') || weatherText.includes('sunny') || weatherText.includes('clear')) {
+        condition = 'sunny';
+      } else if (weatherText.includes('雨') || weatherText.includes('rain') || weatherText.includes('drizzle')) {
         condition = 'rainy';
-      else if (
-        [227, 230, 323, 326, 329, 332, 335, 338, 350, 353, 356, 359, 362, 365, 368, 371, 374, 377].includes(weatherCode)
-      )
+      } else if (weatherText.includes('雪') || weatherText.includes('snow')) {
         condition = 'snowy';
-      else if ([143, 248, 260].includes(weatherCode)) condition = 'foggy';
+      } else if (weatherText.includes('雾') || weatherText.includes('fog') || weatherText.includes('mist')) {
+        condition = 'foggy';
+      } else if (weatherText.includes('风') || weatherText.includes('wind')) {
+        condition = 'windy';
+      } else if (weatherText.includes('暴') || weatherText.includes('storm') || weatherText.includes('thunder')) {
+        condition = 'stormy';
+      } else if (weatherText.includes('云') || weatherText.includes('cloud') || weatherText.includes('overcast')) {
+        condition = 'cloudy';
+      }
+
+      // 获取温度
+      const temperature = parseInt(current.temp) || 20;
+
+      // 获取湿度（转换为数字，去掉%）
+      const humidity = parseInt(current.humidity?.replace('%', '')) || 50;
+
+      // 获取天气描述
+      const description = current.weather || condition;
 
       const weather = {
         condition,
-        temperature: parseInt(current.temp_C),
-        humidity: parseInt(current.humidity),
-        description: current.weatherDesc[0].value,
+        temperature,
+        humidity,
+        description,
       };
 
       console.log('✅ 天气解析成功:', weather);
