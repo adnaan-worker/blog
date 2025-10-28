@@ -474,7 +474,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
     <div className={`header ${internalScrolled ? 'scrolled' : ''}`}>
       <HeaderContainer scrolled={internalScrolled}>
         {/* Logo 和状态 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           <AnimatedLogo />
           <AppStatus />
         </div>

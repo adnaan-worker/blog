@@ -409,6 +409,8 @@ pre,
  * 导航和Header样式 
  */
 .header {
+  width: 95%;
+  margin: 0 auto;
   position: fixed;
   top: 10px;
   left: 0;
@@ -449,7 +451,6 @@ pre,
     0 2px 8px 0 rgba(0, 0, 0, 0.04),
     0 0 0 1px rgba(0, 0, 0, 0.02);
   border-radius: 24px;
-  margin: 0 20px;
 }
 
 /* 暗色模式滚动后状态 */
