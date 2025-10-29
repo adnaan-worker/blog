@@ -37,18 +37,17 @@ const MainContainer = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
-  /* 移除 overflow 限制以支持 position: sticky */
 `;
 
 // 内容区域样式 - 完全移除动画，确保DOM立即可见
 const Content = styled.main`
   flex: 1;
-  width: 100%;
+  width: 100vw;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   overflow: visible;
   margin-top: var(--header-height);
-  min-height: calc(100vh - var(--header-height)); /* 确保内容区域始终占据剩余视口高度 */
+  min-height: calc(100vh - var(--header-height));
 
   @media (max-width: 768px) {
     padding: 1.5rem 1.25rem;

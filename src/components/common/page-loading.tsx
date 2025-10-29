@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import scrollLock from '@/utils/scroll-lock';
 
 // 加载容器 - 始终全屏覆盖
 const LoadingContainer = styled(motion.div)<{ $fullScreen?: boolean }>`
@@ -104,14 +103,6 @@ const PageLoading: React.FC<PageLoadingProps> = ({
       const randomIndex = Math.floor(Math.random() * loadingMessages.length);
       setLoadingMessage(loadingMessages[randomIndex]);
     }
-
-    // 使用滚动锁定工具
-    scrollLock.lock();
-
-    // 清理函数：解锁滚动
-    return () => {
-      scrollLock.unlock();
-    };
   }, [message]);
 
   // 根据尺寸调整大小

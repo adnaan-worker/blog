@@ -210,10 +210,7 @@ html {
   scroll-behavior: smooth;
   letter-spacing: -0.01em;
   height: auto;
-  /* 禁用移动端双指缩放 */
   touch-action: pan-y pan-x;
-  overflow-y: scroll;
-  overflow-x: clip; /* 使用 clip 而不是 hidden，不会影响 sticky 定位 */
 }
 
 body {
@@ -230,6 +227,7 @@ body {
   height: auto;
   /* 禁用移动端双指缩放 */
   touch-action: pan-y pan-x;
+  overflow-x: hidden;
 }
 
 #root {
@@ -409,12 +407,11 @@ pre,
  * 导航和Header样式 
  */
 .header {
-  width: 95%;
-  margin: 0 auto;
+  width: 95vw;
   position: fixed;
   top: 10px;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 100;
   height: var(--header-height);
   /* 使用弹簧动画 */
@@ -426,7 +423,7 @@ pre,
   border-radius: 0 0 24px 24px;
   background: transparent;
   /* GPU加速 */
-  transform: translateZ(0);
+  /* transform: translateZ(0); */
   will-change: background-color, backdrop-filter;
 }
 
