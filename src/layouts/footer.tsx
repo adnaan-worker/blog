@@ -2,10 +2,11 @@ import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiGithub, FiMail, FiRss, FiHeart } from 'react-icons/fi';
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { useOnlineUsers } from '@/hooks';
 import { useSiteSettings } from './index';
+import VisitorStatsTooltip from '@/components/common/visitor-stats-tooltip';
 
 // 使用motion组件增强动画效果
 const MotionFooter = motion.footer;
@@ -261,7 +262,7 @@ const OnlineUsers = styled(motion.span)`
   font-size: 0.85rem;
   color: var(--text-secondary);
   transition: all 0.3s ease;
-  cursor: default;
+  cursor: pointer;
 
   &:hover {
     color: var(--text-primary);
@@ -364,6 +365,41 @@ const Footer = () => {
   // 使用网站设置Hook - 增加加载状态检查
   const { siteSettings, loading } = useSiteSettings();
 
+  // 访客统计 Tooltip 状态
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const onlineUsersRef = useRef<HTMLSpanElement>(null);
+
+  // 点击外部关闭 tooltip
+  useEffect(() => {
+    if (!isTooltipVisible) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      // 检查点击是否在在线人数元素内
+      const isClickInsideTrigger = onlineUsersRef.current?.contains(target);
+
+      // 检查点击是否在 tooltip 内
+      const isClickInsideTooltip = target?.closest('[data-tooltip-container]');
+
+      // 如果点击既不在触发元素内，也不在 tooltip 内，则关闭
+      if (!isClickInsideTrigger && !isClickInsideTooltip) {
+        setIsTooltipVisible(false);
+      }
+    };
+
+    // 使用捕获阶段，确保在其他事件处理器之前执行
+    // 延迟添加监听器，避免点击触发元素时立即关闭
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('click', handleClickOutside, true);
+    }, 0);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('click', handleClickOutside, true);
+    };
+  }, [isTooltipVisible]);
+
   // 如果还在加载中，返回 null 或显示加载占位符
   if (loading) {
     return null;
@@ -383,151 +419,166 @@ const Footer = () => {
 
   const itemVariants = variants.fadeIn;
 
-  // TODO: 添加 siteSettings Redux slice 后再使用动态配置
   return (
-    <FooterContainer
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.1 }}
-      variants={containerVariants}
-    >
-      <FooterContent>
-        <FooterTop>
-          <FooterLeft>
-            <motion.div variants={itemVariants}>
-              <FooterLogo to="/">Turn of The Page</FooterLogo>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <FooterDescription>
-                "分享编程知识、设计理念与生活感悟。一个记录思考与成长的空间，希望能为你带来一些启发和帮助。"
-              </FooterDescription>
-            </motion.div>
-
-            <SocialLinks>
-              <SocialLink
-                href={siteSettings?.socialLinks?.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                variants={itemVariants}
-                whileHover={{ y: -2, scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="GitHub"
-              >
-                <FiGithub size={18} />
-              </SocialLink>
-              <SocialLink
-                href={`mailto:${siteSettings?.socialLinks?.email}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                variants={itemVariants}
-                whileHover={{ y: -2, scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Email"
-              >
-                <FiMail size={18} />
-              </SocialLink>
-              <SocialLink
-                href="/rss.xml"
-                variants={itemVariants}
-                whileHover={{ y: -2, scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="RSS Feed"
-              >
-                <FiRss size={18} />
-              </SocialLink>
-            </SocialLinks>
-          </FooterLeft>
-
-          <FooterRight>
-            <FooterLinks>
+    <>
+      <FooterContainer
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
+        variants={containerVariants}
+      >
+        <FooterContent>
+          <FooterTop>
+            <FooterLeft>
               <motion.div variants={itemVariants}>
-                <FooterLinkTitle>导航</FooterLinkTitle>
+                <FooterLogo to="/">Turn of The Page</FooterLogo>
               </motion.div>
-              <FooterLink to="/" variants={itemVariants}>
-                首页
-              </FooterLink>
-              <FooterLink to="/blog" variants={itemVariants}>
-                博客
-              </FooterLink>
-              <FooterLink to="/notes" variants={itemVariants}>
-                手记
-              </FooterLink>
-              <FooterLink to="/projects" variants={itemVariants}>
-                项目
-              </FooterLink>
-              <FooterLink to="/about" variants={itemVariants}>
-                关于我
-              </FooterLink>
-            </FooterLinks>
 
-            <FooterLinks>
               <motion.div variants={itemVariants}>
-                <FooterLinkTitle>资源</FooterLinkTitle>
+                <FooterDescription>
+                  "分享编程知识、设计理念与生活感悟。一个记录思考与成长的空间，希望能为你带来一些启发和帮助。"
+                </FooterDescription>
               </motion.div>
-              <FooterLink to="/timeline" variants={itemVariants}>
-                时间线
-              </FooterLink>
-              <FooterLink to="/friends" variants={itemVariants}>
-                友情链接
-              </FooterLink>
-              <FooterExternalLink href="/sitemap.xml" target="_blank" variants={itemVariants}>
-                网站地图
-              </FooterExternalLink>
-              <FooterExternalLink href="/rss.xml" target="_blank" variants={itemVariants}>
-                RSS订阅
-              </FooterExternalLink>
-            </FooterLinks>
-          </FooterRight>
-        </FooterTop>
 
-        <FooterBottom>
-          <Copyright>
-            <span>© {new Date().getFullYear()}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              Design by {siteSettings?.authorName || 'adnaan'}.
-              <FiHeart style={{ color: 'var(--error-color)' }} size={12} />
-            </span>
-          </Copyright>
+              <SocialLinks>
+                <SocialLink
+                  href={siteSettings?.socialLinks?.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variants={itemVariants}
+                  whileHover={{ y: -2, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="GitHub"
+                >
+                  <FiGithub size={18} />
+                </SocialLink>
+                <SocialLink
+                  href={`mailto:${siteSettings?.socialLinks?.email}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variants={itemVariants}
+                  whileHover={{ y: -2, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Email"
+                >
+                  <FiMail size={18} />
+                </SocialLink>
+                <SocialLink
+                  href="/rss.xml"
+                  variants={itemVariants}
+                  whileHover={{ y: -2, scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="RSS Feed"
+                >
+                  <FiRss size={18} />
+                </SocialLink>
+              </SocialLinks>
+            </FooterLeft>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <PoweredBy>
-              由{' '}
-              <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-                React
-              </a>{' '}
-              强力驱动 |{' '}
-              <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
-                陇ICP备2025016896号
-              </a>
-              {/* 在线人数显示 - 响应式文案 */}
-              {onlineCount > 0 && (
-                <>
-                  {' | '}
-                  <OnlineUsers
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    title={`当前有 ${onlineCount} 位访客在线`}
-                  >
-                    <span className="pulse-dot" />
-                    {/* 桌面端：完整文案 */}
-                    <span className="full-text">
-                      此刻有 <span className="count">{onlineCount}</span> 位{onlineCount === 1 ? '朋友' : '朋友'}
-                      在博客里闲逛
-                    </span>
-                    {/* 移动端：简短文案 */}
-                    <span className="short-text">
-                      <span className="count">{onlineCount}</span> 人在线
-                    </span>
-                  </OnlineUsers>
-                </>
-              )}
-            </PoweredBy>
-          </div>
-        </FooterBottom>
-      </FooterContent>
-    </FooterContainer>
+            <FooterRight>
+              <FooterLinks>
+                <motion.div variants={itemVariants}>
+                  <FooterLinkTitle>导航</FooterLinkTitle>
+                </motion.div>
+                <FooterLink to="/" variants={itemVariants}>
+                  首页
+                </FooterLink>
+                <FooterLink to="/blog" variants={itemVariants}>
+                  博客
+                </FooterLink>
+                <FooterLink to="/notes" variants={itemVariants}>
+                  手记
+                </FooterLink>
+                <FooterLink to="/projects" variants={itemVariants}>
+                  项目
+                </FooterLink>
+                <FooterLink to="/about" variants={itemVariants}>
+                  关于我
+                </FooterLink>
+              </FooterLinks>
+
+              <FooterLinks>
+                <motion.div variants={itemVariants}>
+                  <FooterLinkTitle>资源</FooterLinkTitle>
+                </motion.div>
+                <FooterLink to="/timeline" variants={itemVariants}>
+                  时间线
+                </FooterLink>
+                <FooterLink to="/friends" variants={itemVariants}>
+                  友情链接
+                </FooterLink>
+                <FooterExternalLink href="/sitemap.xml" target="_blank" variants={itemVariants}>
+                  网站地图
+                </FooterExternalLink>
+                <FooterExternalLink href="/rss.xml" target="_blank" variants={itemVariants}>
+                  RSS订阅
+                </FooterExternalLink>
+              </FooterLinks>
+            </FooterRight>
+          </FooterTop>
+
+          <FooterBottom>
+            <Copyright>
+              <span>© {new Date().getFullYear()}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                Design by {siteSettings?.authorName || 'adnaan'}.
+                <FiHeart style={{ color: 'var(--error-color)' }} size={12} />
+              </span>
+            </Copyright>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <PoweredBy>
+                由{' '}
+                <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
+                  React
+                </a>{' '}
+                强力驱动 |{' '}
+                <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
+                  陇ICP备2025016896号
+                </a>
+                {/* 在线人数显示 - 响应式文案 */}
+                {onlineCount > 0 && (
+                  <>
+                    {' | '}
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <OnlineUsers
+                        ref={onlineUsersRef}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        title={`当前有 ${onlineCount} 位访客在线`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsTooltipVisible((prev) => !prev);
+                        }}
+                      >
+                        <span className="pulse-dot" />
+                        {/* 桌面端：完整文案 */}
+                        <span className="full-text">
+                          此刻有 <span className="count">{onlineCount}</span> 位{onlineCount === 1 ? '朋友' : '朋友'}
+                          在博客里闲逛
+                        </span>
+                        {/* 移动端：简短文案 */}
+                        <span className="short-text">
+                          <span className="count">{onlineCount}</span> 人在线
+                        </span>
+                      </OnlineUsers>
+
+                      {/* 访客统计 Tooltip - 相对定位 */}
+                      <VisitorStatsTooltip
+                        isVisible={isTooltipVisible}
+                        targetRef={onlineUsersRef}
+                        onlineCount={onlineCount}
+                      />
+                    </div>
+                  </>
+                )}
+              </PoweredBy>
+            </div>
+          </FooterBottom>
+        </FooterContent>
+      </FooterContainer>
+    </>
   );
 };
 

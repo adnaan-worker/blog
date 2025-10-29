@@ -1004,6 +1004,30 @@ export const API = {
     },
   },
 
+  // 访客统计相关API
+  visitorStats: {
+    /**
+     * 获取访客统计数据
+     * @returns Promise<ApiResponse<{ onlineCount: number; activities: Array<any>; timestamp: number }>>
+     */
+    getVisitorStats: (): Promise<
+      ApiResponse<{
+        onlineCount: number;
+        activities: Array<{
+          id: string;
+          location: string;
+          device: 'desktop' | 'mobile' | 'tablet';
+          page: string;
+          pageTitle: string;
+          count: number;
+        }>;
+        timestamp: number;
+      }>
+    > => {
+      return http.get('/visitor-stats');
+    },
+  },
+
   // AI写作助手相关
   ai: {
     /**

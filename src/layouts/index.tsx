@@ -12,7 +12,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
 import PageLoading from '@/components/common/page-loading';
 import { setupHttpConfig } from '@/utils/http-config';
-import { useAutoConnect } from '@/hooks/useSocket';
+import { useAutoConnect, useVisitorTracking } from '@/hooks';
 import { AppDispatch } from '@/store';
 import { API, SiteSettings } from '@/utils/api';
 import { PageInfoContext, usePageInfoState } from '@/hooks/usePageInfo';
@@ -105,6 +105,9 @@ const RootLayout = () => {
 
   // 自动连接Socket.IO（用于在线人数统计等实时功能）
   useAutoConnect(true);
+
+  // 访客活动追踪（自动上报地区、设备、页面等信息）
+  useVisitorTracking();
 
   // 配置HTTP未授权回调（传入 dispatch 以便清除 Redux 状态）
   useEffect(() => {
