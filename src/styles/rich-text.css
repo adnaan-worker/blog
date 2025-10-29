@@ -262,7 +262,8 @@
 }
 
 /* 图片样式 - 基础样式 */
-.rich-text-content img,
+/* 排除 ImagePreview 组件的图片（通过类名识别） */
+.rich-text-content img:not(.image-preview-img),
 .ProseMirror img {
   max-width: 100%;
   height: auto;
@@ -273,8 +274,9 @@
 }
 
 /* 移动端图片强制自适应 */
+/* 排除 ImagePreview 组件的图片 */
 @media (max-width: 768px) {
-  .rich-text-content img,
+  .rich-text-content img:not(.image-preview-img),
   .ProseMirror img {
     width: 100% !important;
     height: auto !important;
