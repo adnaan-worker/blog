@@ -16,56 +16,7 @@ import {
   FiCoffee,
   FiStar,
 } from 'react-icons/fi';
-
-// 应用图片映射（根据 appName 匹配）
-const APP_IMAGES: Record<string, string> = {
-  Cursor: 'https://cursor.com/marketing-static/favicon.svg',
-  'VS Code': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg',
-  PyCharm: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/pycharm/pycharm-original.svg',
-  'IntelliJ IDEA': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/intellij/intellij-original.svg',
-  WebStorm: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/webstorm/webstorm-original.svg',
-  'Sublime Text': 'https://www.sublimetext.com/images/icon.svg',
-  Chrome: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/chrome/chrome-original.svg',
-  Firefox: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firefox/firefox-original.svg',
-  Edge: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg',
-  Spotify: 'https://upload.wikimedia.org/wikipedia/commons/8/84/Spotify_icon.svg',
-  Discord:
-    'https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.svg',
-  网易云音乐:
-    'https://p6.music.126.net/obj/wonDlsKUwrLClGjCm8Kx/12494165869/fe27/1e09/1dbe/2e61d7d2bd06b1dad7cd892c21d55b74.png',
-  QQ音乐: 'https://y.qq.com/favicon.ico',
-  PotPlayer: 'https://potplayer.daum.net/img/logo.png',
-  VLC: 'https://images.videolan.org/images/vlc-ios-icon.png',
-  微信: 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico',
-};
-
-// 应用颜色映射
-const APP_COLORS: Record<string, string> = {
-  Cursor: '#007ACC',
-  'VS Code': '#007ACC',
-  PyCharm: '#FCF84A',
-  'IntelliJ IDEA': '#fe315d',
-  WebStorm: '#00CDD7',
-  'Sublime Text': '#FF9800',
-  Chrome: '#4285F4',
-  Firefox: '#FF7139',
-  Edge: '#0078D4',
-  Spotify: '#1DB954',
-  Discord: '#5865F2',
-  网易云音乐: '#C20C0C',
-  QQ音乐: '#31C27C',
-  PotPlayer: '#0090C6',
-  VLC: '#FF8800',
-  微信: '#09B83E',
-  // 默认状态颜色
-  深夜休息: '#9333EA', // 紫色
-  早晨时光: '#F59E0B', // 橙色
-  工作状态: '#10B981', // 绿色
-  午间休息: '#06B6D4', // 青色
-  夜间时光: '#6366F1', // 靛蓝
-  深夜时光: '#8B5CF6', // 紫罗兰
-  default: '#666666',
-};
+import { getAppIcon, getAppColor } from '@/utils/app-icons';
 
 // 备用图标（当图片加载失败时使用）
 const FALLBACK_ICONS: Record<string, React.ReactNode> = {
@@ -157,6 +108,10 @@ const AppIcon = styled.div<{
   justify-content: center;
   width: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
   height: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
+  min-width: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
+  min-height: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
+  max-width: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
+  max-height: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
   border-radius: ${(props) => (props.size === 'large' ? '8px' : '6px')};
   background: ${(props) => props.color}20;
   color: ${(props) => props.color};
@@ -165,6 +120,7 @@ const AppIcon = styled.div<{
   position: relative;
   cursor: pointer;
   opacity: ${(props) => (props.size === 'large' ? 1 : props.size === 'medium' ? 0.8 : 0.6)};
+  overflow: visible;
 
   ${(props) =>
     props.isNew &&
@@ -189,14 +145,21 @@ const AppIcon = styled.div<{
   img {
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
     padding: ${(props) => (props.size === 'large' ? '4px' : '3px')};
     border-radius: inherit;
+    display: block;
   }
 
   @media (max-width: 768px) {
     width: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
     height: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
+    min-width: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
+    min-height: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
+    max-width: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
+    max-height: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
     font-size: ${(props) => (props.size === 'large' ? '14px' : props.size === 'medium' ? '12px' : '10px')};
   }
 `;
@@ -223,8 +186,8 @@ const Tooltip = styled.div<{ visible: boolean }>`
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--bg-secondary, #f7f9fb);
+  color: var(--text-primary, #252525);
   padding: 10px 14px;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -234,10 +197,10 @@ const Tooltip = styled.div<{ visible: boolean }>`
   min-width: 200px;
   opacity: ${(props) => (props.visible ? 1 : 0)};
   visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
-  pointer-events: ${(props) => (props.visible ? 'auto' : 'none')};
+  pointer-events: none; /* 始终穿透鼠标事件，避免触发父元素的 onMouseLeave */
   z-index: 1000;
   transition: all 0.2s ease;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
   text-align: left;
   line-height: 1.6;
 
@@ -249,28 +212,28 @@ const Tooltip = styled.div<{ visible: boolean }>`
     transform: translateX(-50%) rotate(45deg);
     width: 8px;
     height: 8px;
-    background: var(--bg-secondary);
-    border-left: 1px solid var(--border-color);
-    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary, #f7f9fb);
+    border-left: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
+    border-top: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
   }
 `;
 
 const TooltipHeader = styled.div`
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--text-primary, #252525);
   margin-bottom: 2px;
 `;
 
 const TooltipApp = styled.div`
   font-weight: 600;
-  color: var(--accent-color);
+  color: var(--accent-color, #5183f5);
   margin-bottom: 2px;
 `;
 
 const TooltipDetail = styled.div`
   opacity: 0.8;
   font-size: 0.7rem;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #606060);
 `;
 
 // 获取默认状态（当没有实时推送时）
@@ -427,8 +390,8 @@ const AppStatus: React.FC = () => {
       ...app,
       size: index === 0 ? 'large' : index === 1 ? 'medium' : 'small',
       isActive: index === 0,
-      color: APP_COLORS[app.appName] || APP_COLORS.default,
-      imageUrl: APP_IMAGES[app.appName],
+      color: getAppColor(app.appName),
+      imageUrl: getAppIcon(app.appName),
       fallbackIcon: FALLBACK_ICONS[app.appName] || FALLBACK_ICONS.default,
       hasImageError: imageErrors.has(app.appName),
     }));
@@ -501,7 +464,7 @@ const AppStatus: React.FC = () => {
           >
             {/* 优先显示图片，加载失败则显示备用图标 */}
             {app.imageUrl && !app.hasImageError ? (
-              <img src={app.imageUrl} alt={app.appName} onError={() => handleImageError(app.appName)} loading="lazy" />
+              <img src={app.imageUrl} alt={app.appName} onError={() => handleImageError(app.appName)} />
             ) : (
               app.fallbackIcon
             )}

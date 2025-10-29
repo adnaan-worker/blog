@@ -33,18 +33,30 @@ const GhostBody = styled(motion.div)`
   border-top-right-radius: 18px;
   border-top-left-radius: 18px;
   overflow: visible;
-
-  /* 使用主题色的渐变 */
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--accent-color) 70%, white) 0%,
-    color-mix(in srgb, var(--accent-color) 50%, white) 100%
+    rgba(var(--accent-rgb, 81, 131, 245), 0.85) 0%,
+    rgba(var(--accent-rgb, 81, 131, 245), 0.7) 100%
   );
+
+  @supports (background: color-mix(in srgb, red 50%, white)) {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-color) 70%, white) 0%,
+      color-mix(in srgb, var(--accent-color) 50%, white) 100%
+    );
+  }
 
   /* 主题色发光效果 */
   box-shadow:
-    0 0 20px color-mix(in srgb, var(--accent-color) 50%, transparent),
-    0 0 40px color-mix(in srgb, var(--accent-color) 30%, transparent);
+    0 0 20px rgba(var(--accent-rgb, 81, 131, 245), 0.5),
+    0 0 40px rgba(var(--accent-rgb, 81, 131, 245), 0.3);
+
+  @supports (box-shadow: 0 0 10px color-mix(in srgb, red 50%, transparent)) {
+    box-shadow:
+      0 0 20px color-mix(in srgb, var(--accent-color) 50%, transparent),
+      0 0 40px color-mix(in srgb, var(--accent-color) 30%, transparent);
+  }
 
   transition:
     background 0.5s ease,
@@ -80,7 +92,12 @@ const EyeContainer = styled.div`
 const Eye = styled(motion.div)`
   width: 4.5px;
   height: 4.5px;
-  background-color: color-mix(in srgb, var(--accent-color) 80%, black);
+  background-color: rgba(var(--accent-rgb, 81, 131, 245), 0.9);
+
+  @supports (background-color: color-mix(in srgb, red 80%, black)) {
+    background-color: color-mix(in srgb, var(--accent-color) 80%, black);
+  }
+
   border-radius: 100%;
   transition: all 0.2s ease;
 `;
@@ -89,7 +106,11 @@ const Eye = styled(motion.div)`
 const Smile = styled.div`
   width: 7.2px;
   height: 3.6px;
-  background-color: color-mix(in srgb, var(--accent-color) 80%, black);
+  background-color: rgba(var(--accent-rgb, 81, 131, 245), 0.9);
+  @supports (background-color: color-mix(in srgb, red 80%, black)) {
+    background-color: color-mix(in srgb, var(--accent-color) 80%, black);
+  }
+
   margin-top: 1.35px;
   margin-left: 4.5px;
   border-bottom-left-radius: 3.6px 2.7px;
@@ -128,9 +149,18 @@ const ArmLeft = styled(motion.div)`
   height: 9px;
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--accent-color) 70%, white) 0%,
-    color-mix(in srgb, var(--accent-color) 50%, white) 100%
+    rgba(var(--accent-rgb, 81, 131, 245), 0.85) 0%,
+    rgba(var(--accent-rgb, 81, 131, 245), 0.7) 100%
   );
+
+  @supports (background: color-mix(in srgb, red 50%, white)) {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-color) 70%, white) 0%,
+      color-mix(in srgb, var(--accent-color) 50%, white) 100%
+    );
+  }
+
   border-radius: 60% 100%;
 `;
 
@@ -142,9 +172,19 @@ const ArmRight = styled(motion.div)`
   height: 9px;
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--accent-color) 70%, white) 0%,
-    color-mix(in srgb, var(--accent-color) 50%, white) 100%
+    rgba(var(--accent-rgb, 81, 131, 245), 0.85) 0%,
+    rgba(var(--accent-rgb, 81, 131, 245), 0.7) 100%
   );
+
+  /* 增强效果（仅现代浏览器） */
+  @supports (background: color-mix(in srgb, red 50%, white)) {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-color) 70%, white) 0%,
+      color-mix(in srgb, var(--accent-color) 50%, white) 100%
+    );
+  }
+
   border-radius: 100% 60%;
 `;
 
@@ -164,11 +204,21 @@ const BottomWave = styled.div<{ isOdd: boolean }>`
   top: ${(props) => (props.isOdd ? '-2.25px' : '-3.15px')};
   height: 6.3px;
   border-radius: 100%;
+
   background: ${(props) =>
     props.isOdd
       ? 'transparent'
-      : 'linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 70%, white) 0%, color-mix(in srgb, var(--accent-color) 50%, white) 100%)'};
-  border-top: ${(props) => (props.isOdd ? '4.5px solid color-mix(in srgb, var(--accent-color) 60%, white)' : 'none')};
+      : 'linear-gradient(180deg, rgba(var(--accent-rgb, 81, 131, 245), 0.85) 0%, rgba(var(--accent-rgb, 81, 131, 245), 0.7) 100%)'};
+  border-top: ${(props) => (props.isOdd ? '4.5px solid rgba(var(--accent-rgb, 81, 131, 245), 0.75)' : 'none')};
+
+  @supports (background: color-mix(in srgb, red 50%, white)) {
+    background: ${(props) =>
+      props.isOdd
+        ? 'transparent'
+        : 'linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 70%, white) 0%, color-mix(in srgb, var(--accent-color) 50%, white) 100%)'};
+    border-top: ${(props) => (props.isOdd ? '4.5px solid color-mix(in srgb, var(--accent-color) 60%, white)' : 'none')};
+  }
+
   margin: ${(props) => (props.isOdd ? '0 -0.45px' : '0')};
 `;
 
@@ -180,7 +230,11 @@ const Shadow = styled(motion.div)`
   width: 45px;
   height: 2.7px;
   border-radius: 100%;
-  background-color: color-mix(in srgb, var(--accent-color) 40%, black);
+  background-color: rgba(var(--accent-rgb, 81, 131, 245), 0.5);
+
+  @supports (background-color: color-mix(in srgb, red 40%, black)) {
+    background-color: color-mix(in srgb, var(--accent-color) 40%, black);
+  }
 `;
 
 // 粒子容器
@@ -213,9 +267,18 @@ const CareBubble = styled(motion.div)`
   margin-bottom: 12px;
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--accent-color) 70%, white) 0%,
-    color-mix(in srgb, var(--accent-color) 50%, white) 100%
+    rgba(var(--accent-rgb, 81, 131, 245), 0.9) 0%,
+    rgba(var(--accent-rgb, 81, 131, 245), 0.8) 100%
   );
+
+  @supports (background: color-mix(in srgb, red 50%, white)) {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-color) 70%, white) 0%,
+      color-mix(in srgb, var(--accent-color) 50%, white) 100%
+    );
+  }
+
   color: #fff;
   padding: 10px 16px;
   border-radius: 16px;
@@ -244,7 +307,7 @@ const CareBubble = styled(motion.div)`
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: var(--accent-color);
+    border-top-color: var(--accent-color, #5183f5);
   }
 `;
 
