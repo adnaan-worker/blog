@@ -34,7 +34,7 @@ interface VisitorStatsTooltipProps {
 const TooltipContainer = styled(motion.div)<{ visible: boolean }>`
   position: absolute;
   bottom: 100%;
-  right: 50px;
+  left: 50px;
   z-index: 10000;
   padding: 1rem;
   min-width: 340px;
@@ -80,7 +80,7 @@ const TooltipContainer = styled(motion.div)<{ visible: boolean }>`
     /* 移动端也显示在触发元素左上角 */
     position: absolute;
     bottom: 100%;
-    right: 0;
+    left: 0;
     transform: none;
     margin-bottom: 8px;
     /* 确保在最顶层 */
@@ -92,7 +92,7 @@ const TooltipContainer = styled(motion.div)<{ visible: boolean }>`
 const Arrow = styled.div`
   position: absolute;
   bottom: -6px;
-  right: 20px;
+  left: 20px;
   transform: rotate(45deg);
   width: 12px;
   height: 12px;
@@ -544,10 +544,10 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, x: -20, scale: 0.95 },
+    hidden: { opacity: 0, y: 2, scale: 0.95 },
     visible: (i: number) => ({
       opacity: 1,
-      x: 0,
+      y: 0,
       scale: 1,
       transition: {
         ...springPresets.snappy,
@@ -606,8 +606,6 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
               animate="visible"
               variants={itemVariants}
               whileHover={{
-                scale: 1.02,
-                x: 4,
                 transition: springPresets.snappy,
               }}
             >

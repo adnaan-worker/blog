@@ -525,56 +525,53 @@ const Footer = () => {
                 <FiHeart style={{ color: 'var(--error-color)' }} size={12} />
               </span>
             </Copyright>
+            <PoweredBy>
+              {/* 在线人数显示 - 响应式文案 */}
+              {onlineCount > 0 && (
+                <>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <OnlineUsers
+                      ref={onlineUsersRef}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                      title={`当前有 ${onlineCount} 位访客在线`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsTooltipVisible((prev) => !prev);
+                      }}
+                    >
+                      <span className="pulse-dot" />
+                      {/* 桌面端：完整文案 */}
+                      <span className="full-text">
+                        此刻有 <span className="count">{onlineCount}</span> 位{onlineCount === 1 ? '朋友' : '朋友'}
+                        在博客里闲逛
+                      </span>
+                      {/* 移动端：简短文案 */}
+                      <span className="short-text">
+                        <span className="count">{onlineCount}</span> 人在线
+                      </span>
+                    </OnlineUsers>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <PoweredBy>
-                由{' '}
-                <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-                  React
-                </a>{' '}
-                强力驱动 |{' '}
-                <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
-                  陇ICP备2025016896号
-                </a>
-                {/* 在线人数显示 - 响应式文案 */}
-                {onlineCount > 0 && (
-                  <>
-                    {' | '}
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
-                      <OnlineUsers
-                        ref={onlineUsersRef}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.3 }}
-                        title={`当前有 ${onlineCount} 位访客在线`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsTooltipVisible((prev) => !prev);
-                        }}
-                      >
-                        <span className="pulse-dot" />
-                        {/* 桌面端：完整文案 */}
-                        <span className="full-text">
-                          此刻有 <span className="count">{onlineCount}</span> 位{onlineCount === 1 ? '朋友' : '朋友'}
-                          在博客里闲逛
-                        </span>
-                        {/* 移动端：简短文案 */}
-                        <span className="short-text">
-                          <span className="count">{onlineCount}</span> 人在线
-                        </span>
-                      </OnlineUsers>
-
-                      {/* 访客统计 Tooltip - 相对定位 */}
-                      <VisitorStatsTooltip
-                        isVisible={isTooltipVisible}
-                        targetRef={onlineUsersRef}
-                        onlineCount={onlineCount}
-                      />
-                    </div>
-                  </>
-                )}
-              </PoweredBy>
-            </div>
+                    {/* 访客统计 Tooltip - 相对定位 */}
+                    <VisitorStatsTooltip
+                      isVisible={isTooltipVisible}
+                      targetRef={onlineUsersRef}
+                      onlineCount={onlineCount}
+                    />
+                  </div>
+                  |{' '}
+                </>
+              )}
+              由{' '}
+              <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
+                React
+              </a>{' '}
+              强力驱动 |{' '}
+              <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
+                陇ICP备2025016896号
+              </a>
+            </PoweredBy>
           </FooterBottom>
         </FooterContent>
       </FooterContainer>
