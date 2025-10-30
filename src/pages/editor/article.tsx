@@ -167,14 +167,14 @@ const ArticleEditorPage: React.FC = () => {
       return;
     }
 
+    // 校验分类（必填项，草稿和发布都需要）
+    if (!categoryId) {
+      adnaan.toast.error('请选择文章分类');
+      return;
+    }
+
     // 发布时的额外校验
     if (!isDraft) {
-      // 校验分类（发布时必须选择）
-      if (!categoryId) {
-        adnaan.toast.error('发布文章前请选择分类');
-        return;
-      }
-
       // 校验标签（发布时建议至少选择一个）
       if (selectedTagIds.length === 0) {
         const confirmed = await adnaan.confirm.confirm(
@@ -377,7 +377,7 @@ const ArticleEditorPage: React.FC = () => {
                   value={categoryId || ''}
                   onChange={(e) => setCategoryId(Number(e.target.value) || null)}
                   style={{
-                    borderColor: !categoryId && status === 1 ? 'var(--error-color, #f56c6c)' : undefined,
+                    borderColor: !categoryId ? 'var(--error-color, #f56c6c)' : undefined,
                   }}
                 >
                   <option value="">请选择分类</option>
@@ -387,7 +387,7 @@ const ArticleEditorPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                {!categoryId && <FieldHint>发布文章时必须选择分类</FieldHint>}
+                {!categoryId && <FieldHint className="error">必须选择文章分类</FieldHint>}
               </Field>
 
               {/* 标签 */}

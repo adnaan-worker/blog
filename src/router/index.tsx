@@ -20,7 +20,6 @@ const ScrollToTop = () => {
 // 使用 React.lazy 懒加载组件
 const Home = lazy(() => import('@/pages/index/home'));
 const NotFound = lazy(() => import('@/pages/not-fund/not-fund'));
-const Code = lazy(() => import('@/pages/examples/code'));
 const Blog = lazy(() => import('@/pages/blog'));
 const BlogDetail = lazy(() => import('@/pages/blog/detail'));
 const Notes = lazy(() => import('@/pages/notes'));
@@ -49,10 +48,6 @@ const router = createHashRouter([
       {
         index: true,
         element: <Home />,
-      },
-      {
-        path: '/code',
-        element: <Code />,
       },
       {
         path: '/blog',

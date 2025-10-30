@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import { FiCpu, FiX, FiChevronDown, FiChevronUp, FiCheck, FiLoader } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
 import { aiWritingHelper } from '@/utils/ai-writing-helper';
@@ -173,6 +174,88 @@ const OptionGroup = styled.div`
   }
 `;
 
+// AI思考指示器 - 增强版
+const ThinkingIndicator = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--accent-rgb, 99, 102, 241), 0.08) 0%,
+    rgba(var(--accent-rgb, 99, 102, 241), 0.02) 100%
+  );
+  border-radius: 12px;
+  margin-top: 1rem;
+  border: 1px solid rgba(var(--accent-rgb, 99, 102, 241), 0.2);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb, 99, 102, 241), 0.08);
+`;
+
+const ThinkingHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-color);
+
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const ThinkingDots = styled.div`
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+
+  span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    animation: bounce 1.4s infinite ease-in-out both;
+
+    &:nth-of-type(1) {
+      animation-delay: -0.32s;
+    }
+
+    &:nth-of-type(2) {
+      animation-delay: -0.16s;
+    }
+  }
+
+  @keyframes bounce {
+    0%,
+    80%,
+    100% {
+      transform: scale(0);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+`;
+
+const ThinkingStatus = styled.div`
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+`;
+
 const ProcessingIndicator = styled.div`
   display: flex;
   align-items: center;
@@ -197,82 +280,156 @@ interface EditorAIAssistantProps {
   onToggle: () => void;
 }
 
-// AI动作列表
+// AI动作列表 - 增强版
 const AI_ACTIONS = [
   {
     type: 'polish' as const,
     title: '文本润色',
     description: '优化语言表达，使文本更加流畅专业',
     icon: '✨',
+    category: 'enhance',
+    requiresContent: true,
   },
   {
     type: 'improve' as const,
     title: '内容改进',
     description: '提升文章质量，增强逻辑性和可读性',
     icon: '🎯',
+    category: 'enhance',
+    requiresContent: true,
   },
   {
     type: 'expand' as const,
     title: '内容扩展',
     description: '丰富文章内容，增加细节和实例',
     icon: '📝',
+    category: 'enhance',
+    requiresContent: true,
+  },
+  {
+    type: 'continue' as const,
+    title: '智能续写',
+    description: '基于现有内容，AI智能续写后续内容',
+    icon: '✍️',
+    category: 'generate',
+    requiresContent: true,
+  },
+  {
+    type: 'rewrite' as const,
+    title: '改写风格',
+    description: '用不同风格重写内容，保持核心观点',
+    icon: '🎨',
+    category: 'enhance',
+    requiresContent: true,
   },
   {
     type: 'summarize' as const,
     title: '内容总结',
     description: '提炼核心要点，生成简洁摘要',
     icon: '📋',
+    category: 'enhance',
+    requiresContent: true,
+  },
+  {
+    type: 'translate' as const,
+    title: '智能翻译',
+    description: '将内容翻译成其他语言',
+    icon: '🌐',
+    category: 'transform',
+    requiresContent: true,
   },
   {
     type: 'generate_outline' as const,
     title: '生成大纲',
     description: '为主题生成详细的文章结构大纲',
     icon: '📚',
+    category: 'generate',
+    requiresContent: false,
   },
 ];
 
 const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onContentUpdate, isVisible, onToggle }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [thinkingStatus, setThinkingStatus] = useState<string>('');
   const [options, setOptions] = useState({
     style: 'professional',
     length: 'medium',
+    targetLang: '英文',
   });
 
   // 执行AI动作
   const executeAction = useCallback(
     async (actionType: (typeof AI_ACTIONS)[number]['type']) => {
-      if (!content && ['polish', 'improve', 'expand', 'summarize'].includes(actionType)) {
+      const action = AI_ACTIONS.find((a) => a.type === actionType);
+
+      // 检查是否需要内容
+      if (!content && action?.requiresContent) {
         adnaan.toast.error('请先输入内容');
         return;
       }
 
       setIsProcessing(true);
       setProcessingAction(actionType);
+      setThinkingStatus('🤔 AI正在思考...');
 
       try {
         let result: string;
 
         switch (actionType) {
           case 'generate_outline':
+            setThinkingStatus('📝 正在生成大纲...');
             result = await aiWritingHelper.generateOutline(content || '请为这个主题生成大纲', []);
             break;
 
           case 'polish':
           case 'improve':
           case 'expand':
-          case 'summarize': {
+          case 'summarize':
+          case 'continue':
+          case 'rewrite':
+          case 'translate': {
+            // 更新思考状态
+            const statusMap: Record<string, string> = {
+              polish: '✨ 正在润色文本...',
+              improve: '🎯 正在改进内容...',
+              expand: '📝 正在扩展内容...',
+              summarize: '📋 正在生成摘要...',
+              continue: '✍️ 正在智能续写...',
+              rewrite: '🎨 正在改写风格...',
+              translate: '🌐 正在翻译内容...',
+            };
+            setThinkingStatus(statusMap[actionType] || '🤖 AI正在处理...');
+
             // 使用异步任务处理
             const taskPromise = await getAsyncTaskPromise(actionType, content, options);
+
+            // 模拟进度状态变化
+            const progressInterval = setInterval(() => {
+              const statuses = [
+                '🔍 分析内容结构...',
+                '🧠 理解语义...',
+                '✍️ 生成内容...',
+                '🎨 优化格式...',
+                '✅ 即将完成...',
+              ];
+              setThinkingStatus((prev) => {
+                const currentIndex = statuses.findIndex((s) => s === prev);
+                return statuses[(currentIndex + 1) % statuses.length];
+              });
+            }, 3000);
+
             result = await new Promise<string>((resolve, reject) => {
               taskPromise.onComplete((taskResult: string) => {
+                clearInterval(progressInterval);
                 resolve(taskResult);
               });
 
               // 超时处理
               setTimeout(() => {
+                clearInterval(progressInterval);
                 reject(new Error('处理超时，请重试'));
-              }, 60000); // 60秒超时
+              }, 90000); // 90秒超时
             });
             break;
           }
@@ -284,9 +441,16 @@ const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onConten
         // 处理AI返回的内容，转换为编辑器兼容格式
         const editorContent = processAIContentForEditor(result);
 
-        // 更新编辑器内容
-        onContentUpdate(editorContent);
-        adnaan.toast.success(`${AI_ACTIONS.find((a) => a.type === actionType)?.title || '操作'}完成`);
+        // 根据操作类型决定如何更新内容
+        if (actionType === 'continue') {
+          // 续写：追加到现有内容后面
+          onContentUpdate(content + '\n' + editorContent);
+        } else {
+          // 其他操作：替换现有内容
+          onContentUpdate(editorContent);
+        }
+
+        adnaan.toast.success(`${action?.title || '操作'}完成`);
       } catch (error: any) {
         adnaan.toast.error(`操作失败: ${error.message}`);
         console.error('AI操作失败:', error);
@@ -309,6 +473,12 @@ const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onConten
         return await aiWritingHelper.expandContent(content, options.length);
       case 'summarize':
         return await aiWritingHelper.summarizeContent(content, options.length);
+      case 'continue':
+        return await aiWritingHelper.continueContent(content, options.length);
+      case 'rewrite':
+        return await aiWritingHelper.rewriteStyle(content, options.style);
+      case 'translate':
+        return await aiWritingHelper.translateContent(content, options.targetLang || '英文');
       default:
         throw new Error(`不支持的异步任务类型: ${actionType}`);
     }
@@ -338,6 +508,7 @@ const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onConten
               <option value="casual">轻松易读</option>
               <option value="academic">学术严谨</option>
               <option value="creative">创意生动</option>
+              <option value="storytelling">故事叙述</option>
             </select>
           </OptionGroup>
 
@@ -352,13 +523,28 @@ const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onConten
               <option value="long">详细深入</option>
             </select>
           </OptionGroup>
+
+          <OptionGroup>
+            <div className="option-label">翻译语言</div>
+            <select
+              value={options.targetLang}
+              onChange={(e) => setOptions((prev) => ({ ...prev, targetLang: e.target.value }))}
+            >
+              <option value="英文">英文</option>
+              <option value="日文">日文</option>
+              <option value="韩文">韩文</option>
+              <option value="法文">法文</option>
+              <option value="德文">德文</option>
+              <option value="西班牙文">西班牙文</option>
+            </select>
+          </OptionGroup>
         </OptionsSection>
 
-        {/* AI动作列表 */}
+        {/* AI动作列表 - 按类别分组 */}
         <ActionSection>
-          <SectionTitle>智能操作</SectionTitle>
+          <SectionTitle>🎨 内容优化</SectionTitle>
           <ActionGrid>
-            {AI_ACTIONS.map((action) => (
+            {AI_ACTIONS.filter((a) => a.category === 'enhance').map((action) => (
               <ActionCard
                 key={action.type}
                 onClick={() => executeAction(action.type)}
@@ -381,12 +567,78 @@ const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onConten
           </ActionGrid>
         </ActionSection>
 
-        {/* 处理中指示器 */}
+        <ActionSection>
+          <SectionTitle>✍️ 内容生成</SectionTitle>
+          <ActionGrid>
+            {AI_ACTIONS.filter((a) => a.category === 'generate').map((action) => (
+              <ActionCard
+                key={action.type}
+                onClick={() => executeAction(action.type)}
+                disabled={isProcessing}
+                isProcessing={isProcessing && processingAction === action.type}
+              >
+                <ActionIcon isProcessing={isProcessing && processingAction === action.type}>
+                  {isProcessing && processingAction === action.type ? (
+                    <FiLoader size={16} />
+                  ) : (
+                    <span>{action.icon}</span>
+                  )}
+                </ActionIcon>
+                <ActionContent>
+                  <ActionTitle>{action.title}</ActionTitle>
+                  <ActionDescription>{action.description}</ActionDescription>
+                </ActionContent>
+              </ActionCard>
+            ))}
+          </ActionGrid>
+        </ActionSection>
+
+        <ActionSection>
+          <SectionTitle>🌐 内容转换</SectionTitle>
+          <ActionGrid>
+            {AI_ACTIONS.filter((a) => a.category === 'transform').map((action) => (
+              <ActionCard
+                key={action.type}
+                onClick={() => executeAction(action.type)}
+                disabled={isProcessing}
+                isProcessing={isProcessing && processingAction === action.type}
+              >
+                <ActionIcon isProcessing={isProcessing && processingAction === action.type}>
+                  {isProcessing && processingAction === action.type ? (
+                    <FiLoader size={16} />
+                  ) : (
+                    <span>{action.icon}</span>
+                  )}
+                </ActionIcon>
+                <ActionContent>
+                  <ActionTitle>{action.title}</ActionTitle>
+                  <ActionDescription>{action.description}</ActionDescription>
+                </ActionContent>
+              </ActionCard>
+            ))}
+          </ActionGrid>
+        </ActionSection>
+
+        {/* AI思考指示器 - 增强版 */}
         {isProcessing && (
-          <ProcessingIndicator>
-            <FiLoader size={16} />
-            <span>AI正在处理中，请稍候...</span>
-          </ProcessingIndicator>
+          <ThinkingIndicator
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <ThinkingHeader>
+              <FiCpu size={18} />
+              <span>AI 助手正在工作</span>
+            </ThinkingHeader>
+            <ThinkingStatus>
+              {thinkingStatus}
+              <ThinkingDots>
+                <span></span>
+                <span></span>
+                <span></span>
+              </ThinkingDots>
+            </ThinkingStatus>
+          </ThinkingIndicator>
         )}
       </AssistantContent>
     </AssistantContainer>

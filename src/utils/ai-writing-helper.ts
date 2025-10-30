@@ -211,6 +211,62 @@ export class AIWritingHelper {
   }
 
   /**
+   * 续写内容
+   * @param content 现有内容
+   * @param length 续写长度
+   */
+  async continueContent(
+    content: string,
+    length: 'short' | 'medium' | 'long' = 'medium',
+  ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
+    const params: AIWritingParams = {
+      action: 'continue',
+      content,
+      params: {
+        length,
+      },
+    };
+
+    const response = await API.ai.writingAssistant(params);
+    const taskId = response.data.taskId;
+
+    return {
+      taskId,
+      onComplete: (callback: (result: string) => void) => {
+        this.pollTaskResult(taskId, callback);
+      },
+    };
+  }
+
+  /**
+   * 改写风格
+   * @param content 原始内容
+   * @param style 目标风格
+   */
+  async rewriteStyle(
+    content: string,
+    style: 'professional' | 'casual' | 'academic' | 'creative' | 'storytelling' = 'professional',
+  ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
+    const params: AIWritingParams = {
+      action: 'rewrite',
+      content,
+      params: {
+        style,
+      },
+    };
+
+    const response = await API.ai.writingAssistant(params);
+    const taskId = response.data.taskId;
+
+    return {
+      taskId,
+      onComplete: (callback: (result: string) => void) => {
+        this.pollTaskResult(taskId, callback);
+      },
+    };
+  }
+
+  /**
    * 总结内容
    * @param content 原始内容
    * @param length 摘要长度

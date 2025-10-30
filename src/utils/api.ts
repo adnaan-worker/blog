@@ -365,7 +365,7 @@ export interface CreateCommentData {
  * AI写作助手相关接口类型定义
  */
 export interface AIWritingParams {
-  action: 'generate' | 'improve' | 'translate' | 'summarize' | 'expand' | 'polish';
+  action: 'generate' | 'improve' | 'translate' | 'summarize' | 'expand' | 'polish' | 'continue' | 'rewrite';
   content?: string;
   params?: {
     targetLang?: string;

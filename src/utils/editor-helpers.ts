@@ -55,6 +55,11 @@ export const removeSlashCommand = (editor: any) => {
  * @param content AI返回的HTML内容
  * @returns 处理后的HTML
  */
+/**
+ * 处理AI生成的内容，确保格式符合编辑器和渲染器要求
+ * @param content AI生成的原始HTML内容
+ * @returns 处理后的HTML内容
+ */
 export const processAIContentForEditor = (content: string): string => {
   if (!content || typeof content !== 'string') {
     return '<p></p>';
@@ -62,47 +67,94 @@ export const processAIContentForEditor = (content: string): string => {
 
   let processedContent = content.trim();
 
-  // 移除外层的 rich-text-content 包装
-  processedContent = processedContent.replace(/<div[^>]*class="rich-text-content"[^>]*>([\s\S]*)<\/div>$/i, '$1');
+  // 1. 移除可能的Markdown代码块标记
+  processedContent = processedContent.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, language, code) => {
+    return `<pre><code class="language-${language || 'text'}">${code.trim()}</code></pre>`;
+  });
 
-  // 移除所有 rich-text-* 类名,但保留 language-* 类名
+  // 2. 移除外层包装
+  processedContent = processedContent.replace(/^<div[^>]*class="rich-text-content"[^>]*>([\s\S]*)<\/div>$/i, '$1');
+
+  // 3. 移除所有 rich-text-* 类名（渲染器会自动添加）
   processedContent = processedContent.replace(/class="rich-text-[^"]*"/gi, '');
 
-  // 清理空的class属性
+  // 4. 清理空的class属性
   processedContent = processedContent.replace(/\s*class="\s*"\s*/gi, ' ');
 
-  // 确保代码块格式正确,保留语言标识符
+  // 5. 移除style属性（不允许内联样式）
+  processedContent = processedContent.replace(/\s*style="[^"]*"/gi, '');
+
+  // 6. 标准化代码块格式
   processedContent = processedContent.replace(
-    /<pre>\s*<code[^>]*class="language-(\w+)"[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi,
+    /<pre[^>]*>\s*<code[^>]*class="language-(\w+)"[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi,
     (match, language, code) => {
       return `<pre><code class="language-${language}">${code}</code></pre>`;
     },
   );
 
-  // 处理没有语言标识符的代码块
-  processedContent = processedContent.replace(/<pre>\s*<code[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi, (match, code) => {
-    const trimmedCode = code.trim();
-    let language = 'text';
+  // 7. 处理没有语言标识符的代码块
+  processedContent = processedContent.replace(
+    /<pre[^>]*>\s*<code[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi,
+    (match, code) => {
+      const trimmedCode = code.trim();
+      let language = 'text';
 
-    // 简单的语言推断逻辑
-    if (trimmedCode.includes('function') || trimmedCode.includes('const ') || trimmedCode.includes('let ')) {
-      language = 'javascript';
-    } else if (trimmedCode.includes('import ') || trimmedCode.includes('from ')) {
-      language = 'python';
-    } else if (trimmedCode.includes('SELECT ') || trimmedCode.includes('FROM ')) {
-      language = 'sql';
-    } else if (trimmedCode.includes('<') && trimmedCode.includes('>')) {
-      language = 'html';
-    } else if (trimmedCode.includes('{') && trimmedCode.includes('}')) {
-      language = 'json';
+      // 智能语言推断
+      if (
+        trimmedCode.includes('function') ||
+        trimmedCode.includes('const ') ||
+        trimmedCode.includes('let ') ||
+        trimmedCode.includes('=>')
+      ) {
+        language = 'javascript';
+      } else if (trimmedCode.includes('def ') || trimmedCode.includes('import ') || trimmedCode.includes('from ')) {
+        language = 'python';
+      } else if (trimmedCode.includes('SELECT ') || trimmedCode.includes('FROM ') || trimmedCode.includes('WHERE ')) {
+        language = 'sql';
+      } else if (trimmedCode.includes('<!DOCTYPE') || (trimmedCode.includes('<') && trimmedCode.includes('>'))) {
+        language = 'html';
+      } else if (trimmedCode.match(/^\s*[{\[]/)) {
+        language = 'json';
+      } else if (trimmedCode.includes('public class') || trimmedCode.includes('private ')) {
+        language = 'java';
+      }
+
+      return `<pre><code class="language-${language}">${code}</code></pre>`;
+    },
+  );
+
+  // 8. 清理多余的空白
+  processedContent = processedContent
+    .replace(/\n\s*\n\s*\n/g, '\n\n') // 移除多余的空行
+    .replace(/>\s+</g, '><') // 移除标签之间的多余空格
+    .trim();
+
+  // 9. 确保段落格式正确
+  processedContent = processedContent.replace(/<p>\s*<\/p>/g, ''); // 移除空段落
+
+  // 10. 标准化链接格式
+  processedContent = processedContent.replace(
+    /<a\s+href="([^"]+)"[^>]*>/gi,
+    '<a href="$1" target="_blank" rel="noopener noreferrer">',
+  );
+
+  // 11. 处理引用块格式
+  processedContent = processedContent.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (match, content) => {
+    // 确保引用内容有段落包装
+    if (!content.trim().startsWith('<p>')) {
+      return `<blockquote><p>${content.trim()}</p></blockquote>`;
     }
-
-    return `<pre><code class="language-${language}">${code}</code></pre>`;
+    return `<blockquote>${content}</blockquote>`;
   });
 
-  // 如果内容为空,返回空段落
-  if (!processedContent.trim()) {
+  // 12. 如果内容为空，返回空段落
+  if (!processedContent.trim() || processedContent === '<p></p>') {
     return '<p></p>';
+  }
+
+  // 13. 确保内容以段落或其他块级元素开始
+  if (!processedContent.match(/^<(p|h[1-6]|ul|ol|pre|blockquote|table)/i)) {
+    processedContent = `<p>${processedContent}</p>`;
   }
 
   return processedContent;
