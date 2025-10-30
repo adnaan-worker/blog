@@ -47,23 +47,18 @@ export const mainNavItems: MenuItem[] = [
   },
   {
     path: '#',
-    title: '更多',
+    title: '关于',
     icon: <FiInfo size={16} />,
     isDropdown: true,
     children: [
       {
-        path: '/code',
-        title: '开发字体',
-        icon: <FiCode size={16} />,
-      },
-      {
         path: '/about',
-        title: '关于我',
+        title: '关于此站点',
         icon: <FiInfo size={16} />,
       },
       {
         path: '/contact',
-        title: '联系方式',
+        title: '自述',
         icon: <FiMail size={16} />,
       },
     ],

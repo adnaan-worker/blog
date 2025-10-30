@@ -14,7 +14,7 @@ import {
   FiCpu,
   FiSettings,
 } from 'react-icons/fi';
-import ModernEditor from '@/components/rich-text/modern-editor';
+import RichTextEditor from '@/components/rich-text/rich-text-editor';
 import EditorAIAssistant from '@/components/rich-text/editor-ai-assistant';
 import { API } from '@/utils/api';
 import { Button, Input } from 'adnaan-ui';
@@ -278,7 +278,7 @@ const NoteEditorPage: React.FC = () => {
       <MainContent>
         {/* 编辑器 */}
         <EditorSection>
-          <ModernEditor content={content} onChange={setContent} placeholder="记录此刻的心情..." />
+          <RichTextEditor content={content} onChange={setContent} placeholder="记录此刻的心情..." />
         </EditorSection>
 
         {/* AI助手面板 */}

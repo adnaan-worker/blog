@@ -2,7 +2,7 @@
  * 智能陪伴系统 - 小幽灵的智能大脑
  * 收集环境信息、用户行为，提供智能化的关怀文案
  */
-
+import { API } from '@/utils/api';
 // ==================== 类型定义 ====================
 
 export interface SmartContext {
@@ -234,9 +234,6 @@ export const getWeather = async (location?: SmartContext['location']): Promise<S
   if (!location) return undefined;
 
   try {
-    // 动态导入 API 对象（避免循环依赖）
-    const { API } = await import('./api');
-
     console.log('🌤️ 正在获取天气信息:', location.city);
 
     // 使用封装的 API 调用代理服务

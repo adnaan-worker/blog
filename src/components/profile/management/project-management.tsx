@@ -6,7 +6,7 @@ import { Button, Modal, Input, Textarea, RadioGroup, InfiniteScroll, Switch, Col
 import type { RadioOption } from 'adnaan-ui';
 import { API, Project, ProjectParams } from '@/utils/api';
 import { ManagementLayout, type StatItemData, type FilterOption } from '../common/management-layout';
-import ModernEditor from '@/components/rich-text/modern-editor';
+import RichTextEditor from '@/components/rich-text/rich-text-editor';
 import GitHubSyncModal from './github-sync-modal';
 import {
   ItemCard,
@@ -482,7 +482,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ project, onClose, o
 
         <FormGroup>
           <Label>项目详情</Label>
-          <ModernEditor
+          <RichTextEditor
             content={formData.content || ''}
             onChange={handleContentChange}
             placeholder="输入项目详细介绍..."

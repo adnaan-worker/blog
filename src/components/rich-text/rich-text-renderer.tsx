@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import styled from '@emotion/styled';
 import parse, { HTMLReactParserOptions, Element, domToReact } from 'html-react-parser';
-import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import '@/styles/rich-text.css';
 import { RichTextParser } from '@/utils/rich-text-parser';
@@ -260,18 +259,38 @@ const ExpandButton = styled.button`
 interface SimpleCodeBlockProps {
   code: string;
   language?: string;
-  highlightedCode: string;
 }
 
-const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, language, highlightedCode }) => {
+const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, language }) => {
+  const [highlightedCode, setHighlightedCode] = React.useState<string>('');
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // 动态高亮
+  React.useEffect(() => {
+    let canceled = false;
+    (async () => {
+      const hljs = (await import('highlight.js')).default;
+      let html = '';
+      try {
+        html =
+          language && hljs.getLanguage(language)
+            ? hljs.highlight(code, { language }).value
+            : hljs.highlightAuto(code).value;
+      } catch {
+        html = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+      if (!canceled) setHighlightedCode(html);
+    })();
+    return () => {
+      canceled = true;
+    };
+  }, [code, language]);
+
   // 计算代码行数
   const lineCount = useMemo(() => code.split('\n').length, [code]);
-  const shouldShowExpand = lineCount > 20; // 超过20行显示展开按钮
-  const maxCollapsedHeight = 400; // 折叠时的最大高度
-
+  const shouldShowExpand = lineCount > 20;
+  const maxCollapsedHeight = 400;
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(code);
@@ -281,7 +300,6 @@ const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, lang
       console.error('复制失败:', err);
     }
   }, [code]);
-
   return (
     <CodeBlockContainer>
       <CodeBlockHeader>
@@ -291,16 +309,14 @@ const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, lang
           {copied ? '已复制' : '复制'}
         </CopyButton>
       </CodeBlockHeader>
-
       <CodeContent collapsed={!isExpanded && shouldShowExpand} maxHeight={maxCollapsedHeight}>
         <pre>
           <code
             className={language ? `language-${language} hljs` : 'hljs'}
-            dangerouslySetInnerHTML={{ __html: highlightedCode }}
+            dangerouslySetInnerHTML={{ __html: highlightedCode || code }}
           />
         </pre>
       </CodeContent>
-
       {shouldShowExpand && (
         <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
           {isExpanded ? <FiChevronUp size={14} /> : <FiChevronDown size={14} />}
@@ -440,19 +456,8 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
             .replace(/&#39;/g, "'")
             .replace(/&nbsp;/g, ' ');
 
-          // 应用语法高亮
-          let highlightedCode = code;
-          try {
-            highlightedCode =
-              language && hljs.getLanguage(language)
-                ? hljs.highlight(code, { language }).value
-                : hljs.highlightAuto(code).value;
-          } catch (e) {
-            console.warn('语法高亮失败:', e);
-            highlightedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          }
-
-          return <SimpleCodeBlock code={code} language={language} highlightedCode={highlightedCode} />;
+          // 代码块组件由 SimpleCodeBlock 动态高亮，已支持懒加载
+          return <SimpleCodeBlock code={code} language={language} />;
         }
 
         // 处理图片

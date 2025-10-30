@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiSettings } from 'react-icons/fi';
-import ModernEditor from '@/components/rich-text/modern-editor';
+import RichTextEditor from '@/components/rich-text/rich-text-editor';
 import EditorAIAssistant from '@/components/rich-text/editor-ai-assistant';
 import { API } from '@/utils/api';
 import { Button, Input } from 'adnaan-ui';
@@ -272,7 +272,7 @@ const ArticleEditorPage: React.FC = () => {
       <MainContent>
         {/* 编辑器 */}
         <EditorSection>
-          <ModernEditor content={content} onChange={setContent} placeholder="开始编写你的文章..." />
+          <RichTextEditor content={content} onChange={setContent} placeholder="开始编写你的文章..." />
         </EditorSection>
 
         {/* AI助手面板 */}

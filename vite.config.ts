@@ -199,6 +199,23 @@ export default defineConfig(({ mode }) => {
               return 'adnaan-ui';
             }
 
+            // 常见通用依赖 - 独立分块，减小 vendor 体积
+            if (id.includes('highlight.js')) {
+              return 'highlight';
+            }
+            if (id.includes('dayjs')) {
+              return 'dayjs';
+            }
+            if (id.includes('lodash') || id.includes('lodash-es')) {
+              return 'lodash';
+            }
+            if (id.includes('axios')) {
+              return 'axios';
+            }
+            if (id.includes('remark') || id.includes('rehype') || id.includes('unified')) {
+              return 'markdown';
+            }
+
             // 其他 node_modules 依赖
             if (id.includes('node_modules')) {
               return 'vendor';

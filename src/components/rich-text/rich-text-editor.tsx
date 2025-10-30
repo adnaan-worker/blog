@@ -147,7 +147,7 @@ const createExtensions = () => [
   Superscript,
 ];
 
-interface ModernEditorProps {
+interface RichTextEditorProps {
   content: string;
   onChange: (content: string) => void;
   placeholder?: string;
@@ -161,7 +161,7 @@ interface CommandItem {
   command: (editor: any) => void;
 }
 
-const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placeholder, maxHeight }) => {
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, placeholder, maxHeight }) => {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
@@ -169,7 +169,6 @@ const ModernEditor: React.FC<ModernEditorProps> = ({ content, onChange, placehol
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showCommandMenu, setShowCommandMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-  const [languageMenuPosition, setLanguageMenuPosition] = useState({ top: 0, left: 0 });
   const [isInCodeBlock, setIsInCodeBlock] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -1841,4 +1840,4 @@ const UploadingIndicator = styled.div`
   }
 `;
 
-export default ModernEditor;
+export default RichTextEditor;
