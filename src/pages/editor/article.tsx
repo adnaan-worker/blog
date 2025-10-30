@@ -144,16 +144,58 @@ const ArticleEditorPage: React.FC = () => {
     loadData();
   }, []);
 
+  // 检查富文本内容是否为空
+  const isContentEmpty = (htmlContent: string): boolean => {
+    // 移除所有HTML标签
+    const textContent = htmlContent.replace(/<[^>]*>/g, '').trim();
+    // 移除所有空白字符和&nbsp;
+    const cleanContent = textContent.replace(/&nbsp;/g, '').replace(/\s/g, '');
+    return cleanContent.length === 0;
+  };
+
   // 保存文章
   const handleSave = async (isDraft: boolean = true) => {
+    // 校验标题
     if (!title.trim()) {
       adnaan.toast.error('请输入文章标题');
       return;
     }
 
-    if (!content.trim()) {
+    // 校验内容（判断富文本是否为空）
+    if (!content || isContentEmpty(content)) {
       adnaan.toast.error('请输入文章内容');
       return;
+    }
+
+    // 发布时的额外校验
+    if (!isDraft) {
+      // 校验分类（发布时必须选择）
+      if (!categoryId) {
+        adnaan.toast.error('发布文章前请选择分类');
+        return;
+      }
+
+      // 校验标签（发布时建议至少选择一个）
+      if (selectedTagIds.length === 0) {
+        const confirmed = await adnaan.confirm.confirm(
+          '未选择标签',
+          '发布文章建议至少选择一个标签，这有助于读者找到你的文章。确定要继续发布吗？',
+          '继续发布',
+          '取消',
+        );
+        if (!confirmed) return;
+      }
+
+      // 校验摘要（发布时建议填写）
+      if (!summary.trim()) {
+        const confirmed = await adnaan.confirm.confirm(
+          '未填写摘要',
+          '发布文章建议填写摘要，这有助于读者快速了解文章内容。确定要继续发布吗？',
+          '继续发布',
+          '取消',
+        );
+        if (!confirmed) return;
+      }
     }
 
     setIsSaving(true);
@@ -295,9 +337,12 @@ const ArticleEditorPage: React.FC = () => {
 
               {/* 摘要 */}
               <Field>
-                <Label>摘要</Label>
+                <Label>
+                  摘要
+                  <OptionalTag>（建议填写）</OptionalTag>
+                </Label>
                 <textarea
-                  placeholder="请输入文章摘要..."
+                  placeholder="请输入文章摘要，帮助读者快速了解文章内容..."
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
                   rows={3}
@@ -306,7 +351,10 @@ const ArticleEditorPage: React.FC = () => {
 
               {/* 封面图 */}
               <Field>
-                <Label>封面图</Label>
+                <Label>
+                  封面图
+                  <OptionalTag>（选填）</OptionalTag>
+                </Label>
                 <Input
                   placeholder="请输入封面图地址..."
                   value={coverImage}
@@ -321,8 +369,17 @@ const ArticleEditorPage: React.FC = () => {
 
               {/* 分类 */}
               <Field>
-                <Label>分类</Label>
-                <select value={categoryId || ''} onChange={(e) => setCategoryId(Number(e.target.value) || null)}>
+                <Label>
+                  分类
+                  <RequiredTag>*</RequiredTag>
+                </Label>
+                <select
+                  value={categoryId || ''}
+                  onChange={(e) => setCategoryId(Number(e.target.value) || null)}
+                  style={{
+                    borderColor: !categoryId && status === 1 ? 'var(--error-color, #f56c6c)' : undefined,
+                  }}
+                >
                   <option value="">请选择分类</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -330,11 +387,15 @@ const ArticleEditorPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                {!categoryId && <FieldHint>发布文章时必须选择分类</FieldHint>}
               </Field>
 
               {/* 标签 */}
               <Field>
-                <Label>标签</Label>
+                <Label>
+                  标签
+                  <OptionalTag>（建议至少选择1个）</OptionalTag>
+                </Label>
                 <TagsList>
                   {tags.map((tag) => (
                     <TagItem key={tag.id} selected={selectedTagIds.includes(tag.id)} onClick={() => toggleTag(tag.id)}>
@@ -342,6 +403,7 @@ const ArticleEditorPage: React.FC = () => {
                     </TagItem>
                   ))}
                 </TagsList>
+                {selectedTagIds.length === 0 && <FieldHint>标签有助于读者找到你的文章</FieldHint>}
               </Field>
             </SidebarSection>
           </Sidebar>
@@ -603,6 +665,38 @@ const Label = styled.label`
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+// 必填标记
+const RequiredTag = styled.span`
+  color: var(--error-color, #f56c6c);
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: 2px;
+`;
+
+// 可选标记
+const OptionalTag = styled.span`
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 400;
+  margin-left: 4px;
+`;
+
+// 字段提示
+const FieldHint = styled.div`
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+  line-height: 1.5;
+
+  /* 如果是错误提示，使用红色 */
+  &.error {
+    color: var(--error-color, #f56c6c);
+  }
 `;
 
 const CoverPreview = styled.div`

@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { FiCpu, FiX, FiChevronDown, FiChevronUp, FiCheck, FiLoader } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
 import { aiWritingHelper } from '@/utils/ai-writing-helper';
+import { processAIContentForEditor } from '@/utils/editor-helpers';
 
 // 样式组件
 const AssistantContainer = styled.div<{ isVisible: boolean }>`
@@ -229,61 +230,6 @@ const AI_ACTIONS = [
     icon: '📚',
   },
 ];
-
-// 处理AI返回内容，转换为TipTap编辑器兼容格式
-const processAIContentForEditor = (content: string): string => {
-  if (!content || typeof content !== 'string') {
-    return '<p></p>';
-  }
-
-  let processedContent = content.trim();
-
-  // 移除外层的 rich-text-content 包装（如果存在）
-  processedContent = processedContent.replace(/<div[^>]*class="rich-text-content"[^>]*>([\s\S]*)<\/div>$/i, '$1');
-
-  // 移除所有 rich-text-* 类名，但保留 language-* 类名
-  processedContent = processedContent.replace(/class="rich-text-[^"]*"/gi, '');
-
-  // 清理空的class属性，但保留有内容的class属性
-  processedContent = processedContent.replace(/\s*class="\s*"\s*/gi, ' ');
-
-  // 确保代码块格式正确，保留语言标识符
-  processedContent = processedContent.replace(
-    /<pre>\s*<code[^>]*class="language-(\w+)"[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi,
-    (match, language, code) => {
-      return `<pre><code class="language-${language}">${code}</code></pre>`;
-    },
-  );
-
-  // 处理没有语言标识符的代码块，尝试从内容推断语言
-  processedContent = processedContent.replace(/<pre>\s*<code[^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi, (match, code) => {
-    // 尝试从代码内容推断语言
-    const trimmedCode = code.trim();
-    let language = 'text';
-
-    // 简单的语言推断逻辑
-    if (trimmedCode.includes('function') || trimmedCode.includes('const ') || trimmedCode.includes('let ')) {
-      language = 'javascript';
-    } else if (trimmedCode.includes('import ') || trimmedCode.includes('from ')) {
-      language = 'python';
-    } else if (trimmedCode.includes('SELECT ') || trimmedCode.includes('FROM ')) {
-      language = 'sql';
-    } else if (trimmedCode.includes('<') && trimmedCode.includes('>')) {
-      language = 'html';
-    } else if (trimmedCode.includes('{') && trimmedCode.includes('}')) {
-      language = 'json';
-    }
-
-    return `<pre><code class="language-${language}">${code}</code></pre>`;
-  });
-
-  // 如果内容为空，返回空段落
-  if (!processedContent.trim()) {
-    return '<p></p>';
-  }
-
-  return processedContent;
-};
 
 const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onContentUpdate, isVisible, onToggle }) => {
   const [isProcessing, setIsProcessing] = useState(false);

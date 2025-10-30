@@ -124,14 +124,25 @@ const NoteEditorPage: React.FC = () => {
     loadNote();
   }, [noteId, navigate]);
 
+  // 检查富文本内容是否为空
+  const isContentEmpty = (htmlContent: string): boolean => {
+    // 移除所有HTML标签
+    const textContent = htmlContent.replace(/<[^>]*>/g, '').trim();
+    // 移除所有空白字符和&nbsp;
+    const cleanContent = textContent.replace(/&nbsp;/g, '').replace(/\s/g, '');
+    return cleanContent.length === 0;
+  };
+
   // 保存手记
   const handleSave = async () => {
+    // 校验标题
     if (!title.trim()) {
       adnaan.toast.error('请输入手记标题');
       return;
     }
 
-    if (!content.trim()) {
+    // 校验内容（判断富文本是否为空）
+    if (!content || isContentEmpty(content)) {
       adnaan.toast.error('请输入手记内容');
       return;
     }

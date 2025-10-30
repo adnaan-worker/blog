@@ -47,7 +47,10 @@
   color: #e8e8e8;
 }
 
-/* 代码块样式 - 仅用于编辑器 (ProseMirror) */
+/* ========== 代码块样式 - 统一编辑器和渲染器 ========== */
+
+/* 代码块容器 - 应用于编辑器和渲染器 */
+.rich-text-content pre,
 .ProseMirror pre {
   background: var(--rich-text-code-bg);
   border: 1px solid var(--rich-text-border);
@@ -57,10 +60,13 @@
   overflow-x: auto;
   font-family: var(--font-code);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
   white-space: pre;
+  position: relative;
 }
 
+/* 代码块内的代码元素 */
+.rich-text-content pre code,
 .ProseMirror pre code {
   background: none;
   padding: 0;
@@ -69,22 +75,27 @@
   font-family: inherit;
   color: var(--rich-text-primary);
   white-space: pre;
-  display: inline;
+  display: block;
+  width: 100%;
 }
 
-/* 深色模式 - 编辑器代码块优化 */
+/* 深色模式 - 代码块优化 */
+[data-theme='dark'] .rich-text-content pre,
 [data-theme='dark'] .ProseMirror pre {
   background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.08);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
+[data-theme='dark'] .rich-text-content pre code,
 [data-theme='dark'] .ProseMirror pre code {
   color: #d4d4d4 !important; /* 更亮的默认代码色 */
 }
 
+/* 确保语法高亮的颜色不被覆盖 */
+[data-theme='dark'] .rich-text-content pre code *,
 [data-theme='dark'] .ProseMirror pre code * {
   color: inherit;
 }
@@ -106,7 +117,6 @@
 [data-theme='dark'] .ProseMirror code {
   background: rgba(129, 212, 250, 0.12); /* 使用主题色的半透明背景 */
   color: #81d4fa; /* 明亮的蓝色 */
-  border: 1px solid rgba(129, 212, 250, 0.2);
   text-shadow: 0 0 8px rgba(129, 212, 250, 0.3); /* 微光效果 */
 }
 
@@ -718,13 +728,22 @@
 }
 
 /* ===== 表格样式 ===== */
+
+/* 表格外层包装 - 提供横向滚动 */
+.rich-text-content > table,
+.ProseMirror > table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* iOS 流畅滚动 */
+}
+
+/* 表格本身 */
 .rich-text-content table,
 .ProseMirror table {
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto; /* 改为 auto 以适应移动端 */
   width: 100%;
   margin: 2rem 0;
-  overflow: hidden;
   border-radius: 8px;
   border: 1px solid var(--rich-text-border);
   background: var(--rich-text-background);

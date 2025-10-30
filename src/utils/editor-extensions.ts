@@ -1,0 +1,97 @@
+/**
+ * TipTap编辑器扩展配置
+ */
+import React from 'react';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import TextAlign from '@tiptap/extension-text-align';
+import Link from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
+import Strike from '@tiptap/extension-strike';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
+import { TextStyle, Color } from '@tiptap/extension-text-style';
+import Highlight from '@tiptap/extension-highlight';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import Subscript from '@tiptap/extension-subscript';
+import Superscript from '@tiptap/extension-superscript';
+import { ResizableImage } from '@/components/rich-text/resizable-image';
+import { CodeBlockComponent } from '@/components/rich-text/code-block-component';
+
+// 创建 lowlight 实例,支持更多语言
+const lowlight = createLowlight(common);
+
+/**
+ * 创建扩展配置
+ * 使用函数而非直接导出数组,避免重复创建扩展实例
+ */
+export const createExtensions = () => [
+  StarterKit.configure({
+    codeBlock: false, // 禁用,使用 CodeBlockLowlight
+    strike: false, // 禁用,使用自定义配置
+    heading: {
+      levels: [1, 2, 3, 4, 5, 6],
+    },
+  }),
+  CodeBlockLowlight.extend({
+    addNodeView() {
+      return ReactNodeViewRenderer(CodeBlockComponent);
+    },
+  }).configure({
+    lowlight,
+    defaultLanguage: 'javascript',
+  }),
+  Placeholder.configure({
+    placeholder: ({ node }) => {
+      if (node.type.name === 'heading') {
+        return '标题';
+      }
+      return '输入 / 唤起命令菜单,或直接开始输入...';
+    },
+  }),
+  ResizableImage.configure({
+    allowBase64: false,
+    inline: false,
+    HTMLAttributes: {
+      class: 'editor-image',
+    },
+  }),
+  TextAlign.configure({
+    types: ['heading', 'paragraph'],
+    alignments: ['left', 'center', 'right', 'justify'],
+  }),
+  Link.configure({
+    openOnClick: false,
+    HTMLAttributes: {
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    },
+  }),
+  // 文字样式扩展(TextStyle 必须在 Color 之前)
+  TextStyle,
+  Color,
+  Highlight.configure({
+    multicolor: true,
+  }),
+  // 表格
+  Table,
+  TableRow,
+  TableHeader,
+  TableCell,
+  // 任务列表
+  TaskList,
+  TaskItem.configure({
+    nested: true,
+  }),
+  // 其他
+  Underline,
+  Strike,
+  Subscript,
+  Superscript,
+];

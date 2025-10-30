@@ -22,7 +22,7 @@ const PageContainer = styled.div`
   z-index: 3;
 
   @media (max-width: 768px) {
-    padding: 60px 1rem 3rem;
+    padding: 15px 1rem 3rem;
   }
 `;
 

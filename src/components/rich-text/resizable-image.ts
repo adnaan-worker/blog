@@ -290,6 +290,7 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
         }
       };
 
+      let isDestroyed = false;
       resizeHandle.addEventListener('mousedown', onMouseDown);
 
       // 工具栏按钮事件
@@ -338,7 +339,21 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
           return true;
         },
         destroy: () => {
+          isDestroyed = true;
+
+          // 清理事件监听器
           resizeHandle.removeEventListener('mousedown', onMouseDown);
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+
+          // 取消可能待执行的 RAF
+          if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+
+          // 恢复全局鼠标样式
+          document.body.style.cursor = '';
         },
       };
     };

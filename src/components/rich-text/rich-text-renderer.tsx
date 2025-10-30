@@ -265,9 +265,35 @@ const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, lang
   const [highlightedCode, setHighlightedCode] = React.useState<string>('');
   const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const codeBlockRef = React.useRef<HTMLDivElement>(null);
 
-  // 动态高亮
+  // 使用 IntersectionObserver 实现懒加载高亮
   React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: '200px', // 提前200px开始加载
+        threshold: 0.01,
+      },
+    );
+
+    if (codeBlockRef.current) {
+      observer.observe(codeBlockRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // 动态高亮 - 只在可见时加载
+  React.useEffect(() => {
+    if (!isVisible) return;
+
     let canceled = false;
     (async () => {
       const hljs = (await import('highlight.js')).default;
@@ -285,7 +311,7 @@ const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, lang
     return () => {
       canceled = true;
     };
-  }, [code, language]);
+  }, [code, language, isVisible]);
 
   // 计算代码行数
   const lineCount = useMemo(() => code.split('\n').length, [code]);
@@ -301,7 +327,7 @@ const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, lang
     }
   }, [code]);
   return (
-    <CodeBlockContainer>
+    <CodeBlockContainer ref={codeBlockRef}>
       <CodeBlockHeader>
         <LanguageLabel>{language || 'plaintext'}</LanguageLabel>
         <CopyButton copied={copied} onClick={handleCopy}>

@@ -116,18 +116,14 @@ const AISummaryContent = styled.p`
 
 // 文章内容容器 - 继承统一的 RichTextContent 并添加文章特定样式
 const ArticleContentWrapper = styled(RichTextContent)`
-  font-size: 1.05rem;
-  line-height: 1.8;
-  color: var(--text-primary);
+  /* 文章页面基础设置 */
   min-height: 300px;
-  height: auto;
   position: relative;
 
-  /* 文章特定：H2标题下划线装饰 */
+  /* ========== 文章特定：H2 标题装饰线 ========== */
   h2.article-heading {
     position: relative;
     padding-bottom: 0.5rem;
-    scroll-margin-top: 100px;
 
     &::after {
       content: '';
@@ -141,29 +137,21 @@ const ArticleContentWrapper = styled(RichTextContent)`
     }
   }
 
-  /* 文章特定：标题滚动偏移 */
+  /* ========== 文章特定：目录导航滚动偏移 ========== */
   h2.article-heading,
   h3.article-heading,
   h4.article-heading,
   h5.article-heading,
   h6.article-heading {
-    scroll-margin-top: 100px;
+    scroll-margin-top: 100px; /* 避免被 Header 遮挡 */
   }
 
-  /* 文章特定：标题高亮效果 */
-  .highlight-heading {
-    transition: all 0.3s ease;
-  }
-
+  /* ========== 文章特定：标题高亮效果（点击目录跳转时） ========== */
   .target-highlight {
-    background-color: rgba(81, 131, 245, 0.1) !important;
-    padding: 10px !important;
-    border-radius: 4px !important;
+    background-color: rgba(var(--accent-rgb, 81, 131, 245), 0.1) !important;
+    padding: 0.5rem !important;
+    border-radius: 8px !important;
     transition: all 0.3s ease !important;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 1rem;
   }
 `;
 
