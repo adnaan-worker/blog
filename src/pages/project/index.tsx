@@ -8,6 +8,8 @@ import { formatDate } from '@/utils';
 import { Pagination } from 'adnaan-ui';
 import { SPRING_PRESETS } from '@/utils/animation-engine';
 import { ListPageHeader } from '@/components/common/list-page-header';
+import { SEO } from '@/components/common';
+import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 
 // 动画变体 - 使用 Spring 系统
 const fadeInUpVariants: Variants = {
@@ -530,61 +532,74 @@ const Projects: React.FC = () => {
   };
 
   return (
-    <PageContainer>
-      {/* 页面头部 - 统一组件 */}
-      <ListPageHeader title="开源项目" subtitle="探索代码与创意，共建开发生态" count={totalCount} countUnit="个项目" />
+    <>
+      <SEO
+        title={PAGE_SEO_CONFIG.projectList.title}
+        description={PAGE_SEO_CONFIG.projectList.description}
+        keywords={PAGE_SEO_CONFIG.projectList.keywords}
+        type="website"
+      />
+      <PageContainer>
+        {/* 页面头部 - 统一组件 */}
+        <ListPageHeader
+          title="开源项目"
+          subtitle="探索代码与创意，共建开发生态"
+          count={totalCount}
+          countUnit="个项目"
+        />
 
-      <FilterBar>
-        <FilterLabel>筛选</FilterLabel>
-        <FilterTags>
-          <FilterTag active={!selectedStatus} onClick={() => setSelectedStatus('')}>
-            全部
-          </FilterTag>
-          <FilterTag active={selectedStatus === 'active'} onClick={() => setSelectedStatus('active')}>
-            活跃
-          </FilterTag>
-          <FilterTag active={selectedStatus === 'developing'} onClick={() => setSelectedStatus('developing')}>
-            开发中
-          </FilterTag>
-          <FilterTag active={selectedStatus === 'archived'} onClick={() => setSelectedStatus('archived')}>
-            已归档
-          </FilterTag>
-        </FilterTags>
-      </FilterBar>
+        <FilterBar>
+          <FilterLabel>筛选</FilterLabel>
+          <FilterTags>
+            <FilterTag active={!selectedStatus} onClick={() => setSelectedStatus('')}>
+              全部
+            </FilterTag>
+            <FilterTag active={selectedStatus === 'active'} onClick={() => setSelectedStatus('active')}>
+              活跃
+            </FilterTag>
+            <FilterTag active={selectedStatus === 'developing'} onClick={() => setSelectedStatus('developing')}>
+              开发中
+            </FilterTag>
+            <FilterTag active={selectedStatus === 'archived'} onClick={() => setSelectedStatus('archived')}>
+              已归档
+            </FilterTag>
+          </FilterTags>
+        </FilterBar>
 
-      {/* 只有加载完成后才显示内容或空状态 */}
-      {projects.length > 0 ? (
-        <>
-          <ProjectsList initial="hidden" animate="visible" variants={staggerContainerVariants}>
-            {projects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
-            ))}
-          </ProjectsList>
+        {/* 只有加载完成后才显示内容或空状态 */}
+        {projects.length > 0 ? (
+          <>
+            <ProjectsList initial="hidden" animate="visible" variants={staggerContainerVariants}>
+              {projects.map((project, index) => (
+                <ProjectCard key={project.id} project={project} index={index} />
+              ))}
+            </ProjectsList>
 
-          {totalPages > 1 && (
-            <PaginationWrapper>
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                pageSize={limit}
-                totalItems={totalCount}
-                onPageChange={handlePageChange}
-                showInfo={false}
-                showSizeChanger={false}
-              />
-            </PaginationWrapper>
-          )}
-        </>
-      ) : (
-        !loading && (
-          <EmptyState variants={fadeInUpVariants} initial="hidden" animate="visible">
-            <FiGithub />
-            <h3>暂无项目</h3>
-            <p>还没有发布任何项目</p>
-          </EmptyState>
-        )
-      )}
-    </PageContainer>
+            {totalPages > 1 && (
+              <PaginationWrapper>
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  pageSize={limit}
+                  totalItems={totalCount}
+                  onPageChange={handlePageChange}
+                  showInfo={false}
+                  showSizeChanger={false}
+                />
+              </PaginationWrapper>
+            )}
+          </>
+        ) : (
+          !loading && (
+            <EmptyState variants={fadeInUpVariants} initial="hidden" animate="visible">
+              <FiGithub />
+              <h3>暂无项目</h3>
+              <p>还没有发布任何项目</p>
+            </EmptyState>
+          )
+        )}
+      </PageContainer>
+    </>
   );
 };
 

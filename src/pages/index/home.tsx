@@ -5,8 +5,9 @@ import { FiGithub, FiMail, FiCode } from 'react-icons/fi';
 import { API, UserActivity, Project } from '@/utils/api';
 import { useAnimationEngine } from '@/utils/animation-engine';
 import { Icon } from '@/components/common/Icon';
-import { WaveText } from '@/components/common';
+import { WaveText, SEO } from '@/components/common';
 import { useSiteSettings } from '@/layouts';
+import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import {
   ArticlesSection,
   NotesSection,
@@ -760,6 +761,12 @@ const Home: React.FC = () => {
 
   return (
     <>
+      <SEO
+        title={PAGE_SEO_CONFIG.home.title}
+        description={PAGE_SEO_CONFIG.home.description}
+        keywords={PAGE_SEO_CONFIG.home.keywords}
+        type="website"
+      />
       <PageContainer>
         <HeroSection>
           <Hero>

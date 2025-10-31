@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAnimationEngine, SPRING_PRESETS } from '@/utils/animation-engine';
+import { SEO } from '@/components/common';
+import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 
 // GPU 加速样式 - 已废弃，直接在各组件中使用优化的样式
 
@@ -99,7 +101,6 @@ import { useUserRole } from '@/hooks/useUserRole';
 
 const ProfileContainer = styled.div`
   margin: 0 auto;
-  padding: 1rem 2rem;
   min-height: calc(100vh - 120px);
   width: 100%;
 
@@ -1710,245 +1711,255 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <ProfileContainer>
-      <ModernLayout>
-        {/* 左侧用户信息区域 */}
-        <UserSection>
-          <Card>
-            {user && (
-              <UserInfoCard
-                user={user}
-                onEditProfile={() => setIsEditModalOpen(true)}
-                onAvatarChange={handleAvatarChange}
-                isLoading={isUserLoading}
-              />
-            )}
-          </Card>
-
-          {/* 成就徽章 */}
-          {!isMobile && (
+    <>
+      <SEO
+        title={PAGE_SEO_CONFIG.profile.title}
+        description={PAGE_SEO_CONFIG.profile.description}
+        keywords={PAGE_SEO_CONFIG.profile.keywords}
+        type="profile"
+        index={false}
+        follow={false}
+      />
+      <ProfileContainer>
+        <ModernLayout>
+          {/* 左侧用户信息区域 */}
+          <UserSection>
             <Card>
-              <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
-            </Card>
-          )}
-        </UserSection>
-
-        {/* 主内容区域 */}
-        <MainContent>
-          {/* 标签页容器 - 始终显示，让用户知道当前位置 */}
-          <TabsContainer>
-            <TabsList>
-              {openTabs.length === 0 ? (
-                /* 空状态提示 */
-                <EmptyTabsState>
-                  <EmptyTabsIcon>
-                    <FiLayers size={20} />
-                  </EmptyTabsIcon>
-                  <EmptyTabsText>
-                    <EmptyTabsTitle>暂无打开的标签页</EmptyTabsTitle>
-                    <EmptyTabsHint>
-                      <FiChevronRight size={14} />
-                      使用右侧快捷操作打开功能
-                    </EmptyTabsHint>
-                  </EmptyTabsText>
-                </EmptyTabsState>
-              ) : (
-                openTabs.map((tab) => (
-                  <TabButton
-                    key={tab.id}
-                    active={activeTab === tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
-                    title={tab.label}
-                  >
-                    <span>{tab.label}</span>
-                    {tab.closable && (
-                      <CloseButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          closeTab(tab.id);
-                        }}
-                      >
-                        <FiX size={12} />
-                      </CloseButton>
-                    )}
-                  </TabButton>
-                ))
+              {user && (
+                <UserInfoCard
+                  user={user}
+                  onEditProfile={() => setIsEditModalOpen(true)}
+                  onAvatarChange={handleAvatarChange}
+                  isLoading={isUserLoading}
+                />
               )}
-            </TabsList>
-          </TabsContainer>
-
-          {/* 内容区域 */}
-          <TabContent>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-                style={{ width: '100%', minHeight: 'inherit' }}
-              >
-                {activeTab === 'dashboard' ? renderTabContent() : <Card>{renderTabContent()}</Card>}
-              </motion.div>
-            </AnimatePresence>
-          </TabContent>
-        </MainContent>
-
-        {/* 右侧快捷操作区域（大屏显示） */}
-        {permissions.quickActions.length > 0 && (
-          <QuickActionsSection>
-            <Card>
-              <QuickActions onAction={handleQuickAction} actions={permissions.quickActions} />
             </Card>
-          </QuickActionsSection>
-        )}
-      </ModernLayout>
 
-      {user && (
-        <EditProfileModal
-          isOpen={isEditModalOpen}
-          user={user}
-          onClose={handleCloseEditModal}
-          onSave={handleSaveProfile}
-          isLoading={isUserLoading}
-        />
-      )}
+            {/* 成就徽章 */}
+            {!isMobile && (
+              <Card>
+                <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+              </Card>
+            )}
+          </UserSection>
 
-      {/* 移动端侧边箭头按钮 */}
-      {isMobile && (
-        <>
-          {/* 左侧箭头按钮 - 个人资料 */}
-          <SideArrowButton
-            position="left"
-            onClick={() => setLeftDrawerOpen(true)}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 0.7, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            whileHover={{ opacity: 1 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FiChevronRight />
-          </SideArrowButton>
+          {/* 主内容区域 */}
+          <MainContent>
+            {/* 标签页容器 - 始终显示，让用户知道当前位置 */}
+            <TabsContainer>
+              <TabsList>
+                {openTabs.length === 0 ? (
+                  /* 空状态提示 */
+                  <EmptyTabsState>
+                    <EmptyTabsIcon>
+                      <FiLayers size={20} />
+                    </EmptyTabsIcon>
+                    <EmptyTabsText>
+                      <EmptyTabsTitle>暂无打开的标签页</EmptyTabsTitle>
+                      <EmptyTabsHint>
+                        <FiChevronRight size={14} />
+                        使用右侧快捷操作打开功能
+                      </EmptyTabsHint>
+                    </EmptyTabsText>
+                  </EmptyTabsState>
+                ) : (
+                  openTabs.map((tab) => (
+                    <TabButton
+                      key={tab.id}
+                      active={activeTab === tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
+                      title={tab.label}
+                    >
+                      <span>{tab.label}</span>
+                      {tab.closable && (
+                        <CloseButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            closeTab(tab.id);
+                          }}
+                        >
+                          <FiX size={12} />
+                        </CloseButton>
+                      )}
+                    </TabButton>
+                  ))
+                )}
+              </TabsList>
+            </TabsContainer>
 
-          {/* 右侧箭头按钮 - 快捷操作 */}
+            {/* 内容区域 */}
+            <TabContent>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+                  style={{ width: '100%', minHeight: 'inherit' }}
+                >
+                  {activeTab === 'dashboard' ? renderTabContent() : <Card>{renderTabContent()}</Card>}
+                </motion.div>
+              </AnimatePresence>
+            </TabContent>
+          </MainContent>
+
+          {/* 右侧快捷操作区域（大屏显示） */}
           {permissions.quickActions.length > 0 && (
+            <QuickActionsSection>
+              <Card>
+                <QuickActions onAction={handleQuickAction} actions={permissions.quickActions} />
+              </Card>
+            </QuickActionsSection>
+          )}
+        </ModernLayout>
+
+        {user && (
+          <EditProfileModal
+            isOpen={isEditModalOpen}
+            user={user}
+            onClose={handleCloseEditModal}
+            onSave={handleSaveProfile}
+            isLoading={isUserLoading}
+          />
+        )}
+
+        {/* 移动端侧边箭头按钮 */}
+        {isMobile && (
+          <>
+            {/* 左侧箭头按钮 - 个人资料 */}
             <SideArrowButton
-              position="right"
-              onClick={() => setRightDrawerOpen(true)}
-              initial={{ opacity: 0, x: 20 }}
+              position="left"
+              onClick={() => setLeftDrawerOpen(true)}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 0.7, x: 0 }}
               transition={{ delay: 0.3, duration: 0.5 }}
               whileHover={{ opacity: 1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <FiChevronLeft />
+              <FiChevronRight />
             </SideArrowButton>
-          )}
-        </>
-      )}
 
-      {/* 左侧抽屉 - 个人资料 */}
-      <AnimatePresence>
-        {leftDrawerOpen && isMobile && (
-          <>
-            <DrawerOverlay
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={overlayVariants}
-              onClick={() => setLeftDrawerOpen(false)}
-            />
-            <Drawer position="left" initial="hidden" animate="visible" exit="exit" variants={drawerVariants.left}>
-              <DrawerHeader>
-                <DrawerTitle>
-                  <FiUser />
-                  个人资料
-                </DrawerTitle>
-                <DrawerCloseButton onClick={() => setLeftDrawerOpen(false)}>
-                  <FiX />
-                </DrawerCloseButton>
-              </DrawerHeader>
-
-              {user && (
-                <UserInfoCard
-                  user={user}
-                  onEditProfile={() => {
-                    setLeftDrawerOpen(false);
-                    setIsEditModalOpen(true);
-                  }}
-                  onAvatarChange={handleAvatarChange}
-                  isLoading={isUserLoading}
-                />
-              )}
-
-              {/* 成就徽章 */}
-              <div>
-                <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
-              </div>
-            </Drawer>
+            {/* 右侧箭头按钮 - 快捷操作 */}
+            {permissions.quickActions.length > 0 && (
+              <SideArrowButton
+                position="right"
+                onClick={() => setRightDrawerOpen(true)}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 0.7, x: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                whileHover={{ opacity: 1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <FiChevronLeft />
+              </SideArrowButton>
+            )}
           </>
         )}
-      </AnimatePresence>
 
-      {/* 右侧抽屉 - 快捷操作 */}
-      <AnimatePresence>
-        {rightDrawerOpen && isMobile && permissions.quickActions.length > 0 && (
-          <>
-            <DrawerOverlay
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={overlayVariants}
-              onClick={() => setRightDrawerOpen(false)}
-            />
-            <Drawer position="right" initial="hidden" animate="visible" exit="exit" variants={drawerVariants.right}>
-              <DrawerHeader>
-                <DrawerTitle>
-                  <FiZap />
-                  快捷操作
-                </DrawerTitle>
-                <DrawerCloseButton onClick={() => setRightDrawerOpen(false)}>
-                  <FiX />
-                </DrawerCloseButton>
-              </DrawerHeader>
-
-              <QuickActions
-                onAction={(action) => {
-                  setRightDrawerOpen(false);
-                  handleQuickAction(action);
-                }}
-                actions={permissions.quickActions}
+        {/* 左侧抽屉 - 个人资料 */}
+        <AnimatePresence>
+          {leftDrawerOpen && isMobile && (
+            <>
+              <DrawerOverlay
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={overlayVariants}
+                onClick={() => setLeftDrawerOpen(false)}
               />
-            </Drawer>
-          </>
-        )}
-      </AnimatePresence>
+              <Drawer position="left" initial="hidden" animate="visible" exit="exit" variants={drawerVariants.left}>
+                <DrawerHeader>
+                  <DrawerTitle>
+                    <FiUser />
+                    个人资料
+                  </DrawerTitle>
+                  <DrawerCloseButton onClick={() => setLeftDrawerOpen(false)}>
+                    <FiX />
+                  </DrawerCloseButton>
+                </DrawerHeader>
 
-      {/* 右键菜单 */}
-      {contextMenu && (
-        <ContextMenu x={contextMenu.x} y={contextMenu.y}>
-          {openTabs.find((tab) => tab.id === contextMenu.tabId)?.closable && (
-            <ContextMenuItem onClick={handleCloseCurrentTab}>
-              <FiX size={14} />
-              关闭当前标签
-            </ContextMenuItem>
+                {user && (
+                  <UserInfoCard
+                    user={user}
+                    onEditProfile={() => {
+                      setLeftDrawerOpen(false);
+                      setIsEditModalOpen(true);
+                    }}
+                    onAvatarChange={handleAvatarChange}
+                    isLoading={isUserLoading}
+                  />
+                )}
+
+                {/* 成就徽章 */}
+                <div>
+                  <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+                </div>
+              </Drawer>
+            </>
           )}
-          <ContextMenuItem onClick={handleCloseOtherTabs}>
-            <FiXCircle size={14} />
-            关闭其他标签
-          </ContextMenuItem>
-          <ContextMenuItem onClick={handleCloseRightTabs}>
-            <FiChevronsRight size={14} />
-            关闭右侧标签
-          </ContextMenuItem>
-          <ContextMenuItem danger onClick={handleCloseAllTabs}>
-            <FiTrash2 size={14} />
-            关闭所有标签
-          </ContextMenuItem>
-        </ContextMenu>
-      )}
-    </ProfileContainer>
+        </AnimatePresence>
+
+        {/* 右侧抽屉 - 快捷操作 */}
+        <AnimatePresence>
+          {rightDrawerOpen && isMobile && permissions.quickActions.length > 0 && (
+            <>
+              <DrawerOverlay
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={overlayVariants}
+                onClick={() => setRightDrawerOpen(false)}
+              />
+              <Drawer position="right" initial="hidden" animate="visible" exit="exit" variants={drawerVariants.right}>
+                <DrawerHeader>
+                  <DrawerTitle>
+                    <FiZap />
+                    快捷操作
+                  </DrawerTitle>
+                  <DrawerCloseButton onClick={() => setRightDrawerOpen(false)}>
+                    <FiX />
+                  </DrawerCloseButton>
+                </DrawerHeader>
+
+                <QuickActions
+                  onAction={(action) => {
+                    setRightDrawerOpen(false);
+                    handleQuickAction(action);
+                  }}
+                  actions={permissions.quickActions}
+                />
+              </Drawer>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* 右键菜单 */}
+        {contextMenu && (
+          <ContextMenu x={contextMenu.x} y={contextMenu.y}>
+            {openTabs.find((tab) => tab.id === contextMenu.tabId)?.closable && (
+              <ContextMenuItem onClick={handleCloseCurrentTab}>
+                <FiX size={14} />
+                关闭当前标签
+              </ContextMenuItem>
+            )}
+            <ContextMenuItem onClick={handleCloseOtherTabs}>
+              <FiXCircle size={14} />
+              关闭其他标签
+            </ContextMenuItem>
+            <ContextMenuItem onClick={handleCloseRightTabs}>
+              <FiChevronsRight size={14} />
+              关闭右侧标签
+            </ContextMenuItem>
+            <ContextMenuItem danger onClick={handleCloseAllTabs}>
+              <FiTrash2 size={14} />
+              关闭所有标签
+            </ContextMenuItem>
+          </ContextMenu>
+        )}
+      </ProfileContainer>
+    </>
   );
 };
 

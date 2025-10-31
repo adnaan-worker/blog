@@ -6,6 +6,8 @@ import RichTextEditor from '@/components/rich-text/rich-text-editor';
 import EditorAIAssistant from '@/components/rich-text/editor-ai-assistant';
 import { API } from '@/utils/api';
 import { Button, Input } from 'adnaan-ui';
+import { SEO } from '@/components/common';
+import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 
 interface Article {
   id: number;
@@ -263,153 +265,167 @@ const ArticleEditorPage: React.FC = () => {
 
   // 加载状态由路由级别的Suspense处理，不需要额外显示
   return (
-    <EditorContainer>
-      {/* 顶部工具栏 */}
-      <TopBar>
-        <LeftSection>
-          <BackButton onClick={handleExit}>
-            <FiX />
-            <span>退出</span>
-          </BackButton>
-          <Title>
-            <input
-              type="text"
-              placeholder="请输入文章标题..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </Title>
-        </LeftSection>
+    <>
+      <SEO
+        title={articleId ? '编辑文章' : PAGE_SEO_CONFIG.articleEditor.title}
+        description={PAGE_SEO_CONFIG.articleEditor.description}
+        keywords={PAGE_SEO_CONFIG.articleEditor.keywords}
+        type="website"
+        index={false}
+        follow={false}
+      />
+      <EditorContainer>
+        {/* 顶部工具栏 */}
+        <TopBar>
+          <LeftSection>
+            <BackButton onClick={handleExit}>
+              <FiX />
+              <span>退出</span>
+            </BackButton>
+            <Title>
+              <input
+                type="text"
+                placeholder="请输入文章标题..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </Title>
+          </LeftSection>
 
-        <RightSection>
-          <Button
-            variant={showSidebar ? 'primary' : 'outline'}
-            size="small"
-            onClick={() => setShowSidebar(!showSidebar)}
-            title={showSidebar ? '隐藏设置面板' : '显示设置面板'}
-          >
-            <FiSettings />
-            <span>设置</span>
-          </Button>
-          <Button
-            variant={showAIAssistant ? 'primary' : 'outline'}
-            size="small"
-            onClick={() => setShowAIAssistant(!showAIAssistant)}
-          >
-            <FiCpu />
-            <span>AI助手</span>
-          </Button>
-          <Button variant="outline" size="small" onClick={() => handleSave(true)} disabled={isSaving}>
-            <FiSave />
-            <span>保存草稿</span>
-          </Button>
-          <Button variant="primary" size="small" onClick={() => handleSave(false)} disabled={isSaving}>
-            <FiUpload />
-            <span>发布</span>
-          </Button>
-        </RightSection>
-      </TopBar>
+          <RightSection>
+            <Button
+              variant={showSidebar ? 'primary' : 'outline'}
+              size="small"
+              onClick={() => setShowSidebar(!showSidebar)}
+              title={showSidebar ? '隐藏设置面板' : '显示设置面板'}
+            >
+              <FiSettings />
+              <span>设置</span>
+            </Button>
+            <Button
+              variant={showAIAssistant ? 'primary' : 'outline'}
+              size="small"
+              onClick={() => setShowAIAssistant(!showAIAssistant)}
+            >
+              <FiCpu />
+              <span>AI助手</span>
+            </Button>
+            <Button variant="outline" size="small" onClick={() => handleSave(true)} disabled={isSaving}>
+              <FiSave />
+              <span>保存草稿</span>
+            </Button>
+            <Button variant="primary" size="small" onClick={() => handleSave(false)} disabled={isSaving}>
+              <FiUpload />
+              <span>发布</span>
+            </Button>
+          </RightSection>
+        </TopBar>
 
-      {/* 主编辑区 */}
-      <MainContent>
-        {/* 编辑器 */}
-        <EditorSection>
-          <RichTextEditor content={content} onChange={setContent} placeholder="开始编写你的文章..." />
-        </EditorSection>
+        {/* 主编辑区 */}
+        <MainContent>
+          {/* 编辑器 */}
+          <EditorSection>
+            <RichTextEditor content={content} onChange={setContent} placeholder="开始编写你的文章..." />
+          </EditorSection>
 
-        {/* AI助手面板 */}
-        {showAIAssistant && (
-          <AIAssistantPanel>
-            <EditorAIAssistant
-              content={content}
-              onContentUpdate={setContent}
-              isVisible={showAIAssistant}
-              onToggle={() => setShowAIAssistant(false)}
-            />
-          </AIAssistantPanel>
-        )}
+          {/* AI助手面板 */}
+          {showAIAssistant && (
+            <AIAssistantPanel>
+              <EditorAIAssistant
+                content={content}
+                onContentUpdate={setContent}
+                isVisible={showAIAssistant}
+                onToggle={() => setShowAIAssistant(false)}
+              />
+            </AIAssistantPanel>
+          )}
 
-        {/* 右侧边栏 - 可折叠 */}
-        {showSidebar && (
-          <Sidebar>
-            <SidebarSection>
-              <SectionTitle>文章设置</SectionTitle>
+          {/* 右侧边栏 - 可折叠 */}
+          {showSidebar && (
+            <Sidebar>
+              <SidebarSection>
+                <SectionTitle>文章设置</SectionTitle>
 
-              {/* 摘要 */}
-              <Field>
-                <Label>
-                  摘要
-                  <OptionalTag>（建议填写）</OptionalTag>
-                </Label>
-                <textarea
-                  placeholder="请输入文章摘要，帮助读者快速了解文章内容..."
-                  value={summary}
-                  onChange={(e) => setSummary(e.target.value)}
-                  rows={3}
-                />
-              </Field>
+                {/* 摘要 */}
+                <Field>
+                  <Label>
+                    摘要
+                    <OptionalTag>（建议填写）</OptionalTag>
+                  </Label>
+                  <textarea
+                    placeholder="请输入文章摘要，帮助读者快速了解文章内容..."
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
+                    rows={3}
+                  />
+                </Field>
 
-              {/* 封面图 */}
-              <Field>
-                <Label>
-                  封面图
-                  <OptionalTag>（选填）</OptionalTag>
-                </Label>
-                <Input
-                  placeholder="请输入封面图地址..."
-                  value={coverImage}
-                  onChange={(e) => setCoverImage(e.target.value)}
-                />
-                {coverImage && (
-                  <CoverPreview>
-                    <img src={coverImage} alt="封面预览" />
-                  </CoverPreview>
-                )}
-              </Field>
+                {/* 封面图 */}
+                <Field>
+                  <Label>
+                    封面图
+                    <OptionalTag>（选填）</OptionalTag>
+                  </Label>
+                  <Input
+                    placeholder="请输入封面图地址..."
+                    value={coverImage}
+                    onChange={(e) => setCoverImage(e.target.value)}
+                  />
+                  {coverImage && (
+                    <CoverPreview>
+                      <img src={coverImage} alt="封面预览" />
+                    </CoverPreview>
+                  )}
+                </Field>
 
-              {/* 分类 */}
-              <Field>
-                <Label>
-                  分类
-                  <RequiredTag>*</RequiredTag>
-                </Label>
-                <select
-                  value={categoryId || ''}
-                  onChange={(e) => setCategoryId(Number(e.target.value) || null)}
-                  style={{
-                    borderColor: !categoryId ? 'var(--error-color, #f56c6c)' : undefined,
-                  }}
-                >
-                  <option value="">请选择分类</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-                {!categoryId && <FieldHint className="error">必须选择文章分类</FieldHint>}
-              </Field>
+                {/* 分类 */}
+                <Field>
+                  <Label>
+                    分类
+                    <RequiredTag>*</RequiredTag>
+                  </Label>
+                  <select
+                    value={categoryId || ''}
+                    onChange={(e) => setCategoryId(Number(e.target.value) || null)}
+                    style={{
+                      borderColor: !categoryId ? 'var(--error-color, #f56c6c)' : undefined,
+                    }}
+                  >
+                    <option value="">请选择分类</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  {!categoryId && <FieldHint className="error">必须选择文章分类</FieldHint>}
+                </Field>
 
-              {/* 标签 */}
-              <Field>
-                <Label>
-                  标签
-                  <OptionalTag>（建议至少选择1个）</OptionalTag>
-                </Label>
-                <TagsList>
-                  {tags.map((tag) => (
-                    <TagItem key={tag.id} selected={selectedTagIds.includes(tag.id)} onClick={() => toggleTag(tag.id)}>
-                      {tag.name}
-                    </TagItem>
-                  ))}
-                </TagsList>
-                {selectedTagIds.length === 0 && <FieldHint>标签有助于读者找到你的文章</FieldHint>}
-              </Field>
-            </SidebarSection>
-          </Sidebar>
-        )}
-      </MainContent>
-    </EditorContainer>
+                {/* 标签 */}
+                <Field>
+                  <Label>
+                    标签
+                    <OptionalTag>（建议至少选择1个）</OptionalTag>
+                  </Label>
+                  <TagsList>
+                    {tags.map((tag) => (
+                      <TagItem
+                        key={tag.id}
+                        selected={selectedTagIds.includes(tag.id)}
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        {tag.name}
+                      </TagItem>
+                    ))}
+                  </TagsList>
+                  {selectedTagIds.length === 0 && <FieldHint>标签有助于读者找到你的文章</FieldHint>}
+                </Field>
+              </SidebarSection>
+            </Sidebar>
+          )}
+        </MainContent>
+      </EditorContainer>
+    </>
   );
 };
 

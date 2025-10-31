@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
 import { ListPageHeader } from '@/components/common/list-page-header';
+import { SEO } from '@/components/common';
+import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import { API, Note, NoteParams } from '@/utils/api';
 
@@ -194,26 +196,34 @@ const NotesPage: React.FC = () => {
   );
 
   return (
-    <PageContainer>
-      <Container>
-        {/* 页面头部 */}
-        <ListPageHeader
-          title="生活手记"
-          subtitle="记录时光片段，留住美好瞬间"
-          count={notes.length}
-          countUnit="篇手记"
-        />
+    <>
+      <SEO
+        title={PAGE_SEO_CONFIG.noteList.title}
+        description={PAGE_SEO_CONFIG.noteList.description}
+        keywords={PAGE_SEO_CONFIG.noteList.keywords}
+        type="website"
+      />
+      <PageContainer>
+        <Container>
+          {/* 页面头部 */}
+          <ListPageHeader
+            title="生活手记"
+            subtitle="记录时光片段，留住美好瞬间"
+            count={notes.length}
+            countUnit="篇手记"
+          />
 
-        <TimelineMasonry
-          items={notes}
-          renderItem={(item, index) => renderNoteItem(item as Note, index)}
-          loading={isLoading}
-          loadingMore={isLoadingMore}
-          hasMore={hasMore}
-          emptyState={emptyStateComponent}
-        />
-      </Container>
-    </PageContainer>
+          <TimelineMasonry
+            items={notes}
+            renderItem={(item, index) => renderNoteItem(item as Note, index)}
+            loading={isLoading}
+            loadingMore={isLoadingMore}
+            hasMore={hasMore}
+            emptyState={emptyStateComponent}
+          />
+        </Container>
+      </PageContainer>
+    </>
   );
 };
 

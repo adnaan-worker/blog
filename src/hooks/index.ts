@@ -4,3 +4,4 @@ export * from './useSocket';
 export * from './useSystemTheme';
 export * from './useOnlineUsers';
 export * from './useVisitorTracking';
+export * from './useSEO';

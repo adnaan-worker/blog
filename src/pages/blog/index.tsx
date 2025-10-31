@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
 import { ListPageHeader } from '@/components/common/list-page-header';
+import { SEO } from '@/components/common';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import { API, Article } from '@/utils/api';
 import { formatDate } from '@/utils';
@@ -293,22 +294,34 @@ const BlogPage: React.FC = () => {
   );
 
   return (
-    <PageContainer>
-      <Container>
-        {/* 页面头部 */}
-        <ListPageHeader title="技术文章" subtitle="探索代码世界，分享技术思考" count={totalCount} countUnit="篇文章" />
+    <>
+      <SEO
+        title="技术文章"
+        description="探索代码世界，分享技术思考。包含React、TypeScript、Node.js等前后端开发技术文章。"
+        keywords="技术博客, React教程, TypeScript, Node.js, 前端开发, 后端开发"
+      />
+      <PageContainer>
+        <Container>
+          {/* 页面头部 */}
+          <ListPageHeader
+            title="技术文章"
+            subtitle="探索代码世界，分享技术思考"
+            count={totalCount}
+            countUnit="篇文章"
+          />
 
-        {/* 时间线列表 */}
-        <TimelineMasonry
-          items={articles}
-          renderItem={(item, index) => renderArticleItem(item as unknown as Article, index)}
-          loading={isLoading}
-          loadingMore={isLoadingMore}
-          hasMore={hasMore}
-          emptyState={emptyStateComponent}
-        />
-      </Container>
-    </PageContainer>
+          {/* 时间线列表 */}
+          <TimelineMasonry
+            items={articles}
+            renderItem={(item, index) => renderArticleItem(item as unknown as Article, index)}
+            loading={isLoading}
+            loadingMore={isLoadingMore}
+            hasMore={hasMore}
+            emptyState={emptyStateComponent}
+          />
+        </Container>
+      </PageContainer>
+    </>
   );
 };
 

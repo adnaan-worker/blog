@@ -11,6 +11,7 @@ import { useAnimationEngine } from '@/utils/animation-engine';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
 import DetailNoiseBackground from '@/components/common/detail-noise-background';
 import { usePageInfo } from '@/hooks/usePageInfo';
+import { SEO, AutoSkeleton } from '@/components/common';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -653,171 +654,163 @@ const NoteDetail: React.FC = () => {
     }
   };
 
-  // 加载中，不显示背景
-  if (isLoading) {
-    return null;
-  }
-
-  // 手记未找到
-  if (!note) {
-    return (
-      <PageContainer>
-        <BackLink to="/notes">
-          <FiArrowLeft size={16} /> 返回手记列表
-        </BackLink>
-        <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-          <h2>手记未找到</h2>
-          <p>抱歉，找不到您请求的手记</p>
-        </div>
-      </PageContainer>
-    );
-  }
-
   return (
-    <DetailPageLayout showBackground={true} mainContent={<></>}>
-      {/* 噪点背景 - 仅详情页使用 */}
-      <DetailNoiseBackground />
-      <PageContainer>
-        <BackLink to="/notes">
-          <FiArrowLeft size={16} /> 返回手记列表
-        </BackLink>
+    <>
+      <SEO
+        title={note?.title || '加载中...'}
+        description={note?.content?.substring(0, 150) || '查看手记详情'}
+        keywords={note?.tags?.map((tag: any) => (typeof tag === 'string' ? tag : tag.name)).join(', ')}
+        type="article"
+      />
+      <AutoSkeleton loading={isLoading || !note} cacheKey={`note-detail-${id}`} minLoadingTime={800}>
+        {note && (
+          <DetailPageLayout showBackground={true} mainContent={<></>}>
+            {/* 噪点背景 - 仅详情页使用 */}
+            <DetailNoiseBackground />
+            <PageContainer>
+              <BackLink to="/notes">
+                <FiArrowLeft size={16} /> 返回手记列表
+              </BackLink>
 
-        <NoteLayout>
-          {/* 主内容区 - 向上弹性划出 */}
-          <DetailMainContent>
-            <NoteMain>
-              {/* 标题和元数据卡片 */}
-              <NoteHeader>
-                <NoteTitle>{note.title}</NoteTitle>
-                <NoteMeta>
-                  <span>
-                    <FiCalendar size={15} /> {formatDateUtil(note.createdAt, 'YYYY-MM-DD')}
-                  </span>
-                  <span>
-                    <FiClock size={15} /> {formatTime(note.createdAt)}
-                  </span>
-                </NoteMeta>
-              </NoteHeader>
+              <NoteLayout>
+                {/* 主内容区 - 向上弹性划出 */}
+                <DetailMainContent>
+                  <NoteMain>
+                    {/* 标题和元数据卡片 */}
+                    <NoteHeader>
+                      <NoteTitle>{note.title}</NoteTitle>
+                      <NoteMeta>
+                        <span>
+                          <FiCalendar size={15} /> {formatDateUtil(note.createdAt, 'YYYY-MM-DD')}
+                        </span>
+                        <span>
+                          <FiClock size={15} /> {formatTime(note.createdAt)}
+                        </span>
+                      </NoteMeta>
+                    </NoteHeader>
 
-              {/* 内容统计 */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <RichTextStats content={note.content} showDetailed={true} />
-              </div>
+                    {/* 内容统计 */}
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <RichTextStats content={note.content} showDetailed={true} />
+                    </div>
 
-              {/* 手记内容 */}
-              <NoteContentWrapper>
-                <RichTextContent className="rich-text-content">
-                  <RichTextRenderer
-                    content={note.content}
-                    mode="note"
-                    enableCodeHighlight={true}
-                    enableImagePreview={true}
-                    enableTableOfContents={false}
-                  />
-                </RichTextContent>
-              </NoteContentWrapper>
+                    {/* 手记内容 */}
+                    <NoteContentWrapper>
+                      <RichTextContent className="rich-text-content">
+                        <RichTextRenderer
+                          content={note.content}
+                          mode="note"
+                          enableCodeHighlight={true}
+                          enableImagePreview={true}
+                          enableTableOfContents={false}
+                        />
+                      </RichTextContent>
+                    </NoteContentWrapper>
 
-              {/* 相关手记 */}
-              {note.relatedNotes && note.relatedNotes.length > 0 && (
-                <RelatedNotes>
-                  <RelatedTitle>相关手记</RelatedTitle>
-                  <RelatedList>
-                    {note.relatedNotes.map((relatedNote) => (
-                      <RelatedCard key={relatedNote.id} to={`/notes/${relatedNote.id}`}>
-                        <h4>{relatedNote.title || '生活随记'}</h4>
-                        <p>{relatedNote.content.substring(0, 100)}...</p>
-                        <div className="date">
-                          <FiCalendar size={12} />
-                          {formatDateUtil(relatedNote.createdAt, 'YYYY-MM-DD')}
-                        </div>
-                      </RelatedCard>
-                    ))}
-                  </RelatedList>
-                </RelatedNotes>
-              )}
-            </NoteMain>
-          </DetailMainContent>
-
-          {/* 侧边栏 - 快速淡入 */}
-          <DetailSidebar>
-            <NoteSidebar>
-              <NoteInfoCard>
-                <CardTitle>手记信息</CardTitle>
-                <InfoList>
-                  <InfoItem>
-                    <InfoLabel>
-                      <FiCalendar size={13} />
-                      日期
-                    </InfoLabel>
-                    <InfoValue>{formatDateUtil(note.createdAt, 'YYYY-MM-DD')}</InfoValue>
-                  </InfoItem>
-                  <InfoItem>
-                    <InfoLabel>
-                      <FiClock size={13} />
-                      时间
-                    </InfoLabel>
-                    <InfoValue>{formatTime(note.createdAt)}</InfoValue>
-                  </InfoItem>
-                  {note.mood && (
-                    <InfoItem>
-                      <InfoLabel>
-                        <FiHeart size={13} />
-                        心情
-                      </InfoLabel>
-                      <InfoValue>
-                        <MoodIndicator mood={note.mood}>{note.mood}</MoodIndicator>
-                      </InfoValue>
-                    </InfoItem>
-                  )}
-                  {note.weather && (
-                    <InfoItem>
-                      <InfoLabel>
-                        <FiCloud size={13} />
-                        天气
-                      </InfoLabel>
-                      <InfoValue>{note.weather}</InfoValue>
-                    </InfoItem>
-                  )}
-                  {note.location && (
-                    <InfoItem>
-                      <InfoLabel>
-                        <FiMapPin size={13} />
-                        地点
-                      </InfoLabel>
-                      <InfoValue>{note.location}</InfoValue>
-                    </InfoItem>
-                  )}
-                  {note.readingTime && (
-                    <InfoItem>
-                      <InfoLabel>
-                        <FiEdit3 size={13} />
-                        阅读
-                      </InfoLabel>
-                      <InfoValue>约 {note.readingTime} 分钟</InfoValue>
-                    </InfoItem>
-                  )}
-                  {note.tags && note.tags.length > 0 && (
-                    <InfoItem>
-                      <InfoLabel>
-                        <FiTag size={13} />
-                        标签
-                      </InfoLabel>
-                      <InfoValue>
-                        <TagsContainer>
-                          {note.tags.map((tag) => (
-                            <Tag key={tag}>{tag}</Tag>
+                    {/* 相关手记 */}
+                    {note.relatedNotes && note.relatedNotes.length > 0 && (
+                      <RelatedNotes>
+                        <RelatedTitle>相关手记</RelatedTitle>
+                        <RelatedList>
+                          {note.relatedNotes.map((relatedNote) => (
+                            <RelatedCard key={relatedNote.id} to={`/notes/${relatedNote.id}`}>
+                              <h4>{relatedNote.title || '生活随记'}</h4>
+                              <p>{relatedNote.content.substring(0, 100)}...</p>
+                              <div className="date">
+                                <FiCalendar size={12} />
+                                {formatDateUtil(relatedNote.createdAt, 'YYYY-MM-DD')}
+                              </div>
+                            </RelatedCard>
                           ))}
-                        </TagsContainer>
-                      </InfoValue>
-                    </InfoItem>
-                  )}
-                </InfoList>
-              </NoteInfoCard>
-            </NoteSidebar>
-          </DetailSidebar>
-        </NoteLayout>
-      </PageContainer>
-    </DetailPageLayout>
+                        </RelatedList>
+                      </RelatedNotes>
+                    )}
+                  </NoteMain>
+                </DetailMainContent>
+
+                {/* 侧边栏 - 快速淡入 */}
+                <DetailSidebar>
+                  <NoteSidebar>
+                    <NoteInfoCard>
+                      <CardTitle>手记信息</CardTitle>
+                      <InfoList>
+                        <InfoItem>
+                          <InfoLabel>
+                            <FiCalendar size={13} />
+                            日期
+                          </InfoLabel>
+                          <InfoValue>{formatDateUtil(note.createdAt, 'YYYY-MM-DD')}</InfoValue>
+                        </InfoItem>
+                        <InfoItem>
+                          <InfoLabel>
+                            <FiClock size={13} />
+                            时间
+                          </InfoLabel>
+                          <InfoValue>{formatTime(note.createdAt)}</InfoValue>
+                        </InfoItem>
+                        {note.mood && (
+                          <InfoItem>
+                            <InfoLabel>
+                              <FiHeart size={13} />
+                              心情
+                            </InfoLabel>
+                            <InfoValue>
+                              <MoodIndicator mood={note.mood}>{note.mood}</MoodIndicator>
+                            </InfoValue>
+                          </InfoItem>
+                        )}
+                        {note.weather && (
+                          <InfoItem>
+                            <InfoLabel>
+                              <FiCloud size={13} />
+                              天气
+                            </InfoLabel>
+                            <InfoValue>{note.weather}</InfoValue>
+                          </InfoItem>
+                        )}
+                        {note.location && (
+                          <InfoItem>
+                            <InfoLabel>
+                              <FiMapPin size={13} />
+                              地点
+                            </InfoLabel>
+                            <InfoValue>{note.location}</InfoValue>
+                          </InfoItem>
+                        )}
+                        {note.readingTime && (
+                          <InfoItem>
+                            <InfoLabel>
+                              <FiEdit3 size={13} />
+                              阅读
+                            </InfoLabel>
+                            <InfoValue>约 {note.readingTime} 分钟</InfoValue>
+                          </InfoItem>
+                        )}
+                        {note.tags && note.tags.length > 0 && (
+                          <InfoItem>
+                            <InfoLabel>
+                              <FiTag size={13} />
+                              标签
+                            </InfoLabel>
+                            <InfoValue>
+                              <TagsContainer>
+                                {note.tags.map((tag) => (
+                                  <Tag key={tag}>{tag}</Tag>
+                                ))}
+                              </TagsContainer>
+                            </InfoValue>
+                          </InfoItem>
+                        )}
+                      </InfoList>
+                    </NoteInfoCard>
+                  </NoteSidebar>
+                </DetailSidebar>
+              </NoteLayout>
+            </PageContainer>
+          </DetailPageLayout>
+        )}
+      </AutoSkeleton>
+    </>
   );
 };
 

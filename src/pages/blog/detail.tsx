@@ -12,6 +12,7 @@ import { useAnimationEngine } from '@/utils/animation-engine';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
 import DetailNoiseBackground from '@/components/common/detail-noise-background';
 import { usePageInfo } from '@/hooks/usePageInfo';
+import { SEO, AutoSkeleton } from '@/components/common';
 
 // 页面容器
 const PageContainer = styled.div`
@@ -739,152 +740,163 @@ const BlogDetail: React.FC = () => {
     );
   }
 
-  // 没有数据时不显示背景
-  if (!article) {
-    return null;
-  }
-
   return (
-    <DetailPageLayout showBackground={true} mainContent={<></>}>
-      {/* 噪点背景 - 仅详情页使用 */}
-      <DetailNoiseBackground />
-      <PageContainer>
-        <ArticleLayout>
-          {/* 左侧：文章内容 - 向上弹性划出 */}
-          <DetailMainContent>
-            <ArticleMain>
-              <ArticleContent
-                article={{
-                  ...article,
-                  content: article?.content || '',
-                }}
-                contentRef={articleRef as RefObject<HTMLDivElement>}
-              />
-
-              {/* 上一篇/下一篇文章导航 */}
-              <ArticleNavigation>
-                {prevArticle && (
-                  <NavButton to={`/blog/${prevArticle.id}`} className="prev">
-                    <FiChevronLeft size={20} />
-                    <div className="nav-text">
-                      <span className="label">上一篇</span>
-                      <span className="title">{prevArticle.title}</span>
-                    </div>
-                  </NavButton>
-                )}
-
-                {nextArticle && (
-                  <NavButton to={`/blog/${nextArticle.id}`} className="next">
-                    <div className="nav-text">
-                      <span className="label">下一篇</span>
-                      <span className="title">{nextArticle.title}</span>
-                    </div>
-                    <FiChevronRight size={20} />
-                  </NavButton>
-                )}
-              </ArticleNavigation>
-
-              {/* 相关文章 */}
-              {relatedArticles.length > 0 && (
-                <RelatedArticles>
-                  <RelatedTitle>相关文章</RelatedTitle>
-                  <div>
-                    {relatedArticles.map((related) => (
-                      <div key={related.id} style={{ marginBottom: '1rem' }}>
-                        <h4>
-                          <Link to={`/blog/${related.id}`}>{related.title}</Link>
-                        </h4>
-                        <p>{related.excerpt}</p>
-                      </div>
-                    ))}
-                  </div>
-                </RelatedArticles>
-              )}
-
-              {/* 评论区 */}
-              <CommentSection postId={Number(article.id)} />
-            </ArticleMain>
-          </DetailMainContent>
-
-          {/* 右侧：文章目录 - 桌面端，快速淡入 */}
-          <DetailSidebar>
-            <ArticleSidebar>
-              <ArticleToc {...tocProps} />
-            </ArticleSidebar>
-          </DetailSidebar>
-        </ArticleLayout>
-
-        {/* 移动端 TOC 书签式导航 - 弹性书签 */}
-        {headings.length > 0 && showMobileTocButton && (
-          <MobileTocBookmarks>
-            <BookmarksListWrapper>
-              {headings.map((heading, index) => {
-                const isActive = activeHeading === heading.id;
-                return (
-                  <BookmarkTabWrapper key={heading.id} $isActive={isActive}>
-                    <BookmarkTab
-                      $isActive={isActive}
-                      $level={heading.level}
-                      initial={{ opacity: 0, x: -20, scale: 0.8 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
-                      transition={{
-                        ...springPresets.bouncy, // 使用弹性预设
-                        delay: index * 0.03,
+    <>
+      <SEO
+        title={article?.title || '加载中...'}
+        description={article?.excerpt || article?.summary || '阅读更多技术文章'}
+        keywords={article?.tags?.map((tag: any) => (typeof tag === 'string' ? tag : tag.name)).join(', ')}
+        image={article?.coverImage}
+        type="article"
+        author={
+          typeof article?.author === 'string' ? article.author : article?.author?.username || article?.author?.nickname
+        }
+      />
+      <AutoSkeleton loading={!article} cacheKey={`article-detail-${id}`} minLoadingTime={800}>
+        {article && (
+          <DetailPageLayout showBackground={true} mainContent={<></>}>
+            {/* 噪点背景 - 仅详情页使用 */}
+            <DetailNoiseBackground />
+            <PageContainer>
+              <ArticleLayout>
+                {/* 左侧：文章内容 - 向上弹性划出 */}
+                <DetailMainContent>
+                  <ArticleMain>
+                    <ArticleContent
+                      article={{
+                        ...article,
+                        content: article?.content || '',
                       }}
+                      contentRef={articleRef as RefObject<HTMLDivElement>}
                     />
-                    <BookmarkTitle $isActive={isActive}>
-                      {heading.text.length > 15 ? `${heading.text.substring(0, 15)}...` : heading.text}
-                    </BookmarkTitle>
-                  </BookmarkTabWrapper>
-                );
-              })}
-            </BookmarksListWrapper>
 
-            {/* 操作工具栏 - 弹性入场 */}
-            <BookmarkActions
-              initial={{ opacity: 0, x: -30, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ ...springPresets.bouncy, delay: 0.2 }}
-            >
-              {/* 点赞按钮 - 弹性交互 */}
-              <motion.button
-                className={liked ? 'active' : ''}
-                onClick={handleLike}
-                aria-label="点赞"
-                whileHover={{ scale: 1.15, y: -4 }}
-                whileTap={{ scale: 0.9 }}
-                transition={springPresets.bouncy}
-              >
-                <FiHeart />
-              </motion.button>
+                    {/* 上一篇/下一篇文章导航 */}
+                    <ArticleNavigation>
+                      {prevArticle && (
+                        <NavButton to={`/blog/${prevArticle.id}`} className="prev">
+                          <FiChevronLeft size={20} />
+                          <div className="nav-text">
+                            <span className="label">上一篇</span>
+                            <span className="title">{prevArticle.title}</span>
+                          </div>
+                        </NavButton>
+                      )}
 
-              {/* 收藏按钮 - 弹性交互 */}
-              <motion.button
-                className={bookmarked ? 'active' : ''}
-                onClick={handleBookmark}
-                aria-label="收藏"
-                whileHover={{ scale: 1.15, y: -4 }}
-                whileTap={{ scale: 0.9 }}
-                transition={springPresets.bouncy}
-              >
-                <FiBookmark />
-              </motion.button>
+                      {nextArticle && (
+                        <NavButton to={`/blog/${nextArticle.id}`} className="next">
+                          <div className="nav-text">
+                            <span className="label">下一篇</span>
+                            <span className="title">{nextArticle.title}</span>
+                          </div>
+                          <FiChevronRight size={20} />
+                        </NavButton>
+                      )}
+                    </ArticleNavigation>
 
-              {/* 分享按钮 - 弹性交互 */}
-              <motion.button
-                onClick={handleShare}
-                aria-label="分享"
-                whileHover={{ scale: 1.15, y: -4, rotate: 5 }}
-                whileTap={{ scale: 0.9 }}
-                transition={springPresets.bouncy}
-              >
-                <FiShare2 />
-              </motion.button>
-            </BookmarkActions>
-          </MobileTocBookmarks>
+                    {/* 相关文章 */}
+                    {relatedArticles.length > 0 && (
+                      <RelatedArticles>
+                        <RelatedTitle>相关文章</RelatedTitle>
+                        <div>
+                          {relatedArticles.map((related) => (
+                            <div key={related.id} style={{ marginBottom: '1rem' }}>
+                              <h4>
+                                <Link to={`/blog/${related.id}`}>{related.title}</Link>
+                              </h4>
+                              <p>{related.excerpt}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </RelatedArticles>
+                    )}
+
+                    {/* 评论区 */}
+                    <CommentSection postId={Number(article.id)} />
+                  </ArticleMain>
+                </DetailMainContent>
+
+                {/* 右侧：文章目录 - 桌面端，快速淡入 */}
+                <DetailSidebar>
+                  <ArticleSidebar>
+                    <ArticleToc {...tocProps} />
+                  </ArticleSidebar>
+                </DetailSidebar>
+              </ArticleLayout>
+
+              {/* 移动端 TOC 书签式导航 - 弹性书签 */}
+              {headings.length > 0 && showMobileTocButton && (
+                <MobileTocBookmarks>
+                  <BookmarksListWrapper>
+                    {headings.map((heading, index) => {
+                      const isActive = activeHeading === heading.id;
+                      return (
+                        <BookmarkTabWrapper key={heading.id} $isActive={isActive}>
+                          <BookmarkTab
+                            $isActive={isActive}
+                            $level={heading.level}
+                            initial={{ opacity: 0, x: -20, scale: 0.8 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            transition={{
+                              ...springPresets.bouncy, // 使用弹性预设
+                              delay: index * 0.03,
+                            }}
+                          />
+                          <BookmarkTitle $isActive={isActive}>
+                            {heading.text.length > 15 ? `${heading.text.substring(0, 15)}...` : heading.text}
+                          </BookmarkTitle>
+                        </BookmarkTabWrapper>
+                      );
+                    })}
+                  </BookmarksListWrapper>
+
+                  {/* 操作工具栏 - 弹性入场 */}
+                  <BookmarkActions
+                    initial={{ opacity: 0, x: -30, scale: 0.9 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    transition={{ ...springPresets.bouncy, delay: 0.2 }}
+                  >
+                    {/* 点赞按钮 - 弹性交互 */}
+                    <motion.button
+                      className={liked ? 'active' : ''}
+                      onClick={handleLike}
+                      aria-label="点赞"
+                      whileHover={{ scale: 1.15, y: -4 }}
+                      whileTap={{ scale: 0.9 }}
+                      transition={springPresets.bouncy}
+                    >
+                      <FiHeart />
+                    </motion.button>
+
+                    {/* 收藏按钮 - 弹性交互 */}
+                    <motion.button
+                      className={bookmarked ? 'active' : ''}
+                      onClick={handleBookmark}
+                      aria-label="收藏"
+                      whileHover={{ scale: 1.15, y: -4 }}
+                      whileTap={{ scale: 0.9 }}
+                      transition={springPresets.bouncy}
+                    >
+                      <FiBookmark />
+                    </motion.button>
+
+                    {/* 分享按钮 - 弹性交互 */}
+                    <motion.button
+                      onClick={handleShare}
+                      aria-label="分享"
+                      whileHover={{ scale: 1.15, y: -4, rotate: 5 }}
+                      whileTap={{ scale: 0.9 }}
+                      transition={springPresets.bouncy}
+                    >
+                      <FiShare2 />
+                    </motion.button>
+                  </BookmarkActions>
+                </MobileTocBookmarks>
+              )}
+            </PageContainer>
+          </DetailPageLayout>
         )}
-      </PageContainer>
-    </DetailPageLayout>
+      </AutoSkeleton>
+    </>
   );
 };
 

@@ -3,6 +3,8 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiTerminal, FiArrowLeft, FiHome, FiFolder } from 'react-icons/fi';
+import { SEO } from '@/components/common';
+import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 
 const Container = styled.div`
   display: flex;
@@ -387,151 +389,162 @@ drwxr-xr-x 12 user user 4096 Dec 12 22:58 ..
   }, [logs, currentStep, showCursor]);
 
   return (
-    <Container>
-      <Terminal initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <TerminalHeader>
-          <TrafficLights>
-            <TrafficLight color="#ff5f57" />
-            <TrafficLight color="#ffbd2e" />
-            <TrafficLight color="#28ca42" />
-          </TrafficLights>
-          <TerminalTitle>
-            <FiTerminal size={14} />
-            terminal — 404 error
-          </TerminalTitle>
-        </TerminalHeader>
+    <>
+      <SEO
+        title={PAGE_SEO_CONFIG.notFound.title}
+        description={PAGE_SEO_CONFIG.notFound.description}
+        index={PAGE_SEO_CONFIG.notFound.index}
+        follow={PAGE_SEO_CONFIG.notFound.follow}
+      />
+      <Container>
+        <Terminal initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <TerminalHeader>
+            <TrafficLights>
+              <TrafficLight color="#ff5f57" />
+              <TrafficLight color="#ffbd2e" />
+              <TrafficLight color="#28ca42" />
+            </TrafficLights>
+            <TerminalTitle>
+              <FiTerminal size={14} />
+              terminal — 404 error
+            </TerminalTitle>
+          </TerminalHeader>
 
-        <TerminalBody
-          ref={scrollRef}
-          onClick={() => inputRef.current?.focus()}
-          tabIndex={0}
-          aria-label="404 Terminal Output"
-        >
-          {steps.slice(0, currentStep + 1).map((step, index) => (
-            <motion.div key={index} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-              {step.type === 'command' && (
-                <CommandLine>
-                  <Command>{step.text}</Command>
-                </CommandLine>
-              )}
-              {step.type === 'output' && (
-                <Output>
-                  <TypewriterText>{step.text}</TypewriterText>
-                </Output>
-              )}
-              {step.type === 'error' && <ErrorText>{step.text}</ErrorText>}
-            </motion.div>
-          ))}
+          <TerminalBody
+            ref={scrollRef}
+            onClick={() => inputRef.current?.focus()}
+            tabIndex={0}
+            aria-label="404 Terminal Output"
+          >
+            {steps.slice(0, currentStep + 1).map((step, index) => (
+              <motion.div key={index} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+                {step.type === 'command' && (
+                  <CommandLine>
+                    <Command>{step.text}</Command>
+                  </CommandLine>
+                )}
+                {step.type === 'output' && (
+                  <Output>
+                    <TypewriterText>{step.text}</TypewriterText>
+                  </Output>
+                )}
+                {step.type === 'error' && <ErrorText>{step.text}</ErrorText>}
+              </motion.div>
+            ))}
 
-          {/* 渲染用户输入的命令和输出 */}
-          {logs.slice(steps.length).map((log, index) => (
-            <motion.div
-              key={`user-${index}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              {log.type === 'command' && (
-                <CommandLine>
-                  <Command>{log.text}</Command>
-                </CommandLine>
-              )}
-              {log.type === 'output' && (
-                <Output>
-                  <TypewriterText>{log.text}</TypewriterText>
-                </Output>
-              )}
-              {log.type === 'error' && <ErrorText>{log.text}</ErrorText>}
-            </motion.div>
-          ))}
+            {/* 渲染用户输入的命令和输出 */}
+            {logs.slice(steps.length).map((log, index) => (
+              <motion.div
+                key={`user-${index}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {log.type === 'command' && (
+                  <CommandLine>
+                    <Command>{log.text}</Command>
+                  </CommandLine>
+                )}
+                {log.type === 'output' && (
+                  <Output>
+                    <TypewriterText>{log.text}</TypewriterText>
+                  </Output>
+                )}
+                {log.type === 'error' && <ErrorText>{log.text}</ErrorText>}
+              </motion.div>
+            ))}
 
-          {currentStep === steps.length - 1 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-              {/* 输入命令行（替换原按钮区域） */}
-              <InputLine>
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-                    if (e.key !== 'Enter') return;
+            {currentStep === steps.length - 1 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+                {/* 输入命令行（替换原按钮区域） */}
+                <InputLine>
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                      if (e.key !== 'Enter') return;
 
-                    const cmd = input.trim();
-                    if (!cmd) return;
+                      const cmd = input.trim();
+                      if (!cmd) return;
 
-                    setLogs((prev) => [...prev, { type: 'command', text: cmd }]);
-                    const normalized = cmd.toLowerCase();
-                    const goHome = ['cd /', 'home', 'cd ~', 'cd ~/home', 'go home'];
-                    const goBack = ['cd ..', 'back', 'return', 'up'];
+                      setLogs((prev) => [...prev, { type: 'command', text: cmd }]);
+                      const normalized = cmd.toLowerCase();
+                      const goHome = ['cd /', 'home', 'cd ~', 'cd ~/home', 'go home'];
+                      const goBack = ['cd ..', 'back', 'return', 'up'];
 
-                    // 立即清空输入框
-                    setInput('');
+                      // 立即清空输入框
+                      setInput('');
 
-                    // 优先处理 help 命令
-                    if (normalized === 'help') {
-                      setLogs((prev) => [
-                        ...prev,
-                        {
-                          type: 'output',
-                          text: `可用命令:
+                      // 优先处理 help 命令
+                      if (normalized === 'help') {
+                        setLogs((prev) => [
+                          ...prev,
+                          {
+                            type: 'output',
+                            text: `可用命令:
   - cd /        回到首页
   - cd ..       返回上一页
   - cd posts    前往文章列表
   - cd about    查看关于
   - help        查看帮助`,
-                        },
-                      ]);
-                      return;
-                    }
-
-                    if (goHome.includes(normalized)) {
-                      setLogs((prev) => [...prev, { type: 'output', text: '→ Navigating to /' }]);
-                      navigate('/');
-                      return;
-                    }
-
-                    if (goBack.includes(normalized)) {
-                      setLogs((prev) => [...prev, { type: 'output', text: '→ Navigating back' }]);
-                      navigate(-1);
-                      return;
-                    }
-
-                    if (normalized.startsWith('cd ')) {
-                      const target = cmd.slice(3).trim();
-                      if (['/posts', 'posts'].includes(target)) {
-                        setLogs((prev) => [...prev, { type: 'output', text: '→ Navigating to /posts' }]);
-                        navigate('/posts');
+                          },
+                        ]);
                         return;
                       }
-                      if (['/about', 'about'].includes(target)) {
-                        setLogs((prev) => [...prev, { type: 'output', text: '→ Navigating to /about' }]);
-                        navigate('/about');
+
+                      if (goHome.includes(normalized)) {
+                        setLogs((prev) => [...prev, { type: 'output', text: '→ Navigating to /' }]);
+                        navigate('/');
                         return;
                       }
-                      setLogs((prev) => [...prev, { type: 'error', text: `cd: no such file or directory: ${target}` }]);
-                      return;
-                    }
 
-                    setLogs((prev) => [...prev, { type: 'error', text: `command not found: ${cmd}` }]);
-                  }}
-                  placeholder='输入命令，如 "cd /" 回首页，"cd .." 返回上一页，输入 "help" 查看帮助'
-                  style={{
-                    flex: 1,
-                    background: 'transparent',
-                    border: 'none',
-                    outline: 'none',
-                    color: 'inherit',
-                    fontFamily: 'var(--font-code)',
-                    fontSize: '0.875rem',
-                    caretColor: '#58a6ff',
-                  }}
-                  autoFocus
-                />
-              </InputLine>
-            </motion.div>
-          )}
-        </TerminalBody>
-      </Terminal>
-    </Container>
+                      if (goBack.includes(normalized)) {
+                        setLogs((prev) => [...prev, { type: 'output', text: '→ Navigating back' }]);
+                        navigate(-1);
+                        return;
+                      }
+
+                      if (normalized.startsWith('cd ')) {
+                        const target = cmd.slice(3).trim();
+                        if (['/posts', 'posts'].includes(target)) {
+                          setLogs((prev) => [...prev, { type: 'output', text: '→ Navigating to /posts' }]);
+                          navigate('/posts');
+                          return;
+                        }
+                        if (['/about', 'about'].includes(target)) {
+                          setLogs((prev) => [...prev, { type: 'output', text: '→ Navigating to /about' }]);
+                          navigate('/about');
+                          return;
+                        }
+                        setLogs((prev) => [
+                          ...prev,
+                          { type: 'error', text: `cd: no such file or directory: ${target}` },
+                        ]);
+                        return;
+                      }
+
+                      setLogs((prev) => [...prev, { type: 'error', text: `command not found: ${cmd}` }]);
+                    }}
+                    placeholder='输入命令，如 "cd /" 回首页，"cd .." 返回上一页，输入 "help" 查看帮助'
+                    style={{
+                      flex: 1,
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: 'inherit',
+                      fontFamily: 'var(--font-code)',
+                      fontSize: '0.875rem',
+                      caretColor: '#58a6ff',
+                    }}
+                    autoFocus
+                  />
+                </InputLine>
+              </motion.div>
+            )}
+          </TerminalBody>
+        </Terminal>
+      </Container>
+    </>
   );
 };
 
