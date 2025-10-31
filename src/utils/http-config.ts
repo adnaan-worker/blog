@@ -29,7 +29,7 @@ import { logout } from '@/store/modules/userSlice';
  */
 export function setupHttpConfig(navigate: (path: string) => void, dispatch?: AppDispatch) {
   HttpRequest.setUnauthorizedCallback(() => {
-    // ✅ 清除 Redux 状态（如果提供了 dispatch）
+    // 清除 Redux 状态（如果提供了 dispatch）
     if (dispatch) {
       dispatch(logout());
     }

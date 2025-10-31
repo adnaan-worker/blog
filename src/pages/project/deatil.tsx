@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   FiGithub,
   FiExternalLink,
@@ -34,35 +34,27 @@ const PageContainer = styled.div`
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 2rem 1rem;
-  min-height: calc(100vh - 200px);
+  padding: 20px 1.5rem 4rem;
+  position: relative;
+  z-index: 3;
 
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: 15px 1rem 3rem;
   }
 `;
 
-const BackButton = styled.button`
+const BackLink = styled(Link)`
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.75rem;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary);
-  border-radius: 4px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  gap: 0.5rem;
   margin-bottom: 2rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(var(--accent-rgb), 0.08);
     color: var(--accent-color);
-  }
-
-  svg {
-    font-size: 0.9rem;
+    transform: translateX(-3px);
   }
 `;
 
@@ -245,7 +237,6 @@ const ProjectLayout = styled.div`
   display: flex;
   gap: 2rem;
   position: relative;
-  z-index: 3;
 
   @media (max-width: 1024px) {
     flex-direction: column;
@@ -269,9 +260,8 @@ const ProjectSidebar = styled.div`
   position: -webkit-sticky;
   top: 150px;
   width: 280px;
-  height: calc(100vh - 210px);
+  height: fit-content;
   align-self: flex-start;
-  margin-top: 40px;
   overflow-y: auto;
 
   /* 自定义滚动条 */
@@ -556,7 +546,6 @@ const statusTextMap: Record<string, string> = {
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -607,10 +596,9 @@ const ProjectDetail: React.FC = () => {
             {/* 噪点背景 - 仅详情页使用 */}
             <DetailNoiseBackground />
             <PageContainer>
-              <BackButton onClick={() => navigate('/projects')}>
-                <FiArrowLeft />
-                返回项目列表
-              </BackButton>
+              <BackLink to="/projects">
+                <FiArrowLeft /> 返回项目列表
+              </BackLink>
 
               {/* 项目布局 - 参考手记详情页结构 */}
               <ProjectLayout>

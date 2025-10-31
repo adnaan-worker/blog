@@ -517,10 +517,24 @@ const BlogDetail: React.FC = () => {
 
     const extractedHeadings: DetailPageHeading[] = [];
     headingElements.forEach((element) => {
-      const headingId = element.id || '';
-      const headingText = element.textContent || '';
+      const headingText = element.textContent?.trim() || '';
       const tagName = element.tagName.toLowerCase();
       const level = parseInt(tagName.substring(1));
+
+      // 跳过文本为空的标题
+      if (!headingText) return;
+
+      // 如果没有 ID，根据文本生成一个
+      let headingId = element.id || '';
+      if (!headingId && headingText) {
+        headingId = `heading-${headingText
+          .toLowerCase()
+          .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .substring(0, 50)}`;
+        // 设置到 DOM 元素上，以便后续使用
+        element.id = headingId;
+      }
 
       extractedHeadings.push({
         id: headingId,
@@ -530,7 +544,12 @@ const BlogDetail: React.FC = () => {
       });
     });
 
-    setHeadings(extractedHeadings);
+    // 只有当有有效标题时才设置
+    if (extractedHeadings.length > 0) {
+      setHeadings(extractedHeadings);
+    } else {
+      setHeadings([]);
+    }
 
     const ACTIVE_THRESHOLD = 100;
 

@@ -541,10 +541,26 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
 
         // 处理 h2-h6 标题（文章模式 - 添加锚点）
         if (mode === 'article' && ['h2', 'h3', 'h4', 'h5', 'h6'].includes(element.name) && element.children) {
-          const text = element.children.map((child: any) => (child.type === 'text' ? child.data : '')).join('');
+          // 递归提取所有文本内容（支持嵌套元素）
+          const extractText = (node: any): string => {
+            if (node.type === 'text') return node.data || '';
+            if (node.children && Array.isArray(node.children)) {
+              return node.children.map(extractText).join('');
+            }
+            return '';
+          };
+
+          const text = extractText({ children: element.children }).trim();
+
+          // 确保文本不为空，否则不渲染标题
+          if (!text) {
+            return undefined;
+          }
+
           const id = `heading-${text
-            ?.toLowerCase()
+            .toLowerCase()
             .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
+            .replace(/^-+|-+$/g, '') // 移除开头和结尾的连字符
             .substring(0, 50)}`;
 
           const HeadingTag = element.name as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';

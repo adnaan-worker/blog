@@ -186,9 +186,9 @@ const TocList = styled.div`
 `;
 
 // 目录项
-const TocItem = styled.div<{ active: boolean; level: number }>`
+const TocItem = styled.div<{ active: boolean; level: number; minLevel: number }>`
   position: relative;
-  padding: 4px 0 4px ${(props) => 16 + (props.level - 2) * 16}px; /* 根据层级添加缩进 */
+  padding: 4px 0 4px ${(props) => 16 + (props.level - props.minLevel) * 16}px; /* 根据相对层级添加缩进 */
   margin-bottom: 8px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 使用统一的缓动函数 */
@@ -197,7 +197,7 @@ const TocItem = styled.div<{ active: boolean; level: number }>`
   &:before {
     content: '';
     position: absolute;
-    left: ${(props) => (props.level - 2) * 16}px; /* 短线位置也跟随缩进 */
+    left: ${(props) => (props.level - props.minLevel) * 16}px; /* 短线位置也跟随相对缩进 */
     top: 50%;
     transform: translateY(-50%);
     width: ${(props) => (props.active ? '8px' : '0')};
@@ -285,11 +285,15 @@ const ArticleToc: React.FC<ArticleTocProps> = memo(
         );
       }
 
+      // 计算最小标题层级，用于相对缩进计算
+      const minLevel = Math.min(...headings.map((h) => h.level));
+
       return headings.map((heading) => (
         <TocItem
           key={heading.id}
           active={activeHeading === heading.id}
           level={heading.level}
+          minLevel={minLevel}
           onClick={() => onHeadingClick?.(heading.id)}
         >
           <span>{heading.text}</span>
