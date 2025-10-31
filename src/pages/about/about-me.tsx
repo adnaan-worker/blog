@@ -5,7 +5,7 @@ import { FiGithub, FiMail, FiLink } from 'react-icons/fi';
 import { SEO } from '@/components/common';
 import { personalInfo, skillTags, experiences, projects, contactInfo } from '@/data/about-me.data';
 import type { ExperienceItem } from '@/data/about-me.data';
-import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { SPRING_PRESETS, useAnimationEngine } from '@/utils/ui/animation';
 import { formatDate } from '@/utils';
 
 // 页面容器
@@ -280,7 +280,7 @@ const SectionTitle = styled(motion.h2)`
 `;
 
 // 经历列表
-const TimelineList = styled.div`
+const TimelineList = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -399,7 +399,7 @@ const Tag = styled.span`
 `;
 
 // 项目列表
-const ProjectsList = styled.div`
+const ProjectsList = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -479,6 +479,8 @@ const ProjectTags = styled.div`
 `;
 
 const AboutMe: React.FC = () => {
+  const { variants } = useAnimationEngine();
+
   return (
     <>
       <SEO title="自述" description={personalInfo.bio} keywords="全栈开发,React,Node.js,个人简介" />
@@ -568,16 +570,15 @@ const AboutMe: React.FC = () => {
             >
               工作与学习经历
             </SectionTitle>
-            <TimelineList>
-              {experiences.map((exp, index) => (
-                <TimelineItem
-                  key={exp.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ amount: 0.1 }}
-                  transition={{ delay: index * 0.02, ...SPRING_PRESETS.snappy }}
-                >
+            <TimelineList
+              initial="hidden"
+              animate="visible"
+              whileInView="visible"
+              viewport={{ amount: 0.1, once: true }}
+              variants={variants.stagger}
+            >
+              {experiences.map((exp) => (
+                <TimelineItem key={exp.id} variants={variants.listItem}>
                   <TimelineHeader>
                     <TimelineDate>{formatDate(exp.date, 'YYYY-MM')}</TimelineDate>
                     <TimelineTitle>
@@ -619,16 +620,15 @@ const AboutMe: React.FC = () => {
             >
               项目作品
             </SectionTitle>
-            <ProjectsList>
-              {projects.map((project, index) => (
-                <ProjectItem
-                  key={project.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ amount: 0.1 }}
-                  transition={{ delay: index * 0.02, ...SPRING_PRESETS.snappy }}
-                >
+            <ProjectsList
+              initial="hidden"
+              animate="visible"
+              whileInView="visible"
+              viewport={{ amount: 0.1, once: true }}
+              variants={variants.stagger}
+            >
+              {projects.map((project) => (
+                <ProjectItem key={project.id} variants={variants.listItem}>
                   <ProjectHeader>
                     <ProjectTitle $featured={project.featured}>{project.title}</ProjectTitle>
                     <ProjectLinks>

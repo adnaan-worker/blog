@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { SEO } from '@/components/common';
 import { siteMilestones, techStack, siteStats } from '@/data/about-site.data';
 import type { SiteMilestone } from '@/data/about-site.data';
-import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { SPRING_PRESETS, useAnimationEngine } from '@/utils/ui/animation';
 import { formatDate } from '@/utils';
 
 // 页面容器
@@ -254,7 +254,7 @@ const SectionTitle = styled(motion.h2)`
 `;
 
 // 里程碑列表
-const MilestonesList = styled.div`
+const MilestonesList = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -344,6 +344,7 @@ const Tag = styled.span`
 `;
 
 const AboutSite: React.FC = () => {
+  const { variants } = useAnimationEngine();
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
   const filteredMilestones =
@@ -459,16 +460,15 @@ const AboutSite: React.FC = () => {
             >
               发展历程
             </SectionTitle>
-            <MilestonesList>
-              {filteredMilestones.map((milestone, index) => (
-                <MilestoneItem
-                  key={milestone.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ amount: 0.1 }}
-                  transition={{ delay: index * 0.02, ...SPRING_PRESETS.snappy }}
-                >
+            <MilestonesList
+              initial="hidden"
+              animate="visible"
+              whileInView="visible"
+              viewport={{ amount: 0.1, once: true }}
+              variants={variants.stagger}
+            >
+              {filteredMilestones.map((milestone) => (
+                <MilestoneItem key={milestone.id} variants={variants.listItem}>
                   <MilestoneHeader>
                     <MilestoneDate>{formatDate(milestone.date, 'YYYY-MM-DD')}</MilestoneDate>
                     <MilestoneTitle>{milestone.title}</MilestoneTitle>

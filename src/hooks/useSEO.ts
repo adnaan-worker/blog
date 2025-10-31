@@ -172,7 +172,7 @@ export const useSEO = (config: SEOConfig) => {
     setLinkTag('canonical', canonicalUrl);
 
     // 8. 移动端优化
-    setMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=5.0');
+    setMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
     setMetaTag('theme-color', SITE_CONFIG.themeColor);
 
     // 9. 应用名称（PWA相关）
