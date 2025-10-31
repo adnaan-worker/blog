@@ -42,6 +42,14 @@ export const router = createHashRouter([
         path: '/profile',
         element: elements.profile,
       },
+      {
+        path: '/about-site',
+        element: elements.aboutSite,
+      },
+      {
+        path: '/about-me',
+        element: elements.aboutMe,
+      },
     ],
   },
   // 编辑器独立页面路由（不继承主布局）

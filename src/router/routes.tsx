@@ -19,6 +19,10 @@ const Profile = lazy(() => import('@/pages/user/profile'));
 const ArticleEditor = lazy(() => import('@/pages/editor/article'));
 const NoteEditor = lazy(() => import('@/pages/editor/note'));
 
+// 关于页面
+const AboutSite = lazy(() => import('@/pages/about/about-site'));
+const AboutMe = lazy(() => import('@/pages/about/about-me'));
+
 /**
  * 路由配置
  * 返回路由元素（JSX），用于在 config.ts 中创建 router
@@ -48,5 +52,7 @@ export const createRouteElements = () => ({
       <NoteEditor />
     </Suspense>
   ),
+  aboutSite: <AboutSite />,
+  aboutMe: <AboutMe />,
   notFound: <NotFound />,
 });

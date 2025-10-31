@@ -8,7 +8,7 @@ import { useAnimationEngine } from '@/utils/ui/animation';
 interface MenuItem {
   path: string;
   title: string;
-  icon: React.ReactNode;
+  icon: React.ComponentType<{ size?: number }>;
   isExternal?: boolean;
   isDropdown?: boolean;
   children?: MenuItem[];
@@ -91,11 +91,11 @@ export const NavLinkWithHover: React.FC<{
   active: boolean;
   onClick?: (e: React.MouseEvent<Element, MouseEvent>) => void;
   children: React.ReactNode;
-  icon: React.ReactNode;
-}> = ({ to, active, onClick, children, icon }) => {
+  icon: React.ComponentType<{ size?: number }>;
+}> = ({ to, active, onClick, children, icon: Icon }) => {
   return (
     <NavLink to={to} active={active ? 'true' : 'false'} onClick={onClick} className="nav-link-hover">
-      {active ? icon : <></>}
+      {active && Icon ? <Icon size={16} /> : null}
       {children}
       {active ? <div className="underline" /> : <></>}
     </NavLink>
@@ -166,22 +166,27 @@ const NavLinks: React.FC<NavLinksProps> = ({
               <AnimatePresence>
                 {moreDropdownOpen && (
                   <DropdownContent initial="hidden" animate="visible" exit="exit" variants={variants.dropdown}>
-                    {item.children.map((childItem) => (
-                      <DropdownItem
-                        key={childItem.path}
-                        to={childItem.path}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // 先替换父菜单
-                          onDropdownItemClick?.(childItem);
-                          // 再跳转到目标页面
-                          navigate(childItem.path);
-                        }}
-                      >
-                        {childItem.icon}
-                        {childItem.title}
-                      </DropdownItem>
-                    ))}
+                    {item.children.map((childItem) => {
+                      const ChildIcon = childItem.icon;
+                      return (
+                        <DropdownItem
+                          key={childItem.path}
+                          to={childItem.path}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            // 先替换父菜单
+                            onDropdownItemClick?.(childItem);
+                            // 再跳转到目标页面
+                            navigate(childItem.path);
+                          }}
+                        >
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <ChildIcon size={16} />
+                            <span>{childItem.title}</span>
+                          </span>
+                        </DropdownItem>
+                      );
+                    })}
                   </DropdownContent>
                 )}
               </AnimatePresence>

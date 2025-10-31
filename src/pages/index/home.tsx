@@ -8,7 +8,7 @@ import { useAnimationEngine } from '@/utils/ui/animation';
 import { Icon } from '@/components/common/icon';
 import { WaveText, SEO } from '@/components/common';
 import { useSiteSettings } from '@/layouts';
-import { PAGE_SEO_CONFIG } from '@/config/seo.config';
+import { PAGE_SEO_CONFIG, getRandomPoeticTitle } from '@/config/seo.config';
 import {
   ArticlesSection,
   NotesSection,
@@ -763,7 +763,7 @@ const Home: React.FC = () => {
   return (
     <>
       <SEO
-        title={PAGE_SEO_CONFIG.home.title}
+        title={getRandomPoeticTitle()}
         description={PAGE_SEO_CONFIG.home.description}
         keywords={PAGE_SEO_CONFIG.home.keywords}
         type="website"

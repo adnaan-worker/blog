@@ -281,7 +281,7 @@ const MobileAuthButton = styled.button`
 interface MenuItem {
   path: string;
   title: string;
-  icon: React.ReactNode;
+  icon: React.ComponentType<{ size?: number }>;
   isExternal?: boolean;
   isDropdown?: boolean;
   children?: MenuItem[];
@@ -380,26 +380,31 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                     return (
                       <React.Fragment key={item.path}>
                         <MobileNavLink to="#" active="false" onClick={() => {}}>
-                          {item.icon}
-                          {item.title}
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <item.icon size={16} />
+                            <span>{item.title}</span>
+                          </span>
                         </MobileNavLink>
 
                         {/* 渲染子菜单项，稍微缩进 */}
                         <div style={{ paddingLeft: '1.5rem' }}>
-                          {item.children.map((childItem) => (
-                            <MobileNavLink
-                              key={childItem.path}
-                              to={childItem.path}
-                              active={(
-                                location.pathname === childItem.path ||
-                                (childItem.path !== '/' && location.pathname.includes(childItem.path))
-                              ).toString()}
-                              onClick={() => handleSpecialPathClick(childItem.path)}
-                            >
-                              {childItem.icon}
-                              {childItem.title}
-                            </MobileNavLink>
-                          ))}
+                          {item.children.map((childItem) => {
+                            const ChildIcon = childItem.icon;
+                            return (
+                              <MobileNavLink
+                                key={childItem.path}
+                                to={childItem.path}
+                                active={(
+                                  location.pathname === childItem.path ||
+                                  (childItem.path !== '/' && location.pathname.includes(childItem.path))
+                                ).toString()}
+                                onClick={() => handleSpecialPathClick(childItem.path)}
+                              >
+                                <ChildIcon size={16} />
+                                {childItem.title}
+                              </MobileNavLink>
+                            );
+                          })}
                         </div>
                       </React.Fragment>
                     );
@@ -419,8 +424,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                         item.isExternal || item.path.startsWith('#') ? handleSpecialPathClick(item.path) : onLinkClick()
                       }
                     >
-                      {item.icon}
-                      {item.title}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <item.icon size={16} />
+                        <span>{item.title}</span>
+                      </span>
                     </MobileNavLink>
                   );
                 })}
@@ -504,12 +511,17 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             ) : (
               // 未登录用户显示登录和注册
               accountItems &&
-              accountItems.map((item) => (
-                <MobileAuthButton key={item.path} onClick={() => handleSpecialPathClick(item.path)}>
-                  {item.icon}
-                  {item.title}
-                </MobileAuthButton>
-              ))
+              accountItems.map((item) => {
+                const AccountIcon = item.icon;
+                return (
+                  <MobileAuthButton key={item.path} onClick={() => handleSpecialPathClick(item.path)}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <AccountIcon size={16} />
+                      <span>{item.title}</span>
+                    </span>
+                  </MobileAuthButton>
+                );
+              })
             )}
           </MobileMenuSection>
 

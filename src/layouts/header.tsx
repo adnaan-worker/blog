@@ -300,8 +300,38 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
 
   // 菜单状态 - 从 localStorage 恢复选中的菜单项
   const [mainNavItems, setMainNavItems] = useState<MenuItem[]>(() => {
-    const saved = storage.local.get<MenuItem>(STORAGE_KEYS.SELECTED_MENU);
-    return saved ? replaceMoreMenuItem(defaultMainNavItems, saved) : defaultMainNavItems;
+    const savedPath = storage.local.get<string>(STORAGE_KEYS.SELECTED_MENU);
+
+    if (!savedPath) {
+      return defaultMainNavItems;
+    }
+
+    // 根据保存的 path 查找对应的菜单项
+    let foundItem: MenuItem | undefined;
+
+    for (const item of defaultMainNavItems) {
+      if (item.path === savedPath) {
+        foundItem = item;
+        break;
+      }
+      // 检查子菜单
+      if (item.children) {
+        const childItem = item.children.find((child) => child.path === savedPath);
+        if (childItem) {
+          foundItem = childItem;
+          break;
+        }
+      }
+    }
+
+    // 如果找到了匹配的菜单项，替换父菜单
+    if (foundItem) {
+      return replaceMoreMenuItem(defaultMainNavItems, foundItem);
+    }
+
+    // 如果找不到，清理缓存并使用默认值
+    storage.local.remove(STORAGE_KEYS.SELECTED_MENU);
+    return defaultMainNavItems;
   });
 
   // 其他状态
@@ -347,7 +377,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
             ...getBaseMobileMenuGroups(),
             {
               title: '用户中心',
-              items: [{ path: '/profile', title: '个人中心', icon: <FiUser size={16} /> }],
+              items: [{ path: '/profile', title: '个人中心', icon: FiUser }],
             },
           ]
         : getBaseMobileMenuGroups(),
@@ -362,7 +392,8 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
   const handleDropdownItemClick = useCallback((item: MenuItem) => {
     const newMainNavItems = replaceMoreMenuItem(defaultMainNavItems, item);
     setMainNavItems(newMainNavItems);
-    storage.local.set(STORAGE_KEYS.SELECTED_MENU, item);
+    // 只保存 path，避免函数类型的 icon 被 JSON 序列化后丢失
+    storage.local.set(STORAGE_KEYS.SELECTED_MENU, item.path);
     setMoreDropdownOpen(false);
   }, []);
 

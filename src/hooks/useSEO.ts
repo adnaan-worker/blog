@@ -178,12 +178,7 @@ export const useSEO = (config: SEOConfig) => {
     // 9. 应用名称（PWA相关）
     setMetaTag('application-name', SITE_CONFIG.name);
     setMetaTag('apple-mobile-web-app-title', SITE_CONFIG.name);
-
-    // 清理函数：组件卸载时重置为默认值
-    return () => {
-      document.title = DEFAULT_SEO_CONFIG.title;
-      // 不移除meta标签，只在下次更新时覆盖
-    };
+    return () => {};
   }, [config, location.pathname]);
 };
 

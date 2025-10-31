@@ -11,7 +11,7 @@ import { FiHome, FiBookOpen, FiCode, FiInfo, FiMail, FiLogIn, FiUserPlus, FiUser
 export interface MenuItem {
   path: string;
   title: string;
-  icon: React.ReactNode;
+  icon: React.ComponentType<{ size?: number }>;
   isExternal?: boolean;
   isDropdown?: boolean;
   children?: MenuItem[];
@@ -28,38 +28,38 @@ export const mainNavItems: MenuItem[] = [
   {
     path: '/',
     title: '首页',
-    icon: <FiHome size={16} />,
+    icon: FiHome,
   },
   {
     path: '/blog',
     title: '文稿',
-    icon: <FiBookOpen size={16} />,
+    icon: FiBookOpen,
   },
   {
     path: '/notes',
     title: '手记',
-    icon: <FiEdit size={16} />,
+    icon: FiEdit,
   },
   {
     path: '/projects',
     title: '项目',
-    icon: <FiCode size={16} />,
+    icon: FiCode,
   },
   {
     path: '#',
     title: '关于',
-    icon: <FiInfo size={16} />,
+    icon: FiInfo,
     isDropdown: true,
     children: [
       {
-        path: '/about',
+        path: '/about-site',
         title: '关于此站点',
-        icon: <FiInfo size={16} />,
+        icon: FiInfo,
       },
       {
-        path: '/contact',
+        path: '/about-me',
         title: '自述',
-        icon: <FiMail size={16} />,
+        icon: FiMail,
       },
     ],
   },
@@ -71,12 +71,12 @@ export const accountMenuItems: MenuItem[] = [
   {
     path: '#login',
     title: '登录',
-    icon: <FiLogIn size={16} />,
+    icon: FiLogIn,
   },
   {
     path: '#register',
     title: '注册',
-    icon: <FiUserPlus size={16} />,
+    icon: FiUserPlus,
   },
 ];
 
@@ -85,7 +85,7 @@ export const accountMenuItems: MenuItem[] = [
 export const userCenterMenuItem: MenuItem = {
   path: '/profile',
   title: '个人中心',
-  icon: <FiUser size={16} />,
+  icon: FiUser,
 };
 
 /* ==================== 移动端菜单配置 ==================== */
