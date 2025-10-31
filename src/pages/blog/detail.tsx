@@ -502,80 +502,33 @@ const BlogDetail: React.FC = () => {
     window.scrollTo(0, 0);
   }, [id, fetchArticle]);
 
-  // 提取标题并设置滚动监听
-  const setupHeadingsAndScroll = useCallback(() => {
-    if (!article?.content || !articleRef.current) return;
+  // 处理从 ArticleContent 接收到的标题
+  const handleHeadingsExtracted = useCallback((extractedHeadings: DetailPageHeading[]) => {
+    setHeadings(extractedHeadings);
+  }, []);
 
-    const articleElement = articleRef.current;
-    const headingElements = Array.from(
-      articleElement.querySelectorAll(
-        'h2.article-heading, h3.article-heading, h4.article-heading, h5.article-heading, h6.article-heading',
-      ),
-    );
-
-    if (headingElements.length === 0) return;
-
-    const extractedHeadings: DetailPageHeading[] = [];
-    headingElements.forEach((element) => {
-      const headingText = element.textContent?.trim() || '';
-      const tagName = element.tagName.toLowerCase();
-      const level = parseInt(tagName.substring(1));
-
-      // 跳过文本为空的标题
-      if (!headingText) return;
-
-      // 如果没有 ID，根据文本生成一个
-      let headingId = element.id || '';
-      if (!headingId && headingText) {
-        headingId = `heading-${headingText
-          .toLowerCase()
-          .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
-          .replace(/^-+|-+$/g, '')
-          .substring(0, 50)}`;
-        // 设置到 DOM 元素上，以便后续使用
-        element.id = headingId;
-      }
-
-      extractedHeadings.push({
-        id: headingId,
-        text: headingText,
-        level,
-        element: element as HTMLElement,
-      });
-    });
-
-    // 只有当有有效标题时才设置
-    if (extractedHeadings.length > 0) {
-      setHeadings(extractedHeadings);
-    } else {
-      setHeadings([]);
-    }
+  // 设置滚动监听 - 监听活动标题和阅读进度
+  useEffect(() => {
+    if (headings.length === 0) return;
 
     const ACTIVE_THRESHOLD = 100;
 
     const updateActiveHeading = () => {
-      if (headingElements.length === 0) return;
+      const passedHeadings: { id: string; top: number }[] = [];
 
-      const passedHeadings: { element: Element; top: number }[] = [];
-
-      headingElements.forEach((heading) => {
-        const rect = heading.getBoundingClientRect();
+      headings.forEach((heading) => {
+        if (!heading.element) return;
+        const rect = heading.element.getBoundingClientRect();
         if (rect.top <= ACTIVE_THRESHOLD) {
-          passedHeadings.push({ element: heading, top: rect.top });
+          passedHeadings.push({ id: heading.id, top: rect.top });
         }
       });
 
       if (passedHeadings.length > 0) {
         passedHeadings.sort((a, b) => b.top - a.top);
-        const activeElement = passedHeadings[0].element as HTMLElement;
-        if (activeElement.id) {
-          setActiveHeading(activeElement.id);
-        }
-      } else {
-        const firstElement = headingElements[0] as HTMLElement;
-        if (firstElement.id) {
-          setActiveHeading(firstElement.id);
-        }
+        setActiveHeading(passedHeadings[0].id);
+      } else if (headings[0]) {
+        setActiveHeading(headings[0].id);
       }
     };
 
@@ -585,12 +538,12 @@ const BlogDetail: React.FC = () => {
       }
 
       scrollHandlerRef.current = window.requestAnimationFrame(() => {
-        const scrollTop = window.scrollY;
-        if (!articleElement) return;
+        if (!articleRef.current) return;
 
-        const contentHeight = articleElement.scrollHeight;
+        const scrollTop = window.scrollY;
+        const contentHeight = articleRef.current.scrollHeight;
         const clientHeight = document.documentElement.clientHeight;
-        const contentRect = articleElement.getBoundingClientRect();
+        const contentRect = articleRef.current.getBoundingClientRect();
         const contentTop = contentRect.top + window.scrollY;
 
         const relativeScrollTop = Math.max(0, scrollTop - contentTop);
@@ -612,16 +565,7 @@ const BlogDetail: React.FC = () => {
         window.cancelAnimationFrame(scrollHandlerRef.current);
       }
     };
-  }, [article]);
-
-  // 设置标题和滚动监听
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setupHeadingsAndScroll();
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [setupHeadingsAndScroll]);
+  }, [headings]);
 
   // 滚动时显示书签
   useEffect(() => {
@@ -787,6 +731,7 @@ const BlogDetail: React.FC = () => {
                         content: article?.content || '',
                       }}
                       contentRef={articleRef as RefObject<HTMLDivElement>}
+                      onHeadingsExtracted={handleHeadingsExtracted}
                     />
 
                     {/* 上一篇/下一篇文章导航 */}

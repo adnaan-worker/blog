@@ -199,10 +199,11 @@ const AuthorInfo = styled.div`
 interface ArticleContentProps {
   article: Article;
   contentRef: React.RefObject<HTMLDivElement>;
+  onHeadingsExtracted?: (headings: { id: string; text: string; level: number; element: HTMLElement }[]) => void;
 }
 
 // 使用memo包装组件，避免不必要的重渲染
-const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRef }) => {
+const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRef, onHeadingsExtracted }) => {
   // 使用useMemo缓存标签展示
   const articleTags = useMemo(() => {
     if (!article.tags || !Array.isArray(article.tags)) return null;
@@ -216,13 +217,58 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
     });
   }, [article.tags]);
 
-  // 简化的useEffect，只处理contentRef的设置
+  // 内容渲染完成后，提取标题并通知父组件
   useEffect(() => {
-    // 这里不再需要复杂的DOM操作，RichTextRenderer会处理所有内容
-    if (contentRef && typeof contentRef === 'object' && contentRef.current) {
-      // 可以在这里添加一些额外的处理逻辑
-    }
-  }, [contentRef, article.content]);
+    if (!contentRef?.current || !onHeadingsExtracted) return;
+
+    // 使用 requestAnimationFrame 确保 DOM 完全渲染
+    const rafId = requestAnimationFrame(() => {
+      if (!contentRef.current) return;
+
+      // 查找所有标题元素
+      const headingElements = Array.from(contentRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+
+      if (headingElements.length === 0) {
+        onHeadingsExtracted([]);
+        return;
+      }
+
+      const extractedHeadings = headingElements
+        .map((element) => {
+          const headingText = element.textContent?.trim() || '';
+          if (!headingText) return null;
+
+          const tagName = element.tagName.toLowerCase();
+          const level = parseInt(tagName.substring(1));
+
+          // 自动添加 article-heading 类
+          element.classList.add('article-heading');
+
+          // 生成或使用现有 ID
+          let headingId = element.id;
+          if (!headingId) {
+            headingId = `heading-${headingText
+              .toLowerCase()
+              .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
+              .replace(/^-+|-+$/g, '')
+              .substring(0, 50)}`;
+            element.id = headingId;
+          }
+
+          return {
+            id: headingId,
+            text: headingText,
+            level,
+            element: element as HTMLElement,
+          };
+        })
+        .filter((h): h is { id: string; text: string; level: number; element: HTMLElement } => h !== null);
+
+      onHeadingsExtracted(extractedHeadings);
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  }, [contentRef, article.content, onHeadingsExtracted]);
 
   const authorName =
     typeof article.author === 'object'

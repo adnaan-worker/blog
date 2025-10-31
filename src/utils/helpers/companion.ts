@@ -189,8 +189,6 @@ export const getConnectionType = (): SmartContext['system']['connection'] => {
  */
 export const getLocationByIP = async (): Promise<SmartContext['location'] | undefined> => {
   try {
-    console.log('📍 正在通过IP获取地理位置...');
-
     const response = await fetch('http://ip-api.com/json/?lang=zh-CN&fields=status,country,city,lat,lon,timezone');
 
     if (!response.ok) {
@@ -198,7 +196,6 @@ export const getLocationByIP = async (): Promise<SmartContext['location'] | unde
     }
 
     const data = await response.json();
-    console.log('✅ ip-api.com 返回数据:', data);
 
     if (data.status === 'success') {
       const location = {
@@ -209,7 +206,6 @@ export const getLocationByIP = async (): Promise<SmartContext['location'] | unde
         longitude: data.lon,
       };
 
-      console.log('✅ IP定位成功 (ip-api.com):', `${location.city}, ${location.country}`);
       return location;
     }
   } catch (e) {
@@ -234,12 +230,8 @@ export const getWeather = async (location?: SmartContext['location']): Promise<S
   if (!location) return undefined;
 
   try {
-    console.log('🌤️ 正在获取天气信息:', location.city);
-
     // 使用封装的 API 调用代理服务
     const result = await API.proxy.getWeather(location.city, 'json');
-
-    console.log('✅ 天气API返回数据:', result);
 
     // 解析后端代理返回的数据结构
     const data = result.data || result;
@@ -286,7 +278,6 @@ export const getWeather = async (location?: SmartContext['location']): Promise<S
         description,
       };
 
-      console.log('✅ 天气解析成功:', weather);
       return weather;
     }
   } catch (e) {
