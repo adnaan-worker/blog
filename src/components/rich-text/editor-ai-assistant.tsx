@@ -3,8 +3,8 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiCpu, FiX, FiChevronDown, FiChevronUp, FiCheck, FiLoader } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
-import { aiWritingHelper } from '@/utils/ai-writing-helper';
-import { processAIContentForEditor } from '@/utils/editor-helpers';
+import { aiWritingHelper } from '@/utils/editor/ai-helper';
+import { processAIContentForEditor } from '@/utils/editor/helpers';
 
 // 样式组件
 const AssistantContainer = styled.div<{ isVisible: boolean }>`

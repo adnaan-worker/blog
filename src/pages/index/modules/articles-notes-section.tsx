@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 import { formatDate, getTimeAgo } from '@/utils';
-import { useAnimationEngine, useSmartInView } from '@/utils/animation-engine';
+import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 import { ArticlesSectionProps, NotesSectionProps } from './types';
 
 // Styled Components

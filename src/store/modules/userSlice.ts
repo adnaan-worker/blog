@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import API from '@/utils/api';
+import { API } from '@/utils';
 import { storage } from '@/utils';
 
 export interface User {

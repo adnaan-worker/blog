@@ -10,8 +10,8 @@ export interface SocketState {
   lastConnected: Date | null;
 }
 
-import { getSocketConfig } from '@/utils/socket-config';
-import { getDeviceId } from '@/utils/device-id';
+import { getSocketConfig } from '@/utils/config/socket';
+import { getDeviceId } from '@/utils/core/device-id';
 
 // Socket配置 - 使用统一的配置管理
 const SOCKET_CONFIG = {

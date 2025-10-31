@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import styled from '@emotion/styled';
 import { FiType, FiList, FiFileText, FiCode, FiMessageSquare, FiMinus, FiImage, FiLink } from 'react-icons/fi';
-import { removeSlashCommand } from '@/utils/editor-helpers';
+import { removeSlashCommand } from '@/utils/editor/helpers';
 
 const CommandMenuContainer = styled.div`
   position: absolute;

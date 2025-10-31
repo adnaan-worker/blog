@@ -5,8 +5,8 @@ import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { FiLogOut, FiX, FiUser } from 'react-icons/fi';
 import type { RootState } from '@/store';
-import { scrollLock } from '@/utils/scroll-lock';
-import { getRoleDisplayName, getRoleColor } from '@/utils/role-helper';
+import { scrollLock } from '@/utils/core/scroll-lock';
+import { getRoleDisplayName, getRoleColor } from '@/utils/helpers/role';
 
 // Spring 动画配置 - 使用统一的配置
 const SPRING_CONFIGS = {

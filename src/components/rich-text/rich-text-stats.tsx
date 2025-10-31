@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { FiClock, FiImage, FiLink, FiCode, FiType, FiEye } from 'react-icons/fi';
-import { RichTextParser } from '@/utils/rich-text-parser';
+import { RichTextParser } from '@/utils/editor/parser';
 
 // 统计容器
 const StatsContainer = styled.div`

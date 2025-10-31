@@ -14,7 +14,7 @@ import {
   FiGlobe,
 } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 import { storage } from '@/utils';
 
 interface QuickAction {

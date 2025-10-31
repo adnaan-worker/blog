@@ -368,7 +368,7 @@ export class RichTextParser {
     if (cached !== null) return cached;
 
     // 先进行基础安全清理
-    let cleanHtml = html
+    const cleanHtml = html
       .replace(/<script[^>]*>.*?<\/script>/gi, '')
       .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
       .replace(/<object[^>]*>.*?<\/object>/gi, '')

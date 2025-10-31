@@ -24,7 +24,6 @@ import {
   FiTrash2,
   FiMinus,
 } from 'react-icons/fi';
-import { MdFormatColorText, MdFormatColorFill } from 'react-icons/md';
 import { HeadingMenu } from './heading-menu';
 import { ColorPicker } from './color-picker';
 

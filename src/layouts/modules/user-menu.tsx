@@ -6,8 +6,8 @@ import { FiUser, FiLogOut, FiLogIn, FiUserPlus } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
-import { getRoleDisplayName, getRoleColor } from '@/utils/role-helper';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { getRoleDisplayName, getRoleColor } from '@/utils/helpers/role';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 用户头像样式
 const Avatar = styled.div<{ hasImage?: boolean }>`

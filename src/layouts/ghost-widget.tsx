@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { RootState } from '@/store';
 import { storage } from '@/utils';
-import { buildSmartContext, getSmartMessage, SmartContext } from '@/utils/smart-companion';
+import { buildSmartContext, getSmartMessage, SmartContext } from '@/utils/helpers/companion';
 
 // 幽灵容器 - 缩小到原始的 45%，支持交互和拖拽
 const GhostContainer = styled(motion.div)<{ isDragging?: boolean }>`
@@ -862,7 +862,7 @@ export const GhostWidget = () => {
 
     // 小范围高力度：降低最大拉力距离，提高力度系数
     const maxPull = 150; // 从300降到150，只需拉一半距离
-    let power = Math.min(distance, maxPull) / 4; // 从除以8改为除以4，力度翻倍
+    const power = Math.min(distance, maxPull) / 4; // 从除以8改为除以4，力度翻倍
 
     // 边界增强：如果幽灵在边界附近，增加该方向的拉力
     const edgeThreshold = 100; // 距离边界100px内视为"靠近边界"
@@ -964,7 +964,7 @@ export const GhostWidget = () => {
 
         // 小范围高力度：降低最大拉力距离，提高力度系数
         const maxPull = 150;
-        let power = Math.min(distance, maxPull) / 4;
+        const power = Math.min(distance, maxPull) / 4;
 
         // 边界增强
         const edgeThreshold = 100;

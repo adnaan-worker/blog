@@ -3,16 +3,15 @@ import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { FiCalendar, FiClock, FiTag, FiArrowRight } from 'react-icons/fi';
-import type { Article } from '@/utils/api';
+import type { Article } from '@/types';
 import ImageError from '@/assets/images/image-error.png';
 import { formatDate } from '@/utils';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 export const fadeInUpVariants = {};
 export const staggerContainerVariants = {};
 
-// 导出 Article 类型供其他组件使用
-export type { Article };
+// 注意：Article 类型现在从 @/types 统一导入
 
 // 时间线容器
 const TimelineContainer = styled(motion.div)`

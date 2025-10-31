@@ -2,7 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 import type { UserStats } from './types';
 
 interface DataStatsGridProps {

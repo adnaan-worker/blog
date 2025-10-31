@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiTag, FiEdit2, FiTrash2, FiFileText } from 'react-icons/fi';
-import { API, type Tag } from '@/utils/api';
+import { API } from '@/utils/api';
+import type { Tag } from '@/types';
 import { Modal, Button, Input, Textarea, Pagination } from 'adnaan-ui';
 import ManagementLayout from '../common/management-layout';
-import type { PaginatedApiResponse } from '@/utils/types';
 
 const TagGrid = styled.div`
   display: grid;
@@ -330,10 +330,10 @@ const TagManagement: React.FC = () => {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  limit={limit}
+                  pageSize={limit}
                   totalItems={totalItems}
                   onPageChange={setPage}
-                  onlimitChange={setlimit}
+                  onPageSizeChange={setlimit}
                 />
               </PaginationWrapper>
             )}

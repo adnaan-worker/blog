@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef, Suspense, createContext, useContext } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
 import { useDispatch } from 'react-redux';
@@ -11,23 +11,16 @@ import MeteorBackground from '@/components/common/meteor-background';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
 import PageLoading from '@/components/common/page-loading';
-import { setupHttpConfig } from '@/utils/http-config';
+import { setupHttpConfig } from '@/utils/api/http-config';
 import { useAutoConnect, useVisitorTracking } from '@/hooks';
 import { AppDispatch } from '@/store';
-import { API, SiteSettings } from '@/utils/api';
+import { API } from '@/utils';
+import type { SiteSettings } from '@/types';
 import { PageInfoContext, usePageInfoState } from '@/hooks/usePageInfo';
+import { SiteSettingsContext } from './contexts';
 
-// 创建网站设置Context
-const SiteSettingsContext = createContext<{
-  siteSettings: SiteSettings | null;
-  loading: boolean;
-}>({
-  siteSettings: null,
-  loading: true,
-});
-
-// 导出Hook供子组件使用
-export const useSiteSettings = () => useContext(SiteSettingsContext);
+// 重新导出 Hook，保持向后兼容
+export { useSiteSettings } from './hooks';
 
 // 定义页面主体样式
 const MainContainer = styled.div`

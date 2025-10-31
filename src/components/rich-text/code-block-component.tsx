@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NodeViewWrapper, NodeViewContent } from '@tiptap/react';
 import styled from '@emotion/styled';
 import { FiType } from 'react-icons/fi';
-import { SUPPORTED_LANGUAGES } from '@/utils/editor-helpers';
+import { SUPPORTED_LANGUAGES } from '@/utils/editor/helpers';
 
 const CodeBlockWrapper = styled(NodeViewWrapper)`
   position: relative;

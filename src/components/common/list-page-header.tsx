@@ -6,7 +6,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { SPRING_PRESETS } from '@/utils/animation-engine';
+import { SPRING_PRESETS } from '@/utils/ui/animation';
 
 // Header 容器
 const Header = styled(motion.div)`

@@ -1,31 +1,30 @@
-// 导出HTTP请求工具
-export { default as http } from './http';
-export { HttpRequest } from './http';
-export { setupHttpConfig } from './http-config';
+/**
+ * Utils 统一导出入口
+ * 按功能模块组织，保持向后兼容
+ */
 
-// 导出API封装
-export { default as API } from './api';
+// API 相关模块
+export { default as API } from './api/api';
+export { default as http } from './api/http';
+export { HttpRequest } from './api/http';
+export { setupHttpConfig } from './api/http-config';
 
-// 导出富文本解析工具
-export { RichTextParser } from './rich-text-parser';
+// 编辑器相关模块
+export { RichTextParser } from './editor/parser';
+export { aiWritingHelper, AIWritingHelper, AI_WRITING_TEMPLATES } from './editor/ai-helper';
+export * from './editor/helpers';
+export * from './editor/extensions';
 
-// 导出AI写作助手工具
-export { aiWritingHelper, AIWritingHelper, AI_WRITING_TEMPLATES } from './ai-writing-helper';
+// UI/动画相关模块
+export { useAnimationEngine, useSmartInView, SPRING_PRESETS } from './ui/animation';
+export * from './ui/theme';
+export * from './ui/icons';
+export * from './ui/language-icons';
 
-// 导出类型定义
-export * from './types';
-
-// 导出调试工具
-export { useDebugTool, DebugTool, initialViewportInfo } from './debug';
-export type { ViewportInfo, HeadingInfo } from './debug';
-
-// 导出Sticky调试工具
-export { StickyDebugger, useStickyDebug } from './sticky-debug';
-
-// 导出滚动锁定工具
-export { default as scrollLock } from './scroll-lock';
-
-// 导出日期格式化工具
+// 核心工具函数
+export { debounce } from './core/debounce';
+export { throttle } from './core/throttle';
+export { storage } from './core/storage';
 export {
   formatDate,
   getTimeAgo,
@@ -37,100 +36,22 @@ export {
   isYesterday,
   getTimestamp,
   getDaysDiff,
-} from './format-date';
+} from './core/date';
+export { default as scrollLock } from './core/scroll-lock';
+export * from './core/device-id';
 
-// 防抖函数
-export const debounce = <T extends (...args: any[]) => any>(
-  fn: T,
-  delay: number = 300,
-): ((...args: Parameters<T>) => void) => {
-  let timer: number | null = null;
+// 业务帮助函数
+export * from './helpers/companion';
+export * from './helpers/role';
+export * from './helpers/timeline';
 
-  return function (...args: Parameters<T>) {
-    if (timer) clearTimeout(timer);
+// 配置相关
+export { default as appConfig } from './config/app';
+export * from './config/socket';
 
-    timer = window.setTimeout(() => {
-      fn(...args);
-      timer = null;
-    }, delay);
-  };
-};
+// 导出调试工具
+export { useDebugTool, DebugTool, initialViewportInfo } from '@/components/dev-tools/debug';
+export type { ViewportInfo, HeadingInfo } from '@/components/dev-tools/debug';
 
-// 节流函数
-export const throttle = <T extends (...args: any[]) => any>(
-  fn: T,
-  delay: number = 300,
-): ((...args: Parameters<T>) => void) => {
-  let lastTime = 0;
-
-  return function (...args: Parameters<T>) {
-    const now = Date.now();
-
-    if (now - lastTime >= delay) {
-      fn(...args);
-      lastTime = now;
-    }
-  };
-};
-
-// 本地存储封装
-export const storage = {
-  // localStorage
-  local: {
-    get<T>(key: string): T | null {
-      const value = localStorage.getItem(key);
-      if (value) {
-        try {
-          return JSON.parse(value);
-        } catch {
-          return value as unknown as T;
-        }
-      }
-      return null;
-    },
-    set(key: string, value: any): void {
-      if (typeof value === 'object') {
-        localStorage.setItem(key, JSON.stringify(value));
-      } else {
-        localStorage.setItem(key, value);
-      }
-    },
-    remove(key: string): void {
-      localStorage.removeItem(key);
-    },
-    clear(): void {
-      localStorage.clear();
-    },
-  },
-
-  // sessionStorage
-  session: {
-    get<T>(key: string): T | null {
-      const value = sessionStorage.getItem(key);
-      if (value) {
-        try {
-          return JSON.parse(value);
-        } catch {
-          return value as unknown as T;
-        }
-      }
-      return null;
-    },
-    set(key: string, value: any): void {
-      if (typeof value === 'object') {
-        sessionStorage.setItem(key, JSON.stringify(value));
-      } else {
-        sessionStorage.setItem(key, value);
-      }
-    },
-    remove(key: string): void {
-      sessionStorage.removeItem(key);
-    },
-    clear(): void {
-      sessionStorage.clear();
-    },
-  },
-};
-
-// 导出时间线工具
-export * from './timeline';
+// 导出Sticky调试工具
+export { StickyDebugger, useStickyDebug } from '@/components/dev-tools/sticky-debug';

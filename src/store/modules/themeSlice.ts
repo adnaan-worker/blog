@@ -1,6 +1,6 @@
 import { storage } from '@/utils';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { executeThemeTransition } from '@/utils/theme-transition';
+import { executeThemeTransition } from '@/utils/ui/theme';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
 type Theme = 'light' | 'dark';

@@ -12,7 +12,7 @@ import {
   FiMusic,
   FiMessageSquare,
 } from 'react-icons/fi';
-import musicListData from '@/config/musicList.json';
+import musicListData from '@/data/music-list.json';
 
 // 动画配置常量
 const ANIMATION_DURATION = {

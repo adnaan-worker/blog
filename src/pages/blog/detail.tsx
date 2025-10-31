@@ -5,10 +5,10 @@ import { FiArrowLeft, FiChevronLeft, FiChevronRight, FiHeart, FiBookmark, FiShar
 import ArticleContent from '@/components/blog/article-content';
 import ArticleToc from '@/components/blog/article-toc';
 import CommentSection from '@/components/blog/comment-section';
-import { Article } from '@/components/blog/article-list';
 import styled from '@emotion/styled';
-import { API, Article as ApiArticle } from '@/utils/api';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { API } from '@/utils/api';
+import type { Article } from '@/types';
+import { useAnimationEngine } from '@/utils/ui/animation';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
 import DetailNoiseBackground from '@/components/common/detail-noise-background';
 import { usePageInfo } from '@/hooks/usePageInfo';

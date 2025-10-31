@@ -1,4 +1,8 @@
 /**
+ * HTTP 和 API 基础类型定义
+ */
+
+/**
  * HTTP 请求方法枚举
  */
 export enum HttpMethod {

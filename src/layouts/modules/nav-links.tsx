@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 定义菜单项接口
 interface MenuItem {

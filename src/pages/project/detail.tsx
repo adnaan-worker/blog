@@ -20,7 +20,8 @@ import {
   FiCheckCircle,
   FiAward,
 } from 'react-icons/fi';
-import { API, Project } from '@/utils/api';
+import { API } from '@/utils/api';
+import type { Project } from '@/types';
 import { formatDate } from '@/utils';
 import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
 import { RichTextContent } from '@/components/rich-text/rich-text-content';

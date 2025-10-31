@@ -6,7 +6,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // ==================== 类型定义 ====================
 

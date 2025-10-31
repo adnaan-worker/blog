@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { FiSearch, FiPlus, FiRefreshCw, FiFilter } from 'react-icons/fi';
 import { Empty, Button, Input } from 'adnaan-ui';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 统计项接口
 export interface StatItemData {

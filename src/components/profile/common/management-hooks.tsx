@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { PaginatedApiResponse } from '@/utils/types';
+import type { PaginatedApiResponse } from '@/types';
 
 // 通用分页Hook
 export interface UsePaginationOptions<T, P = any> {

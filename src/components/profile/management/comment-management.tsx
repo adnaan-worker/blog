@@ -17,7 +17,8 @@ import {
   FiX,
 } from 'react-icons/fi';
 import { Button, Input, InfiniteScroll } from 'adnaan-ui';
-import { API, type Comment } from '@/utils/api';
+import { API } from '@/utils/api';
+import type { Comment } from '@/types';
 import { formatDate } from '@/utils';
 
 // 样式组件

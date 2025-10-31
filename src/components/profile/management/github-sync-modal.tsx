@@ -3,7 +3,8 @@ import styled from '@emotion/styled';
 import { FiGithub, FiCode, FiStar, FiGitBranch, FiDownload, FiRefreshCw } from 'react-icons/fi';
 import { SiGitee } from 'react-icons/si';
 import { Button, Modal, Input, Tabs } from 'adnaan-ui';
-import { API, Project } from '@/utils/api';
+import { API } from '@/utils/api';
+import type { Project } from '@/types';
 
 // 统一仓库接口
 interface RepoInfo {

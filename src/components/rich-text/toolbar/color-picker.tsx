@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { MdFormatColorText, MdFormatColorFill } from 'react-icons/md';
-import { TEXT_COLORS, HIGHLIGHT_COLORS } from '@/utils/editor-helpers';
+import { TEXT_COLORS, HIGHLIGHT_COLORS } from '@/utils/editor/helpers';
 
 const ColorPickerDropdown = styled.div`
   position: relative;

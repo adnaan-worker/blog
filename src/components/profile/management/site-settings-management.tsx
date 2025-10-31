@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { FiSave, FiRefreshCw } from 'react-icons/fi';
 import { Button, Input, Textarea } from 'adnaan-ui';
-import type { SiteSettings } from '@/utils/api';
+import type { SiteSettings } from '@/types';
 
 interface SiteSettingsManagementProps {
   settings: SiteSettings | null;

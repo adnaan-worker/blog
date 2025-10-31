@@ -16,7 +16,7 @@ import {
   FiCoffee,
   FiStar,
 } from 'react-icons/fi';
-import { getAppIcon, getAppColor } from '@/utils/app-icons';
+import { getAppIcon, getAppColor } from '@/utils/ui/icons';
 
 // 备用图标（当图片加载失败时使用）
 const FALLBACK_ICONS: Record<string, React.ReactNode> = {

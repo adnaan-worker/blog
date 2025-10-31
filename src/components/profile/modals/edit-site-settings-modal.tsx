@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { FiSave } from 'react-icons/fi';
 import { Button, Input, Textarea } from 'adnaan-ui';
 import { Modal } from 'adnaan-ui';
-import type { SiteSettings } from '@/utils/api';
+import type { SiteSettings } from '@/types';
 
 interface EditSiteSettingsModalProps {
   isOpen: boolean;

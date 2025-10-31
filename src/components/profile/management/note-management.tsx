@@ -20,8 +20,9 @@ import {
   FiMeh,
 } from 'react-icons/fi';
 import { Button, InfiniteScroll } from 'adnaan-ui';
-import { API, Note, NoteParams } from '@/utils/api';
-import { RichTextParser } from '@/utils/rich-text-parser';
+import { API } from '@/utils/api';
+import type { Note, NoteParams } from '@/types';
+import { RichTextParser } from '@/utils/editor/parser';
 import { ManagementLayout, type StatItemData, type FilterOption } from '../common/management-layout';
 import {
   ItemCard,

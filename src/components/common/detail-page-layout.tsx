@@ -6,7 +6,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import styled from '@emotion/styled';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 页面头部渐变背景 - 流光溢彩诗意光晕 ✨
 const PageHeadGradient = styled.div`

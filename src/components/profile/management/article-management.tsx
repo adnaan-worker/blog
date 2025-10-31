@@ -14,8 +14,9 @@ import {
   FiTag,
 } from 'react-icons/fi';
 import { Button, InfiniteScroll } from 'adnaan-ui';
-import { API, Article, ArticleParams } from '@/utils/api';
-import { RichTextParser } from '@/utils/rich-text-parser';
+import { API } from '@/utils/api';
+import type { Article, ArticleParams } from '@/types';
+import { RichTextParser } from '@/utils/editor/parser';
 import { ManagementLayout, type StatItemData, type FilterOption } from '../common/management-layout';
 import {
   ItemCard,

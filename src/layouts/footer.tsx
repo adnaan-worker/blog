@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiGithub, FiMail, FiRss, FiHeart } from 'react-icons/fi';
 import React, { useState, useRef, useEffect } from 'react';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 import { useOnlineUsers } from '@/hooks';
 import { useSiteSettings } from './index';
 import VisitorStatsTooltip from '@/components/common/visitor-stats-tooltip';

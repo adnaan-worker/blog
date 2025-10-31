@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { HttpMethod, RequestConfig, ApiResponse, ErrorResponse } from './types';
-import config from './config';
-import { storage } from './index';
+import { HttpMethod } from '@/types/api';
+import type { RequestConfig, ApiResponse, ErrorResponse } from '@/types/api';
+import config from '../config/app';
+import { storage } from '../core/storage';
 
 class HttpRequest {
   private instance: AxiosInstance;

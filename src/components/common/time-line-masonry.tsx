@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { SPRING_PRESETS } from '@/utils/animation-engine';
-import { groupItemsByYear, type TimelineItem, type YearGroup } from '@/utils/timeline';
+import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { groupItemsByYear, type TimelineItem, type YearGroup } from '@/utils/helpers/timeline';
 
 // 重新导出类型，方便其他组件使用
 export type { TimelineItem, YearGroup };

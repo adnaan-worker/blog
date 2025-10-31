@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiFolder, FiEdit2, FiTrash2, FiFileText } from 'react-icons/fi';
-import { API, type Category } from '@/utils/api';
+import { API } from '@/utils/api';
+import type { Category } from '@/types';
 import { Modal, Button, Input, Textarea, Empty, Pagination } from 'adnaan-ui';
 import { formatDate } from '@/utils';
 import ManagementLayout from '../common/management-layout';
-import type { PaginatedApiResponse } from '@/utils/types';
+import type { PaginatedApiResponse } from '@/types';
 
 const CategoryGrid = styled.div`
   display: grid;
@@ -313,10 +314,10 @@ const CategoryManagement: React.FC = () => {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  limit={limit}
+                  pageSize={limit}
                   totalItems={totalItems}
                   onPageChange={setPage}
-                  onlimitChange={setlimit}
+                  onPageSizeChange={setlimit}
                 />
               </PaginationWrapper>
             )}

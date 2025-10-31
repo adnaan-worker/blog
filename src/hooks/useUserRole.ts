@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { UserProfile } from '@/utils/api';
+import type { UserProfile } from '@/types';
 
 /**
  * 用户角色枚举

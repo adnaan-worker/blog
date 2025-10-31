@@ -2,14 +2,12 @@ import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import userReducer from './modules/userSlice';
 import themeReducer from './modules/themeSlice';
-import counterReducer from './modules/counterSlice';
 
 // 配置 store
 const store = configureStore({
   reducer: {
     user: userReducer,
     theme: themeReducer,
-    counter: counterReducer,
   },
   // 添加中间件配置
   middleware: (getDefaultMiddleware) =>

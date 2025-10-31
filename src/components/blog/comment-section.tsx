@@ -3,7 +3,8 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMessageSquare, FiSend, FiCornerDownRight, FiThumbsUp, FiTrash2, FiLoader } from 'react-icons/fi';
 import { Button, Input, Textarea } from 'adnaan-ui';
-import { API, Comment as CommentType } from '@/utils/api';
+import { API } from '@/utils/api';
+import type { Comment as CommentType } from '@/types';
 import { storage } from '@/utils';
 import { formatDate } from '@/utils';
 

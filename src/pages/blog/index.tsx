@@ -5,7 +5,8 @@ import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-mas
 import { ListPageHeader } from '@/components/common/list-page-header';
 import { SEO } from '@/components/common';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
-import { API, Article } from '@/utils/api';
+import { API } from '@/utils/api';
+import type { Article } from '@/types';
 import { formatDate } from '@/utils';
 import { FiCalendar, FiEye, FiHeart, FiMessageSquare, FiClock } from 'react-icons/fi';
 

@@ -6,7 +6,8 @@ import { ListPageHeader } from '@/components/common/list-page-header';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
-import { API, Note, NoteParams } from '@/utils/api';
+import { API } from '@/utils/api';
+import type { Note, NoteParams } from '@/types';
 
 // 页面样式组件
 const PageContainer = styled.div`

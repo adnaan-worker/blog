@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiSun, FiMoon, FiMonitor } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { cycleTheme } from '@/store/modules/themeSlice';
-import { getElementCenter } from '@/utils/theme-transition';
+import { getElementCenter } from '@/utils/ui/theme';
 import type { RootState } from '@/store';
-import { SPRING_PRESETS } from '@/utils/animation-engine';
+import { SPRING_PRESETS } from '@/utils/ui/animation';
 
 // 主题切换按钮容器
 const ThemeToggleContainer = styled(motion.div)`

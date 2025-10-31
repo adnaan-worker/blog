@@ -3,8 +3,8 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDate } from '@/utils';
-import { useAnimationEngine, useSmartInView } from '@/utils/animation-engine';
-import { UserActivity } from '@/utils/api';
+import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
+import type { UserActivity } from '@/types';
 
 // Styled Components
 const ContentSection = styled(motion.section)`

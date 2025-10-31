@@ -14,7 +14,7 @@ import {
   FiCamera,
 } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 import type { UserProfile } from './types';
 
 interface UserInfoCardProps {

@@ -2,17 +2,17 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import styled from '@emotion/styled';
 import '@/styles/rich-text.css';
-import { API } from '@/utils/api';
+import { API } from '@/utils';
 import { EditorToolbar } from './toolbar/editor-toolbar';
 import { CommandMenu } from './toolbar/command-menu';
 import { InputPanel } from './toolbar/input-panel';
-import { createExtensions } from '@/utils/editor-extensions';
+import { createExtensions } from '@/utils/editor/extensions';
 import {
   uploadImage,
   getRelativeCursorPosition,
   calculateMenuPosition,
   getCurrentCodeBlockLanguage,
-} from '@/utils/editor-helpers';
+} from '@/utils/editor/helpers';
 
 interface RichTextEditorProps {
   content: string;

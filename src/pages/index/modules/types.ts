@@ -2,7 +2,7 @@
  * 首页模块类型定义
  */
 
-import { SiteSettings, UserActivity, Project } from '@/utils/api';
+import type { UserActivity, Project } from '@/types';
 
 // 图表数据类型
 export interface ChartDataItem {

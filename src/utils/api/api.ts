@@ -1,485 +1,52 @@
 import http from './http';
-import { ApiResponse, PaginationParams, PaginationResult } from './types';
+import type { ApiResponse, PaginationParams, PaginationResult } from '@/types/api';
 
-/**
- * 用户相关接口类型定义
- */
-export interface UserInfo {
-  id: string | number;
-  username: string;
-  nickname?: string;
-  avatar?: string;
-  email?: string;
-  role?: string;
-  [key: string]: any;
-}
-
-export interface LoginParams {
-  username: string;
-  password: string;
-  remember?: boolean;
-}
-
-export interface LoginResponse {
-  token: string;
-  user: UserInfo;
-}
-
-export interface RegisterParams {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
-export interface RegisterResponse {
-  message: string;
-  user: UserInfo;
-}
-
-/**
- * 个人中心相关接口类型定义
- */
-export interface UserProfile {
-  id: string | number;
-  username: string;
-  fullName?: string; // 对应数据库的 full_name 字段
-  email: string;
-  avatar?: string;
-  bio?: string;
-  role?: string;
-  status?: string;
-  joinDate: string;
-  lastLoginTime?: string;
-  stats?: {
-    articleCount: number;
-    viewCount: number;
-    likeCount: number;
-    commentCount: number;
-    followerCount: number;
-    followingCount: number;
-    bookmarkCount: number;
-  };
-}
-
-export interface UpdateProfileParams {
-  fullName?: string; // 对应数据库的 full_name 字段
-  email?: string;
-  bio?: string;
-}
-
-export interface ChangePasswordParams {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
-
-/**
- * 网站设置相关接口类型定义（介绍卡片 + 社交链接）
- */
-export interface SiteSettings {
-  id?: number;
-  userId?: number;
-  authorName?: string;
-  authorTitle?: string;
-  authorBio?: string;
-  mbti?: string;
-  location?: string;
-  occupation?: string;
-  skills?: string[];
-  socialLinks?: {
-    email?: string;
-    github?: string;
-    bilibili?: string;
-    twitter?: string;
-    rss?: string;
-  };
-  quote?: string;
-  quoteAuthor?: string;
-  // GitHub 和 Gitee 用户名（用于贡献统计）
-  githubUsername?: string;
-  giteeUsername?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface UpdateSiteSettingsParams {
-  authorName?: string;
-  authorTitle?: string;
-  authorBio?: string;
-  mbti?: string;
-  location?: string;
-  occupation?: string;
-  skills?: string[];
-  socialLinks?: {
-    email?: string;
-    github?: string;
-    bilibili?: string;
-    twitter?: string;
-    rss?: string;
-  };
-  quote?: string;
-  quoteAuthor?: string;
-  // GitHub 和 Gitee 用户名（用于贡献统计）
-  githubUsername?: string;
-  giteeUsername?: string;
-}
-
-export interface UserActivity {
-  id: string | number;
-  type: // 内容创建类
-  | 'post_created'
-    | 'post_updated'
-    | 'post_deleted'
-    | 'note_created'
-    | 'note_updated'
-    | 'note_deleted'
-    | 'comment_created'
-    | 'comment_updated'
-    | 'comment_deleted'
-    // 互动类
-    | 'post_liked'
-    | 'post_unliked'
-    | 'note_liked'
-    | 'note_unliked'
-    | 'post_bookmarked'
-    | 'post_unbookmarked'
-    // 收到反馈类
-    | 'like_received'
-    | 'comment_received'
-    | 'bookmark_received'
-    // 成就类
-    | 'achievement_unlocked'
-    | 'level_up'
-    | 'milestone_reached'
-    // 审核类
-    | 'post_approved'
-    | 'post_rejected'
-    | 'comment_approved'
-    | 'comment_rejected'
-    // 系统通知类
-    | 'system_notice'
-    | 'account_warning'
-    | 'welcome'
-    // 热门趋势类
-    | 'post_trending'
-    | 'post_featured';
-  title: string;
-  description?: string;
-  timestamp: string;
-  link?: string;
-  metadata?: any;
-  priority?: number;
-  user?: {
-    id: string | number;
-    username: string;
-    avatar?: string;
-  };
-}
-
-export interface UserAchievement {
-  id: string | number;
-  name: string;
-  description: string;
-  icon: string;
-  unlocked: boolean;
-  unlockedAt?: string;
-  progress?: {
-    current: number;
-    target: number;
-  };
-  category: 'content' | 'social' | 'engagement' | 'milestone';
-}
-
-export interface UserStats {
-  [x: string]: any;
-  label: string;
-  value: string | number;
-  icon?: React.ReactNode;
-  highlight?: boolean;
-  trend?: {
-    direction: 'up' | 'down' | 'stable';
-    percentage: number;
-  };
-  link?: string;
-}
-
-/**
- * 文章相关接口类型定义
- */
-export interface Article {
-  id: string | number;
-  title: string;
-  content: string;
-  summary?: string;
-  cover?: string;
-  categoryId?: number;
-  tags?: string[];
-  author?: string | UserInfo;
-  createTime?: string;
-  updateTime?: string;
-  viewCount?: number;
-  [key: string]: any;
-}
-
-export interface ArticleParams extends PaginationParams {
-  categoryId?: number;
-  tag?: string;
-  keyword?: string;
-  authorId?: string | number;
-}
-
-/**
- * 分类相关接口类型定义
- */
-export interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-  count?: number;
-  articleCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-/**
- * 标签相关接口类型定义
- */
-export interface Tag {
-  id: number;
-  name: string;
-  slug: string;
-  color?: string;
-  description?: string;
-  count?: number;
-  articleCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-/**
- * 评论相关接口类型定义
- */
-export interface Comment {
-  id: string | number;
-  content: string;
-  postId: string | number;
-  parentId?: string | number;
-  userId?: string | number;
-  author?: string | UserInfo;
-  status?: 'approved' | 'pending' | 'spam';
-  createTime?: string;
-  updateTime?: string;
-  replies?: Comment[];
-  [key: string]: any;
-}
-
-export interface CommentParams extends PaginationParams {
-  postId?: string | number;
-  status?: 'approved' | 'pending' | 'spam';
-}
-
-/**
- * 手记相关接口类型定义
- */
-export interface Note {
-  id: string | number;
-  title?: string;
-  content: string;
-  mood?: '开心' | '平静' | '思考' | '感慨' | '兴奋' | '忧郁' | '愤怒' | '恐惧' | '惊讶' | '厌恶';
-  weather?: string;
-  location?: string;
-  tags?: string[];
-  isPrivate?: boolean;
-  readingTime?: number;
-  viewCount?: number;
-  likeCount?: number;
-  isLiked?: boolean;
-  author?: {
-    id: string | number;
-    username: string;
-    fullName?: string;
-    avatar?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateNoteParams {
-  title?: string;
-  content: string;
-  mood?: string;
-  weather?: string;
-  location?: string;
-  tags?: string[];
-  isPrivate?: boolean;
-}
-
-export interface UpdateNoteParams {
-  title?: string;
-  content?: string;
-  mood?: string;
-  weather?: string;
-  location?: string;
-  tags?: string[];
-  isPrivate?: boolean;
-}
-
-export interface NoteParams extends PaginationParams {
-  mood?: string;
-  weather?: string;
-  tags?: string[];
-  search?: string;
-  isPrivate?: boolean;
-  userId?: string | number;
-  orderBy?: 'createdAt' | 'updatedAt' | 'viewCount' | 'likeCount';
-  orderDirection?: 'ASC' | 'DESC';
-}
-
-export interface NoteStats {
-  totalNotes: number;
-  totalViews: number;
-  totalLikes: number;
-  privateNotes: number;
-  publicNotes: number;
-  moodDistribution: Record<string, number>;
-}
-
-export interface NoteMetadata {
-  commonTags: string[];
-  commonMoods: string[];
-  commonWeathers: string[];
-  commonLocations: string[];
-  moodOptions: string[];
-  parentId?: string | number;
-}
-
-export interface CreateCommentData {
-  content: string;
-  postId: string | number;
-  parentId?: string | number;
-}
-
-/**
- * AI写作助手相关接口类型定义
- */
-export interface AIWritingParams {
-  action: 'generate' | 'improve' | 'translate' | 'summarize' | 'expand' | 'polish' | 'continue' | 'rewrite';
-  content?: string;
-  params?: {
-    targetLang?: string;
-    style?: string;
-    tone?: string;
-    length?: 'short' | 'medium' | 'long';
-    keywords?: string[];
-    prompt?: string;
-  };
-}
-
-export interface AIGenerateParams {
-  type: 'article' | 'note' | 'title' | 'summary' | 'outline';
-  params: {
-    title?: string;
-    keywords?: string[];
-    wordCount?: number;
-    style?: string;
-    tone?: string;
-    prompt?: string;
-  };
-}
-
-export interface AITaskStatus {
-  taskId: string;
-  userId?: number;
-  type: 'generate_content' | 'batch_generate' | 'analyze' | 'writing_assistant';
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  progress?: number;
-  result?: any;
-  error?: string;
-  startedAt?: string;
-  completedAt?: string;
-  createdAt: string;
-}
-
-export interface AIQuota {
-  dailyChatlimit: number;
-  dailyChatUsed: number;
-  dailyGeneratelimit: number;
-  dailyGenerateUsed: number;
-  monthlyTokenlimit: number;
-  monthlyTokenUsed: number;
-  available: boolean;
-}
-
-export interface AIChatMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp?: string;
-}
+import type {
+  UserInfo,
+  LoginParams,
+  LoginResponse,
+  RegisterParams,
+  RegisterResponse,
+  UserProfile,
+  UpdateProfileParams,
+  ChangePasswordParams,
+  UserActivity,
+  UserAchievement,
+  UserStats,
+  Article,
+  ArticleParams,
+  Category,
+  Tag,
+  Comment,
+  CommentParams,
+  CreateCommentData,
+  Note,
+  CreateNoteParams,
+  UpdateNoteParams,
+  NoteParams,
+  NoteStats,
+  NoteMetadata,
+  SiteSettings,
+  UpdateSiteSettingsParams,
+  Project,
+  ProjectParams,
+  ContributionChartData,
+  AIWritingParams,
+  AIGenerateParams,
+  AITaskStatus,
+  AIQuota,
+  AIChatMessage,
+} from '@/types/entities';
 
 /**
  * API封装层
  * 所有的API请求都应该在这里定义
+ *
+ * 注意：
+ * - 所有业务实体类型已移至 @/types/entities
+ * - API基础类型（ApiResponse、Pagination等）在 @/types/api
+ * - 类型导入已在上方完成
  */
-// 项目相关类型
-export interface Project {
-  id: number;
-  title: string;
-  slug: string;
-  description?: string;
-  content?: string;
-  coverImage?: string;
-  icon?: string;
-  status: 'active' | 'archived' | 'developing' | 'paused';
-  visibility: 'public' | 'private';
-  language?: string;
-  languageColor?: string;
-  tags: string[];
-  techStack: string[];
-  features: string[];
-  githubUrl?: string;
-  giteeUrl?: string;
-  demoUrl?: string;
-  docsUrl?: string;
-  npmPackage?: string;
-  stars: number;
-  forks: number;
-  watchers: number;
-  issues: number;
-  downloads: number;
-  isFeatured: boolean;
-  isOpenSource: boolean;
-  displayOrder: number;
-  authorId: number;
-  viewCount: number;
-  startedAt?: string;
-  lastUpdatedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-  author?: {
-    id: number;
-    username: string;
-    fullName?: string;
-    avatar?: string;
-  };
-}
-
-export interface ProjectParams extends PaginationParams {
-  status?: 'active' | 'archived' | 'developing' | 'paused';
-  isFeatured?: boolean;
-  isOpenSource?: boolean;
-  language?: string;
-  keyword?: string;
-}
-
-// 贡献统计数据类型
-export interface ContributionChartData {
-  month: string;
-  count: number;
-  color: string;
-}
-
 export const API = {
   // 活动相关（公开接口）
   activity: {
@@ -1152,3 +719,50 @@ export const API = {
 };
 
 export default API;
+
+/**
+ * 类型重新导出（保持向后兼容）
+ * 建议：新代码请使用 import type { ... } from '@/types' 导入类型
+ */
+export type {
+  // API 基础类型
+  ApiResponse,
+  PaginationParams,
+  PaginationResult,
+  PaginatedApiResponse,
+  // 业务实体类型
+  UserInfo,
+  LoginParams,
+  LoginResponse,
+  RegisterParams,
+  RegisterResponse,
+  UserProfile,
+  UpdateProfileParams,
+  ChangePasswordParams,
+  UserActivity,
+  UserAchievement,
+  UserStats,
+  Article,
+  ArticleParams,
+  Category,
+  Tag,
+  Comment,
+  CommentParams,
+  CreateCommentData,
+  Note,
+  CreateNoteParams,
+  UpdateNoteParams,
+  NoteParams,
+  NoteStats,
+  NoteMetadata,
+  SiteSettings,
+  UpdateSiteSettingsParams,
+  Project,
+  ProjectParams,
+  ContributionChartData,
+  AIWritingParams,
+  AIGenerateParams,
+  AITaskStatus,
+  AIQuota,
+  AIChatMessage,
+} from '@/types';

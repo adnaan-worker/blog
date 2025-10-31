@@ -1,5 +1,6 @@
-import { API, AIWritingParams, AIGenerateParams, AITaskStatus } from './api';
-import { RichTextParser } from './rich-text-parser';
+import { API } from '../api';
+import type { AIWritingParams, AIGenerateParams, AITaskStatus } from '@/types';
+import { RichTextParser } from './parser';
 
 /**
  * AI写作助手工具类

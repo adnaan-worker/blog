@@ -5,7 +5,7 @@ import { RiRobot2Line } from 'react-icons/ri';
 import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
 import RichTextContent from '@/components/rich-text/rich-text-content';
 import ImagePreview from '@/components/common/image-preview';
-import type { Article } from '@/utils/api';
+import type { Article } from '@/types';
 
 // 文章详情页容器
 const ArticleDetailContainer = styled.div`

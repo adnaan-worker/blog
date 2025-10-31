@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMonitor, FiSmartphone, FiUsers, FiActivity, FiHeart, FiCoffee, FiStar } from 'react-icons/fi';
 import { API } from '@/utils/api';
-import { useAnimationEngine } from '@/utils/animation-engine';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // ==================== 类型定义 ====================
 interface VisitorActivity {

@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { useAnimationEngine, SPRING_PRESETS } from '@/utils/animation-engine';
+import { useAnimationEngine, SPRING_PRESETS } from '@/utils/ui/animation';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
-
-// GPU 加速样式 - 已废弃，直接在各组件中使用优化的样式
 
 // 抽屉动画变体 - 使用 Spring 系统
 const drawerVariants = {
@@ -74,7 +72,8 @@ import {
   FiUser,
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { API, UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings } from '@/utils/api';
+import { API } from '@/utils/api';
+import type { UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings } from '@/types';
 import { storage } from '@/utils';
 import {
   UserInfoCard,

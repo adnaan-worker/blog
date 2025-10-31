@@ -5,10 +5,10 @@ import { Link } from 'react-router-dom';
 import { FiArrowRight, FiStar, FiGithub, FiCode, FiCalendar, FiFolderPlus, FiExternalLink } from 'react-icons/fi';
 import { SiGitee } from 'react-icons/si';
 import { formatDate } from '@/utils';
-import { useAnimationEngine } from '@/utils/animation-engine';
-import { Icon } from '@/components/common/Icon';
+import { useAnimationEngine } from '@/utils/ui/animation';
+import { Icon } from '@/components/common/icon';
 import { RadarChart } from '@/components/charts/radar-chart';
-import { getLanguageIcon, calculateProjectRadarData } from '@/utils/language-icons';
+import { getLanguageIcon, calculateProjectRadarData } from '@/utils/ui/language-icons';
 import { ProjectsSectionProps } from './types';
 
 // Styled Components

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSocket } from './useSocket';
-import { getLocationByIP, getBrowser, getDeviceType } from '@/utils/smart-companion';
+import { getLocationByIP, getBrowser, getDeviceType } from '@/utils/helpers/companion';
 
 /**
  * 访客追踪 Hook

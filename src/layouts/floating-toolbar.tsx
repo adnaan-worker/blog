@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMusic, FiArrowUp } from 'react-icons/fi';
 import MusicPlayer from './modules/music-player';
-import { SPRING_PRESETS } from '@/utils/animation-engine';
+import { SPRING_PRESETS } from '@/utils/ui/animation';
 
 // GPU加速优化
 const gpuAcceleration = {

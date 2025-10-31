@@ -1,7 +1,9 @@
-// 导出所有自定义Hooks
 export * from './useUserRole';
 export * from './useSocket';
 export * from './useSystemTheme';
+export * from './useTheme';
 export * from './useOnlineUsers';
 export * from './useVisitorTracking';
 export * from './useSEO';
+export * from './useInfiniteScroll';
+export * from './usePageInfo';
