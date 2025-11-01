@@ -2,7 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiGithub, FiMail, FiLink } from 'react-icons/fi';
-import { SEO } from '@/components/common';
+import { SEO, WordCloud, type WordCloudItem } from '@/components/common';
 import { personalInfo, skillTags, experiences, projects, contactInfo } from '@/data/about-me.data';
 import type { ExperienceItem } from '@/data/about-me.data';
 import { SPRING_PRESETS, useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
@@ -131,99 +131,6 @@ const SidebarSectionTitle = styled.h3`
   margin-bottom: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-`;
-
-// 技能词云 - 随机错落排列
-const SkillCloud = styled.div`
-  position: relative;
-  min-height: 200px;
-  padding: 1.5rem 0;
-  display: block;
-  line-height: 1.6;
-`;
-
-const SkillTag = styled(motion.span)<{ level: string; index: number }>`
-  display: inline-block;
-  position: relative;
-  /* 无边框、无背景 - 纯文字 */
-  background: transparent;
-  border: none;
-  padding: 0;
-
-  /* 随机位置和旋转 - 使用 index 生成伪随机 */
-  margin: ${(props) => {
-    const index = props.index;
-    const offsetY = (index % 3) * 10 - 10; // -10, 0, 10
-    const offsetX = (index % 5) * 8 - 16; // -16, -8, 0, 8, 16
-    return `${10 + offsetY}px ${15 + offsetX}px`;
-  }};
-
-  transform-origin: center;
-
-  /* 旋转角度通过 Framer Motion 控制 */
-
-  /* 字体大小根据级别 - 添加随机变化 */
-  font-size: ${(props) => {
-    const baseSize = props.level === 'expert' ? 1.25 : props.level === 'advanced' ? 1 : 0.875;
-    const random = ((props.index % 3) - 1) * 0.1; // -0.1, 0, 0.1
-    return `${baseSize + random}rem`;
-  }};
-
-  /* 字重 */
-  font-weight: ${(props) => {
-    switch (props.level) {
-      case 'expert':
-        return '700';
-      case 'advanced':
-        return '600';
-      case 'intermediate':
-        return '500';
-      default:
-        return '600';
-    }
-  }};
-
-  /* 颜色渐变 - 根据级别，添加随机色调 */
-  background: ${(props) => {
-    const hueShift = (props.index % 5) * 10; // 0, 10, 20, 30, 40
-    if (props.level === 'expert') {
-      return `linear-gradient(${135 + hueShift}deg, var(--accent-color) 0%, #667eea 100%)`;
-    } else if (props.level === 'advanced') {
-      return `linear-gradient(${135 + hueShift}deg, #10b981 0%, #059669 100%)`;
-    }
-    return `linear-gradient(${135 + hueShift}deg, var(--text-secondary) 0%, var(--text-tertiary) 100%)`;
-  }};
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-
-  /* 过渡 */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: default;
-
-  /* 悬浮效果 - 由 Framer Motion 处理 */
-  &:hover {
-    filter: brightness(1.3);
-    z-index: 10;
-  }
-
-  /* 暗色模式适配 */
-  [data-theme='dark'] & {
-    background: ${(props) => {
-      const hueShift = (props.index % 5) * 10;
-      if (props.level === 'expert') {
-        return `linear-gradient(${135 + hueShift}deg, var(--accent-color) 0%, #818cf8 100%)`;
-      } else if (props.level === 'advanced') {
-        return `linear-gradient(${135 + hueShift}deg, #34d399 0%, #10b981 100%)`;
-      }
-      return `linear-gradient(${135 + hueShift}deg, var(--text-secondary) 0%, var(--text-tertiary) 100%)`;
-    }};
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-  }
 `;
 
 // 联系方式
@@ -481,9 +388,15 @@ const ProjectTags = styled.div`
 const AboutMe: React.FC = () => {
   const { variants } = useAnimationEngine();
 
-  // 使用智能视口检测 - 优化动画性能
   const timelineView = useSmartInView({ amount: 0.1 });
   const projectsView = useSmartInView({ amount: 0.1 });
+
+  // 转换技能数据为词云格式
+  const skillWords: WordCloudItem[] = skillTags.map((skill) => ({
+    text: skill.name,
+    weight: skill.level === 'expert' ? 5 : skill.level === 'advanced' ? 4 : 3,
+    category: skill.level,
+  }));
 
   return (
     <>
@@ -516,38 +429,10 @@ const AboutMe: React.FC = () => {
               </SocialLink>
             </SocialLinks>
 
-            {/* 技能标签云 */}
+            {/* 技能词云 */}
             <SidebarSection>
               <SidebarSectionTitle>技能特长</SidebarSectionTitle>
-              <SkillCloud>
-                {skillTags.map((skill, index) => {
-                  const rotations = [-15, -12, -8, -5, 0, 5, 8, 12, 15, -10, 10, -7, 7];
-                  const rotateAngle = rotations[index % rotations.length];
-
-                  return (
-                    <SkillTag
-                      key={skill.name}
-                      level={skill.level}
-                      index={index}
-                      initial={{ opacity: 0, scale: 0.8, rotate: rotateAngle }}
-                      animate={{ opacity: 1, scale: 1, rotate: rotateAngle }}
-                      whileHover={{
-                        scale: 1.25,
-                        rotate: 0,
-                        transition: { duration: 0.2 },
-                      }}
-                      transition={{
-                        delay: index * 0.03,
-                        type: 'spring',
-                        stiffness: 200,
-                        damping: 15,
-                      }}
-                    >
-                      {skill.name}
-                    </SkillTag>
-                  );
-                })}
-              </SkillCloud>
+              <WordCloud words={skillWords} minFontSize={0.8} maxFontSize={1.6} />
             </SidebarSection>
 
             {/* 联系方式 */}

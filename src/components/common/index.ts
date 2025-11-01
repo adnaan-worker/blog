@@ -7,3 +7,9 @@ export { AutoSkeleton } from './auto-skeleton';
 
 // SEO组件
 export { SEO } from './seo';
+
+// 词云组件
+export { WordCloud, type WordCloudItem } from './word-cloud';
+
+// 运行时间计数器
+export { default as RunningTimeCounter } from './running-time-counter';

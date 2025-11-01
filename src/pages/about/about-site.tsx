@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { SEO } from '@/components/common';
+import { SEO, WordCloud, type WordCloudItem, RunningTimeCounter } from '@/components/common';
 import { siteMilestones, techStack, siteStats } from '@/data/about-site.data';
 import type { SiteMilestone } from '@/data/about-site.data';
 import { SPRING_PRESETS, useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
@@ -112,87 +112,6 @@ const StatValue = styled.span`
 const StatLabel = styled.span`
   font-size: 0.85rem;
   color: var(--text-secondary);
-`;
-
-// 技术栈词云 - 随机错落排列
-const TechCloud = styled.div`
-  position: relative;
-  min-height: 200px;
-  padding: 1.5rem 0;
-  display: block;
-  line-height: 1.6;
-`;
-
-const TechTag = styled(motion.span)<{ size: 'large' | 'medium' | 'small'; index: number }>`
-  display: inline-block;
-  position: relative;
-  /* 无边框、无背景 - 纯文字 */
-  background: transparent;
-  border: none;
-  padding: 0;
-
-  /* 随机位置和旋转 - 使用 index 生成伪随机 */
-  margin: ${(props) => {
-    const index = props.index;
-    const offsetY = (index % 3) * 10 - 10; // -10, 0, 10
-    const offsetX = (index % 5) * 8 - 16; // -16, -8, 0, 8, 16
-    return `${10 + offsetY}px ${15 + offsetX}px`;
-  }};
-
-  transform-origin: center;
-
-  /* 旋转角度通过 Framer Motion 控制 */
-
-  /* 字体大小根据重要性 - 添加随机变化 */
-  font-size: ${(props) => {
-    const baseSize = props.size === 'large' ? 1.25 : props.size === 'medium' ? 1 : 0.875;
-    const random = ((props.index % 3) - 1) * 0.1; // -0.1, 0, 0.1
-    return `${baseSize + random}rem`;
-  }};
-
-  /* 字重 */
-  font-weight: ${(props) => {
-    switch (props.size) {
-      case 'large':
-        return '700';
-      case 'medium':
-        return '600';
-      case 'small':
-        return '500';
-    }
-  }};
-
-  /* 颜色渐变 - 添加随机色调 */
-  background: ${(props) => {
-    const hueShift = (props.index % 5) * 10; // 0, 10, 20, 30, 40
-    return `linear-gradient(${135 + hueShift}deg, var(--accent-color) 0%, #667eea 100%)`;
-  }};
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-
-  /* 过渡 */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: default;
-
-  /* 悬浮效果 - 由 Framer Motion 处理 */
-  &:hover {
-    filter: brightness(1.3);
-    z-index: 10;
-  }
-
-  /* 暗色模式适配 */
-  [data-theme='dark'] & {
-    background: ${(props) => {
-      const hueShift = (props.index % 5) * 10;
-      return `linear-gradient(${135 + hueShift}deg, var(--accent-color) 0%, #818cf8 100%)`;
-    }};
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-  }
 `;
 
 // 主内容区
@@ -347,28 +266,34 @@ const AboutSite: React.FC = () => {
   const { variants } = useAnimationEngine();
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
-  // 使用智能视口检测 - 优化动画性能
   const milestonesView = useSmartInView({ amount: 0.1 });
 
   const filteredMilestones =
     activeCategory === 'all' ? siteMilestones : siteMilestones.filter((m) => m.category === activeCategory);
 
-  // 技术栈大小分配（根据重要性）
-  const techSizes = {
-    React: 'large' as const,
-    'Node.js': 'large' as const,
-    TypeScript: 'large' as const,
-    MySQL: 'medium' as const,
-    Redis: 'medium' as const,
-    Vite: 'medium' as const,
-    Express: 'medium' as const,
-    Sequelize: 'small' as const,
-    'Socket.IO': 'small' as const,
-    Docker: 'small' as const,
-    Nginx: 'small' as const,
-    OpenAI: 'medium' as const,
-    LangChain: 'small' as const,
+  // 技术栈权重映射
+  const techWeights: Record<string, number> = {
+    React: 5,
+    'Node.js': 5,
+    TypeScript: 5,
+    MySQL: 4,
+    Redis: 4,
+    Vite: 4,
+    Express: 4,
+    OpenAI: 4,
+    Sequelize: 3,
+    'Socket.IO': 3,
+    Docker: 3,
+    Nginx: 3,
+    LangChain: 3,
   };
+
+  // 转换技术栈为词云格式
+  const techWords: WordCloudItem[] = techStack.map((tech) => ({
+    text: tech.name,
+    weight: techWeights[tech.name] || 3,
+    category: tech.category,
+  }));
 
   return (
     <>
@@ -384,50 +309,34 @@ const AboutSite: React.FC = () => {
             <SidebarSection>
               <SidebarSectionTitle>站点统计</SidebarSectionTitle>
               <StatsList>
-                {siteStats.map((stat) => (
-                  <StatItem key={stat.id}>
-                    <StatValue>
-                      {stat.value}
-                      <span>{stat.unit}</span>
-                    </StatValue>
-                    <StatLabel>{stat.label}</StatLabel>
-                  </StatItem>
-                ))}
+                {siteStats.map((stat) => {
+                  // 运行天数使用实时计数器
+                  if (stat.id === '1') {
+                    return (
+                      <StatItem key={stat.id}>
+                        <RunningTimeCounter />
+                        <StatLabel>天</StatLabel>
+                      </StatItem>
+                    );
+                  }
+                  // 其他统计数据正常显示
+                  return (
+                    <StatItem key={stat.id}>
+                      <StatValue>
+                        {stat.value}
+                        <span>{stat.unit}</span>
+                      </StatValue>
+                      <StatLabel>{stat.label}</StatLabel>
+                    </StatItem>
+                  );
+                })}
               </StatsList>
             </SidebarSection>
 
-            {/* 技术栈 - 标签云 */}
+            {/* 技术栈词云 */}
             <SidebarSection>
               <SidebarSectionTitle>技术栈</SidebarSectionTitle>
-              <TechCloud>
-                {techStack.map((tech, index) => {
-                  const rotations = [-15, -12, -8, -5, 0, 5, 8, 12, 15, -10, 10, -7, 7];
-                  const rotateAngle = rotations[index % rotations.length];
-
-                  return (
-                    <TechTag
-                      key={tech.id}
-                      size={techSizes[tech.name as keyof typeof techSizes] || 'small'}
-                      index={index}
-                      initial={{ opacity: 0, scale: 0.8, rotate: rotateAngle }}
-                      animate={{ opacity: 1, scale: 1, rotate: rotateAngle }}
-                      whileHover={{
-                        scale: 1.25,
-                        rotate: 0,
-                        transition: { duration: 0.2 },
-                      }}
-                      transition={{
-                        delay: index * 0.03,
-                        type: 'spring',
-                        stiffness: 200,
-                        damping: 15,
-                      }}
-                    >
-                      {tech.name}
-                    </TechTag>
-                  );
-                })}
-              </TechCloud>
+              <WordCloud words={techWords} minFontSize={0.8} maxFontSize={1.6} />
             </SidebarSection>
           </Sidebar>
 
