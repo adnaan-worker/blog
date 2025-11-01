@@ -18,6 +18,7 @@ import { API } from '@/utils';
 import type { SiteSettings } from '@/types';
 import { PageInfoContext, usePageInfoState } from '@/hooks/usePageInfo';
 import { SiteSettingsContext } from './contexts';
+import { HydrationDetector } from '@/utils/ui/animation';
 
 // 重新导出 Hook，保持向后兼容
 export { useSiteSettings } from './hooks';
@@ -215,6 +216,9 @@ const RootLayout = () => {
     <SiteSettingsContext.Provider value={{ siteSettings, loading: siteSettingsLoading }}>
       <PageInfoContext.Provider value={pageInfoState}>
         <MainContainer>
+          {/* Hydration 检测器 - 用于动画优化 */}
+          <HydrationDetector />
+
           {/* 简洁的顶部加载进度条 */}
           <AnimatePresence>
             {showLoader && (

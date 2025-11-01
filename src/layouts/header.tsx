@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import styled from '@emotion/styled';
+import { useLocation } from 'react-router-dom';
 import { FiMenu, FiX, FiUser, FiTag, FiBookOpen } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
@@ -233,10 +234,10 @@ const STORAGE_KEYS = {
   SELECTED_MENU: 'header_selected_menu_item',
 } as const;
 
-// 滚动动画配置
+// 滚动动画配置 - 增加滚动范围，让转场更从容
 const SCROLL_CONFIG = {
-  start: 5,
-  end: 100,
+  start: 0,
+  end: 150,
 } as const;
 
 // Spring 动画配置
@@ -294,6 +295,9 @@ const replaceMoreMenuItem = (items: MenuItem[], selectedChild: MenuItem): MenuIt
 /* ==================== Header 组件 ==================== */
 
 const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
+  // Router
+  const location = useLocation();
+
   // Redux
   const dispatch = useDispatch<AppDispatch>();
   const { user, isLoggedIn } = useSelector((state: RootState) => state.user);
@@ -384,6 +388,47 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
     [isLoggedIn],
   );
 
+  // ==================== 辅助函数 ====================
+
+  /**
+   * 检查路径是否在主导航菜单中（使用与 NavLinks 一致的匹配规则）
+   */
+  const isPathInMainNav = useCallback((path: string): boolean => {
+    return defaultMainNavItems.some((item) => {
+      // 首页需要精确匹配
+      if (item.path === '/') {
+        return path === '/';
+      }
+
+      // 其他路径使用包含匹配
+      if (path.includes(item.path)) {
+        return true;
+      }
+
+      // 检查子菜单
+      if (item.children) {
+        return item.children.some((child) => {
+          // 子菜单也需要考虑首页的情况
+          if (child.path === '/') {
+            return path === '/';
+          }
+          return path.includes(child.path);
+        });
+      }
+
+      return false;
+    });
+  }, []);
+
+  /**
+   * 重置主导航菜单到默认状态
+   */
+  const resetMainNavMenu = useCallback(() => {
+    setMainNavItems(defaultMainNavItems);
+    storage.local.remove(STORAGE_KEYS.SELECTED_MENU);
+    setMoreDropdownOpen(false);
+  }, []);
+
   // ==================== 回调函数 ====================
 
   /**
@@ -397,7 +442,15 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
     setMoreDropdownOpen(false);
   }, []);
 
-  // ==================== 副作用 ====================
+  // 监听路由变化，当路由不在主导航菜单中时（如个人中心），重置主导航菜单到默认状态
+  useEffect(() => {
+    const currentPath = location.pathname;
+
+    // 如果当前路径不在主导航菜单中（如 /profile），重置主导航菜单
+    if (!isPathInMainNav(currentPath)) {
+      resetMainNavMenu();
+    }
+  }, [location.pathname, isPathInMainNav, resetMainNavMenu]);
 
   // 监听滚动位置
   useEffect(() => {
@@ -460,14 +513,11 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
   // ==================== 事件处理 ====================
 
   const handleLinkClick = useCallback(() => {
-    // 点击普通菜单项时，重置"更多"菜单到默认状态
-    setMainNavItems(defaultMainNavItems);
-    storage.local.remove(STORAGE_KEYS.SELECTED_MENU);
-
-    setMoreDropdownOpen(false);
+    // 点击普通菜单项时，重置主导航菜单到默认状态
+    resetMainNavMenu();
     setMobileMenuOpen(false);
     setUserDropdownOpen(false);
-  }, []);
+  }, [resetMainNavMenu]);
 
   const toggleUserDropdown = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();

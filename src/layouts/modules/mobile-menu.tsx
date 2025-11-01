@@ -7,17 +7,7 @@ import { FiLogOut, FiX, FiUser } from 'react-icons/fi';
 import type { RootState } from '@/store';
 import { scrollLock } from '@/utils/core/scroll-lock';
 import { getRoleDisplayName, getRoleColor } from '@/utils/helpers/role';
-
-// Spring 动画配置 - 使用统一的配置
-const SPRING_CONFIGS = {
-  menu: {
-    stiffness: 300,
-    damping: 30,
-    mass: 0.3,
-    restDelta: 0.01,
-    restSpeed: 0.5,
-  },
-} as const;
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 修改移动端菜单样式 - 响应式胶囊扩展效果
 const MobileMenuContainer = styled(motion.div)<{ scrolled?: boolean }>`
@@ -157,77 +147,7 @@ const MobileMenuDivider = styled.div`
   margin: 1rem 0;
 `;
 
-// 定义动画变体 - 使用封装的 Spring 配置
-// 滚动状态：胶囊向下扩展（限制高度）
-const mobileMenuScrolledVariants = {
-  hidden: {
-    height: 'var(--header-height)',
-    opacity: 1,
-  },
-  visible: {
-    height: '500px',
-    opacity: 1,
-    transition: {
-      height: {
-        type: 'spring' as const,
-        ...SPRING_CONFIGS.menu,
-      },
-      opacity: {
-        duration: 0.3,
-      },
-    },
-  },
-  exit: {
-    height: 'var(--header-height)',
-    opacity: 0,
-    transition: {
-      height: {
-        type: 'spring' as const,
-        ...SPRING_CONFIGS.menu,
-        stiffness: 400, // 退出时稍快
-      },
-      opacity: {
-        duration: 0.2,
-      },
-    },
-  },
-};
-
-// 非滚动状态：从 header 底部展开（限制高度）
-const mobileMenuNormalVariants = {
-  hidden: {
-    height: 0,
-    opacity: 0,
-  },
-  visible: {
-    height: '65vh',
-    opacity: 1,
-    transition: {
-      height: {
-        type: 'spring' as const,
-        ...SPRING_CONFIGS.menu,
-      },
-      opacity: {
-        duration: 0.3,
-        delay: 0.1,
-      },
-    },
-  },
-  exit: {
-    height: 0,
-    opacity: 0,
-    transition: {
-      height: {
-        type: 'spring' as const,
-        ...SPRING_CONFIGS.menu,
-        stiffness: 400, // 退出时稍快
-      },
-      opacity: {
-        duration: 0.2,
-      },
-    },
-  },
-};
+// 动画变体将在组件内部动态生成，使用动画引擎的 springPresets
 
 // 背景遮罩动画 - 平滑淡入淡出
 const overlayVariants = {
@@ -318,6 +238,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   const location = useLocation();
   const { isLoggedIn, user } = useSelector((state: RootState) => state.user);
 
+  // 使用动画引擎 - 统一的 Spring 动画系统
+  const { springPresets } = useAnimationEngine();
+
   // 当菜单打开时锁定背景滚动
   useEffect(() => {
     if (isOpen) {
@@ -345,7 +268,70 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     }
   };
 
-  // 根据滚动状态选择不同的动画变体
+  // 根据滚动状态生成动画变体
+  const mobileMenuScrolledVariants = {
+    hidden: {
+      height: 'var(--header-height)',
+      opacity: 1,
+    },
+    visible: {
+      height: '500px',
+      opacity: 1,
+      transition: {
+        height: {
+          ...springPresets.gentle,
+        },
+        opacity: {
+          duration: 0.3,
+        },
+      },
+    },
+    exit: {
+      height: 'var(--header-height)',
+      opacity: 0,
+      transition: {
+        height: {
+          ...springPresets.snappy,
+        },
+        opacity: {
+          duration: 0.2,
+        },
+      },
+    },
+  };
+
+  const mobileMenuNormalVariants = {
+    hidden: {
+      height: 0,
+      opacity: 0,
+    },
+    visible: {
+      height: '65vh',
+      opacity: 1,
+      transition: {
+        height: {
+          ...springPresets.gentle,
+        },
+        opacity: {
+          duration: 0.3,
+          delay: 0.1,
+        },
+      },
+    },
+    exit: {
+      height: 0,
+      opacity: 0,
+      transition: {
+        height: {
+          ...springPresets.snappy,
+        },
+        opacity: {
+          duration: 0.2,
+        },
+      },
+    },
+  };
+
   const menuVariants = scrolled ? mobileMenuScrolledVariants : mobileMenuNormalVariants;
 
   return (

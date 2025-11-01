@@ -2,7 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { ActivityChartSectionProps } from './types';
-import { useAnimationEngine } from '@/utils/ui/animation';
+import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 
 // Styled Components
 const ChartSection = styled(motion.section)`
@@ -129,12 +129,16 @@ const MonthLabel = styled.div`
 // 主组件
 export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ chartData }) => {
   const { variants, springPresets } = useAnimationEngine();
+
+  // 使用智能视口检测 - 优化初始加载和刷新时的动画
+  const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
+
   if (!Array.isArray(chartData) || chartData.length === 0) {
     return (
       <ChartSection
+        ref={containerView.ref as React.RefObject<HTMLElement>}
         initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        animate={containerView.isInView ? 'visible' : 'hidden'}
         variants={variants.stagger}
       >
         <CreativeSectionHeader>
@@ -233,9 +237,9 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
 
   return (
     <ChartSection
+      ref={containerView.ref as React.RefObject<HTMLElement>}
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+      animate={containerView.isInView ? 'visible' : 'hidden'}
       variants={variants.stagger}
     >
       <CreativeSectionHeader>

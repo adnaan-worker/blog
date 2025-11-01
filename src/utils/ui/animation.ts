@@ -1,15 +1,16 @@
 /**
- * 🚀 Adnaan Animation Engine v2.0 - 超级动画引擎
+ * 🚀 Adnaan Animation Engine v3.0 - 超级动画引擎
  * 统一的动画管理系统，提供最佳性能和视觉效果
  *
- * 优化内容：
- * - 内存管理：自动清理和垃圾回收
+ * 核心功能：
  * - 性能监控：动态调整动画复杂度
- * - 统一管理：所有动画配置集中管理
- * - 防内存泄漏：完善的清理机制
+ * - 视口动画：修复刷新时可见度问题
+ * - Hydration优化：改善LCP性能
+ * - 内存管理：自动清理和垃圾回收
+ * - Spring动画：现代化的弹性动画系统
  */
 
-import { Variants, Transition, useInView } from 'framer-motion';
+import { Variants, Transition, useInView, useAnimation } from 'framer-motion';
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 
 // ==================== 类型定义 ====================
@@ -31,6 +32,58 @@ export interface AnimationConfig {
   delay?: number;
   stagger?: number;
 }
+
+// ==================== Hydration 检测器 ====================
+
+/**
+ * Hydration 状态管理
+ * 用于跳过首次加载动画，改善 LCP 性能
+ */
+let isHydrationComplete = false;
+let hydrationCallbacks: (() => void)[] = [];
+
+/**
+ * 标记 Hydration 完成
+ * 应在 App 组件挂载后2秒调用
+ */
+export const markHydrationComplete = () => {
+  isHydrationComplete = true;
+  hydrationCallbacks.forEach((cb) => cb());
+  hydrationCallbacks = [];
+};
+
+/**
+ * 检查 Hydration 是否完成
+ */
+export const getIsHydrationComplete = () => isHydrationComplete;
+
+/**
+ * 订阅 Hydration 完成事件
+ */
+export const onHydrationComplete = (callback: () => void) => {
+  if (isHydrationComplete) {
+    callback();
+  } else {
+    hydrationCallbacks.push(callback);
+  }
+  return () => {
+    hydrationCallbacks = hydrationCallbacks.filter((cb) => cb !== callback);
+  };
+};
+
+/**
+ * Hydration 检测组件
+ * 在 App 根组件中使用
+ */
+export const HydrationDetector = () => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      markHydrationComplete();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+  return null;
+};
 
 // ==================== 性能监控器 (优化版) ====================
 
@@ -283,19 +336,43 @@ class AnimationScheduler {
 /**
  * Spring 动画预设 - 基于物理世界的运动规律
  *
- * 参数说明:
- * - stiffness (刚度): 弹簧的硬度，值越大弹簧越硬，动画越快 (50-1000)
- * - damping (阻尼): 减少振荡，值越大减速越快 (5-50)
- * - mass (质量): 物体的质量，影响动画的惯性 (0.1-5)
- * - velocity (初始速度): 动画的初始速度 (0-100)
+ * 传统参数 (stiffness/damping/mass):
+ * - stiffness: 弹簧刚度 (50-1000)
+ * - damping: 阻尼系数 (5-50)
+ * - mass: 物体质量 (0.1-5)
+ *
+ * 现代参数 (duration/bounce):
+ * - duration: 感知持续时间
+ * - bounce: 回弹量 (0-1)
  */
 export const SPRING_PRESETS = {
   // 🌸 温柔优雅 - 适用于页面入场、卡片展开
   gentle: {
     type: 'spring' as const,
-    stiffness: 120, // 较低的刚度，柔和
-    damping: 20, // 适中的阻尼，轻微回弹
-    mass: 1, // 正常质量
+    stiffness: 120,
+    damping: 20,
+    mass: 1,
+  },
+
+  // 🌊 柔和平滑 - 无回弹的平滑过渡
+  soft: {
+    type: 'spring' as const,
+    duration: 0.35,
+    stiffness: 120,
+    damping: 20,
+  },
+
+  // 💎 微弹动 - 轻微的回弹效果
+  microRebound: {
+    type: 'spring' as const,
+    stiffness: 300,
+    damping: 20,
+  },
+
+  // 🔄 微阻尼 - 快速衰减的弹性
+  microDamping: {
+    type: 'spring' as const,
+    damping: 24,
   },
 
   // 💫 流畅平滑 - 适用于列表、表单交互
@@ -450,39 +527,16 @@ export class AnimationVariants {
     };
   }
 
-  // 💨 滑入动画 - 流畅平滑
-  static slideIn(direction: 'left' | 'right' | 'top' | 'bottom', level: PerformanceMetrics['level']): Variants {
+  // 💨 滑入动画 - 仅保留左侧滑入
+  static slideIn(direction: 'left', level: PerformanceMetrics['level']): Variants {
     const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.smooth;
     const distance = level === 'minimal' ? 0 : 40;
 
-    const offsets = {
-      left: { x: -distance, y: 0 },
-      right: { x: distance, y: 0 },
-      top: { x: 0, y: -distance },
-      bottom: { x: 0, y: distance },
-    };
-
     return {
-      hidden: { opacity: 0, ...offsets[direction] },
+      hidden: { opacity: 0, x: -distance },
       visible: {
         opacity: 1,
         x: 0,
-        y: 0,
-        transition: spring,
-      },
-    };
-  }
-
-  // 🎯 缩放动画 - 弹性十足
-  static scale(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.bouncy;
-    const scaleValue = level === 'minimal' ? 1 : 0.85;
-
-    return {
-      hidden: { opacity: 0, scale: scaleValue },
-      visible: {
-        opacity: 1,
-        scale: 1,
         transition: spring,
       },
     };
@@ -505,31 +559,69 @@ export class AnimationVariants {
     };
   }
 
-  // 📝 列表项动画 - 敏捷快速
+  // 📝 列表项动画 - 敏捷快速（支持自定义索引延迟）
   static listItem(level: PerformanceMetrics['level']): Variants {
     const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.snappy;
 
     if (level === 'minimal') {
       return {
         hidden: { opacity: 0 },
-        visible: {
+        visible: (custom: number) => ({
           opacity: 1,
           transition: {
             duration: 0.3,
             ease: 'easeOut',
+            delay: custom * 0.05,
           },
-        },
+        }),
       };
     }
 
     return {
       hidden: { opacity: 0, x: -20, scale: 0.95 },
-      visible: {
+      visible: (custom: number) => ({
         opacity: 1,
         x: 0,
         scale: 1,
-        transition: spring,
-      },
+        transition: {
+          ...spring,
+          delay: custom * 0.05,
+        },
+      }),
+    };
+  }
+
+  // 📋 列表项向上滑入 - 优雅上升
+  static listItemUp(level: PerformanceMetrics['level']): Variants {
+    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.microRebound;
+
+    return {
+      hidden: { opacity: 0, y: 20 },
+      visible: (custom: number) => ({
+        opacity: 1,
+        y: 0,
+        transition: {
+          ...spring,
+          delay: custom * 0.08,
+        },
+      }),
+    };
+  }
+
+  // ⚡ 列表项缩放入场 - 弹性缩放
+  static listItemScale(level: PerformanceMetrics['level']): Variants {
+    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.bouncy;
+
+    return {
+      hidden: { opacity: 0, scale: 0.8 },
+      visible: (custom: number) => ({
+        opacity: 1,
+        scale: 1,
+        transition: {
+          ...spring,
+          delay: custom * 0.06,
+        },
+      }),
     };
   }
 
@@ -561,27 +653,6 @@ export class AnimationVariants {
     };
   }
 
-  // 🎭 模态框动画 - 强劲有力
-  static modal(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.stiff;
-
-    return {
-      hidden: { opacity: 0, scale: 0.9, y: 30 },
-      visible: {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        transition: spring,
-      },
-      exit: {
-        opacity: 0,
-        scale: 0.95,
-        y: 20,
-        transition: { ...spring, damping: spring.damping! * 1.5 },
-      },
-    };
-  }
-
   // 📱 下拉菜单动画 - 快速响应
   static dropdown(level: PerformanceMetrics['level']): Variants {
     const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.dropdown;
@@ -599,182 +670,6 @@ export class AnimationVariants {
         y: -10,
         scale: 0.95,
         transition: { ...spring, damping: spring.damping! * 1.5 },
-      },
-    };
-  }
-
-  // 🎈 悬浮动画 - 轻盈飘逸
-  static float(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.floaty;
-
-    return {
-      hidden: { opacity: 0, y: 10 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: spring,
-      },
-    };
-  }
-
-  // ⚡ 按钮点击 - 精准到位
-  static button(level: PerformanceMetrics['level']) {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.precise;
-
-    return {
-      hover: { scale: 1.02, y: -2, transition: spring },
-      tap: { scale: 0.98, transition: spring },
-    };
-  }
-
-  // 🌊 滚动入场 - 缓慢流动
-  static scrollReveal(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.slow;
-
-    return {
-      hidden: { opacity: 0, y: 50 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: spring,
-      },
-    };
-  }
-
-  // ============ 详情页专用动画 ============
-
-  // 📰 文章标题入场 - 弹性十足
-  static articleTitle(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.bouncy;
-
-    return {
-      hidden: { opacity: 0, y: -30, scale: 0.9 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        transition: spring,
-      },
-    };
-  }
-
-  // 📝 文章内容入场 - 向上划出，弹性十足
-  static articleContent(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.bouncy;
-
-    return {
-      hidden: { opacity: 0, y: 60, scale: 0.95 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        transition: spring,
-      },
-    };
-  }
-
-  // 📑 TOC 目录入场 - 从右侧滑入
-  static tocSlideIn(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.smooth;
-
-    return {
-      hidden: { opacity: 0, x: 40, scale: 0.95 },
-      visible: {
-        opacity: 1,
-        x: 0,
-        scale: 1,
-        transition: spring,
-      },
-    };
-  }
-
-  // 🔖 书签 Tab 弹性入场
-  static bookmark(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.bouncy;
-
-    return {
-      hidden: { opacity: 0, x: -20, scale: 0.8 },
-      visible: {
-        opacity: 1,
-        x: 0,
-        scale: 1,
-        transition: spring,
-      },
-    };
-  }
-
-  // 💬 评论区入场 - 从下向上弹出
-  static commentSection(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.gentle;
-
-    return {
-      hidden: { opacity: 0, y: 40 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: spring,
-      },
-    };
-  }
-
-  // 🎯 交互按钮悬停 - 弹性响应
-  static interactiveButton(level: PerformanceMetrics['level']) {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.bouncy;
-
-    return {
-      rest: { scale: 1, y: 0 },
-      hover: {
-        scale: 1.1,
-        y: -3,
-        transition: spring,
-      },
-      tap: {
-        scale: 0.95,
-        transition: spring,
-      },
-    };
-  }
-
-  // ============ 项目详情页专用动画 ============
-
-  // 🎯 项目头部 - 从上方滑入
-  static projectHeader(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.smooth;
-
-    return {
-      hidden: { opacity: 0, y: -30 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: spring,
-      },
-    };
-  }
-
-  // 📄 项目主内容 - 淡入上升
-  static projectContent(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.gentle;
-
-    return {
-      hidden: { opacity: 0, y: 20 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: spring,
-      },
-    };
-  }
-
-  // 📊 项目侧边栏 - 从右侧滑入
-  static projectSidebar(level: PerformanceMetrics['level']): Variants {
-    const spring = level === 'minimal' ? this.springConfigs[level] : SPRING_PRESETS.smooth;
-
-    return {
-      hidden: { opacity: 0, x: 30 },
-      visible: {
-        opacity: 1,
-        x: 0,
-        transition: spring,
       },
     };
   }
@@ -857,43 +752,22 @@ export const useAnimationEngine = () => {
     };
   }, [monitor, scheduler]);
 
-  // 获取动画变体 - 全新 Spring 动画系统
+  // 获取动画变体 - 常用动画集合
   const variants = useMemo(
     () => ({
       // 基础动画
       fadeIn: AnimationVariants.fadeIn(metrics.level),
-      scale: AnimationVariants.scale(metrics.level),
-      float: AnimationVariants.float(metrics.level),
-
-      // 滑入动画
       slideInLeft: AnimationVariants.slideIn('left', metrics.level),
-      slideInRight: AnimationVariants.slideIn('right', metrics.level),
-      slideInTop: AnimationVariants.slideIn('top', metrics.level),
-      slideInBottom: AnimationVariants.slideIn('bottom', metrics.level),
 
       // 容器和列表
       stagger: AnimationVariants.stagger(metrics.level),
       listItem: AnimationVariants.listItem(metrics.level),
+      listItemUp: AnimationVariants.listItemUp(metrics.level),
+      listItemScale: AnimationVariants.listItemScale(metrics.level),
       card: AnimationVariants.card(metrics.level),
 
-      // 特殊动画
-      modal: AnimationVariants.modal(metrics.level),
+      // 下拉菜单
       dropdown: AnimationVariants.dropdown(metrics.level),
-      scrollReveal: AnimationVariants.scrollReveal(metrics.level),
-      button: AnimationVariants.button(metrics.level),
-
-      // 详情页专用动画
-      articleTitle: AnimationVariants.articleTitle(metrics.level),
-      articleContent: AnimationVariants.articleContent(metrics.level),
-      tocSlideIn: AnimationVariants.tocSlideIn(metrics.level),
-      bookmark: AnimationVariants.bookmark(metrics.level),
-      commentSection: AnimationVariants.commentSection(metrics.level),
-      interactiveButton: AnimationVariants.interactiveButton(metrics.level),
-
-      // 项目详情页专用动画
-      projectHeader: AnimationVariants.projectHeader(metrics.level),
-      projectContent: AnimationVariants.projectContent(metrics.level),
-      projectSidebar: AnimationVariants.projectSidebar(metrics.level),
 
       // 波浪文字动画
       waveContainer: AnimationVariants.waveContainer(metrics.level),
@@ -952,65 +826,135 @@ export const useAnimationEngine = () => {
 };
 
 /**
- * 智能视口检测 Hook - 解决刷新时元素已在视口的bug
+ * 智能视口检测 Hook - 完美解决视口动画问题
+ *
+ * 核心功能：
+ * 1. 支持 LCP 优化 - 首次加载跳过动画
+ * 2. 修复刷新bug - 元素在视口时立即显示
+ * 3. 自动清理 - 防止内存泄漏
+ * 4. 动画控制 - useAnimation精确控制
  *
  * 使用方法：
  * ```tsx
- * const { ref, controls } = useSmartInView();
+ * const { ref, isInView } = useSmartInView();
  *
  * <motion.div
  *   ref={ref}
  *   initial="hidden"
- *   animate={controls}
+ *   animate={isInView ? "visible" : "hidden"}
  *   variants={variants.fadeIn}
  * >
  * ```
- *
- * 优势：
- * 1. 刷新时如果元素在视口，立即触发动画
- * 2. 滚动进入视口，正常触发动画
- * 3. 完美解决 whileInView 的bug
  */
-export const useSmartInView = (options?: { once?: boolean; amount?: number }) => {
-  const ref = useRef(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
+export const useSmartInView = (options?: {
+  once?: boolean;
+  amount?: number;
+  lcpOptimization?: boolean; // LCP 优化：首次加载跳过动画
+}) => {
+  const ref = useRef<HTMLElement>(null);
+  const controls = useAnimation();
+  const [shouldAnimate, setShouldAnimate] = useState(false);
+  const [isInitialCheck, setIsInitialCheck] = useState(true);
 
-  // 使用 framer-motion 的 useInView
+  // framer-motion 的视口检测
   const isInView = useInView(ref, {
     once: options?.once ?? true,
     amount: options?.amount ?? 0.2,
+    margin: '0px 0px -10% 0px', // 提前触发动画
   });
 
-  // 初次渲染时检测元素是否在视口
+  const lcpOptimization = options?.lcpOptimization ?? false;
+
+  // 初次检查：元素是否在视口中
   useEffect(() => {
-    if (!hasAnimated && ref.current) {
-      // 使用 getBoundingClientRect 检测元素位置
-      const element = ref.current as HTMLElement;
-      const rect = element.getBoundingClientRect();
-      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+    if (!ref.current || !isInitialCheck) return;
 
-      // 检测元素是否在视口中
-      const isVisible = rect.top < windowHeight && rect.bottom > 0;
+    const element = ref.current;
+    const rect = element.getBoundingClientRect();
+    const windowHeight = window.innerHeight || document.documentElement.clientHeight;
 
-      if (isVisible) {
-        // 如果元素初始就在视口中，立即标记为已动画
-        setHasAnimated(true);
+    // 检测元素是否可见
+    const isVisible = rect.top < windowHeight && rect.bottom > 0 && rect.left < window.innerWidth && rect.right > 0;
+
+    if (isVisible) {
+      // 元素初始就在视口中
+      if (lcpOptimization && !getIsHydrationComplete()) {
+        // LCP优化：跳过动画，直接显示
+        controls.start('visible');
+        setShouldAnimate(true);
+      } else {
+        // 立即触发动画
+        setShouldAnimate(true);
       }
     }
-  }, [hasAnimated]);
 
-  // 当元素进入视口时，标记为已动画
+    setIsInitialCheck(false);
+  }, [isInitialCheck, controls, lcpOptimization]);
+
+  // 监听视口变化
   useEffect(() => {
-    if (isInView && !hasAnimated) {
-      setHasAnimated(true);
+    if (isInView && !isInitialCheck) {
+      setShouldAnimate(true);
+      controls.start('visible');
     }
-  }, [isInView, hasAnimated]);
+  }, [isInView, isInitialCheck, controls]);
 
   return {
     ref,
-    // 返回动画控制状态
-    controls: hasAnimated || isInView ? 'visible' : 'hidden',
-    isInView: hasAnimated || isInView,
+    controls,
+    isInView: shouldAnimate,
+  };
+};
+
+/**
+ * 简化版视口检测 - 仅返回可见状态
+ *
+ * 使用方法：
+ * ```tsx
+ * const { ref, isVisible } = useInViewOnce();
+ *
+ * <motion.div
+ *   ref={ref}
+ *   initial={{ opacity: 0 }}
+ *   animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
+ * >
+ * ```
+ */
+export const useInViewOnce = (options?: { amount?: number }) => {
+  const ref = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  const isInView = useInView(ref, {
+    once: true,
+    amount: options?.amount ?? 0.2,
+    margin: '0px 0px -10% 0px',
+  });
+
+  // 初次检查
+  useEffect(() => {
+    if (!ref.current || isVisible) return;
+
+    const element = ref.current;
+    const rect = element.getBoundingClientRect();
+    const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+
+    const isElementVisible = rect.top < windowHeight && rect.bottom > 0;
+
+    if (isElementVisible) {
+      setIsVisible(true);
+    }
+  }, [isVisible]);
+
+  // 监听视口变化
+  useEffect(() => {
+    if (isInView && !isVisible) {
+      setIsVisible(true);
+    }
+  }, [isInView, isVisible]);
+
+  return {
+    ref,
+    isVisible,
   };
 };
 
@@ -1019,6 +963,11 @@ export const useSmartInView = (options?: { once?: boolean; amount?: number }) =>
 export default {
   useAnimationEngine,
   useSmartInView,
+  useInViewOnce,
+  HydrationDetector,
+  getIsHydrationComplete,
+  markHydrationComplete,
+  onHydrationComplete,
   AnimationVariants,
   SPRING_PRESETS,
   EASING,

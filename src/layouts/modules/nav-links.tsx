@@ -15,33 +15,55 @@ interface MenuItem {
 }
 
 // 定义导航链接样式
-const NavLink = styled(Link)<{ active: string }>`
+const NavLinkContainer = styled.div`
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0.5rem 0.75rem;
   margin: 0 0.5rem;
+`;
+
+// 创建 motion Link 组件（使用新 API）
+const MotionLink = motion.create(Link);
+
+const NavLink = styled(MotionLink)<{ active: string }>`
+  position: relative;
+  display: block;
+  padding: 0.5rem 0.75rem;
   font-size: 0.95rem;
   font-weight: ${(props) => (props.active === 'true' ? '600' : '500')};
   color: ${(props) => (props.active === 'true' ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  transition: all 0.2s ease;
   cursor: pointer;
   border-radius: 8px;
   white-space: nowrap;
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     color: var(--accent-color);
   }
+`;
 
-  svg {
-    opacity: ${(props) => (props.active === 'true' ? '1' : '0')};
-    transition: opacity 0.2s ease;
-  }
+// 内容容器 - flex 布局，图标和文字在同一行
+const ContentWrapper = styled.span`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
 
-  &:hover svg {
-    opacity: 0.5;
-  }
+// 图标容器
+const IconWrapper = styled.span`
+  display: flex;
+  align-items: center;
+  margin-right: 0.5rem; /* 图标与文字的间距 */
+`;
+
+// 下划线
+const Underline = styled.div`
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 70px;
+  height: 2px;
+  background: linear-gradient(to right, var(--underline-bg));
+  opacity: 1;
+  pointer-events: none;
 `;
 
 // 下拉菜单样式
@@ -85,7 +107,7 @@ const DropdownItem = styled(Link)`
   }
 `;
 
-// NavLink组件包含悬停效果
+// NavLink组件 - 使用 Shared Layout Animation 实现平滑过渡
 export const NavLinkWithHover: React.FC<{
   to: string;
   active: boolean;
@@ -93,12 +115,131 @@ export const NavLinkWithHover: React.FC<{
   children: React.ReactNode;
   icon: React.ComponentType<{ size?: number }>;
 }> = ({ to, active, onClick, children, icon: Icon }) => {
+  const { springPresets } = useAnimationEngine();
+
+  // Hover 动画配置
+  const hoverAnimation = {
+    y: -1,
+    transition: springPresets.snappy,
+  };
+
+  const tapAnimation = {
+    scale: 0.98,
+    transition: springPresets.stiff,
+  };
+
+  // 图标动画变体
+  const iconVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.8,
+      x: -4,
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      x: 0,
+      transition: {
+        type: 'spring' as const,
+        stiffness: 400,
+        damping: 25,
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.8,
+      x: -4,
+      transition: {
+        duration: 0.15,
+      },
+    },
+  };
+
+  // 下划线动画变体
+  const underlineVariants = {
+    hidden: {
+      scaleX: 0,
+      opacity: 0,
+    },
+    visible: {
+      scaleX: 1,
+      opacity: 1,
+      transition: {
+        type: 'spring' as const,
+        stiffness: 400,
+        damping: 25,
+      },
+    },
+    exit: {
+      scaleX: 0,
+      opacity: 0,
+      transition: {
+        duration: 0.15,
+      },
+    },
+  };
+
   return (
-    <NavLink to={to} active={active ? 'true' : 'false'} onClick={onClick} className="nav-link-hover">
-      {active && Icon ? <Icon size={16} /> : null}
-      {children}
-      {active ? <div className="underline" /> : <></>}
-    </NavLink>
+    <NavLinkContainer>
+      <NavLink
+        to={to}
+        active={active ? 'true' : 'false'}
+        onClick={onClick}
+        className="nav-link-hover"
+        whileHover={hoverAnimation}
+        whileTap={tapAnimation}
+      >
+        {/* 图标和文字容器 */}
+        <ContentWrapper>
+          {/* 图标 - 淡入淡出 + 缩放动画 */}
+          <AnimatePresence mode="wait">
+            {active && Icon && (
+              <motion.span
+                key="icon"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginRight: '0.5rem',
+                }}
+                variants={iconVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <Icon size={16} />
+              </motion.span>
+            )}
+          </AnimatePresence>
+
+          {/* 文字 - 直接显示 */}
+          <span>{children}</span>
+        </ContentWrapper>
+
+        {/* 下划线 - 伸展动画 */}
+        <AnimatePresence mode="wait">
+          {active && (
+            <motion.div
+              key="underline"
+              style={{
+                position: 'absolute',
+                bottom: '-5px',
+                left: 0,
+                width: '70px',
+                height: '2px',
+                background: 'linear-gradient(to right, var(--underline-bg))',
+                opacity: 1,
+                pointerEvents: 'none',
+                transformOrigin: 'left',
+              }}
+              variants={underlineVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            />
+          )}
+        </AnimatePresence>
+      </NavLink>
+    </NavLinkContainer>
   );
 };
 

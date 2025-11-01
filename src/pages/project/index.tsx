@@ -7,39 +7,10 @@ import { API } from '@/utils/api';
 import type { Project } from '@/types';
 import { formatDate } from '@/utils';
 import { Pagination } from 'adnaan-ui';
-import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 import { ListPageHeader } from '@/components/common/list-page-header';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
-
-// 动画变体 - 使用 Spring 系统
-const fadeInUpVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: SPRING_PRESETS.gentle,
-  },
-};
-
-const staggerContainerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-    },
-  },
-};
-
-const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: SPRING_PRESETS.smooth,
-  },
-};
 
 // 样式组件
 const PageContainer = styled.div`
@@ -413,11 +384,12 @@ const statusTextMap: Record<string, string> = {
 interface ProjectCardProps {
   project: Project;
   index: number;
+  variants: any;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, variants }) => {
   return (
-    <ProjectItem variants={cardVariants} custom={index}>
+    <ProjectItem variants={variants} custom={index}>
       <ProjectInner>
         <ProjectMain>
           <ProjectTitleRow>
@@ -477,6 +449,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
 };
 
 const Projects: React.FC = () => {
+  // 使用动画引擎 - 统一的 Spring 动画系统
+  const { variants, springPresets } = useAnimationEngine();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -570,9 +545,9 @@ const Projects: React.FC = () => {
         {/* 只有加载完成后才显示内容或空状态 */}
         {projects.length > 0 ? (
           <>
-            <ProjectsList initial="hidden" animate="visible" variants={staggerContainerVariants}>
+            <ProjectsList initial="hidden" animate="visible" variants={variants.stagger}>
               {projects.map((project, index) => (
-                <ProjectCard key={project.id} project={project} index={index} />
+                <ProjectCard key={project.id} project={project} index={index} variants={variants.listItemUp} />
               ))}
             </ProjectsList>
 
@@ -592,7 +567,7 @@ const Projects: React.FC = () => {
           </>
         ) : (
           !loading && (
-            <EmptyState variants={fadeInUpVariants} initial="hidden" animate="visible">
+            <EmptyState variants={variants.fadeIn} initial="hidden" animate="visible">
               <FiGithub />
               <h3>暂无项目</h3>
               <p>还没有发布任何项目</p>

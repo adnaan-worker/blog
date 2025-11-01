@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { cycleTheme } from '@/store/modules/themeSlice';
 import { getElementCenter } from '@/utils/ui/theme';
 import type { RootState } from '@/store';
-import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 主题切换按钮容器
 const ThemeToggleContainer = styled(motion.div)`
@@ -84,7 +84,10 @@ const ThemeToggle: React.FC = () => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isTransitioning, setIsTransitioning] = React.useState(false);
 
-  // 太阳动画变体 - 使用 Spring 系统
+  // 使用动画引擎 - 统一的 Spring 动画系统
+  const { springPresets } = useAnimationEngine();
+
+  // 太阳动画变体 - 旋转入场，弹性效果
   const sunVariants = {
     initial: {
       rotate: 0,
@@ -95,17 +98,17 @@ const ThemeToggle: React.FC = () => {
       rotate: 360,
       scale: 1,
       opacity: 1,
-      transition: SPRING_PRESETS.bouncy,
+      transition: springPresets.bouncy,
     },
     exit: {
       rotate: -360,
       scale: 0.8,
       opacity: 0,
-      transition: SPRING_PRESETS.snappy,
+      transition: springPresets.snappy,
     },
   };
 
-  // 月亮动画变体 - 使用 Spring 系统
+  // 月亮动画变体 - 反向旋转，弹性效果
   const moonVariants = {
     initial: {
       rotate: 0,
@@ -116,17 +119,17 @@ const ThemeToggle: React.FC = () => {
       rotate: -360,
       scale: 1,
       opacity: 1,
-      transition: SPRING_PRESETS.bouncy,
+      transition: springPresets.bouncy,
     },
     exit: {
       rotate: 360,
       scale: 0.8,
       opacity: 0,
-      transition: SPRING_PRESETS.snappy,
+      transition: springPresets.snappy,
     },
   };
 
-  // 光线动画变体 - 使用 Spring 系统
+  // 光线动画变体 - 柔和扩散
   const raysVariants = {
     initial: {
       scale: 0.8,
@@ -135,16 +138,16 @@ const ThemeToggle: React.FC = () => {
     animate: {
       scale: 1.2,
       opacity: 1,
-      transition: SPRING_PRESETS.floaty,
+      transition: springPresets.floaty,
     },
     exit: {
       scale: 0.8,
       opacity: 0,
-      transition: SPRING_PRESETS.snappy,
+      transition: springPresets.snappy,
     },
   };
 
-  // 自动模式动画变体 - 使用 Spring 系统
+  // 自动模式动画变体 - 旋转入场
   const autoVariants = {
     initial: {
       scale: 0.8,
@@ -155,13 +158,13 @@ const ThemeToggle: React.FC = () => {
       scale: 1,
       opacity: 1,
       rotate: 0,
-      transition: SPRING_PRESETS.bouncy,
+      transition: springPresets.bouncy,
     },
     exit: {
       scale: 0.8,
       opacity: 0,
       rotate: 90,
-      transition: SPRING_PRESETS.snappy,
+      transition: springPresets.snappy,
     },
   };
 

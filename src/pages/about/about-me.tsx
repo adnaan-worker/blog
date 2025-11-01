@@ -5,7 +5,7 @@ import { FiGithub, FiMail, FiLink } from 'react-icons/fi';
 import { SEO } from '@/components/common';
 import { personalInfo, skillTags, experiences, projects, contactInfo } from '@/data/about-me.data';
 import type { ExperienceItem } from '@/data/about-me.data';
-import { SPRING_PRESETS, useAnimationEngine } from '@/utils/ui/animation';
+import { SPRING_PRESETS, useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 import { formatDate } from '@/utils';
 
 // 页面容器
@@ -481,6 +481,10 @@ const ProjectTags = styled.div`
 const AboutMe: React.FC = () => {
   const { variants } = useAnimationEngine();
 
+  // 使用智能视口检测 - 优化动画性能
+  const timelineView = useSmartInView({ amount: 0.1 });
+  const projectsView = useSmartInView({ amount: 0.1 });
+
   return (
     <>
       <SEO title="自述" description={personalInfo.bio} keywords="全栈开发,React,Node.js,个人简介" />
@@ -571,10 +575,9 @@ const AboutMe: React.FC = () => {
               工作与学习经历
             </SectionTitle>
             <TimelineList
+              ref={timelineView.ref as React.RefObject<HTMLDivElement>}
               initial="hidden"
-              animate="visible"
-              whileInView="visible"
-              viewport={{ amount: 0.1, once: true }}
+              animate={timelineView.isInView ? 'visible' : 'hidden'}
               variants={variants.stagger}
             >
               {experiences.map((exp) => (
@@ -611,20 +614,13 @@ const AboutMe: React.FC = () => {
             </TimelineList>
 
             {/* 项目作品 */}
-            <SectionTitle
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ amount: 0.1 }}
-              transition={SPRING_PRESETS.gentle}
-            >
+            <SectionTitle initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={SPRING_PRESETS.gentle}>
               项目作品
             </SectionTitle>
             <ProjectsList
+              ref={projectsView.ref as React.RefObject<HTMLDivElement>}
               initial="hidden"
-              animate="visible"
-              whileInView="visible"
-              viewport={{ amount: 0.1, once: true }}
+              animate={projectsView.isInView ? 'visible' : 'hidden'}
               variants={variants.stagger}
             >
               {projects.map((project) => (

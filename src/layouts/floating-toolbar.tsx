@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMusic, FiArrowUp } from 'react-icons/fi';
 import MusicPlayer from './modules/music-player';
-import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // GPU加速优化
 const gpuAcceleration = {
@@ -282,6 +282,9 @@ interface FloatingToolbarProps {
 }
 
 const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => {
+  // 使用动画引擎 - 统一的 Spring 动画系统
+  const { springPresets } = useAnimationEngine();
+
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isMusicPlayerOpen, setIsMusicPlayerOpen] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<{
@@ -410,7 +413,7 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ ...SPRING_PRESETS.stiff, damping: 60 }}
+                  transition={{ ...springPresets.stiff, damping: 60 }}
                 >
                   <LyricText>{currentLyric}</LyricText>
                 </LyricTextWrapper>

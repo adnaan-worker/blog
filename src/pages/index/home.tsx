@@ -4,7 +4,7 @@ import { motion, Variants } from 'framer-motion';
 import { FiGithub, FiMail, FiCode } from 'react-icons/fi';
 import { API } from '@/utils/api';
 import type { UserActivity, Project } from '@/types';
-import { useAnimationEngine } from '@/utils/ui/animation';
+import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 import { Icon } from '@/components/common/icon';
 import { WaveText, SEO } from '@/components/common';
 import { useSiteSettings } from '@/layouts';
@@ -639,6 +639,9 @@ const Home: React.FC = () => {
   // 使用动画引擎 - 统一的 Spring 动画系统
   const { variants, springPresets } = useAnimationEngine();
 
+  // 使用智能视口检测 - 优化两栏布局动画
+  const twoColumnView = useSmartInView({ amount: 0.2, lcpOptimization: true });
+
   // 按行显示控制（3行）
   const [showLine1, setShowLine1] = useState(true); // 欢迎踏入代码与创意交织的奇幻宇宙🌌
   const [showLine2, setShowLine2] = useState(false); // 在代码与设计的交界，创造数字诗篇 @adnaan
@@ -1147,9 +1150,9 @@ const Home: React.FC = () => {
 
         {/* 两栏布局容器 */}
         <TwoColumnLayout
+          ref={twoColumnView.ref as React.RefObject<HTMLDivElement>}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          animate={twoColumnView.isInView ? 'visible' : 'hidden'}
           variants={variants.stagger}
         >
           {/* 左侧栏 */}

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { SEO } from '@/components/common';
 import { siteMilestones, techStack, siteStats } from '@/data/about-site.data';
 import type { SiteMilestone } from '@/data/about-site.data';
-import { SPRING_PRESETS, useAnimationEngine } from '@/utils/ui/animation';
+import { SPRING_PRESETS, useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 import { formatDate } from '@/utils';
 
 // 页面容器
@@ -347,6 +347,9 @@ const AboutSite: React.FC = () => {
   const { variants } = useAnimationEngine();
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
+  // 使用智能视口检测 - 优化动画性能
+  const milestonesView = useSmartInView({ amount: 0.1 });
+
   const filteredMilestones =
     activeCategory === 'all' ? siteMilestones : siteMilestones.filter((m) => m.category === activeCategory);
 
@@ -461,10 +464,9 @@ const AboutSite: React.FC = () => {
               发展历程
             </SectionTitle>
             <MilestonesList
+              ref={milestonesView.ref as React.RefObject<HTMLDivElement>}
               initial="hidden"
-              animate="visible"
-              whileInView="visible"
-              viewport={{ amount: 0.1, once: true }}
+              animate={milestonesView.isInView ? 'visible' : 'hidden'}
               variants={variants.stagger}
             >
               {filteredMilestones.map((milestone) => (

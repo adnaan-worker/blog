@@ -145,8 +145,8 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
 
-  // 使用智能视口检测 - 解决刷新bug
-  const containerView = useSmartInView({ amount: 0.2 });
+  // 使用智能视口检测 - 修复刷新时可见度问题
+  const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
   const titleView = useSmartInView({ amount: 0.3 });
   const gridView = useSmartInView({ amount: 0.1 });
 
@@ -156,15 +156,15 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
 
   return (
     <ContentSection
-      ref={containerView.ref}
+      ref={containerView.ref as React.RefObject<HTMLDivElement>}
       initial="hidden"
-      animate={containerView.controls}
+      animate={containerView.isInView ? 'visible' : 'hidden'}
       variants={variants.fadeIn}
     >
       <SectionTitle
-        ref={titleView.ref}
+        ref={titleView.ref as React.RefObject<HTMLHeadingElement>}
         initial="hidden"
-        animate={titleView.controls}
+        animate={titleView.isInView ? 'visible' : 'hidden'}
         variants={variants.slideInLeft}
         transition={springPresets.gentle}
       >
@@ -186,7 +186,12 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
         </Link>
       </SectionTitle>
 
-      <ArticleGrid ref={gridView.ref} initial="hidden" animate={gridView.controls} variants={variants.stagger}>
+      <ArticleGrid
+        ref={gridView.ref as React.RefObject<HTMLDivElement>}
+        initial="hidden"
+        animate={gridView.isInView ? 'visible' : 'hidden'}
+        variants={variants.stagger}
+      >
         {articles.slice(0, 3).map((article, index) => (
           <ArticleLink
             to={`/blog/${article.id}`}
@@ -212,8 +217,8 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
 
-  // 使用智能视口检测 - 解决刷新bug
-  const containerView = useSmartInView({ amount: 0.2 });
+  // 使用智能视口检测 - 修复刷新时可见度问题
+  const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
   const titleView = useSmartInView({ amount: 0.3 });
   const gridView = useSmartInView({ amount: 0.1 });
 
@@ -223,15 +228,15 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
 
   return (
     <ContentSection
-      ref={containerView.ref}
+      ref={containerView.ref as React.RefObject<HTMLDivElement>}
       initial="hidden"
-      animate={containerView.controls}
+      animate={containerView.isInView ? 'visible' : 'hidden'}
       variants={variants.fadeIn}
     >
       <SectionTitle
-        ref={titleView.ref}
+        ref={titleView.ref as React.RefObject<HTMLHeadingElement>}
         initial="hidden"
-        animate={titleView.controls}
+        animate={titleView.isInView ? 'visible' : 'hidden'}
         variants={variants.slideInLeft}
         transition={springPresets.gentle}
       >
@@ -253,7 +258,12 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
         </Link>
       </SectionTitle>
 
-      <ArticleGrid ref={gridView.ref} initial="hidden" animate={gridView.controls} variants={variants.stagger}>
+      <ArticleGrid
+        ref={gridView.ref as React.RefObject<HTMLDivElement>}
+        initial="hidden"
+        animate={gridView.isInView ? 'visible' : 'hidden'}
+        variants={variants.stagger}
+      >
         {notes.slice(0, 5).map((note, index) => (
           <ArticleLink
             to={`/notes/${note.id}`}

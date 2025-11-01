@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { FiArrowRight, FiStar, FiGithub, FiCode, FiCalendar, FiFolderPlus, FiExternalLink } from 'react-icons/fi';
 import { SiGitee } from 'react-icons/si';
 import { formatDate } from '@/utils';
-import { useAnimationEngine } from '@/utils/ui/animation';
+import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 import { Icon } from '@/components/common/icon';
 import { RadarChart } from '@/components/charts/radar-chart';
 import { getLanguageIcon, calculateProjectRadarData } from '@/utils/ui/language-icons';
@@ -642,6 +642,9 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
 
+  // 使用智能视口检测 - 优化初始加载和刷新时的动画
+  const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
+
   // 使用 useMemo 根据 projects.length 动态计算布局
   const geometryLayouts = useMemo(() => {
     return generateGeometryLayout(projects.length);
@@ -661,9 +664,9 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
 
   return (
     <ProjectsWrapper
+      ref={containerView.ref as React.RefObject<HTMLElement>}
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+      animate={containerView.isInView ? 'visible' : 'hidden'}
       variants={variants.stagger}
     >
       <CreativeSectionHeader>

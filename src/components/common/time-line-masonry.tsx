@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { useAnimationEngine } from '@/utils/ui/animation';
 import { groupItemsByYear, type TimelineItem, type YearGroup } from '@/utils/helpers/timeline';
 
 // 重新导出类型，方便其他组件使用
@@ -157,6 +157,9 @@ function TimelineMasonry<T extends TimelineItem>({
   onLoadMore,
   emptyState,
 }: TimelineMasonryProps<T>) {
+  // 使用动画引擎 - 统一的 Spring 动画系统
+  const { springPresets } = useAnimationEngine();
+
   const groupedItems = groupItemsByYear(items);
 
   // 默认年份头部渲染
@@ -186,7 +189,7 @@ function TimelineMasonry<T extends TimelineItem>({
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{
-              ...SPRING_PRESETS.gentle,
+              ...springPresets.gentle,
               delay: yearIndex * 0.08,
             }}
           >
@@ -201,7 +204,7 @@ function TimelineMasonry<T extends TimelineItem>({
                   initial={{ opacity: 0, x: -20, scale: 0.95 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   transition={{
-                    ...SPRING_PRESETS.snappy,
+                    ...springPresets.snappy,
                     delay: (yearIndex * 3 + itemIndex) * 0.03,
                   }}
                 >

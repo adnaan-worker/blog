@@ -264,8 +264,8 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
   const { variants, springPresets } = useAnimationEngine();
   const navigate = useNavigate();
 
-  // 使用智能视口检测 - 解决刷新bug
-  const containerView = useSmartInView({ amount: 0.2 });
+  // 使用智能视口检测 - 修复刷新时可见度问题
+  const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
   const titleView = useSmartInView({ amount: 0.3 });
   const gridView = useSmartInView({ amount: 0.1 });
 
@@ -278,15 +278,15 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
 
   return (
     <ContentSection
-      ref={containerView.ref}
+      ref={containerView.ref as React.RefObject<HTMLDivElement>}
       initial="hidden"
-      animate={containerView.controls}
+      animate={containerView.isInView ? 'visible' : 'hidden'}
       variants={variants.fadeIn}
     >
       <SectionTitle
-        ref={titleView.ref}
+        ref={titleView.ref as React.RefObject<HTMLHeadingElement>}
         initial="hidden"
-        animate={titleView.controls}
+        animate={titleView.isInView ? 'visible' : 'hidden'}
         variants={variants.slideInLeft}
         transition={springPresets.gentle}
       >
@@ -295,7 +295,12 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({ activities
 
       <ActivityScrollContainer>
         <FadeMask className="top" />
-        <ActivityGrid ref={gridView.ref} initial="hidden" animate={gridView.controls} variants={variants.stagger}>
+        <ActivityGrid
+          ref={gridView.ref as React.RefObject<HTMLDivElement>}
+          initial="hidden"
+          animate={gridView.isInView ? 'visible' : 'hidden'}
+          variants={variants.stagger}
+        >
           {loading ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>加载中...</div>
           ) : activities.length === 0 ? (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
+import { SPRING_PRESETS } from '@/utils/ui/animation';
 
 // 加载容器 - 始终全屏覆盖
 const LoadingContainer = styled(motion.div)<{ $fullScreen?: boolean }>`
@@ -181,7 +182,7 @@ const PageLoading: React.FC<PageLoadingProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+      transition={SPRING_PRESETS.soft}
     >
       {/* 根据变体渲染不同的动画 */}
       {variant === 'ring' && renderRingAnimation()}
@@ -193,7 +194,7 @@ const PageLoading: React.FC<PageLoadingProps> = ({
         initial={{ opacity: 0, y: 5 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -5 }}
-        transition={{ duration: 0.2, delay: 0.1 }}
+        transition={{ ...SPRING_PRESETS.soft, delay: 0.1 }}
       >
         {loadingMessage}
       </LoadingText>
