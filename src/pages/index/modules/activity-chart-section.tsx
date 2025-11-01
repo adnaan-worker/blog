@@ -145,6 +145,11 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
     );
   }
 
+  // 获取某个月的天数（考虑闰年）
+  const getDaysInMonth = (year: number, month: number): number => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
   // 处理API返回的数据
   const dailyData = chartData.map((item: any) => {
     const date = new Date(item.date);
@@ -152,6 +157,9 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
       date: item.date,
       displayDate: `${date.getMonth() + 1}/${date.getDate()}`,
       month: `${date.getMonth() + 1}月`,
+      monthNum: date.getMonth(),
+      year: date.getFullYear(),
+      day: date.getDate(),
       count: item.count,
     };
   });
@@ -171,11 +179,16 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
 
   // 按月份分组数据（用于月份均分布局）
   const monthGroups = normalizedData.reduce(
-    (groups: Array<{ month: string; days: typeof normalizedData }>, item, index) => {
+    (groups: Array<{ month: string; monthNum: number; year: number; days: typeof normalizedData }>, item) => {
       const lastGroup = groups[groups.length - 1];
 
       if (!lastGroup || lastGroup.month !== item.month) {
-        groups.push({ month: item.month, days: [item] });
+        groups.push({
+          month: item.month,
+          monthNum: item.monthNum,
+          year: item.year,
+          days: [item],
+        });
       } else {
         lastGroup.days.push(item);
       }
@@ -184,6 +197,39 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
     },
     [],
   );
+
+  // 为每个月份组填充完整天数
+  const completeMonthGroups = monthGroups.map((group) => {
+    const daysInMonth = getDaysInMonth(group.year, group.monthNum);
+    const completeDays: typeof normalizedData = [];
+
+    // 填充整个月的天数（1号到月末）
+    for (let day = 1; day <= daysInMonth; day++) {
+      const existingDay = group.days.find((d) => d.day === day);
+      if (existingDay) {
+        // 使用已有数据
+        completeDays.push(existingDay);
+      } else {
+        // 填充缺失天数（count为0）
+        const date = new Date(group.year, group.monthNum, day);
+        completeDays.push({
+          date: date.toISOString().split('T')[0],
+          displayDate: `${group.monthNum + 1}/${day}`,
+          month: group.month,
+          monthNum: group.monthNum,
+          year: group.year,
+          day: day,
+          count: 0,
+          heightPx: 3, // 无贡献时显示最小高度
+        });
+      }
+    }
+
+    return {
+      ...group,
+      days: completeDays,
+    };
+  });
 
   return (
     <ChartSection
@@ -195,14 +241,17 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
       <CreativeSectionHeader>
         <CreativeSectionTitle variants={variants.fadeIn}>我的提交频次诗意图谱</CreativeSectionTitle>
         <SectionSubtitle variants={variants.fadeIn}>
-          让每一次代码提交，都化作 {normalizedData[0].month + '-' + normalizedData[normalizedData.length - 1].month}
+          让每一次代码提交，都化作 {completeMonthGroups[0]?.month || normalizedData[0]?.month || ''} -{' '}
+          {completeMonthGroups[completeMonthGroups.length - 1]?.month ||
+            normalizedData[normalizedData.length - 1]?.month ||
+            ''}
           的诗意的编程韵律
         </SectionSubtitle>
       </CreativeSectionHeader>
 
       <ChartContainer>
         <Chart>
-          {monthGroups.map((group, groupIndex) => (
+          {completeMonthGroups.map((group, groupIndex) => (
             <MonthGroup key={`${group.month}-${groupIndex}`}>
               {group.days.map((item, dayIndex) => (
                 <DayLine
@@ -220,7 +269,7 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
         </Chart>
 
         <ChartLabels>
-          {monthGroups.map((group, index) => (
+          {completeMonthGroups.map((group, index) => (
             <MonthLabel key={`${group.month}-${index}`}>{group.month}</MonthLabel>
           ))}
         </ChartLabels>
