@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
 import { ListPageHeader } from '@/components/common/list-page-header';
 import { SEO } from '@/components/common';
@@ -9,9 +10,9 @@ import { API } from '@/utils/api';
 import type { Article } from '@/types';
 import { formatDate } from '@/utils';
 import { FiCalendar, FiEye, FiHeart, FiMessageSquare, FiClock } from 'react-icons/fi';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
-// 页面样式组件
-const PageContainer = styled.div`
+const PageContainer = styled(motion.div)`
   min-height: 100vh;
   background: var(--bg-primary);
   padding: 2rem 0;
@@ -27,8 +28,7 @@ const Container = styled.div`
   }
 `;
 
-// 文章项目样式 - 紧凑卡片风格
-const ArticleCard = styled.div`
+const ArticleCard = styled(motion.div)`
   background: var(--bg-primary);
   border: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.4);
   border-radius: 10px;
@@ -162,6 +162,7 @@ const EmptyState = styled.div`
 `;
 
 const BlogPage: React.FC = () => {
+  const { variants, level } = useAnimationEngine();
   const [articles, setArticles] = useState<TimelineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -301,9 +302,8 @@ const BlogPage: React.FC = () => {
         description="探索代码世界，分享技术思考。包含React、TypeScript、Node.js等前后端开发技术文章。"
         keywords="技术博客, React教程, TypeScript, Node.js, 前端开发, 后端开发"
       />
-      <PageContainer>
+      <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
         <Container>
-          {/* 页面头部 */}
           <ListPageHeader
             title="技术文章"
             subtitle="探索代码世界，分享技术思考"
@@ -311,7 +311,6 @@ const BlogPage: React.FC = () => {
             countUnit="篇文章"
           />
 
-          {/* 时间线列表 */}
           <TimelineMasonry
             items={articles}
             renderItem={(item, index) => renderArticleItem(item as unknown as Article, index)}

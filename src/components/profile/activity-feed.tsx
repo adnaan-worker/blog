@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiRefreshCw, FiExternalLink } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
 import type { Activity } from './types';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 interface ActivityFeedProps {
   activities: Activity[];
@@ -226,6 +227,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   isLoading = false,
   isRefreshing = false,
 }) => {
+  const { variants } = useAnimationEngine();
   const listRef = useRef<HTMLDivElement>(null);
   const [isNearBottom, setIsNearBottom] = useState(false);
 

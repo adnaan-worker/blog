@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
 import { ListPageHeader } from '@/components/common/list-page-header';
 import { SEO } from '@/components/common';
@@ -8,9 +9,9 @@ import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import { API } from '@/utils/api';
 import type { Note, NoteParams } from '@/types';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
-// 页面样式组件
-const PageContainer = styled.div`
+const PageContainer = styled(motion.div)`
   min-height: 100vh;
   background: var(--bg-primary);
   padding: 2rem 0;
@@ -26,8 +27,7 @@ const Container = styled.div`
   }
 `;
 
-// 手记项目样式
-const NoteItem = styled.div`
+const NoteItem = styled(motion.div)`
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -104,6 +104,7 @@ const EmptyState = styled.div`
 import { formatDate as formatDateUtil } from '@/utils';
 
 const NotesPage: React.FC = () => {
+  const { variants, level } = useAnimationEngine();
   const [notes, setNotes] = useState<TimelineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -204,7 +205,7 @@ const NotesPage: React.FC = () => {
         keywords={PAGE_SEO_CONFIG.noteList.keywords}
         type="website"
       />
-      <PageContainer>
+      <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
         <Container>
           {/* 页面头部 */}
           <ListPageHeader

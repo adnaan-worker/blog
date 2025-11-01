@@ -1,9 +1,10 @@
 import React, { memo, useMemo, useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import { FiHeart, FiBookmark, FiShare2 } from 'react-icons/fi';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
-// 侧边栏容器 - 包含进度条、目录和工具栏
-const SidebarWrapper = styled.div`
+const SidebarWrapper = styled(motion.div)`
   position: relative;
   width: 280px;
   display: flex;
@@ -250,10 +251,9 @@ interface ArticleTocProps {
   onShare: () => void;
 }
 
-// 使用memo优化TOC组件
 const ArticleToc: React.FC<ArticleTocProps> = memo(
   ({ headings, activeHeading, readingProgress, onHeadingClick, liked, bookmarked, onLike, onBookmark, onShare }) => {
-    // 检测是否滚动到底部
+    const { variants } = useAnimationEngine();
     const [isBottom, setIsBottom] = useState(false);
 
     const checkIfBottom = useCallback(() => {
@@ -298,7 +298,7 @@ const ArticleToc: React.FC<ArticleTocProps> = memo(
     }, [headings, activeHeading, onHeadingClick]);
 
     return (
-      <SidebarWrapper>
+      <SidebarWrapper initial="hidden" animate="visible" variants={variants.fadeIn}>
         {/* 顶部：目录 */}
         <TocContainer>
           <TocList>{renderedHeadings}</TocList>

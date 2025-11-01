@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiZoomIn, FiZoomOut, FiRotateCw, FiDownload, FiMaximize2, FiAlertCircle } from 'react-icons/fi';
 import { scrollLock } from '@/utils/core/scroll-lock';
+import { SPRING_PRESETS } from '@/utils/ui/animation';
 
 interface ImagePreviewProps {
   src: string;

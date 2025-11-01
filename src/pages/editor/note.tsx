@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import {
   FiSave,
   FiX,
@@ -20,6 +21,7 @@ import { API } from '@/utils/api';
 import { Button, Input } from 'adnaan-ui';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 interface Note {
   id: number;
@@ -33,6 +35,7 @@ interface Note {
 }
 
 const NoteEditorPage: React.FC = () => {
+  const { variants, level } = useAnimationEngine();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const noteId = searchParams.get('id');
@@ -249,7 +252,7 @@ const NoteEditorPage: React.FC = () => {
         index={false}
         follow={false}
       />
-      <EditorContainer>
+      <EditorContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
         {/* 顶部工具栏 */}
         <TopBar>
           <LeftSection>
@@ -411,7 +414,7 @@ const NoteEditorPage: React.FC = () => {
 };
 
 // 样式组件
-const EditorContainer = styled.div`
+const EditorContainer = styled(motion.div)`
   width: 100vw;
   height: 100vh;
   display: flex;

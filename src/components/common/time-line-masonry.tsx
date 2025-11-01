@@ -98,10 +98,10 @@ const TimelineItemWrapper = styled(motion.div)`
   &::before {
     content: '';
     position: absolute;
-    left: -1.9rem;
+    left: -1.8rem;
     top: 0.3rem;
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     background: var(--accent-color);
     border-radius: 50%;
     border: 2px solid var(--bg-primary);

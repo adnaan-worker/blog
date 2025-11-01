@@ -53,7 +53,7 @@ export const mainNavItems: MenuItem[] = [
     children: [
       {
         path: '/about-site',
-        title: '关于此站点',
+        title: '此站点',
         icon: FiInfo,
       },
       {

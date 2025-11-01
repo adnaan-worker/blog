@@ -254,7 +254,7 @@ const RootLayout = () => {
           </Suspense>
 
           {/* 页面切换时的全屏loading */}
-          {showPageLoading && createPortal(<PageLoading fullScreen variant="pulse" />, document.body)}
+          {showPageLoading && createPortal(<PageLoading />, document.body)}
 
           {/* 页脚 */}
           <Footer />

@@ -1,10 +1,11 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import { FiSearch, FiBarChart2 } from 'react-icons/fi';
 import { Input } from 'adnaan-ui';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
-// 侧边栏容器
-const SidebarContainer = styled.div`
+const SidebarContainer = styled(motion.div)`
   width: 300px;
   flex-shrink: 0;
 
@@ -172,8 +173,10 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
   viewMode = 'timeline',
   onViewModeChange,
 }) => {
+  const { variants } = useAnimationEngine();
+
   return (
-    <SidebarContainer>
+    <SidebarContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
       <SidebarCard>
         <h3>搜索文章</h3>
         <StyledSearchInput

@@ -29,9 +29,10 @@ import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components
 import DetailNoiseBackground from '@/components/common/detail-noise-background';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { SEO, AutoSkeleton } from '@/components/common';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 样式组件
-const PageContainer = styled.div`
+const PageContainer = styled(motion.div)`
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
@@ -547,10 +548,10 @@ const statusTextMap: Record<string, string> = {
 
 const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { variants } = useAnimationEngine();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 使用智能导航栏
   const { setPageInfo } = usePageInfo();
 
   useEffect(() => {
@@ -594,9 +595,8 @@ const ProjectDetail: React.FC = () => {
       <AutoSkeleton loading={loading || !project} cacheKey={`project-detail-${id}`} minLoadingTime={800}>
         {project && (
           <DetailPageLayout showBackground={true} mainContent={<></>}>
-            {/* 噪点背景 - 仅详情页使用 */}
             <DetailNoiseBackground />
-            <PageContainer>
+            <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
               <BackLink to="/projects">
                 <FiArrowLeft /> 返回项目列表
               </BackLink>

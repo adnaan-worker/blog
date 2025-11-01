@@ -76,13 +76,6 @@ export const useVisitorTracking = () => {
         });
 
         hasReportedRef.current = true;
-        console.log('✅ 访客活动已上报:', {
-          location: locationCity,
-          device: deviceType,
-          browser,
-          page,
-          pageTitle,
-        });
       } catch (error) {
         console.error('上报访客活动失败:', error);
       }
@@ -112,8 +105,6 @@ export const useVisitorTracking = () => {
       page,
       pageTitle,
     });
-
-    console.log('📄 页面切换:', { page, pageTitle });
   }, [socket, location.pathname]);
 };
 

@@ -14,8 +14,7 @@ import DetailNoiseBackground from '@/components/common/detail-noise-background';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { SEO, AutoSkeleton } from '@/components/common';
 
-// 页面容器
-const PageContainer = styled.div`
+const PageContainer = styled(motion.div)`
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
@@ -393,8 +392,7 @@ const BlogDetail: React.FC = () => {
   // 滚动处理器引用
   const scrollHandlerRef = useRef<number | null>(null);
 
-  // 使用动画引擎 - Spring 弹性动画
-  const { springPresets } = useAnimationEngine();
+  const { springPresets, variants } = useAnimationEngine();
 
   // 获取文章数据
   const fetchArticle = useCallback(async (articleId: string) => {
@@ -718,9 +716,8 @@ const BlogDetail: React.FC = () => {
       <AutoSkeleton loading={!article} cacheKey={`article-detail-${id}`} minLoadingTime={800}>
         {article && (
           <DetailPageLayout showBackground={true} mainContent={<></>}>
-            {/* 噪点背景 - 仅详情页使用 */}
             <DetailNoiseBackground />
-            <PageContainer>
+            <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
               <ArticleLayout>
                 {/* 左侧：文章内容 - 向上弹性划出 */}
                 <DetailMainContent>

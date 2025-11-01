@@ -14,8 +14,7 @@ import DetailNoiseBackground from '@/components/common/detail-noise-background';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { SEO, AutoSkeleton } from '@/components/common';
 
-// 页面容器
-const PageContainer = styled.div`
+const PageContainer = styled(motion.div)`
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
@@ -666,9 +665,8 @@ const NoteDetail: React.FC = () => {
       <AutoSkeleton loading={isLoading || !note} cacheKey={`note-detail-${id}`} minLoadingTime={800}>
         {note && (
           <DetailPageLayout showBackground={true} mainContent={<></>}>
-            {/* 噪点背景 - 仅详情页使用 */}
             <DetailNoiseBackground />
-            <PageContainer>
+            <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
               <BackLink to="/notes">
                 <FiArrowLeft size={16} /> 返回手记列表
               </BackLink>

@@ -1,14 +1,16 @@
 import React, { useEffect, useRef, memo, useMemo } from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import { FiCalendar, FiClock, FiTag, FiUser } from 'react-icons/fi';
 import { RiRobot2Line } from 'react-icons/ri';
 import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
 import RichTextContent from '@/components/rich-text/rich-text-content';
 import ImagePreview from '@/components/common/image-preview';
 import type { Article } from '@/types';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 文章详情页容器
-const ArticleDetailContainer = styled.div`
+const ArticleDetailContainer = styled(motion.div)`
   width: 100%;
   padding: 0 1rem;
 `;
@@ -204,7 +206,7 @@ interface ArticleContentProps {
 
 // 使用memo包装组件，避免不必要的重渲染
 const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRef, onHeadingsExtracted }) => {
-  // 使用useMemo缓存标签展示
+  const { variants } = useAnimationEngine();
   const articleTags = useMemo(() => {
     if (!article.tags || !Array.isArray(article.tags)) return null;
 
@@ -283,7 +285,7 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
   const readTime = Math.ceil((article.content?.length || 0) / 200);
 
   return (
-    <ArticleDetailContainer>
+    <ArticleDetailContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
       <ArticleDetailHeader>
         <ArticleDetailTitle>{article.title}</ArticleDetailTitle>
         <ArticleDetailMeta>

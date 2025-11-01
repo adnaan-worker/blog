@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiLock, FiInfo } from 'react-icons/fi';
 import type { Achievement } from './types';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 interface AchievementBadgesProps {
   achievements: Achievement[];
@@ -147,6 +148,7 @@ const LockIcon = styled.div`
 `;
 
 export const AchievementBadges: React.FC<AchievementBadgesProps> = ({ achievements, onBadgeClick, maxDisplay = 6 }) => {
+  const { variants } = useAnimationEngine();
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('zh-CN', {
       month: 'short',

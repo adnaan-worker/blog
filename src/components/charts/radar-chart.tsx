@@ -1,5 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 export interface RadarDataItem {
   label: string;
@@ -44,7 +46,7 @@ const RadarLabel = styled.text`
   font-weight: 500;
 `;
 
-const Container = styled.div`
+const Container = styled(motion.div)`
   position: relative;
   width: 100%;
   aspect-ratio: 1;
@@ -57,6 +59,7 @@ const Container = styled.div`
  * @param className - 自定义样式类名
  */
 export const RadarChart: React.FC<RadarChartProps> = ({ data, size = 280, className }) => {
+  const { variants } = useAnimationEngine();
   const center = size / 2;
   const radius = (size / 2) * 0.7; // 70% 的半径用于图表
   const levels = 5; // 网格层数
@@ -104,7 +107,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({ data, size = 280, classN
   }, [data, center, radius, levels]);
 
   return (
-    <Container className={className}>
+    <Container className={className} initial="hidden" animate="visible" variants={variants.fadeIn}>
       <RadarSVG viewBox={`0 0 ${size} ${size}`}>
         {/* 绘制网格 */}
         {[...Array(levels)].map((_, i) => (

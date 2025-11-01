@@ -7,9 +7,10 @@ import { API } from '@/utils/api';
 import type { Comment as CommentType } from '@/types';
 import { storage } from '@/utils';
 import { formatDate } from '@/utils';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 评论区容器
-const CommentSectionContainer = styled.div`
+const CommentSectionContainer = styled(motion.div)`
   margin-top: 3rem;
   padding: 0;
 `;
@@ -240,6 +241,7 @@ interface CommentSectionProps {
 }
 
 const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
+  const { variants } = useAnimationEngine();
   const [comments, setComments] = useState<CommentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -436,7 +438,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   );
 
   return (
-    <CommentSectionContainer>
+    <CommentSectionContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
       <CommentHeader>
         <CommentTitle>
           <FiMessageSquare size={20} />

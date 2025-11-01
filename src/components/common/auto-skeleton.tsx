@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { storage } from '@/utils';
+import { useAnimationEngine, SPRING_PRESETS } from '@/utils/ui/animation';
 
 // ========== 骨架屏元素配置 ==========
 
@@ -336,6 +337,7 @@ interface AutoSkeletonProps {
 }
 
 export const AutoSkeleton: React.FC<AutoSkeletonProps> = ({ loading, children, cacheKey, minLoadingTime = 800 }) => {
+  const { level } = useAnimationEngine();
   const [skeletonConfig, setSkeletonConfig] = useState<SkeletonConfig | null>(null);
   const [isShowingLoading, setIsShowingLoading] = useState(loading);
   const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null);

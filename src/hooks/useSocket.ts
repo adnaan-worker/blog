@@ -293,7 +293,7 @@ class SocketManager {
   public disconnect() {
     this.clearReconnectTimer();
     this.clearConnectionMonitor();
-    this.clearCleanupTimer(); // ✅ 清理自动断开定时器
+    this.clearCleanupTimer();
 
     if (this.socket) {
       this.socket.disconnect();
@@ -314,7 +314,6 @@ class SocketManager {
   public emit(event: string, ...args: any[]): boolean {
     if (this.socket?.connected) {
       this.socket.emit(event, ...args);
-      console.log(`📤 发送事件: ${event}`, args);
       return true;
     }
     console.warn(`⚠️ Socket未连接，无法发送事件: ${event}`);

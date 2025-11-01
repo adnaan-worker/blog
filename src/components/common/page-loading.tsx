@@ -1,203 +1,221 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { motion } from 'framer-motion';
-import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SPRING_PRESETS, useAnimationEngine } from '@/utils/ui/animation';
 
-// 加载容器 - 始终全屏覆盖
-const LoadingContainer = styled(motion.div)<{ $fullScreen?: boolean }>`
+const LoadingContainer = styled(motion.div)`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
   background: var(--bg-primary);
-  z-index: ${(props) => (props.$fullScreen ? '9999' : '10000')};
+  z-index: 10000;
   overflow: hidden;
 
-  /* 确保完全覆盖所有内容 */
-  pointer-events: all;
-
-  /* 防止内容穿透 */
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--bg-primary);
-    z-index: -1;
+    background: radial-gradient(circle at center, rgba(var(--accent-rgb), 0.03) 0%, transparent 70%);
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.6;
+    }
   }
 `;
 
-// 简约圆环容器
-const SpinnerContainer = styled.div`
+const SpinnerWrapper = styled.div`
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
-// 简约圆环
-const SimpleRing = styled(motion.div)`
+const OuterRing = styled(motion.div)`
+  position: absolute;
   width: 100%;
   height: 100%;
   border-radius: 50%;
   border: 2px solid transparent;
   border-top-color: var(--accent-color);
   border-right-color: var(--accent-color);
+  filter: blur(1px);
 `;
 
-// 加载文字
-const LoadingText = styled(motion.div)`
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 400;
-  text-align: center;
-  letter-spacing: 0.3px;
+const InnerRing = styled(motion.div)`
+  position: absolute;
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-bottom-color: rgba(var(--accent-rgb), 0.6);
+  border-left-color: rgba(var(--accent-rgb), 0.6);
 `;
 
-// 简约点容器
-const DotsContainer = styled.div`
-  display: flex;
-  gap: 6px;
-  align-items: center;
-`;
-
-// 简约点
-const Dot = styled(motion.div)`
-  width: 6px;
-  height: 6px;
+const CenterDot = styled(motion.div)`
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--accent-color);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.8);
 `;
 
-// 简约加载文案
-const loadingMessages = ['加载中', '请稍候', '马上就好', '加载中...'];
+const Glow = styled(motion.div)`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.15) 0%, transparent 70%);
+`;
+
+const LoadingText = styled(motion.div)`
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 2px;
+  font-family: 'Inter', system-ui, sans-serif;
+  white-space: nowrap;
+`;
+
+const SubText = styled(motion.div)`
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+  letter-spacing: 1px;
+  margin-top: 0.5rem;
+  opacity: 0.8;
+  white-space: nowrap;
+`;
+
+const poeticMessages = [
+  { main: '穿越时光', sub: '寻找那些被遗忘的故事' },
+  { main: '整理思绪', sub: '让文字在指尖流淌' },
+  { main: '编织梦想', sub: '用代码构建理想世界' },
+  { main: '拾取碎片', sub: '拼凑完整的记忆' },
+  { main: '等待花开', sub: '美好总会如约而至' },
+];
 
 interface PageLoadingProps {
   message?: string;
-  size?: 'small' | 'medium' | 'large';
-  fullScreen?: boolean;
-  variant?: 'ring' | 'dots' | 'pulse';
+  subMessage?: string;
 }
 
-/**
- * 简约优雅的页面加载组件
- * 提供三种简约的加载动画效果
- */
-const PageLoading: React.FC<PageLoadingProps> = ({
-  message,
-  size = 'medium',
-  fullScreen = true,
-  variant = 'pulse',
-}) => {
-  const [loadingMessage, setLoadingMessage] = useState('');
+const PageLoading: React.FC<PageLoadingProps> = ({ message, subMessage }) => {
+  const { springPresets } = useAnimationEngine();
+  const [messageKey, setMessageKey] = useState(0);
+  const [displayMessage, setDisplayMessage] = useState(() => {
+    const randomIndex = Math.floor(Math.random() * poeticMessages.length);
+    return poeticMessages[randomIndex];
+  });
 
   useEffect(() => {
     if (message) {
-      setLoadingMessage(message);
-    } else {
-      const randomIndex = Math.floor(Math.random() * loadingMessages.length);
-      setLoadingMessage(loadingMessages[randomIndex]);
+      setDisplayMessage({ main: message, sub: subMessage || '' });
+      setMessageKey((prev) => prev + 1);
+      return;
     }
-  }, [message]);
 
-  // 根据尺寸调整大小
-  const sizeMap = {
-    small: { container: '40px', dot: '4px' },
-    medium: { container: '60px', dot: '6px' },
-    large: { container: '80px', dot: '8px' },
-  };
+    const interval = setInterval(() => {
+      setDisplayMessage((prev) => {
+        const currentIndex = poeticMessages.findIndex((msg) => msg.main === prev.main);
+        const nextIndex = (currentIndex + 1) % poeticMessages.length;
+        return poeticMessages[nextIndex];
+      });
+      setMessageKey((prev) => prev + 1);
+    }, 3000);
 
-  const currentSize = sizeMap[size];
-
-  // 渲染圆环动画
-  const renderRingAnimation = () => (
-    <SpinnerContainer style={{ width: currentSize.container, height: currentSize.container }}>
-      <SimpleRing
-        animate={{ rotate: 360 }}
-        transition={{
-          duration: 1.2,
-          repeat: Infinity,
-          ease: 'linear',
-          repeatType: 'loop',
-        }}
-      />
-    </SpinnerContainer>
-  );
-
-  // 渲染点动画
-  const renderDotsAnimation = () => (
-    <DotsContainer>
-      {[0, 1, 2].map((index) => (
-        <Dot
-          key={index}
-          style={{ width: currentSize.dot, height: currentSize.dot }}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.4, 1, 0.4],
-          }}
-          transition={{
-            duration: 0.8,
-            repeat: Infinity,
-            delay: index * 0.2,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
-    </DotsContainer>
-  );
-
-  // 渲染脉动动画
-  const renderPulseAnimation = () => (
-    <SpinnerContainer style={{ width: currentSize.container, height: currentSize.container }}>
-      <motion.div
-        style={{
-          width: '100%',
-          height: '100%',
-          borderRadius: '50%',
-          background: 'var(--accent-color)',
-          opacity: 0.1,
-        }}
-        animate={{
-          scale: [1, 1.5, 1],
-          opacity: [0.1, 0.3, 0.1],
-        }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      />
-    </SpinnerContainer>
-  );
+    return () => clearInterval(interval);
+  }, [message, subMessage]);
 
   return (
     <LoadingContainer
-      $fullScreen={fullScreen}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={SPRING_PRESETS.soft}
+      transition={springPresets.soft}
     >
-      {/* 根据变体渲染不同的动画 */}
-      {variant === 'ring' && renderRingAnimation()}
-      {variant === 'dots' && renderDotsAnimation()}
-      {variant === 'pulse' && renderPulseAnimation()}
+      <SpinnerWrapper>
+        {/* 光晕效果 */}
+        <Glow
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.6, 0.3],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
 
-      {/* 加载文字 */}
-      <LoadingText
-        initial={{ opacity: 0, y: 5 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -5 }}
-        transition={{ ...SPRING_PRESETS.soft, delay: 0.1 }}
-      >
-        {loadingMessage}
-      </LoadingText>
+        {/* 外圈 - 顺时针旋转 */}
+        <OuterRing
+          animate={{ rotate: 360 }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        />
+
+        {/* 内圈 - 逆时针旋转 */}
+        <InnerRing
+          animate={{ rotate: -360 }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        />
+
+        {/* 中心点 - 脉动 */}
+        <CenterDot
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.7, 1, 0.7],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+      </SpinnerWrapper>
+
+      {/* 诗意文案 - 渐变切换 */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`loading-${messageKey}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={springPresets.gentle}
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <LoadingText>{displayMessage.main}</LoadingText>
+          {displayMessage.sub && <SubText>{displayMessage.sub}</SubText>}
+        </motion.div>
+      </AnimatePresence>
     </LoadingContainer>
   );
 };

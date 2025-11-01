@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
+import { motion } from 'framer-motion';
 import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiSettings } from 'react-icons/fi';
 import RichTextEditor from '@/components/rich-text/rich-text-editor';
 import EditorAIAssistant from '@/components/rich-text/editor-ai-assistant';
@@ -8,6 +9,7 @@ import { API } from '@/utils/api';
 import { Button, Input } from 'adnaan-ui';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 interface Article {
   id: number;
@@ -31,6 +33,7 @@ interface Tag {
 }
 
 const ArticleEditorPage: React.FC = () => {
+  const { variants, level } = useAnimationEngine();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const articleId = searchParams.get('id');
@@ -274,7 +277,7 @@ const ArticleEditorPage: React.FC = () => {
         index={false}
         follow={false}
       />
-      <EditorContainer>
+      <EditorContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
         {/* 顶部工具栏 */}
         <TopBar>
           <LeftSection>
@@ -430,7 +433,7 @@ const ArticleEditorPage: React.FC = () => {
 };
 
 // 样式组件
-const EditorContainer = styled.div`
+const EditorContainer = styled(motion.div)`
   width: 100vw;
   height: 100vh;
   display: flex;
