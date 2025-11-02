@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { FiLogOut, FiX, FiUser } from 'react-icons/fi';
 import type { RootState } from '@/store';
-import { scrollLock } from '@/utils/core/scroll-lock';
+import { useModalScrollLock } from '@/hooks';
 import { getRoleDisplayName, getRoleColor } from '@/utils/helpers/role';
 import { useAnimationEngine } from '@/utils/ui/animation';
 
@@ -241,17 +241,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   // 使用动画引擎 - 统一的 Spring 动画系统
   const { springPresets } = useAnimationEngine();
 
-  // 当菜单打开时锁定背景滚动
-  useEffect(() => {
-    if (isOpen) {
-      // 使用统一的滚动锁定管理器
-      scrollLock.lock();
-
-      return () => {
-        scrollLock.unlock();
-      };
-    }
-  }, [isOpen]);
+  // 滚动锁定管理
+  useModalScrollLock(isOpen);
 
   if (!isOpen) return null;
 
@@ -338,6 +329,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     <>
       <MobileMenuContainer scrolled={scrolled} initial="hidden" animate="visible" exit="exit" variants={menuVariants}>
         <MobileMenuContent
+          data-modal-body
           initial={{ opacity: 0 }}
           animate={{
             opacity: 1,

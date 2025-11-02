@@ -121,7 +121,7 @@ export const ScrollToTop = () => {
     sessionStorage.removeItem(SCROLL_POSITION_KEY);
 
     // 检查滚动锁定状态（模态框打开时不滚动）
-    if (scrollLock.isScrollLocked()) {
+    if (scrollLock.isLocked()) {
       return;
     }
 
@@ -131,7 +131,7 @@ export const ScrollToTop = () => {
 
       // 延迟确保懒加载组件已渲染
       timersRef.current.timeoutId = window.setTimeout(() => {
-        if (isMountedRef.current && !scrollLock.isScrollLocked()) {
+        if (isMountedRef.current && !scrollLock.isLocked()) {
           window.scrollTo(0, 0);
         }
         timersRef.current.timeoutId = null;

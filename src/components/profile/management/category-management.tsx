@@ -8,6 +8,7 @@ import { Modal, Button, Input, Textarea, Empty, Pagination } from 'adnaan-ui';
 import { formatDate } from '@/utils';
 import ManagementLayout from '../common/management-layout';
 import type { PaginatedApiResponse } from '@/types';
+import { useModalScrollLock } from '@/hooks';
 
 const CategoryGrid = styled.div`
   display: grid;
@@ -178,6 +179,9 @@ const CategoryManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
+  // 滚动锁定管理
+  useModalScrollLock(isEditModalOpen);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',

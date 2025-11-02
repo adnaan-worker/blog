@@ -7,6 +7,7 @@ import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'fra
 import { logoutUser } from '@/store/modules/userSlice';
 import type { AppDispatch, RootState } from '@/store';
 import { storage } from '@/utils';
+import { useModalScrollLock } from '@/hooks';
 import LoginModal from './modules/login-model';
 import RegisterModal from './modules/register-modal';
 import NavLinks from './modules/nav-links';
@@ -351,6 +352,10 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const navCardRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
+
+  // ==================== 滚动锁定管理 ====================
+  // 当任意模态框打开时自动锁定滚动
+  useModalScrollLock(loginModalOpen || registerModalOpen);
 
   // ==================== 滚动动画 ====================
   const { scrollY } = useScroll();

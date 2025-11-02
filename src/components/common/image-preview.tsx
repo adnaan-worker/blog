@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiZoomIn, FiZoomOut, FiRotateCw, FiDownload, FiMaximize2, FiAlertCircle } from 'react-icons/fi';
-import { scrollLock } from '@/utils/core/scroll-lock';
+import { useModalScrollLock } from '@/hooks';
 import { SPRING_PRESETS } from '@/utils/ui/animation';
 
 interface ImagePreviewProps {
@@ -416,8 +416,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, src, alt }
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
       if (isOpen) {
-        e.preventDefault(); // 始终阻止默认的页面滚动行为
-        e.stopPropagation(); // 阻止事件冒泡
+        // 这里只需要实现缩放功能
         const delta = e.deltaY > 0 ? -0.1 : 0.1;
         handleZoom(delta);
       }
@@ -432,41 +431,13 @@ const PreviewModal: React.FC<PreviewModalProps> = ({ isOpen, onClose, src, alt }
     }
   }, [isOpen, resetTransform]);
 
-  // 页面滚动阻止和键盘事件处理
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (
-        isOpen &&
-        (e.key === 'ArrowUp' ||
-          e.key === 'ArrowDown' ||
-          e.key === 'PageUp' ||
-          e.key === 'PageDown' ||
-          e.key === 'Home' ||
-          e.key === 'End')
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    };
-
-    if (isOpen) {
-      // 阻止键盘滚动
-      document.addEventListener('keydown', handleGlobalKeyDown, { capture: true });
-
-      // 使用统一的滚动锁定管理器
-      scrollLock.lock();
-
-      return () => {
-        document.removeEventListener('keydown', handleGlobalKeyDown, { capture: true });
-        scrollLock.unlock();
-      };
-    }
-  }, [isOpen]);
+  // 滚动锁定管理
+  useModalScrollLock(isOpen);
 
   if (!isOpen) return null;
 
   return (
-    <ModalBackdrop isOpen={isOpen} onClick={onClose} onWheel={handleWheel}>
+    <ModalBackdrop isOpen={isOpen} onClick={onClose} onWheel={handleWheel} data-modal-content>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         {hasError ? (
           <div

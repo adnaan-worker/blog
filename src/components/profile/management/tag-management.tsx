@@ -6,6 +6,7 @@ import { API } from '@/utils/api';
 import type { Tag } from '@/types';
 import { Modal, Button, Input, Textarea, Pagination } from 'adnaan-ui';
 import ManagementLayout from '../common/management-layout';
+import { useModalScrollLock } from '@/hooks';
 
 const TagGrid = styled.div`
   display: grid;
@@ -194,6 +195,9 @@ const TagManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+
+  // 滚动锁定管理
+  useModalScrollLock(isEditModalOpen);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',

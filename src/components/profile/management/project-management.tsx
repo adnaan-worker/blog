@@ -9,6 +9,7 @@ import type { Project, ProjectParams } from '@/types';
 import { ManagementLayout, type StatItemData, type FilterOption } from '../common/management-layout';
 import RichTextEditor from '@/components/rich-text/rich-text-editor';
 import GitHubSyncModal from './github-sync-modal';
+import { useModalScrollLock } from '@/hooks';
 import {
   ItemCard,
   ItemHeader,
@@ -47,6 +48,9 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({ className }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+
+  // 滚动锁定管理
+  useModalScrollLock(showEditModal || showSyncModal);
 
   // 使用通用管理页面Hook
   const {

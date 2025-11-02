@@ -7,3 +7,4 @@ export * from './useVisitorTracking';
 export * from './useSEO';
 export * from './useInfiniteScroll';
 export * from './usePageInfo';
+export * from './useModalScrollLock';

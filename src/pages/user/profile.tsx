@@ -75,6 +75,7 @@ import { useNavigate } from 'react-router-dom';
 import { API } from '@/utils/api';
 import type { UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings } from '@/types';
 import { storage } from '@/utils';
+import { useModalScrollLock } from '@/hooks';
 import {
   UserInfoCard,
   DataStatsGrid,
@@ -1032,27 +1033,8 @@ const Profile: React.FC = () => {
     setRightDrawerOpen(false);
   }, [activeTab]);
 
-  // 防止抽屉打开时背景滚动
-  useEffect(() => {
-    if (leftDrawerOpen || rightDrawerOpen) {
-      // 锁定背景滚动
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-    } else {
-      // 恢复滚动
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-    }
-
-    return () => {
-      // 组件卸载时恢复
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-    };
-  }, [leftDrawerOpen, rightDrawerOpen]);
+  // 滚动锁定管理 - 统一管理所有弹窗和抽屉
+  useModalScrollLock(isEditModalOpen || leftDrawerOpen || rightDrawerOpen);
 
   // 确保权限加载后至少有一个仪表盘 tab
   useEffect(() => {
@@ -1868,7 +1850,14 @@ const Profile: React.FC = () => {
                 variants={overlayVariants}
                 onClick={() => setLeftDrawerOpen(false)}
               />
-              <Drawer position="left" initial="hidden" animate="visible" exit="exit" variants={drawerVariants.left}>
+              <Drawer
+                position="left"
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={drawerVariants.left}
+                data-modal-body
+              >
                 <DrawerHeader>
                   <DrawerTitle>
                     <FiUser />
@@ -1911,7 +1900,14 @@ const Profile: React.FC = () => {
                 variants={overlayVariants}
                 onClick={() => setRightDrawerOpen(false)}
               />
-              <Drawer position="right" initial="hidden" animate="visible" exit="exit" variants={drawerVariants.right}>
+              <Drawer
+                position="right"
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={drawerVariants.right}
+                data-modal-body
+              >
                 <DrawerHeader>
                   <DrawerTitle>
                     <FiZap />

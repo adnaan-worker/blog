@@ -7,6 +7,7 @@ import type { UserProfile } from '@/types';
 import { Modal, Button, Input, Select, Empty } from 'adnaan-ui';
 import { formatDate } from '@/utils';
 import ManagementLayout from '../common/management-layout';
+import { useModalScrollLock } from '@/hooks';
 
 const Card = styled(motion.div)`
   background: var(--bg-primary);
@@ -224,6 +225,9 @@ const UserManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+
+  // 滚动锁定管理
+  useModalScrollLock(isEditModalOpen);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
