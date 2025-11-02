@@ -6,6 +6,7 @@ import Header from './header';
 import Footer from './footer';
 import FloatingToolbar from './floating-toolbar';
 import GhostWidget from './ghost-widget';
+import SheepWidget from './sheep-widget';
 import MeteorBackground from '@/components/common/meteor-background';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
@@ -247,8 +248,9 @@ const RootLayout = () => {
           {/* 悬浮工具栏 */}
           <FloatingToolbar scrollPosition={scrollPosition} />
 
-          {/* 幽灵小部件 */}
+          {/* 陪伴物小部件（智能切换） */}
           <GhostWidget />
+          <SheepWidget />
         </MainContainer>
       </PageInfoContext.Provider>
     </SiteSettingsContext.Provider>
