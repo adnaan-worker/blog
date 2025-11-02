@@ -111,196 +111,25 @@ export const siteMilestones: SiteMilestone[] = [
 export interface TechStackItem {
   id: string;
   name: string;
-  description: string;
   category: 'frontend' | 'backend' | 'database' | 'devops' | 'ai';
-  icon?: string;
-  version?: string;
-  color?: string;
 }
 
 export const techStack: TechStackItem[] = [
-  {
-    id: '1',
-    name: 'React 19',
-    description: '现代化的前端框架',
-    category: 'frontend',
-    version: '19.0.0',
-    color: '#61DAFB',
-  },
-  {
-    id: '2',
-    name: 'TypeScript',
-    description: '类型安全的 JavaScript',
-    category: 'frontend',
-    version: '5.0+',
-    color: '#3178C6',
-  },
-  {
-    id: '3',
-    name: 'Vite',
-    description: '极速的构建工具',
-    category: 'frontend',
-    version: '5.0+',
-    color: '#646CFF',
-  },
-  {
-    id: '4',
-    name: 'Emotion',
-    description: 'CSS-in-JS 样式方案',
-    category: 'frontend',
-    color: '#D36AC2',
-  },
-  {
-    id: '5',
-    name: 'Framer Motion',
-    description: '强大的动画库',
-    category: 'frontend',
-    color: '#FF0055',
-  },
-  {
-    id: '6',
-    name: 'Node.js',
-    description: 'JavaScript 运行时',
-    category: 'backend',
-    version: '18+',
-    color: '#339933',
-  },
-  {
-    id: '7',
-    name: 'Express',
-    description: '轻量级 Web 框架',
-    category: 'backend',
-    version: '4.0+',
-    color: '#000000',
-  },
-  {
-    id: '8',
-    name: 'MySQL',
-    description: '关系型数据库',
-    category: 'database',
-    version: '8.0+',
-    color: '#4479A1',
-  },
-  {
-    id: '9',
-    name: 'Redis',
-    description: '内存数据库',
-    category: 'database',
-    version: '7.0+',
-    color: '#DC382D',
-  },
-  {
-    id: '10',
-    name: 'Socket.IO',
-    description: '实时通信引擎',
-    category: 'backend',
-    version: '4.0+',
-    color: '#010101',
-  },
-  {
-    id: '11',
-    name: 'LangChain',
-    description: 'AI 应用开发框架',
-    category: 'ai',
-    color: '#1C3C3C',
-  },
-  {
-    id: '12',
-    name: 'OpenAI API',
-    description: '强大的 AI 能力',
-    category: 'ai',
-    color: '#10A37F',
-  },
-  {
-    id: '13',
-    name: 'Docker',
-    description: '容器化部署',
-    category: 'devops',
-    color: '#2496ED',
-  },
-  {
-    id: '14',
-    name: 'Nginx',
-    description: '高性能 Web 服务器',
-    category: 'devops',
-    color: '#009639',
-  },
-];
-
-// 架构设计特点
-export const architectureFeatures = [
-  {
-    id: '1',
-    title: '分层架构',
-    description: '前后端分离，清晰的 MVC 分层，职责明确',
-    icon: '🏗️',
-  },
-  {
-    id: '2',
-    title: '组件化设计',
-    description: '高度组件化，复用性强，维护成本低',
-    icon: '🧩',
-  },
-  {
-    id: '3',
-    title: '性能优化',
-    description: '懒加载、虚拟滚动、缓存策略，极致性能',
-    icon: '⚡',
-  },
-  {
-    id: '4',
-    title: '响应式布局',
-    description: '完美适配各种屏幕尺寸，优雅的移动端体验',
-    icon: '📱',
-  },
-  {
-    id: '5',
-    title: 'TypeScript',
-    description: '完整的类型定义，编译时错误检查',
-    icon: '🔒',
-  },
-  {
-    id: '6',
-    title: 'RESTful API',
-    description: '规范的 API 设计，易于扩展和维护',
-    icon: '🔌',
-  },
-  {
-    id: '7',
-    title: 'AI 驱动',
-    description: '集成 AI 能力，智能化的内容生成与推荐',
-    icon: '🤖',
-  },
-  {
-    id: '8',
-    title: '实时通信',
-    description: 'WebSocket 支持，实时消息推送',
-    icon: '💬',
-  },
-];
-
-// 设计理念
-export const designPhilosophy = [
-  {
-    id: '1',
-    title: '诗意简约',
-    description: '追求简洁优雅，注重留白与呼吸感，让内容成为焦点',
-  },
-  {
-    id: '2',
-    title: '流畅动效',
-    description: '自然的过渡动画，提升用户体验的细腻度',
-  },
-  {
-    id: '3',
-    title: '主题切换',
-    description: '精心调校的深色/浅色主题，保护视觉健康',
-  },
-  {
-    id: '4',
-    title: '一致性',
-    description: '统一的设计语言，保持视觉和交互的一致性',
-  },
+  { id: '1', name: 'React', category: 'frontend' },
+  { id: '2', name: 'TypeScript', category: 'frontend' },
+  { id: '3', name: 'Vite', category: 'frontend' },
+  { id: '4', name: 'Emotion', category: 'frontend' },
+  { id: '5', name: 'Framer Motion', category: 'frontend' },
+  { id: '6', name: 'Node.js', category: 'backend' },
+  { id: '7', name: 'Express', category: 'backend' },
+  { id: '8', name: 'Sequelize', category: 'backend' },
+  { id: '9', name: 'Socket.IO', category: 'backend' },
+  { id: '10', name: 'MySQL', category: 'database' },
+  { id: '11', name: 'Redis', category: 'database' },
+  { id: '12', name: 'LangChain', category: 'ai' },
+  { id: '13', name: 'OpenAI', category: 'ai' },
+  { id: '14', name: 'Docker', category: 'devops' },
+  { id: '15', name: 'Nginx', category: 'devops' },
 ];
 
 // 站点统计数据
@@ -310,53 +139,29 @@ export const siteStats = [
     label: '运行天数',
     value: 300,
     unit: '天',
-    icon: '📅',
-    trend: 'up' as const,
-    change: '持续运行',
   },
   {
     id: '2',
     label: '文章总数',
     value: 128,
     unit: '篇',
-    icon: '📝',
-    trend: 'up' as const,
-    change: '+12',
   },
   {
     id: '3',
     label: '访问量',
     value: 15600,
     unit: '次',
-    icon: '👁️',
-    trend: 'up' as const,
-    change: '+23%',
   },
   {
     id: '4',
     label: '代码量',
     value: 42,
     unit: 'K 行',
-    icon: '💻',
-    trend: 'stable' as const,
-    change: '持续迭代',
   },
   {
     id: '5',
     label: '组件数',
     value: 85,
     unit: '个',
-    icon: '🧩',
-    trend: 'up' as const,
-    change: '+8',
-  },
-  {
-    id: '6',
-    label: '性能评分',
-    value: 95,
-    unit: '分',
-    icon: '⚡',
-    trend: 'stable' as const,
-    change: '优秀',
   },
 ];

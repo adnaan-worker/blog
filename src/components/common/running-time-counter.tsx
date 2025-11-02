@@ -12,18 +12,17 @@ interface RunningTimeCounterProps {
 
 interface TimeDisplay {
   days: number;
-  totalSeconds: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
 }
 
 // 数字显示容器
-const NumberDisplay = styled(motion.span)`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--accent-color);
-  line-height: 1;
-  display: inline-flex;
-  align-items: baseline;
+const NumberDisplay = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
   gap: 0.25rem;
+  width: 100%;
 `;
 
 // 单个数字容器 - 用于滚动动画
@@ -31,9 +30,10 @@ const DigitContainer = styled.span`
   display: inline-block;
   position: relative;
   overflow: hidden;
-  width: 0.65em;
+  width: 1em;
   height: 1.2em;
   vertical-align: baseline;
+  text-align: center;
 `;
 
 // 数字滚动容器
@@ -54,30 +54,47 @@ const DigitItem = styled.span`
   justify-content: center;
   width: 100%;
   height: 1.2em;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--accent-color);
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 `;
 
-// 标签文本 - 与 StatLabel 样式一致
-const LabelText = styled.span`
-  font-size: 0.85rem;
-  font-weight: 400;
-  color: var(--text-secondary);
-  display: inline-block;
-  vertical-align: baseline;
-  margin-right: 0.25rem;
-`;
-
-// 数字文本 - 保持大号
-const NumberText = styled.span`
+// 数值区域
+const ValueRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 0.125rem;
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--accent-color);
-  display: inline-block;
-  vertical-align: baseline;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  flex-wrap: wrap;
+  justify-content: start;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
+`;
+
+// 标签文本
+const LabelText = styled.span`
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+`;
+
+// 分隔符
+const Separator = styled.span`
+  font-size: 0.7rem;
+  opacity: 0.5;
+  margin: 0 0.15rem;
+  font-weight: 400;
 `;
 
 /**
@@ -94,28 +111,43 @@ const RunningTimeCounter: React.FC<RunningTimeCounterProps> = ({ className }) =>
     const now = Date.now();
     const diff = Math.floor((now - SITE_LAUNCH_TIME) / 1000);
     const days = Math.floor(diff / 86400);
+    const remainingSeconds = diff % 86400;
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    const seconds = remainingSeconds % 60;
     return {
       days,
-      totalSeconds: diff,
+      hours,
+      minutes,
+      seconds,
     };
   });
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const previousDaysRef = useRef<number>(timeDisplay.days);
-  const previousSecondsRef = useRef<number>(timeDisplay.totalSeconds);
+  const previousTimeRef = useRef<TimeDisplay>(timeDisplay);
 
-  // 将数字拆分为单个数字数组
+  // 将数字拆分为单个数字数组（补0确保2位数）
   const daysDigits = useMemo(() => {
     return String(timeDisplay.days).split('').map(Number);
   }, [timeDisplay.days]);
 
+  const hoursDigits = useMemo(() => {
+    return String(timeDisplay.hours).padStart(2, '0').split('').map(Number);
+  }, [timeDisplay.hours]);
+
+  const minutesDigits = useMemo(() => {
+    return String(timeDisplay.minutes).padStart(2, '0').split('').map(Number);
+  }, [timeDisplay.minutes]);
+
   const secondsDigits = useMemo(() => {
-    return String(timeDisplay.totalSeconds).split('').map(Number);
-  }, [timeDisplay.totalSeconds]);
+    return String(timeDisplay.seconds).padStart(2, '0').split('').map(Number);
+  }, [timeDisplay.seconds]);
 
   // 存储每个位置的旧值，用于滚动动画
-  const previousDigitsRef = useRef<{ days: number[]; seconds: number[] }>({
+  const previousDigitsRef = useRef<{ days: number[]; hours: number[]; minutes: number[]; seconds: number[] }>({
     days: daysDigits,
+    hours: hoursDigits,
+    minutes: minutesDigits,
     seconds: secondsDigits,
   });
 
@@ -124,23 +156,35 @@ const RunningTimeCounter: React.FC<RunningTimeCounterProps> = ({ className }) =>
     const timer = setTimeout(() => {
       previousDigitsRef.current = {
         days: daysDigits,
+        hours: hoursDigits,
+        minutes: minutesDigits,
         seconds: secondsDigits,
       };
     }, 0);
     return () => clearTimeout(timer);
-  }, [daysDigits, secondsDigits]);
+  }, [daysDigits, hoursDigits, minutesDigits, secondsDigits]);
 
   // 更新时间的函数
   const updateTime = useCallback(() => {
     const now = Date.now();
     const diff = Math.floor((now - SITE_LAUNCH_TIME) / 1000);
     const days = Math.floor(diff / 86400);
+    const remainingSeconds = diff % 86400;
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    const seconds = remainingSeconds % 60;
 
-    // 只在天数或总秒数变化时更新状态
-    if (days !== previousDaysRef.current || diff !== previousSecondsRef.current) {
-      previousDaysRef.current = days;
-      previousSecondsRef.current = diff;
-      setTimeDisplay({ days, totalSeconds: diff });
+    const newTimeDisplay = { days, hours, minutes, seconds };
+
+    // 只在时间变化时更新状态
+    if (
+      days !== previousTimeRef.current.days ||
+      hours !== previousTimeRef.current.hours ||
+      minutes !== previousTimeRef.current.minutes ||
+      seconds !== previousTimeRef.current.seconds
+    ) {
+      previousTimeRef.current = newTimeDisplay;
+      setTimeDisplay(newTimeDisplay);
     }
   }, []);
 
@@ -165,12 +209,12 @@ const RunningTimeCounter: React.FC<RunningTimeCounterProps> = ({ className }) =>
 
   // 渲染单个数字（带滚动动画）
   const renderDigit = useCallback(
-    (digit: number, index: number, isSeconds: boolean = false) => {
-      const uniqueKey = isSeconds ? `s-${index}-${timeDisplay.totalSeconds}` : `d-${index}-${timeDisplay.days}`;
+    (digit: number, index: number, type: 'days' | 'hours' | 'minutes' | 'seconds') => {
+      const uniqueKey = `${type}-${index}`;
 
       // 获取该位置的旧数字
-      const prevDigits = previousDigitsRef.current;
-      const oldDigit = isSeconds ? (prevDigits.seconds[index] ?? digit) : (prevDigits.days[index] ?? digit);
+      const prevDigits = previousDigitsRef.current[type];
+      const oldDigit = prevDigits[index] ?? digit;
 
       // 计算Y偏移量：每个数字高度是 1.2em
       const initialY = -oldDigit * 1.2;
@@ -195,15 +239,22 @@ const RunningTimeCounter: React.FC<RunningTimeCounterProps> = ({ className }) =>
         </DigitContainer>
       );
     },
-    [timeDisplay.days, timeDisplay.totalSeconds],
+    [timeDisplay.days, timeDisplay.hours, timeDisplay.minutes, timeDisplay.seconds],
   );
 
   return (
     <NumberDisplay className={className}>
-      <LabelText>已运行</LabelText>
-      {daysDigits.map((digit, index) => renderDigit(digit, index, false))}
-      <NumberText>.</NumberText>
-      {secondsDigits.map((digit, index) => renderDigit(digit, index, true))}
+      <ValueRow>
+        {daysDigits.map((digit, index) => renderDigit(digit, index, 'days'))}
+        <Separator>天</Separator>
+        {hoursDigits.map((digit, index) => renderDigit(digit, index, 'hours'))}
+        <Separator>时</Separator>
+        {minutesDigits.map((digit, index) => renderDigit(digit, index, 'minutes'))}
+        <Separator>分</Separator>
+        {secondsDigits.map((digit, index) => renderDigit(digit, index, 'seconds'))}
+        <Separator>秒</Separator>
+      </ValueRow>
+      <LabelText>运行时间</LabelText>
     </NumberDisplay>
   );
 };

@@ -2,7 +2,6 @@
  * 关于我 - Mock 数据
  */
 
-import type { RadarDataItem } from '@/components/charts/radar-chart';
 import type { TimelineItem } from '@/components/common/time-line-masonry';
 
 // 个人信息
@@ -10,38 +9,26 @@ export const personalInfo = {
   name: 'adnaan',
   title: '全栈开发工程师',
   slogan: '用代码书写诗意，以技术创造价值',
-  avatar: 'https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100', // 使用项目中已有的图片
-  location: '中国',
-  email: 'adnaan@gmail.com',
   github: 'https://github.com/adnaan-worker',
+  email: 'adnaan@gmail.com',
   website: 'http://www.adnaan.cn',
   bio: '热爱编程，追求代码的优雅与高效。相信技术能够改变世界，也相信设计能够打动人心。在全栈开发的道路上持续探索，用心创造有温度的产品。',
 };
 
-// 技能数据 - 用于雷达图
-export const skillsRadarData: RadarDataItem[] = [
-  { label: '前端开发', value: 95, max: 100 },
-  { label: '后端开发', value: 88, max: 100 },
-  { label: 'UI设计', value: 75, max: 100 },
-  { label: '系统架构', value: 82, max: 100 },
-  { label: '性能优化', value: 90, max: 100 },
-  { label: 'AI应用', value: 78, max: 100 },
-];
-
 // 技能标签
 export const skillTags = [
-  { name: 'React', level: 'expert' as const, color: '#61DAFB' },
-  { name: 'TypeScript', level: 'expert' as const, color: '#3178C6' },
-  { name: 'Node.js', level: 'advanced' as const, color: '#339933' },
-  { name: 'Vue.js', level: 'advanced' as const, color: '#4FC08D' },
-  { name: 'Python', level: 'intermediate' as const, color: '#3776AB' },
-  { name: 'Docker', level: 'advanced' as const, color: '#2496ED' },
-  { name: 'MySQL', level: 'advanced' as const, color: '#4479A1' },
-  { name: 'Redis', level: 'advanced' as const, color: '#DC382D' },
-  { name: 'Nginx', level: 'intermediate' as const, color: '#009639' },
-  { name: 'AI/ML', level: 'intermediate' as const, color: '#FF6F00' },
-  { name: 'UI/UX', level: 'advanced' as const, color: '#FF0080' },
-  { name: 'Git', level: 'expert' as const, color: '#F05032' },
+  { name: 'React', level: 'expert' as const },
+  { name: 'TypeScript', level: 'expert' as const },
+  { name: 'Node.js', level: 'advanced' as const },
+  { name: 'Vue.js', level: 'advanced' as const },
+  { name: 'Python', level: 'intermediate' as const },
+  { name: 'Docker', level: 'advanced' as const },
+  { name: 'MySQL', level: 'advanced' as const },
+  { name: 'Redis', level: 'advanced' as const },
+  { name: 'Nginx', level: 'intermediate' as const },
+  { name: 'AI/ML', level: 'intermediate' as const },
+  { name: 'UI/UX', level: 'advanced' as const },
+  { name: 'Git', level: 'expert' as const },
 ];
 
 // 工作/学习经历
@@ -144,38 +131,6 @@ export const projects = [
     image: '/image4.png',
     tags: ['React', 'Nest.js', 'PostgreSQL'],
     featured: false,
-  },
-];
-
-// 个人亮点数据
-export const highlights = [
-  {
-    id: '1',
-    label: '工作年限',
-    value: '4+',
-    icon: '💼',
-    description: '年实战经验',
-  },
-  {
-    id: '2',
-    label: '项目经验',
-    value: '20+',
-    icon: '🚀',
-    description: '个完成项目',
-  },
-  {
-    id: '3',
-    label: '开源贡献',
-    value: '500+',
-    icon: '⭐',
-    description: '次代码提交',
-  },
-  {
-    id: '4',
-    label: '技术文章',
-    value: '50+',
-    icon: '📝',
-    description: '篇原创文章',
   },
 ];
 

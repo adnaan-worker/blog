@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 定义菜单项接口
@@ -45,13 +45,6 @@ const ContentWrapper = styled.span`
   position: relative;
   display: flex;
   align-items: center;
-`;
-
-// 图标容器
-const IconWrapper = styled.span`
-  display: flex;
-  align-items: center;
-  margin-right: 0.5rem; /* 图标与文字的间距 */
 `;
 
 // 下划线
@@ -128,33 +121,6 @@ export const NavLinkWithHover: React.FC<{
     transition: springPresets.stiff,
   };
 
-  // 图标动画变体
-  const iconVariants = {
-    hidden: {
-      opacity: 0,
-      scale: 0.8,
-      x: -4,
-    },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      x: 0,
-      transition: {
-        type: 'spring' as const,
-        stiffness: 400,
-        damping: 25,
-      },
-    },
-    exit: {
-      opacity: 0,
-      scale: 0.8,
-      x: -4,
-      transition: {
-        duration: 0.15,
-      },
-    },
-  };
-
   // 下划线动画变体
   const underlineVariants = {
     hidden: {
@@ -191,27 +157,24 @@ export const NavLinkWithHover: React.FC<{
       >
         {/* 图标和文字容器 */}
         <ContentWrapper>
-          {/* 图标 - 淡入淡出 + 缩放动画 */}
-          <AnimatePresence mode="wait">
-            {active && Icon && (
-              <motion.span
-                key="icon"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginRight: '0.5rem',
-                }}
-                variants={iconVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                <Icon size={16} />
-              </motion.span>
-            )}
-          </AnimatePresence>
+          {/* 图标 - 简单淡入淡出 */}
+          {active && Icon && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                marginRight: '0.5rem',
+              }}
+            >
+              <Icon size={16} />
+            </motion.span>
+          )}
 
-          {/* 文字 - 直接显示 */}
+          {/* 文字 */}
           <span>{children}</span>
         </ContentWrapper>
 
@@ -280,7 +243,7 @@ const NavLinks: React.FC<NavLinksProps> = ({
   };
 
   return (
-    <>
+    <LayoutGroup>
       {/* 渲染所有导航菜单项 */}
       {mainNavItems.map((item) => {
         if (item.isDropdown && item.children) {
@@ -348,7 +311,7 @@ const NavLinks: React.FC<NavLinksProps> = ({
           );
         }
       })}
-    </>
+    </LayoutGroup>
   );
 };
 

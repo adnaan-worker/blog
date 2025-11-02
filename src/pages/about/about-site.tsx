@@ -3,9 +3,151 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { SEO, WordCloud, type WordCloudItem, RunningTimeCounter } from '@/components/common';
 import { siteMilestones, techStack, siteStats } from '@/data/about-site.data';
-import type { SiteMilestone } from '@/data/about-site.data';
 import { SPRING_PRESETS, useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 import { formatDate } from '@/utils';
+
+// 页面头部渐变背景 - 流光溢彩诗意光晕 ✨
+const PageHeadGradient = styled.div`
+  pointer-events: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 700px;
+  width: 100%;
+  overflow: hidden;
+  z-index: 0;
+
+  /* 三层光晕效果叠加 */
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  /* 第一层：主光晕 - 从左上方扩散 */
+  &::before {
+    background: radial-gradient(
+      ellipse 160% 110% at 15% 10%,
+      rgba(var(--accent-rgb), 0.38) 0%,
+      rgba(var(--accent-rgb), 0.22) 25%,
+      rgba(var(--accent-rgb), 0.08) 50%,
+      transparent 75%
+    );
+    transform-origin: 15% 10%;
+    animation: breatheGlow1 25s ease-in-out infinite;
+  }
+
+  /* 第二层：次光晕 - 从右上方流动 */
+  &::after {
+    background: radial-gradient(
+      ellipse 140% 95% at 85% 15%,
+      rgba(var(--accent-rgb), 0.32) 0%,
+      rgba(var(--accent-rgb), 0.18) 30%,
+      rgba(var(--accent-rgb), 0.06) 55%,
+      transparent 80%
+    );
+    transform-origin: 85% 15%;
+    animation: breatheGlow2 30s ease-in-out infinite;
+    animation-delay: 8s;
+  }
+
+  /* 第三层：中央光晕 */
+  & > div {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      ellipse 110% 80% at 50% 20%,
+      rgba(var(--accent-rgb), 0.15) 0%,
+      rgba(var(--accent-rgb), 0.08) 35%,
+      transparent 65%
+    );
+    mix-blend-mode: screen;
+    transform-origin: 50% 20%;
+    animation: pulseGlow 20s ease-in-out infinite;
+    animation-delay: 4s;
+  }
+
+  /* 整体渐变遮罩 */
+  mask-image: radial-gradient(
+    ellipse 90% 100% at 50% 0%,
+    black 0%,
+    rgba(0, 0, 0, 0.7) 40%,
+    rgba(0, 0, 0, 0.3) 60%,
+    transparent 80%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 90% 100% at 50% 0%,
+    black 0%,
+    rgba(0, 0, 0, 0.7) 40%,
+    rgba(0, 0, 0, 0.3) 60%,
+    transparent 80%
+  );
+
+  /* 呼吸动画 - 左侧光晕 */
+  @keyframes breatheGlow1 {
+    0%,
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    33% {
+      transform: scale(1.08) rotate(1deg);
+      opacity: 0.92;
+    }
+    66% {
+      transform: scale(0.96) rotate(-0.5deg);
+      opacity: 0.96;
+    }
+  }
+
+  /* 呼吸动画 - 右侧光晕 */
+  @keyframes breatheGlow2 {
+    0%,
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    40% {
+      transform: scale(1.06) rotate(-1deg);
+      opacity: 0.88;
+    }
+    75% {
+      transform: scale(0.98) rotate(0.8deg);
+      opacity: 0.94;
+    }
+  }
+
+  /* 脉动动画 - 中央光晕 */
+  @keyframes pulseGlow {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.65;
+    }
+    50% {
+      transform: scale(1.15);
+      opacity: 0.35;
+    }
+  }
+
+  @media (max-width: 768px) {
+    height: 500px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before,
+    &::after,
+    & > div {
+      animation: none;
+    }
+  }
+`;
 
 // 页面容器
 const PageContainer = styled.div`
@@ -14,6 +156,8 @@ const PageContainer = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
   min-height: calc(100vh - 200px);
+  position: relative;
+  z-index: 1;
 
   @media (max-width: 768px) {
     padding: 1rem 0.75rem;
@@ -52,21 +196,24 @@ const Sidebar = styled(motion.aside)`
 
 // 侧边栏标题
 const SidebarTitle = styled.h1`
-  font-size: 1.75rem;
-  font-weight: 600;
+  font-size: 2rem;
+  font-weight: 700;
   margin-bottom: 0.5rem;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 
   @media (max-width: 768px) {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
 `;
 
 const SidebarDesc = styled.p`
   font-size: 0.9rem;
   color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 2rem;
+  line-height: 1.8;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
 `;
 
 // 侧边栏分区
@@ -83,35 +230,79 @@ const SidebarSectionTitle = styled.h3`
   letter-spacing: 0.05em;
 `;
 
-// 统计列表
+// 统计列表 - 网格布局
 const StatsList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.875rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-const StatItem = styled.div`
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+const StatItem = styled(motion.div)`
+  position: relative;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.06) 0%, rgba(var(--accent-rgb), 0.02) 100%);
+  border: 1px solid rgba(var(--accent-rgb), 0.12);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+
+  /* 悬浮光晕效果 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.15) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--accent-rgb), 0.25);
+    box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.08);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  [data-theme='dark'] & {
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.08) 0%, rgba(var(--accent-rgb), 0.03) 100%);
+    border-color: rgba(var(--accent-rgb), 0.15);
+  }
 `;
 
 const StatValue = styled.span`
-  font-size: 1.5rem;
+  display: block;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--accent-color);
-  line-height: 1;
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+  font-variant-numeric: tabular-nums;
 
   span {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     margin-left: 0.25rem;
     opacity: 0.7;
+    font-weight: 500;
   }
 `;
 
 const StatLabel = styled.span`
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `;
 
 // 主内容区
@@ -180,12 +371,52 @@ const MilestonesList = styled(motion.div)`
 `;
 
 const MilestoneItem = styled(motion.div)`
-  padding: 1.25rem 0;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.4);
-  transition: opacity 0.2s ease;
+  padding: 1.5rem 0 1.5rem 1.5rem;
+  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
+  position: relative;
+  transition: all 0.3s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 1.75rem;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 3.5px;
+    top: 2.5rem;
+    bottom: -1.5rem;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      rgba(var(--accent-rgb, 81, 131, 245), 0.3) 0%,
+      rgba(var(--accent-rgb, 81, 131, 245), 0.1) 50%,
+      transparent 100%
+    );
+  }
+
+  &:last-child::after {
+    display: none;
+  }
 
   &:hover {
-    opacity: 0.85;
+    padding-left: 2rem;
+    background: rgba(var(--accent-rgb, 81, 131, 245), 0.02);
+
+    &::before {
+      opacity: 1;
+      transform: scale(1.3);
+      box-shadow: 0 0 0 4px rgba(var(--accent-rgb, 81, 131, 245), 0.1);
+    }
   }
 
   &:last-child {
@@ -298,6 +529,20 @@ const AboutSite: React.FC = () => {
   return (
     <>
       <SEO title="关于此站点" description="了解光阴副本博客系统的设计理念、技术架构和发展历程" />
+
+      {/* 流光溢彩背景 ✨ */}
+      <motion.div
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 0 }}
+        initial={{ opacity: 0, y: -100, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={SPRING_PRESETS.gentle}
+      >
+        <PageHeadGradient>
+          {/* 第三层中央光晕 */}
+          <div />
+        </PageHeadGradient>
+      </motion.div>
+
       <PageContainer>
         <LayoutGrid>
           {/* 左侧边栏 - 技术栈 */}
@@ -309,22 +554,32 @@ const AboutSite: React.FC = () => {
             <SidebarSection>
               <SidebarSectionTitle>站点统计</SidebarSectionTitle>
               <StatsList>
-                {siteStats.map((stat) => {
-                  // 运行天数使用实时计数器
+                {siteStats.map((stat, index) => {
+                  // 运行天数使用实时计数器 - 占据整行
                   if (stat.id === '1') {
                     return (
-                      <StatItem key={stat.id}>
+                      <StatItem
+                        key={stat.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.08, ...SPRING_PRESETS.gentle }}
+                        style={{ gridColumn: 'span 2' }}
+                      >
                         <RunningTimeCounter />
-                        <StatLabel>天</StatLabel>
                       </StatItem>
                     );
                   }
                   // 其他统计数据正常显示
                   return (
-                    <StatItem key={stat.id}>
+                    <StatItem
+                      key={stat.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.08, ...SPRING_PRESETS.gentle }}
+                    >
                       <StatValue>
                         {stat.value}
-                        <span>{stat.unit}</span>
+                        {stat.unit && <span>{stat.unit}</span>}
                       </StatValue>
                       <StatLabel>{stat.label}</StatLabel>
                     </StatItem>

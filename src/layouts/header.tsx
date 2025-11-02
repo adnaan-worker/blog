@@ -570,6 +570,13 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
           <motion.div
             className="nav-card"
             ref={navCardRef}
+            layout="size"
+            transition={{
+              layout: {
+                duration: 0.25,
+                ease: [0.23, 1, 0.32, 1],
+              },
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',

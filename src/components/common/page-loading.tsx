@@ -4,43 +4,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SPRING_PRESETS, useAnimationEngine } from '@/utils/ui/animation';
 
 const LoadingContainer = styled(motion.div)`
-  position: fixed;
-  inset: 0;
+  width: 100%;
+  min-height: calc(100vh - var(--header-height) - 200px);
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  gap: 2rem;
-  background: var(--bg-primary);
-  z-index: 10000;
+  gap: 1.5rem;
+  background: transparent;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at center, rgba(var(--accent-rgb), 0.03) 0%, transparent 70%);
-    animation: pulse 3s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 0.3;
-    }
-    50% {
-      opacity: 0.6;
-    }
-  }
+  padding: 2rem;
+  position: relative;
 `;
 
 const SpinnerWrapper = styled.div`
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 80px;
+  height: 80px;
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1;
 `;
 
 const OuterRing = styled(motion.div)`
@@ -82,22 +66,24 @@ const Glow = styled(motion.div)`
 
 const LoadingText = styled(motion.div)`
   color: var(--text-primary);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 500;
   text-align: center;
   letter-spacing: 2px;
   font-family: 'Inter', system-ui, sans-serif;
   white-space: nowrap;
+  z-index: 1;
 `;
 
 const SubText = styled(motion.div)`
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-align: center;
   letter-spacing: 1px;
   margin-top: 0.5rem;
-  opacity: 0.8;
+  opacity: 0.7;
   white-space: nowrap;
+  z-index: 1;
 `;
 
 const poeticMessages = [

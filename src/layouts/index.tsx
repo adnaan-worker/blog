@@ -1,6 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
 import { useDispatch } from 'react-redux';
 import Header from './header';
@@ -57,14 +56,6 @@ const LoadingIndicator = styled(motion.div)`
   background: var(--accent-color);
   z-index: 1000;
   box-shadow: 0 0 10px var(--accent-color);
-`;
-
-// Suspense 加载占位符 - 确保有最小高度占位
-const SuspenseFallback = styled.div`
-  min-height: calc(100vh - var(--header-height));
-  display: flex;
-  align-items: center;
-  justify-content: center;
 `;
 
 /**
@@ -240,21 +231,15 @@ const RootLayout = () => {
           {/* 头部导航 - 传递页面信息 */}
           <Header scrolled={isScrolled} pageInfo={pageInfoState.pageInfo || undefined} />
 
-          {/* 主内容区域 - 确保有占位内容 */}
           <Suspense
             fallback={
               <Content>
-                <SuspenseFallback />
+                <PageLoading />
               </Content>
             }
           >
-            <Content key={location.pathname}>
-              <Outlet />
-            </Content>
+            <Content key={location.pathname}>{showPageLoading ? <PageLoading /> : <Outlet />}</Content>
           </Suspense>
-
-          {/* 页面切换时的全屏loading */}
-          {showPageLoading && createPortal(<PageLoading />, document.body)}
 
           {/* 页脚 */}
           <Footer />
