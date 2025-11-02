@@ -203,6 +203,11 @@ export const API = {
       return http.get('/notes', params);
     },
 
+    // 获取手记年份列表
+    getYears: (): Promise<ApiResponse<Array<{ year: number; count: number }>>> => {
+      return http.get('/notes/years');
+    },
+
     /**
      * 获取我的手记列表（个人中心管理）
      * 普通用户：返回自己的所有手记（包括私密）
@@ -300,6 +305,11 @@ export const API = {
      */
     getArticles: (params?: ArticleParams): Promise<ApiResponse<PaginationResult<Article>>> => {
       return http.get('/posts', params);
+    },
+
+    // 获取年份列表
+    getYears: (): Promise<ApiResponse<Array<{ year: number; count: number }>>> => {
+      return http.get('/posts/years');
     },
 
     /**

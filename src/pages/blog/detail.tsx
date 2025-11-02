@@ -9,8 +9,8 @@ import styled from '@emotion/styled';
 import { API } from '@/utils/api';
 import type { Article } from '@/types';
 import { useAnimationEngine } from '@/utils/ui/animation';
-import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
-import DetailNoiseBackground from '@/components/common/detail-noise-background';
+import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/blog/detail-page-layout';
+import DetailNoiseBackground from '@/components/blog/detail-noise-background';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { SEO, AutoSkeleton } from '@/components/common';
 

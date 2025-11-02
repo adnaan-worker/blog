@@ -250,34 +250,30 @@ const SheepWidget = () => {
 
           {/* 眼睛 - 右 */}
           <circle cx="-71" cy="-38" r="30" fill="rgb(255,255,255)" stroke="rgb(171,128,56)" strokeWidth="2" />
-          <motion.circle
-            cx="-71"
-            cy="-37"
-            r="12"
-            fill="rgb(26,26,26)"
+          <motion.g
             animate={{
-              cx: -71 + companion.eyeOffset.x,
-              cy: -37 + companion.eyeOffset.y,
+              x: companion.eyeOffset?.x || 0,
+              y: companion.eyeOffset?.y || 0,
               scaleY: companion.isBlinking ? 0.1 : 1,
             }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          />
+          >
+            <circle cx="-71" cy="-37" r="12" fill="rgb(26,26,26)" />
+          </motion.g>
           <circle cx="-74" cy="-41" r="4.5" fill="rgb(255,255,255)" />
 
           {/* 眼睛 - 左 */}
           <circle cx="36" cy="-18" r="30" fill="rgb(255,255,255)" stroke="rgb(171,128,56)" strokeWidth="2" />
-          <motion.circle
-            cx="39"
-            cy="-18"
-            r="12"
-            fill="rgb(26,26,26)"
+          <motion.g
             animate={{
-              cx: 39 + companion.eyeOffset.x,
-              cy: -18 + companion.eyeOffset.y,
+              x: companion.eyeOffset?.x || 0,
+              y: companion.eyeOffset?.y || 0,
               scaleY: companion.isBlinking ? 0.1 : 1,
             }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          />
+          >
+            <circle cx="39" cy="-18" r="12" fill="rgb(26,26,26)" />
+          </motion.g>
           <circle cx="34" cy="-22" r="4.5" fill="rgb(255,255,255)" />
 
           {/* 眉毛 */}

@@ -2,12 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
-import { ListPageHeader } from '@/components/common/list-page-header';
+import { MultiYearTimeline } from '@/components/blog';
+import type { TimelineItem } from '@/utils/helpers/timeline';
+import { ListPageHeader, type FilterGroup, type FilterValues } from '@/components/common';
 import { SEO } from '@/components/common';
-import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import { API } from '@/utils/api';
-import type { Article } from '@/types';
+import type { Article, Category, Tag } from '@/types';
 import { formatDate } from '@/utils';
 import { FiCalendar, FiEye, FiHeart, FiMessageSquare, FiClock } from 'react-icons/fi';
 import { useAnimationEngine } from '@/utils/ui/animation';
@@ -163,69 +163,130 @@ const EmptyState = styled.div`
 
 const BlogPage: React.FC = () => {
   const { variants, level } = useAnimationEngine();
-  const [articles, setArticles] = useState<TimelineItem[]>([]);
+  const [years, setYears] = useState<Array<{ year: number; count: number }>>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  // 初始数据加载
+  // 筛选相关状态
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [filterValues, setFilterValues] = useState<FilterValues>({});
+
+  // 清理后的筛选参数（由 ListPageHeader 自动处理）
+  const [cleanedFilters, setCleanedFilters] = useState<Record<string, any>>({});
+
+  // 加载分类、标签和年份数据
   useEffect(() => {
-    loadArticles(1);
+    const loadFilterOptions = async () => {
+      try {
+        const [categoriesRes, tagsRes, yearsRes] = await Promise.all([
+          API.category.getCategories(),
+          API.tag.getTags(),
+          API.article.getYears(),
+        ]);
+        setCategories(categoriesRes.data || []);
+        setTags(tagsRes.data || []);
+        const yearList = yearsRes.data || [];
+        setYears(yearList);
+        setTotalCount(yearList.reduce((sum, y) => sum + y.count, 0));
+      } catch (error) {
+        console.error('加载筛选选项失败:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadFilterOptions();
   }, []);
 
-  // 将Article转换为TimelineItem（保留完整的Article数据）
-  const convertArticleToTimelineItem = (article: Article): TimelineItem & Article => ({
-    ...article,
-    id: String(article.id),
-    createdAt: article.publishedAt || article.createdAt,
-  });
-
-  // 加载文章数据
-  const loadArticles = async (pageNum: number, append = false) => {
-    try {
-      if (!append) setIsLoading(true);
-      else setIsLoadingMore(true);
-
-      const response = await API.article.getArticles({
-        page: pageNum,
-        limit: 10,
+  // 筛选条件变化时重新加载年份数据
+  useEffect(() => {
+    if (Object.keys(cleanedFilters).length > 0) {
+      setIsLoading(true);
+      // 重新加载年份列表（带筛选条件）
+      API.article.getYears().then((res) => {
+        const yearList = res.data || [];
+        setYears(yearList);
+        setTotalCount(yearList.reduce((sum, y) => sum + y.count, 0));
+        setIsLoading(false);
       });
-
-      const apiArticles = response.data || [];
-      const newArticles = apiArticles.map(convertArticleToTimelineItem);
-
-      if (append) {
-        setArticles((prev) => [...prev, ...newArticles]);
-      } else {
-        setArticles(newArticles);
-      }
-
-      const pagination = response.meta?.pagination || { page: pageNum, totalPages: 1, total: 0 };
-      setHasMore(pagination.page < pagination.totalPages);
-      setPage(pageNum);
-      setTotalCount(pagination.total || 0);
-    } catch (error: any) {
-      adnaan.toast.error(error.message || '加载文章失败');
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
     }
-  };
+  }, [cleanedFilters]);
 
-  // 加载更多数据
-  const loadMore = useCallback(async () => {
-    if (isLoadingMore || !hasMore) return;
-    await loadArticles(page + 1, true);
-  }, [page, isLoadingMore, hasMore]);
+  // 将Article转换为TimelineItem（保留完整的Article数据）
+  const convertArticleToTimelineItem = useCallback(
+    (article: Article): TimelineItem & Article => ({
+      ...article,
+      id: String(article.id),
+      createdAt: article.publishedAt || article.createdAt,
+    }),
+    [],
+  );
 
-  // 使用无限滚动Hook
-  useInfiniteScroll({
-    hasMore,
-    isLoading: isLoadingMore,
-    onLoadMore: loadMore,
-  });
+  // 按年份加载数据
+  const loadYearItems = useCallback(
+    async (year: number, page: number): Promise<{ items: (TimelineItem & Article)[]; total: number }> => {
+      try {
+        // 使用清理后的参数，映射到API字段
+        const params: any = {
+          page,
+          limit: 10,
+          year, // 添加年份参数
+          ...cleanedFilters,
+        };
+
+        // 特殊字段映射
+        if (cleanedFilters.category) {
+          params.categoryId = Number(cleanedFilters.category);
+          delete params.category;
+        }
+
+        const response = await API.article.getArticles(params);
+        const apiArticles = response.data || [];
+        const items = apiArticles.map(convertArticleToTimelineItem);
+        const total = response.meta?.pagination?.total || 0;
+
+        return { items, total };
+      } catch (error: any) {
+        adnaan.toast.error(error.message || `加载${year}年文章失败`);
+        return { items: [], total: 0 };
+      }
+    },
+    [cleanedFilters, convertArticleToTimelineItem],
+  );
+
+  // 筛选组配置
+  const filterGroups: FilterGroup[] = [
+    {
+      key: 'search',
+      label: '搜索',
+      type: 'search',
+      placeholder: '搜索文章标题、内容...',
+    },
+    {
+      key: 'category',
+      label: '分类',
+      type: 'single',
+      options: [
+        { label: '全部', value: '' },
+        ...categories.map((cat) => ({
+          label: cat.name,
+          value: cat.id,
+        })),
+      ],
+    },
+    {
+      key: 'tag',
+      label: '标签',
+      type: 'single',
+      options: [
+        { label: '全部', value: '' },
+        ...tags.slice(0, 10).map((tag) => ({
+          label: tag.name,
+          value: tag.id,
+        })),
+      ],
+    },
+  ];
 
   // 渲染单个文章项目
   const renderArticleItem = (article: Article, index: number) => (
@@ -305,18 +366,22 @@ const BlogPage: React.FC = () => {
       <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
         <Container>
           <ListPageHeader
-            title="技术文章"
-            subtitle="探索代码世界，分享技术思考"
+            title="织星"
+            subtitle="以逻辑为经、语法为纬，在 0 与 1 的旷野里织就星河，那些调试的夜、重构的风，终会让指令落进理想的经纬"
             count={totalCount}
             countUnit="篇文章"
+            filterGroups={filterGroups}
+            filterValues={filterValues}
+            onFilterChange={setFilterValues}
+            onCleanFilterChange={setCleanedFilters}
           />
 
-          <TimelineMasonry
-            items={articles}
+          <MultiYearTimeline
+            years={years}
             renderItem={(item, index) => renderArticleItem(item as unknown as Article, index)}
+            onLoadYearItems={loadYearItems}
+            initialYearsToLoad={4}
             loading={isLoading}
-            loadingMore={isLoadingMore}
-            hasMore={hasMore}
             emptyState={emptyStateComponent}
           />
         </Container>

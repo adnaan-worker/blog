@@ -2,7 +2,7 @@
  * 关于此站点 - Mock 数据
  */
 
-import type { TimelineItem } from '@/components/common/time-line-masonry';
+import type { TimelineItem } from '@/components/blog/time-line-masonry';
 
 // 站点里程碑
 export interface SiteMilestone extends TimelineItem {

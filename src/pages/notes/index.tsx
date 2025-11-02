@@ -2,14 +2,27 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import TimelineMasonry, { TimelineItem } from '@/components/common/time-line-masonry';
-import { ListPageHeader } from '@/components/common/list-page-header';
+import { MultiYearTimeline } from '@/components/blog';
+import type { TimelineItem } from '@/utils/helpers/timeline';
+import { ListPageHeader, type FilterGroup, type FilterValues } from '@/components/common';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
-import useInfiniteScroll from '@/hooks/useInfiniteScroll';
 import { API } from '@/utils/api';
 import type { Note, NoteParams } from '@/types';
 import { useAnimationEngine } from '@/utils/ui/animation';
+import adnaan from 'adnaan-ui';
+import {
+  FiSun,
+  FiCloud,
+  FiCloudRain,
+  FiCloudSnow,
+  FiWind,
+  FiSmile,
+  FiMeh,
+  FiThumbsUp,
+  FiFrown,
+  FiZap,
+} from 'react-icons/fi';
 
 const PageContainer = styled(motion.div)`
   min-height: 100vh;
@@ -104,73 +117,142 @@ const EmptyState = styled.div`
 import { formatDate as formatDateUtil } from '@/utils';
 
 const NotesPage: React.FC = () => {
-  const { variants, level } = useAnimationEngine();
-  const [notes, setNotes] = useState<TimelineItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const { variants } = useAnimationEngine();
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [years, setYears] = useState<Array<{ year: number; count: number }>>([]);
 
-  // 初始数据加载
+  // 筛选状态
+  const [filterValues, setFilterValues] = useState<FilterValues>({});
+  // 清理后的筛选参数（由 ListPageHeader 自动处理）
+  const [cleanedFilters, setCleanedFilters] = useState<Record<string, any>>({});
+
+  // 初始化加载筛选项和年份列表
   useEffect(() => {
-    loadNotes(1);
+    const loadInitialData = async () => {
+      try {
+        setIsLoading(true);
+
+        // 加载年份列表
+        const yearsResponse = await API.note.getYears();
+        const yearsData = yearsResponse.data || [];
+        setYears(yearsData);
+
+        // 计算总数
+        const total = yearsData.reduce((sum, year) => sum + year.count, 0);
+        setTotalCount(total);
+      } catch (error: any) {
+        adnaan.toast.error(error.message || '加载数据失败');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialData();
   }, []);
 
-  // 将Note转换为TimelineItem
-  const convertNoteToTimelineItem = (note: Note): TimelineItem => ({
-    id: String(note.id),
-    title: note.title || '生活随记',
-    content: note.content,
-    createdAt: note.createdAt,
-    tags: note.tags,
-  });
+  // 监听筛选参数变化，重新加载年份列表
+  useEffect(() => {
+    if (Object.keys(cleanedFilters).length === 0) return;
 
-  // 加载手记数据
-  const loadNotes = async (pageNum: number, append = false) => {
-    try {
-      if (!append) setIsLoading(true);
-      else setIsLoadingMore(true);
+    const reloadYears = async () => {
+      try {
+        const yearsResponse = await API.note.getYears();
+        const yearsData = yearsResponse.data || [];
+        setYears(yearsData);
 
-      const params: NoteParams = {
-        page: pageNum,
-        limit: 10,
-        orderBy: 'createdAt',
-        orderDirection: 'DESC',
-      };
-
-      const response = await API.note.getNotes(params);
-      const apiNotes = response.data || [];
-      const newNotes = apiNotes.map(convertNoteToTimelineItem);
-
-      if (append) {
-        setNotes((prev) => [...prev, ...newNotes]);
-      } else {
-        setNotes(newNotes);
+        const total = yearsData.reduce((sum, year) => sum + year.count, 0);
+        setTotalCount(total);
+      } catch (error: any) {
+        adnaan.toast.error(error.message || '加载年份失败');
       }
+    };
 
-      const pagination = response.meta?.pagination || { page: pageNum, totalPages: 1 };
-      setHasMore(pagination.page < pagination.totalPages);
-      setPage(pageNum);
-    } catch (error: any) {
-      adnaan.toast.error(error.message || '加载手记失败');
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
-    }
-  };
+    reloadYears();
+  }, [cleanedFilters]);
 
-  // 加载更多数据
-  const loadMore = useCallback(async () => {
-    if (isLoadingMore || !hasMore) return;
-    await loadNotes(page + 1, true);
-  }, [page, isLoadingMore, hasMore]);
+  // 将Note转换为TimelineItem
+  const convertNoteToTimelineItem = useCallback(
+    (note: Note): TimelineItem & Note => ({
+      ...note,
+      id: String(note.id),
+      title: note.title,
+    }),
+    [],
+  );
 
-  // 使用无限滚动Hook
-  useInfiniteScroll({
-    hasMore,
-    isLoading: isLoadingMore,
-    onLoadMore: loadMore,
-  });
+  // 按年份加载手记
+  const loadYearItems = useCallback(
+    async (year: number, page: number): Promise<{ items: (TimelineItem & Note)[]; total: number }> => {
+      try {
+        // 使用清理后的参数，映射到API字段
+        const params: any = {
+          page,
+          limit: 10,
+          year, // 添加年份参数
+          orderBy: 'createdAt',
+          orderDirection: 'DESC',
+          ...cleanedFilters,
+        };
+
+        const response = await API.note.getNotes(params);
+        const apiNotes = response.data || [];
+        const items = apiNotes.map(convertNoteToTimelineItem);
+        const total = response.meta?.pagination?.total || 0;
+
+        return { items, total };
+      } catch (error: any) {
+        adnaan.toast.error(error.message || `加载${year}年手记失败`);
+        return { items: [], total: 0 };
+      }
+    },
+    [cleanedFilters, convertNoteToTimelineItem],
+  );
+
+  // 筛选组配置
+  const filterGroups: FilterGroup[] = [
+    {
+      key: 'search',
+      label: '搜索',
+      type: 'search',
+      placeholder: '搜索手记内容...',
+    },
+    {
+      key: 'mood',
+      label: '心情',
+      type: 'single',
+      options: [
+        { label: '全部', value: '' },
+        { label: '开心', value: '开心', icon: <FiSmile /> },
+        { label: '平静', value: '平静', icon: <FiMeh /> },
+        { label: '思考', value: '思考', icon: <FiThumbsUp /> },
+        { label: '感慨', value: '感慨', icon: <FiFrown /> },
+        { label: '兴奋', value: '兴奋', icon: <FiZap /> },
+      ],
+    },
+    {
+      key: 'weather',
+      label: '天气',
+      type: 'single',
+      options: [
+        { label: '全部', value: '' },
+        { label: '晴天', value: '晴天', icon: <FiSun /> },
+        { label: '多云', value: '多云', icon: <FiCloud /> },
+        { label: '雨天', value: '雨天', icon: <FiCloudRain /> },
+        { label: '雪天', value: '雪天', icon: <FiCloudSnow /> },
+        { label: '阴天', value: '阴天', icon: <FiWind /> },
+      ],
+    },
+    {
+      key: 'orderBy',
+      label: '排序',
+      type: 'single',
+      options: [
+        { label: '最新', value: 'createdAt' },
+        { label: '最热', value: 'likeCount' },
+      ],
+    },
+  ];
 
   // 渲染单个手记项目
   const renderNoteItem = (note: Note, index: number) => (
@@ -209,19 +291,24 @@ const NotesPage: React.FC = () => {
         <Container>
           {/* 页面头部 */}
           <ListPageHeader
-            title="生活手记"
-            subtitle="记录时光片段，留住美好瞬间"
-            count={notes.length}
+            title="拾光"
+            subtitle="键盘敲碎的晨昏里，藏着踩坑的余温、顿悟的微光，把每一次批注都折成纸船，在笔记的河流里打捞成长的回响"
+            count={totalCount}
             countUnit="篇手记"
+            filterGroups={filterGroups}
+            filterValues={filterValues}
+            onFilterChange={setFilterValues}
+            onCleanFilterChange={setCleanedFilters}
           />
 
-          <TimelineMasonry
-            items={notes}
-            renderItem={(item, index) => renderNoteItem(item as Note, index)}
+          <MultiYearTimeline
+            years={years}
+            renderItem={(item, index) => renderNoteItem(item as unknown as Note, index)}
+            onLoadYearItems={loadYearItems}
+            initialYearsToLoad={4}
             loading={isLoading}
-            loadingMore={isLoadingMore}
-            hasMore={hasMore}
             emptyState={emptyStateComponent}
+            maxHeight={300}
           />
         </Container>
       </PageContainer>

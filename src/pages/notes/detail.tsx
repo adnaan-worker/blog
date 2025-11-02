@@ -9,8 +9,8 @@ import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
 import RichTextContent from '@/components/rich-text/rich-text-content';
 import RichTextStats from '@/components/rich-text/rich-text-stats';
 import { useAnimationEngine } from '@/utils/ui/animation';
-import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/common/detail-page-layout';
-import DetailNoiseBackground from '@/components/common/detail-noise-background';
+import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/blog/detail-page-layout';
+import DetailNoiseBackground from '@/components/blog/detail-noise-background';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { SEO, AutoSkeleton } from '@/components/common';
 

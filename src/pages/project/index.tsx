@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiGithub, FiExternalLink, FiStar, FiGitBranch, FiCalendar } from 'react-icons/fi';
+import { FiGithub, FiExternalLink, FiStar, FiGitBranch, FiCalendar, FiCode, FiUnlock } from 'react-icons/fi';
 import { API } from '@/utils/api';
 import type { Project } from '@/types';
 import { formatDate } from '@/utils';
 import { Pagination } from 'adnaan-ui';
 import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
-import { ListPageHeader } from '@/components/common/list-page-header';
+import { ListPageHeader, type FilterGroup, type FilterValues } from '@/components/common';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 
@@ -24,47 +24,6 @@ const PageContainer = styled.div`
 
   @media (max-width: 768px) {
     padding: 1rem 0.75rem;
-  }
-`;
-
-const FilterBar = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.15);
-  flex-wrap: wrap;
-`;
-
-const FilterLabel = styled.div`
-  font-size: 0.8rem;
-  color: var(--text-tertiary);
-  font-weight: 500;
-  opacity: 0.8;
-`;
-
-const FilterTags = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  flex: 1;
-`;
-
-const FilterTag = styled.button<{ active?: boolean }>`
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
-  border: none;
-  background: ${(props) => (props.active ? 'rgba(var(--accent-rgb), 0.12)' : 'transparent')};
-  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  font-size: 0.8rem;
-  font-weight: ${(props) => (props.active ? '600' : '400')};
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(var(--accent-rgb), 0.08);
-    color: var(--accent-color);
   }
 `;
 
@@ -457,20 +416,33 @@ const Projects: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const limit = 5;
+
+  // 筛选相关状态
+  const [filterValues, setFilterValues] = useState<FilterValues>({});
+
+  // 清理后的筛选参数（由 ListPageHeader 自动处理）
+  const [cleanedFilters, setCleanedFilters] = useState<Record<string, any>>({});
 
   // 加载项目
   const loadProjects = async (currentPage: number) => {
     try {
       setLoading(true);
-      const response = await API.project.getProjects({
+
+      // 使用清理后的参数，映射到API字段
+      const params: any = {
         page: currentPage,
-        limit: limit, // 统一使用 limit 参数
-        status: selectedStatus as any,
-        language: selectedLanguage,
-      });
+        limit: limit,
+        ...cleanedFilters,
+      };
+
+      // 特殊字段映射
+      if (cleanedFilters.search) {
+        params.keyword = cleanedFilters.search;
+        delete params.search;
+      }
+
+      const response = await API.project.getProjects(params);
 
       const newProjects = response.data || [];
       setProjects(newProjects);
@@ -488,10 +460,10 @@ const Projects: React.FC = () => {
     }
   };
 
-  // 筛选条件变化时重置页码并加载
+  // 筛选条件变化时重置页码
   useEffect(() => {
     setPage(1);
-  }, [selectedStatus, selectedLanguage]);
+  }, [cleanedFilters]);
 
   // 页码变化或筛选条件变化时加载数据
   useEffect(() => {
@@ -500,12 +472,66 @@ const Projects: React.FC = () => {
     if (page > 1) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [page, selectedStatus, selectedLanguage]);
+  }, [page, cleanedFilters]);
 
   // 处理分页变化
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
+
+  // 筛选组配置
+  const filterGroups: FilterGroup[] = [
+    {
+      key: 'search',
+      label: '搜索',
+      type: 'search',
+      placeholder: '搜索项目名称、描述...',
+    },
+    {
+      key: 'status',
+      label: '状态',
+      type: 'single',
+      options: [
+        { label: '全部', value: '' },
+        { label: '活跃', value: 'active' },
+        { label: '开发中', value: 'developing' },
+        { label: '暂停', value: 'paused' },
+        { label: '已归档', value: 'archived' },
+      ],
+    },
+    {
+      key: 'language',
+      label: '编程语言',
+      type: 'single',
+      options: [
+        { label: '全部', value: '', icon: <FiCode /> },
+        { label: 'TypeScript', value: 'TypeScript', icon: <FiCode /> },
+        { label: 'JavaScript', value: 'JavaScript', icon: <FiCode /> },
+        { label: 'Python', value: 'Python', icon: <FiCode /> },
+        { label: 'Java', value: 'Java', icon: <FiCode /> },
+        { label: 'Go', value: 'Go', icon: <FiCode /> },
+        { label: 'Rust', value: 'Rust', icon: <FiCode /> },
+      ],
+    },
+    {
+      key: 'isOpenSource',
+      label: '开源',
+      type: 'single',
+      options: [
+        { label: '全部', value: '' },
+        { label: '开源', value: 'true', icon: <FiUnlock /> },
+      ],
+    },
+    {
+      key: 'isFeatured',
+      label: '精选',
+      type: 'single',
+      options: [
+        { label: '全部', value: '' },
+        { label: '精选项目', value: 'true', icon: <FiStar /> },
+      ],
+    },
+  ];
 
   return (
     <>
@@ -518,29 +544,15 @@ const Projects: React.FC = () => {
       <PageContainer>
         {/* 页面头部 - 统一组件 */}
         <ListPageHeader
-          title="开源项目"
-          subtitle="探索代码与创意，共建开发生态"
+          title="赴约"
+          subtitle="以代码为信物，跨越屏幕的距离，每一行提交都是同频者的应答，在开源的旷野上，赴一场关于热爱与传承的约定"
           count={totalCount}
           countUnit="个项目"
+          filterGroups={filterGroups}
+          filterValues={filterValues}
+          onFilterChange={setFilterValues}
+          onCleanFilterChange={setCleanedFilters}
         />
-
-        <FilterBar>
-          <FilterLabel>筛选</FilterLabel>
-          <FilterTags>
-            <FilterTag active={!selectedStatus} onClick={() => setSelectedStatus('')}>
-              全部
-            </FilterTag>
-            <FilterTag active={selectedStatus === 'active'} onClick={() => setSelectedStatus('active')}>
-              活跃
-            </FilterTag>
-            <FilterTag active={selectedStatus === 'developing'} onClick={() => setSelectedStatus('developing')}>
-              开发中
-            </FilterTag>
-            <FilterTag active={selectedStatus === 'archived'} onClick={() => setSelectedStatus('archived')}>
-              已归档
-            </FilterTag>
-          </FilterTags>
-        </FilterBar>
 
         {/* 只有加载完成后才显示内容或空状态 */}
         {projects.length > 0 ? (

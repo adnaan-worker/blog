@@ -174,6 +174,7 @@ export interface ArticleParams extends PaginationParams {
   tag?: string;
   keyword?: string;
   authorId?: string | number;
+  year?: number; // 按年份筛选
 }
 
 /**
@@ -286,6 +287,7 @@ export interface NoteParams extends PaginationParams {
   search?: string;
   isPrivate?: boolean;
   userId?: string | number;
+  year?: number; // 按年份筛选
   orderBy?: 'createdAt' | 'updatedAt' | 'viewCount' | 'likeCount';
   orderDirection?: 'ASC' | 'DESC';
 }

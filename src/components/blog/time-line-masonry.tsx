@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { useAnimationEngine } from '@/utils/ui/animation';
@@ -22,19 +22,32 @@ interface TimelineMasonryProps<T extends TimelineItem> {
 
 // 样式组件
 const MasonryContainer = styled.div`
-  columns: 2;
-  column-gap: 3rem;
-  column-fill: balance;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3rem;
+  align-items: start;
 
   @media (max-width: 768px) {
-    columns: 1;
-    column-gap: 0;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+`;
+
+const Column = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  /* 移动端第二列隐藏，所有内容合并到第一列 */
+  @media (max-width: 768px) {
+    &:nth-of-type(2) {
+      display: none;
+    }
   }
 `;
 
 const YearTimeline = styled(motion.div)`
-  break-inside: avoid;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
   position: relative;
   background: var(--bg-primary);
 `;
@@ -160,6 +173,22 @@ function TimelineMasonry<T extends TimelineItem>({
   // 使用动画引擎 - 统一的 Spring 动画系统
   const { springPresets } = useAnimationEngine();
 
+  // 移动端检测
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    // 初始检测
+    checkMobile();
+
+    // 监听窗口大小变化
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const groupedItems = groupItemsByYear(items);
 
   // 默认年份头部渲染
@@ -180,40 +209,64 @@ function TimelineMasonry<T extends TimelineItem>({
     return <>{emptyState}</>;
   }
 
+  // 将年份组分配到两列（交替分配：左-右-左-右...）
+  const leftColumnYears: typeof groupedItems = [];
+  const rightColumnYears: typeof groupedItems = [];
+
+  if (isMobile) {
+    // 移动端：所有年份在一列
+    leftColumnYears.push(...groupedItems);
+  } else {
+    // 桌面端：交替分配到两列（2025左, 2024右, 2023左, 2022右...）
+    groupedItems.forEach((yearGroup, index) => {
+      if (index % 2 === 0) {
+        leftColumnYears.push(yearGroup);
+      } else {
+        rightColumnYears.push(yearGroup);
+      }
+    });
+  }
+
+  const renderYearGroup = (yearGroup: (typeof groupedItems)[0], yearIndex: number) => (
+    <YearTimeline
+      key={yearGroup.year}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        ...springPresets.gentle,
+        delay: yearIndex * 0.08,
+      }}
+    >
+      {renderYearHeader
+        ? renderYearHeader(yearGroup.year, yearGroup.items.length)
+        : defaultRenderYearHeader(yearGroup.year, yearGroup.items.length)}
+
+      <TimelineContainer>
+        {yearGroup.items.map((item, itemIndex) => (
+          <TimelineItemWrapper
+            key={item.id}
+            initial={{ opacity: 0, x: -20, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{
+              ...springPresets.snappy,
+              delay: (yearIndex * 3 + itemIndex) * 0.03,
+            }}
+          >
+            {renderItem(item, itemIndex)}
+          </TimelineItemWrapper>
+        ))}
+      </TimelineContainer>
+    </YearTimeline>
+  );
+
   return (
     <>
       <MasonryContainer className={className}>
-        {groupedItems.map((yearGroup, yearIndex) => (
-          <YearTimeline
-            key={yearGroup.year}
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{
-              ...springPresets.gentle,
-              delay: yearIndex * 0.08,
-            }}
-          >
-            {renderYearHeader
-              ? renderYearHeader(yearGroup.year, yearGroup.items.length)
-              : defaultRenderYearHeader(yearGroup.year, yearGroup.items.length)}
+        {/* 左列 */}
+        <Column>{leftColumnYears.map((yearGroup, index) => renderYearGroup(yearGroup, index * 2))}</Column>
 
-            <TimelineContainer>
-              {yearGroup.items.map((item, itemIndex) => (
-                <TimelineItemWrapper
-                  key={item.id}
-                  initial={{ opacity: 0, x: -20, scale: 0.95 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  transition={{
-                    ...springPresets.snappy,
-                    delay: (yearIndex * 3 + itemIndex) * 0.03,
-                  }}
-                >
-                  {renderItem(item, itemIndex)}
-                </TimelineItemWrapper>
-              ))}
-            </TimelineContainer>
-          </YearTimeline>
-        ))}
+        {/* 右列 */}
+        <Column>{rightColumnYears.map((yearGroup, index) => renderYearGroup(yearGroup, index * 2 + 1))}</Column>
       </MasonryContainer>
 
       {/* 加载更多状态 */}

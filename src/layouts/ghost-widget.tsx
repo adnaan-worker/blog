@@ -388,8 +388,8 @@ export const GhostWidget = () => {
             <EyeContainer className="left">
               <Eye
                 animate={{
-                  x: companion.eyeOffset.x,
-                  y: companion.eyeOffset.y,
+                  x: companion.eyeOffset?.x || 0,
+                  y: companion.eyeOffset?.y || 0,
                   scale: companion.isHovered ? 1.3 : 1,
                   scaleY: companion.isBlinking ? 0.1 : companion.isHovered ? 1.3 : 1,
                 }}
@@ -399,8 +399,8 @@ export const GhostWidget = () => {
             <EyeContainer className="right">
               <Eye
                 animate={{
-                  x: companion.eyeOffset.x,
-                  y: companion.eyeOffset.y,
+                  x: companion.eyeOffset?.x || 0,
+                  y: companion.eyeOffset?.y || 0,
                   scale: companion.isHovered ? 1.3 : 1,
                   scaleY: companion.isBlinking ? 0.1 : companion.isHovered ? 1.3 : 1,
                 }}
