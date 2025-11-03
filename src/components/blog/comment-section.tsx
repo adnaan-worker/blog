@@ -1,18 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMessageSquare, FiSend, FiCornerDownRight, FiThumbsUp, FiTrash2, FiLoader } from 'react-icons/fi';
+import {
+  FiMessageSquare,
+  FiSend,
+  FiCornerDownRight,
+  FiTrash2,
+  FiLoader,
+  FiMapPin,
+  FiClock,
+  FiGithub,
+  FiMail,
+} from 'react-icons/fi';
 import { Button, Input, Textarea } from 'adnaan-ui';
 import { API } from '@/utils/api';
 import type { Comment as CommentType } from '@/types';
 import { storage } from '@/utils';
-import { formatDate } from '@/utils';
+import { formatDate, getTimeAgo } from '@/utils';
 import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 评论区容器
 const CommentSectionContainer = styled(motion.div)`
   margin-top: 3rem;
-  padding: 0;
 `;
 
 // 评论区标题
@@ -20,17 +29,17 @@ const CommentHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(var(--border-rgb, 229, 231, 235), 0.6);
 `;
 
 const CommentTitle = styled.h3`
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   color: var(--text-primary);
   margin: 0;
 
@@ -40,26 +49,24 @@ const CommentTitle = styled.h3`
 `;
 
 const CommentCount = styled.span`
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
   font-weight: 400;
-  padding: 0.25rem 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: 12px;
+  opacity: 0.7;
 `;
 
 // 评论表单
 const CommentForm = styled.form`
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s ease;
 
   &:focus-within {
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px var(--accent-color-alpha);
+    box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
   }
 `;
 
@@ -68,10 +75,10 @@ const FormFooter = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  padding-top: 1rem;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--border-color);
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -80,8 +87,9 @@ const FormFooter = styled.div`
 `;
 
 const FormInfo = styled.div`
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
+  opacity: 0.6;
 `;
 
 // 操作按钮容器
@@ -91,127 +99,236 @@ const ActionButtonContainer = styled.div`
   gap: 0.5rem;
 `;
 
-// 评论列表
-const CommentList = styled.div`
+// 评论列表 - 扁平化
+const CommentList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.5rem;
 `;
 
 // 评论项容器
-const CommentItemWrapper = styled(motion.div)``;
-
-// 评论项
-const CommentItem = styled.div<{ isReply?: boolean }>`
-  display: flex;
-  gap: 1rem;
-  padding: ${(props) => (props.isReply ? '1rem 0 1rem 3rem' : '1.25rem 0')};
-  border-bottom: 1px solid var(--border-color);
-
-  &:last-child {
-    border-bottom: none;
-  }
+const CommentItemWrapper = styled(motion.li)<{ depth?: number }>`
+  position: relative;
+  margin-left: ${(props) => (props.depth || 0) * 2.25}rem;
 
   @media (max-width: 768px) {
-    padding: ${(props) => (props.isReply ? '1rem 0 1rem 2rem' : '1rem 0')};
+    margin-left: ${(props) => (props.depth || 0) * 1.5}rem;
   }
 `;
 
+// 评论项
+const CommentItem = styled.div`
+  display: flex;
+  gap: 0.625rem;
+  padding: 0.625rem 0;
+
+  &:hover {
+    .comment-actions {
+      opacity: 1;
+    }
+  }
+`;
+
+// 头像容器
+const AvatarContainer = styled.div`
+  position: relative;
+  flex-shrink: 0;
+`;
+
 // 头像
-const Avatar = styled.div`
-  width: 40px;
-  height: 40px;
+const Avatar = styled.div<{ hasImage?: boolean }>`
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-hover));
+  background: ${(props) =>
+    props.hasImage ? 'transparent' : 'linear-gradient(135deg, var(--accent-color), var(--accent-color-hover))'};
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 600;
+  font-size: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
   flex-shrink: 0;
-  font-size: 0.95rem;
-  box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.2);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 // 评论内容区
 const CommentContent = styled.div`
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 `;
 
-// 评论头部
+// 评论头部 - 紧凑显示所有信息
 const CommentContentHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
   flex-wrap: wrap;
+  font-size: 0.8125rem;
 `;
 
 // 评论者名字
-const CommentAuthor = styled.div`
+const CommentAuthor = styled.span`
   font-weight: 600;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  flex-shrink: 0;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
 `;
 
-// 评论日期
-const CommentDate = styled.div`
-  color: var(--text-tertiary);
-  font-size: 0.85rem;
-`;
-
-// 评论文本
-const CommentText = styled.p`
-  line-height: 1.7;
-  color: var(--text-secondary);
-  margin: 0.5rem 0 0.75rem 0;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-`;
-
-// 评论操作栏
-const CommentActions = styled.div`
+// 次要信息容器
+const CommentMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary);
+  opacity: 0.6;
+  flex-shrink: 1;
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    margin-top: -0.125rem;
+  }
+`;
+
+const MetaItem = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  flex-shrink: 0;
+
+  svg {
+    font-size: 0.625rem;
+  }
+
+  &.location {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+  }
 `;
 
 // 管理员标签样式
-const AdminBadgeStyled = styled.span`
-  padding: 0.125rem 0.5rem;
-  background: var(--accent-color-alpha);
+const AdminBadge = styled.span`
+  padding: 0.0625rem 0.3125rem;
+  background: rgba(var(--accent-rgb), 0.12);
   color: var(--accent-color);
-  border-radius: 4px;
-  font-size: 0.75rem;
+  border-radius: 3px;
+  font-size: 0.625rem;
   font-weight: 500;
+  flex-shrink: 0;
+  line-height: 1.2;
+`;
+
+// 评论文本 - 气泡样式
+const CommentBubble = styled.div`
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: rgba(var(--text-primary-rgb, 0, 0, 0), 0.04);
+  border-radius: 12px;
+  border-top-left-radius: 4px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  font-size: 0.875rem;
+
+  @media (min-width: 768px) {
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 4px;
+  }
+
+  .dark & {
+    background: rgba(255, 255, 255, 0.06);
+  }
+`;
+
+// 评论操作栏 - 悬停显示
+const CommentActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+
+  @media (max-width: 768px) {
+    opacity: 0.7;
+  }
+`;
+
+const ActionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  padding: 0.1875rem 0.4375rem;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 0.6875rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(var(--accent-rgb), 0.08);
+    color: var(--accent-color);
+  }
+
+  svg {
+    font-size: 0.8125rem;
+  }
 `;
 
 // 回复表单容器
 const ReplyFormContainer = styled(motion.div)`
-  margin-top: 1rem;
-  padding-left: 3rem;
+  margin-top: 0.75rem;
+  margin-left: 2.75rem;
 
   @media (max-width: 768px) {
-    padding-left: 2rem;
+    margin-left: 0;
   }
 `;
 
 // 空状态
 const EmptyState = styled.div`
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3rem 1.5rem;
   color: var(--text-tertiary);
+  opacity: 0.6;
 
   svg {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.4;
   }
 
   p {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
   }
 `;
 
@@ -240,6 +357,20 @@ interface CommentSectionProps {
   postId: number;
 }
 
+// 扁平化评论树的辅助函数
+const flattenComments = (comments: CommentType[], depth = 0): Array<CommentType & { depth: number }> => {
+  const result: Array<CommentType & { depth: number }> = [];
+
+  comments.forEach((comment) => {
+    result.push({ ...comment, depth });
+    if (comment.replies && comment.replies.length > 0) {
+      result.push(...flattenComments(comment.replies, depth + 1));
+    }
+  });
+
+  return result;
+};
+
 const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const { variants } = useAnimationEngine();
   const [comments, setComments] = useState<CommentType[]>([]);
@@ -250,9 +381,17 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
 
+  // 访客信息
+  const [guestName, setGuestName] = useState<string>(() => storage.local.get<string>('guest_name') || '');
+  const [guestEmail, setGuestEmail] = useState<string>(() => storage.local.get<string>('guest_email') || '');
+  const [guestWebsite, setGuestWebsite] = useState<string>(() => storage.local.get<string>('guest_website') || '');
+
   const user = storage.local.get('user');
   const token = storage.local.get('token');
   const isLoggedIn = !!token;
+
+  // 扁平化的评论列表
+  const flatComments = useMemo(() => flattenComments(comments), [comments]);
 
   // 获取评论列表
   const fetchComments = async () => {
@@ -282,19 +421,47 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     e.preventDefault();
     if (!commentText.trim()) return;
 
+    // 访客评论验证
     if (!isLoggedIn) {
-      adnaan?.toast?.error('请先登录');
-      return;
+      if (!guestName.trim()) {
+        adnaan?.toast?.error('请填写您的姓名');
+        return;
+      }
+      if (!guestEmail.trim()) {
+        adnaan?.toast?.error('请填写您的邮箱');
+        return;
+      }
+      // 简单的邮箱格式验证
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(guestEmail)) {
+        adnaan?.toast?.error('邮箱格式不正确');
+        return;
+      }
     }
 
     try {
       setIsSubmitting(true);
-      await API.comment.createComment({
+
+      const commentData: any = {
         content: commentText,
         postId,
-      });
+      };
 
-      adnaan?.toast?.success('评论发布成功');
+      // 如果是访客，添加访客信息
+      if (!isLoggedIn) {
+        commentData.guestName = guestName.trim();
+        commentData.guestEmail = guestEmail.trim();
+        commentData.guestWebsite = guestWebsite.trim() || undefined;
+
+        // 保存访客信息到本地存储（下次使用）
+        storage.local.set('guest_name', guestName.trim());
+        storage.local.set('guest_email', guestEmail.trim());
+        storage.local.set('guest_website', guestWebsite.trim());
+      }
+
+      await API.comment.createComment(commentData);
+
+      adnaan?.toast?.success(isLoggedIn ? '评论发布成功' : '评论发布成功，等待审核');
       setCommentText('');
       await fetchComments();
     } catch (error: any) {
@@ -308,19 +475,46 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const handleReply = async (parentId: number) => {
     if (!replyText.trim()) return;
 
+    // 访客回复验证
     if (!isLoggedIn) {
-      adnaan?.toast?.error('请先登录');
-      return;
+      if (!guestName.trim()) {
+        adnaan?.toast?.error('请填写您的姓名');
+        return;
+      }
+      if (!guestEmail.trim()) {
+        adnaan?.toast?.error('请填写您的邮箱');
+        return;
+      }
+      // 简单的邮箱格式验证
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(guestEmail)) {
+        adnaan?.toast?.error('邮箱格式不正确');
+        return;
+      }
     }
 
     try {
-      await API.comment.createComment({
+      const replyData: any = {
         content: replyText,
         postId,
         parentId,
-      });
+      };
 
-      adnaan?.toast?.success('回复发布成功');
+      // 如果是访客，添加访客信息
+      if (!isLoggedIn) {
+        replyData.guestName = guestName.trim();
+        replyData.guestEmail = guestEmail.trim();
+        replyData.guestWebsite = guestWebsite.trim() || undefined;
+
+        // 保存访客信息到本地存储（下次使用）
+        storage.local.set('guest_name', guestName.trim());
+        storage.local.set('guest_email', guestEmail.trim());
+        storage.local.set('guest_website', guestWebsite.trim());
+      }
+
+      await API.comment.createComment(replyData);
+
+      adnaan?.toast?.success(isLoggedIn ? '回复发布成功' : '回复发布成功，等待审核');
       setReplyText('');
       setReplyingTo(null);
       await fetchComments();
@@ -346,143 +540,242 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     }
   };
 
-  // 渲染单个评论
-  const renderComment = (comment: CommentType, isReply: boolean = false) => (
-    <CommentItemWrapper
-      key={comment.id}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <CommentItem isReply={isReply}>
-        <Avatar>
-          {typeof comment.author === 'string' && comment.author ? comment.author[0]?.toUpperCase() || '?' : '?'}
-        </Avatar>
-        <CommentContent>
-          <CommentContentHeader>
-            <CommentAuthor>{typeof comment.author === 'string' ? comment.author : '匿名用户'}</CommentAuthor>
-            {comment.originalData?.author?.role === 'admin' && <AdminBadgeStyled>管理员</AdminBadgeStyled>}
-            <CommentDate>{formatDate(comment.date || comment.originalData?.createdAt, 'YYYY-MM-DD HH:mm')}</CommentDate>
-          </CommentContentHeader>
-          <CommentText>{comment.content}</CommentText>
-          <CommentActions>
-            {isLoggedIn && !isReply && (
-              <Button
-                variant="ghost"
-                size="small"
+  // 渲染单个评论（扁平化版本）
+  const renderComment = (comment: CommentType & { depth: number }) => {
+    // 判断是访客评论还是用户评论
+    const isGuestComment = comment.isGuest || !comment.userId;
+    const author = isGuestComment
+      ? comment.guestName || '访客'
+      : comment.author?.username || comment.author?.fullName || '用户';
+    const authorInitial = author ? author[0]?.toUpperCase() || '?' : '?';
+
+    // 权限和角色判断
+    const isAdmin = comment.author?.role === 'admin';
+    const isOwner = isLoggedIn && typeof user === 'object' && user && 'id' in user && user.id === comment.userId;
+
+    // 时间处理
+    const relativeTime = comment.createdAt ? getTimeAgo(comment.createdAt) : '';
+    const fullDate = comment.createdAt ? formatDate(comment.createdAt, 'YYYY-MM-DD HH:mm:ss') : '';
+
+    // 访客信息
+    const location = comment.location;
+    const browser = comment.browser;
+    const os = comment.os;
+    const device = comment.device;
+
+    // 获取头像URL（访客没有头像）
+    const avatarUrl = isGuestComment ? null : comment.author?.avatar;
+
+    return (
+      <CommentItemWrapper
+        key={`comment-${comment.id}-depth-${comment.depth}`}
+        depth={comment.depth}
+        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+      >
+        <CommentItem>
+          <AvatarContainer>
+            <Avatar hasImage={!!avatarUrl}>{avatarUrl ? <img src={avatarUrl} alt={author} /> : authorInitial}</Avatar>
+          </AvatarContainer>
+
+          <CommentContent>
+            {/* 头部信息 - 紧凑显示 */}
+            <CommentContentHeader>
+              <CommentAuthor title={author}>{author}</CommentAuthor>
+              {isAdmin && <AdminBadge>博主</AdminBadge>}
+              <CommentMeta>
+                <MetaItem title={fullDate}>
+                  <FiClock />
+                  {relativeTime}
+                </MetaItem>
+                <MetaItem>#{String(comment.id).slice(0, 8)}</MetaItem>
+                {location && location !== '未知' && (
+                  <MetaItem className="location" title={`来自 ${location}`}>
+                    <FiMapPin />
+                    {location}
+                  </MetaItem>
+                )}
+                {browser && (
+                  <MetaItem title={`浏览器: ${browser}${os ? ' · 系统: ' + os : ''}`}>
+                    {device === 'Mobile' ? '📱' : device === 'Tablet' ? '📟' : '💻'}
+                  </MetaItem>
+                )}
+                {(comment.author?.email || comment.guestEmail) && (
+                  <MetaItem title="已验证邮箱">
+                    <FiMail />
+                  </MetaItem>
+                )}
+              </CommentMeta>
+            </CommentContentHeader>
+
+            {/* 评论内容气泡 */}
+            <CommentBubble>{comment.content}</CommentBubble>
+
+            {/* 操作按钮 */}
+            <CommentActions className="comment-actions">
+              <ActionButton
                 onClick={() => setReplyingTo(replyingTo === Number(comment.id) ? null : Number(comment.id))}
+                title="回复"
               >
                 <FiCornerDownRight />
                 回复
-              </Button>
-            )}
-            {isLoggedIn &&
-              typeof user === 'object' &&
-              user &&
-              'id' in user &&
-              user.id === comment.originalData?.userId && (
-                <Button variant="ghost" size="small" onClick={() => handleDelete(Number(comment.id))}>
+              </ActionButton>
+              {isOwner && (
+                <ActionButton onClick={() => handleDelete(Number(comment.id))} title="删除">
                   <FiTrash2 />
                   删除
-                </Button>
+                </ActionButton>
               )}
-          </CommentActions>
+            </CommentActions>
 
-          {/* 回复表单 */}
-          <AnimatePresence>
-            {replyingTo === comment.id && (
-              <ReplyFormContainer
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <CommentForm
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleReply(Number(comment.id));
-                  }}
+            {/* 回复表单 */}
+            <AnimatePresence>
+              {replyingTo === comment.id && (
+                <ReplyFormContainer
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <Textarea
-                    placeholder={`回复 ${comment.author}...`}
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    rows={3}
-                    size="small"
-                    fullWidth
-                  />
-                  <FormFooter>
-                    <FormInfo>Ctrl + Enter 快速发送</FormInfo>
-                    <ActionButtonContainer>
-                      <Button variant="ghost" onClick={() => setReplyingTo(null)}>
-                        取消
-                      </Button>
-                      <Button type="submit" disabled={!replyText.trim()} variant="primary">
-                        <FiSend size={16} />
-                        发送
-                      </Button>
-                    </ActionButtonContainer>
-                  </FormFooter>
-                </CommentForm>
-              </ReplyFormContainer>
-            )}
-          </AnimatePresence>
-        </CommentContent>
-      </CommentItem>
+                  <CommentForm
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleReply(Number(comment.id));
+                    }}
+                  >
+                    {/* 访客信息输入（仅未登录时显示） */}
+                    {!isLoggedIn && (
+                      <div
+                        style={{
+                          display: 'grid',
+                          gap: '0.5rem',
+                          gridTemplateColumns: '1fr 1fr',
+                          marginBottom: '0.5rem',
+                        }}
+                      >
+                        <Input
+                          placeholder="姓名 *"
+                          value={guestName}
+                          onChange={(e) => setGuestName(e.target.value)}
+                          size="small"
+                          required
+                          style={{ width: '100%' }}
+                        />
+                        <Input
+                          type="email"
+                          placeholder="邮箱 *"
+                          value={guestEmail}
+                          onChange={(e) => setGuestEmail(e.target.value)}
+                          size="small"
+                          required
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                    )}
 
-      {/* 递归渲染回复 */}
-      {comment.replies && comment.replies.length > 0 && (
-        <div>{comment.replies.map((reply) => renderComment(reply, true))}</div>
-      )}
-    </CommentItemWrapper>
-  );
+                    <Textarea
+                      placeholder={`回复 ${author}...`}
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      rows={3}
+                      size="small"
+                      fullWidth
+                    />
+                    <FormFooter>
+                      <FormInfo>{isLoggedIn ? 'Ctrl + Enter 快速发送' : '访客回复需要审核后才能显示'}</FormInfo>
+                      <ActionButtonContainer>
+                        <Button variant="ghost" size="small" onClick={() => setReplyingTo(null)}>
+                          取消
+                        </Button>
+                        <Button type="submit" size="small" disabled={!replyText.trim()} variant="primary">
+                          <FiSend size={14} />
+                          发送
+                        </Button>
+                      </ActionButtonContainer>
+                    </FormFooter>
+                  </CommentForm>
+                </ReplyFormContainer>
+              )}
+            </AnimatePresence>
+          </CommentContent>
+        </CommentItem>
+      </CommentItemWrapper>
+    );
+  };
 
   return (
     <CommentSectionContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
       <CommentHeader>
         <CommentTitle>
-          <FiMessageSquare size={20} />
-          评论
-          <CommentCount>{total} 条</CommentCount>
+          <FiMessageSquare size={18} />
+          评论 <CommentCount>{total} 条</CommentCount>
         </CommentTitle>
       </CommentHeader>
 
       {/* 评论表单 */}
-      {isLoggedIn ? (
-        <CommentForm onSubmit={handleSubmit}>
-          <Textarea
-            placeholder="写下你的评论..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            rows={4}
-            size="medium"
-            fullWidth
-          />
-          <FormFooter>
-            <FormInfo>支持 Markdown 语法</FormInfo>
-            <Button
-              type="submit"
-              disabled={!commentText.trim() || isSubmitting}
-              isLoading={isSubmitting}
-              variant="primary"
-            >
-              {isSubmitting ? '发送中...' : '发送评论'}
-            </Button>
-          </FormFooter>
-        </CommentForm>
-      ) : (
-        <CommentForm as="div" style={{ textAlign: 'center', padding: '2rem' }}>
-          <FormInfo style={{ fontSize: '0.95rem' }}>请先登录后发表评论</FormInfo>
-        </CommentForm>
-      )}
+      <CommentForm onSubmit={handleSubmit}>
+        {/* 访客信息输入（仅未登录时显示） */}
+        {!isLoggedIn && (
+          <div style={{ display: 'grid', gap: '0.75rem', gridTemplateColumns: '1fr 1fr', marginBottom: '0.75rem' }}>
+            <Input
+              placeholder="姓名 *"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+              size="small"
+              required
+              style={{ width: '100%' }}
+            />
+            <Input
+              type="email"
+              placeholder="邮箱 *"
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+              size="small"
+              required
+              style={{ width: '100%' }}
+            />
+            <Input
+              placeholder="网站（可选）"
+              value={guestWebsite}
+              onChange={(e) => setGuestWebsite(e.target.value)}
+              size="small"
+              style={{ gridColumn: '1 / -1', width: '100%' }}
+            />
+          </div>
+        )}
 
-      {/* 评论列表 */}
+        <Textarea
+          placeholder={isLoggedIn ? '写下你的评论...' : '写下你的评论...'}
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+          rows={3}
+          size="small"
+          fullWidth
+        />
+        <FormFooter>
+          <FormInfo>
+            {isLoggedIn ? '支持 Markdown 语法 · Ctrl + Enter 快速发送' : '访客评论需要审核后才能显示'}
+          </FormInfo>
+          <Button
+            type="submit"
+            size="small"
+            disabled={!commentText.trim() || isSubmitting}
+            isLoading={isSubmitting}
+            variant="primary"
+          >
+            {isSubmitting ? '发送中...' : '发送评论'}
+          </Button>
+        </FormFooter>
+      </CommentForm>
+
+      {/* 评论列表 - 扁平化显示 */}
       {loading ? (
         <LoadingSpinner>
-          <FiLoader size={24} />
+          <FiLoader size={20} />
         </LoadingSpinner>
-      ) : comments.length > 0 ? (
-        <CommentList>{comments.map((comment) => renderComment(comment))}</CommentList>
+      ) : flatComments.length > 0 ? (
+        <CommentList>{flatComments.map((comment) => renderComment(comment))}</CommentList>
       ) : (
         <EmptyState>
           <FiMessageSquare />

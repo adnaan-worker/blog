@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiMessageSquare,
   FiTrash2,
@@ -15,6 +14,9 @@ import {
   FiXCircle,
   FiCheck,
   FiX,
+  FiList,
+  FiGitBranch,
+  FiCornerDownRight,
 } from 'react-icons/fi';
 import { Button, Input, InfiniteScroll } from 'adnaan-ui';
 import { API } from '@/utils/api';
@@ -174,40 +176,50 @@ const CommentsList = styled.div`
   padding: 1rem;
 `;
 
-const CommentCard = styled(motion.div)`
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
+const CommentCard = styled.div<{ depth?: number }>`
+  position: relative;
+  padding: 0.5rem 0.75rem;
+  padding-left: ${(props) => (props.depth || 0) * 2 + 0.75}rem;
+  transition: background 0.15s ease;
+
+  /* 树形连接线 - 只在回复评论显示 */
+  ${(props) =>
+    props.depth && props.depth > 0
+      ? `
+    &::before {
+      content: '└─';
+      position: absolute;
+      left: ${(props.depth - 1) * 2 + 0.25}rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(var(--text-tertiary-rgb, 107, 114, 126), 0.35);
+      font-size: 0.75rem;
+      font-family: monospace;
+    }
+  `
+      : ''}
 
   &:hover {
-    border-color: var(--accent-color);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  &:last-child {
-    margin-bottom: 0;
+    background: rgba(var(--accent-rgb, 99, 102, 241), 0.04);
   }
 `;
 
 const CommentHeader = styled.div`
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
-  gap: 1rem;
+  margin-bottom: 0.375rem;
+  gap: 0.75rem;
 `;
 
-const PostInfo = styled.div`
+const PostInfo = styled.div<{ depth?: number }>`
   display: flex;
   align-items: center;
   gap: 0.5rem;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   flex: 1;
+  margin-bottom: ${(props) => (props.depth === 0 ? '0.375rem' : '0')};
 `;
 
 const PostLink = styled.a`
@@ -217,6 +229,7 @@ const PostLink = styled.a`
   align-items: center;
   gap: 0.25rem;
   cursor: pointer;
+  font-weight: 500;
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -230,9 +243,10 @@ const PostLink = styled.a`
 const CommentActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
 
   ${CommentCard}:hover & {
     opacity: 1;
@@ -243,11 +257,11 @@ const ActionButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
-  border-radius: 6px;
-  background: var(--bg-primary);
+  border-radius: 4px;
+  background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -260,33 +274,34 @@ const ActionButton = styled.button`
 
 const CommentContent = styled.div`
   color: var(--text-primary);
-  font-size: 0.9rem;
-  line-height: 1.6;
-  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
   word-break: break-word;
 `;
 
 const CommentMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
-  font-size: 0.8rem;
+  gap: 0.5rem;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
-  flex-wrap: wrap;
+  flex-shrink: 0;
+  white-space: nowrap;
 `;
 
 const MetaItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.25rem;
 `;
 
 const StatusBadge = styled.div<{ status?: string }>`
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 10px;
   font-size: 0.7rem;
   font-weight: 500;
   background: ${(props) => {
@@ -366,6 +381,7 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'approved' | 'pending' | 'spam' | ''>('');
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'flat' | 'tree'>('tree'); // 视图模式：扁平 or 树形
 
   // 加载更多数据
   const loadMoreComments = useCallback(async () => {
@@ -551,6 +567,97 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
     }
   };
 
+  // 递归渲染单个评论节点（树形视图组件）
+  const CommentTreeNode: React.FC<{ comment: Comment; depth: number; parentPath?: string }> = ({
+    comment,
+    depth,
+    parentPath = '',
+  }) => {
+    // 生成唯一的路径标识，避免 key 冲突
+    const nodePath = parentPath ? `${parentPath}-${comment.id}` : `${comment.id}`;
+
+    return (
+      <>
+        <CommentCard depth={depth}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {/* 左侧：文章链接（仅顶级）或评论内容 */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {depth === 0 ? (
+                <PostLink onClick={() => handleGoToPost(comment.postId)}>
+                  <FiMessageSquare size={13} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {comment.post?.title || `文章 #${comment.postId}`}
+                  </span>
+                  <FiExternalLink size={11} />
+                </PostLink>
+              ) : null}
+              <span style={{ color: 'var(--text-primary)', fontSize: '0.875rem' }}>{comment.content}</span>
+            </div>
+
+            {/* 中间：时间和状态 */}
+            <CommentMeta>
+              <MetaItem>
+                <FiClock size={11} />
+                {formatDate(comment.createTime || (comment as any).createdAt || '', 'MM-DD HH:mm')}
+              </MetaItem>
+              <StatusBadge status={comment.status}>
+                {getStatusIcon(comment.status)}
+                {getStatusText(comment.status)}
+              </StatusBadge>
+            </CommentMeta>
+
+            {/* 右侧：操作按钮 */}
+            <CommentActions>
+              {comment.status === 'pending' && (
+                <>
+                  <ActionButton
+                    onClick={() => handleApproveComment(comment)}
+                    style={{ color: 'var(--success-color)' }}
+                    title="审核通过"
+                  >
+                    <FiCheck size={13} />
+                  </ActionButton>
+                  <ActionButton
+                    onClick={() => handleRejectComment(comment)}
+                    style={{ color: 'var(--error-color)' }}
+                    title="审核驳回"
+                  >
+                    <FiX size={13} />
+                  </ActionButton>
+                </>
+              )}
+              <ActionButton onClick={() => handleDeleteComment(comment)} title="删除">
+                <FiTrash2 size={12} />
+              </ActionButton>
+            </CommentActions>
+          </div>
+        </CommentCard>
+
+        {/* 递归渲染子回复 - 使用路径作为 key 确保唯一性 */}
+        {comment.replies &&
+          comment.replies.length > 0 &&
+          comment.replies.map((reply) => (
+            <CommentTreeNode key={`${nodePath}-${reply.id}`} comment={reply} depth={depth + 1} parentPath={nodePath} />
+          ))}
+      </>
+    );
+  };
+
+  // 扁平化评论列表（扁平视图）
+  const flattenComments = (comments: Comment[]): Comment[] => {
+    const result: Comment[] = [];
+
+    const flatten = (comment: Comment) => {
+      result.push(comment);
+      if (comment.replies && comment.replies.length > 0) {
+        comment.replies.forEach(flatten);
+      }
+    };
+
+    comments.forEach(flatten);
+    return result;
+  };
+
   return (
     <Container className={className}>
       <Header>
@@ -593,49 +700,49 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
             <FiFilter size={14} />
             <span style={{ marginLeft: '0.25rem' }}>筛选</span>
           </FilterButton>
+          {isAdmin && (
+            <FilterButton
+              active={viewMode === 'tree'}
+              onClick={() => setViewMode(viewMode === 'tree' ? 'flat' : 'tree')}
+              title={viewMode === 'tree' ? '切换到扁平视图' : '切换到树形视图'}
+            >
+              {viewMode === 'tree' ? <FiGitBranch size={14} /> : <FiList size={14} />}
+            </FilterButton>
+          )}
           <Button variant="secondary" onClick={handleRefresh}>
             <FiRefreshCw size={14} />
           </Button>
         </HeaderRight>
       </Header>
 
-      <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <FilterBar>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>状态：</span>
-                <FilterTag active={selectedStatus === ''} onClick={() => setSelectedStatus('')}>
-                  全部
-                </FilterTag>
-                <FilterTag
-                  active={selectedStatus === 'approved'}
-                  onClick={() => setSelectedStatus(selectedStatus === 'approved' ? '' : 'approved')}
-                >
-                  已通过
-                </FilterTag>
-                <FilterTag
-                  active={selectedStatus === 'pending'}
-                  onClick={() => setSelectedStatus(selectedStatus === 'pending' ? '' : 'pending')}
-                >
-                  待审核
-                </FilterTag>
-                <FilterTag
-                  active={selectedStatus === 'spam'}
-                  onClick={() => setSelectedStatus(selectedStatus === 'spam' ? '' : 'spam')}
-                >
-                  已驳回
-                </FilterTag>
-              </div>
-            </FilterBar>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showFilters && (
+        <FilterBar>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>状态：</span>
+            <FilterTag active={selectedStatus === ''} onClick={() => setSelectedStatus('')}>
+              全部
+            </FilterTag>
+            <FilterTag
+              active={selectedStatus === 'approved'}
+              onClick={() => setSelectedStatus(selectedStatus === 'approved' ? '' : 'approved')}
+            >
+              已通过
+            </FilterTag>
+            <FilterTag
+              active={selectedStatus === 'pending'}
+              onClick={() => setSelectedStatus(selectedStatus === 'pending' ? '' : 'pending')}
+            >
+              待审核
+            </FilterTag>
+            <FilterTag
+              active={selectedStatus === 'spam'}
+              onClick={() => setSelectedStatus(selectedStatus === 'spam' ? '' : 'spam')}
+            >
+              已驳回
+            </FilterTag>
+          </div>
+        </FilterBar>
+      )}
 
       <Content>
         <InfiniteScroll
@@ -655,63 +762,66 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
           }
         >
           <CommentsList>
-            <AnimatePresence>
-              {comments.map((comment, index) => (
-                <CommentCard
-                  key={comment.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <CommentHeader>
-                    <PostInfo>
-                      <PostLink onClick={() => handleGoToPost(comment.postId)}>
-                        文章: {comment.post?.title || `#${comment.postId}`}
-                        <FiExternalLink size={14} />
-                      </PostLink>
-                      {comment.parentId && <span>• 回复 #{comment.parentId}</span>}
-                    </PostInfo>
-                    <CommentActions>
-                      {comment.status === 'pending' && (
-                        <>
-                          <ActionButton
-                            onClick={() => handleApproveComment(comment)}
-                            style={{ color: 'var(--success-color)' }}
-                            title="审核通过"
-                          >
-                            <FiCheck size={16} />
-                          </ActionButton>
-                          <ActionButton
-                            onClick={() => handleRejectComment(comment)}
-                            style={{ color: 'var(--error-color)' }}
-                            title="审核驳回"
-                          >
-                            <FiX size={16} />
-                          </ActionButton>
-                        </>
-                      )}
-                      <ActionButton onClick={() => handleDeleteComment(comment)} title="删除">
-                        <FiTrash2 size={14} />
-                      </ActionButton>
-                    </CommentActions>
-                  </CommentHeader>
+            {viewMode === 'tree'
+              ? // 树形视图
+                comments.map((comment) => (
+                  <CommentTreeNode key={`tree-${comment.id}`} comment={comment} depth={0} parentPath="" />
+                ))
+              : // 扁平视图
+                flattenComments(comments).map((comment) => (
+                  <CommentCard key={`flat-${comment.id}`} depth={0}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <PostLink onClick={() => handleGoToPost(comment.postId)}>
+                          <FiMessageSquare size={13} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {comment.post?.title || `文章 #${comment.postId}`}
+                          </span>
+                          <FiExternalLink size={11} />
+                          {comment.parentId && <span style={{ marginLeft: '0.5rem' }}>• 回复</span>}
+                        </PostLink>
+                        <span style={{ color: 'var(--text-primary)', fontSize: '0.875rem', marginLeft: '0.5rem' }}>
+                          {comment.content}
+                        </span>
+                      </div>
 
-                  <CommentContent>{comment.content}</CommentContent>
+                      <CommentMeta>
+                        <MetaItem>
+                          <FiClock size={11} />
+                          {formatDate(comment.createTime || (comment as any).createdAt || '', 'MM-DD HH:mm')}
+                        </MetaItem>
+                        <StatusBadge status={comment.status}>
+                          {getStatusIcon(comment.status)}
+                          {getStatusText(comment.status)}
+                        </StatusBadge>
+                      </CommentMeta>
 
-                  <CommentMeta>
-                    <MetaItem>
-                      <FiClock size={12} />
-                      {formatDate(comment.createTime || (comment as any).createdAt || '', 'YYYY-MM-DD HH:mm')}
-                    </MetaItem>
-                    <StatusBadge status={comment.status}>
-                      {getStatusIcon(comment.status)}
-                      {getStatusText(comment.status)}
-                    </StatusBadge>
-                  </CommentMeta>
-                </CommentCard>
-              ))}
-            </AnimatePresence>
+                      <CommentActions>
+                        {comment.status === 'pending' && (
+                          <>
+                            <ActionButton
+                              onClick={() => handleApproveComment(comment)}
+                              style={{ color: 'var(--success-color)' }}
+                              title="审核通过"
+                            >
+                              <FiCheck size={13} />
+                            </ActionButton>
+                            <ActionButton
+                              onClick={() => handleRejectComment(comment)}
+                              style={{ color: 'var(--error-color)' }}
+                              title="审核驳回"
+                            >
+                              <FiX size={13} />
+                            </ActionButton>
+                          </>
+                        )}
+                        <ActionButton onClick={() => handleDeleteComment(comment)} title="删除">
+                          <FiTrash2 size={12} />
+                        </ActionButton>
+                      </CommentActions>
+                    </div>
+                  </CommentCard>
+                ))}
           </CommentsList>
         </InfiniteScroll>
       </Content>

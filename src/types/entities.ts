@@ -215,12 +215,26 @@ export interface Comment {
   postId: string | number;
   parentId?: string | number;
   userId?: string | number;
-  author?: string | UserInfo;
+  author?: UserInfo; // 用户信息对象（包含username, avatar, role等）
+  post?: { id: string | number; title: string }; // 关联的文章信息
   status?: 'approved' | 'pending' | 'spam';
-  createTime?: string;
-  updateTime?: string;
-  replies?: Comment[];
-  [key: string]: any;
+  createdAt?: string; // 数据库时间戳
+  updatedAt?: string; // 数据库时间戳
+  createTime?: string; // 兼容旧字段
+  updateTime?: string; // 兼容旧字段
+  replies?: Comment[]; // 回复列表
+  // 访客评论字段
+  isGuest?: boolean;
+  guestName?: string;
+  guestEmail?: string;
+  guestWebsite?: string;
+  // 访客信息
+  ip?: string;
+  userAgent?: string;
+  location?: string;
+  browser?: string;
+  os?: string;
+  device?: 'Desktop' | 'Mobile' | 'Tablet';
 }
 
 export interface CommentParams extends PaginationParams {
@@ -232,6 +246,10 @@ export interface CreateCommentData {
   content: string;
   postId: string | number;
   parentId?: string | number;
+  // 访客评论字段（未登录时必填）
+  guestName?: string;
+  guestEmail?: string;
+  guestWebsite?: string;
 }
 
 /**
