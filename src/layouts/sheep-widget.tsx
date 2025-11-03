@@ -69,7 +69,7 @@ const SheepWidget = () => {
   const theme = useSelector((state: RootState) => state.theme.theme);
   const isDark = theme === 'dark';
 
-  // 使用公共 Hook
+  // 使用公共 Hook - 必须在条件返回之前调用
   const companion = useCompanionWidget({
     storageKey: 'cloud_sheep_position',
     width: SHEEP_WIDTH,
@@ -82,17 +82,11 @@ const SheepWidget = () => {
     blinkInterval: 3000,
   });
 
-  // 只在白天显示
-  if (isDark) return null;
-
-  // 处理鼠标按下
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    companion.handlePullStart(e.clientX, e.clientY);
-  };
-
-  // 触摸事件处理
+  // 触摸事件处理 - 必须在条件返回之前调用
   useEffect(() => {
+    // 只在白天模式时设置事件监听器
+    if (isDark) return;
+
     const element = companion.widgetRef.current;
     if (!element) return;
 
@@ -107,7 +101,16 @@ const SheepWidget = () => {
     return () => {
       element.removeEventListener('touchstart', handleTouchStart);
     };
-  }, [companion.isFlying, companion.handlePullStart]);
+  }, [isDark, companion.isFlying, companion.handlePullStart]);
+
+  // 只在白天显示 - 在所有 Hook 调用之后才返回
+  if (isDark) return null;
+
+  // 处理鼠标按下
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    companion.handlePullStart(e.clientX, e.clientY);
+  };
 
   return (
     <>
