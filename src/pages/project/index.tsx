@@ -8,7 +8,7 @@ import type { Project } from '@/types';
 import { formatDate } from '@/utils';
 import { Pagination } from 'adnaan-ui';
 import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
-import { ListPageHeader, type FilterGroup, type FilterValues } from '@/components/common';
+import { ListPageHeader, type FilterGroup, type FilterValues, ProjectListSkeleton } from '@/components/common';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 
@@ -555,7 +555,9 @@ const Projects: React.FC = () => {
         />
 
         {/* 只有加载完成后才显示内容或空状态 */}
-        {projects.length > 0 ? (
+        {loading ? (
+          <ProjectListSkeleton count={4} />
+        ) : projects.length > 0 ? (
           <>
             <ProjectsList initial="hidden" animate="visible" variants={variants.stagger}>
               {projects.map((project, index) => (
@@ -578,13 +580,11 @@ const Projects: React.FC = () => {
             )}
           </>
         ) : (
-          !loading && (
-            <EmptyState variants={variants.fadeIn} initial="hidden" animate="visible">
-              <FiGithub />
-              <h3>暂无项目</h3>
-              <p>还没有发布任何项目</p>
-            </EmptyState>
-          )
+          <EmptyState variants={variants.fadeIn} initial="hidden" animate="visible">
+            <FiGithub />
+            <h3>暂无项目</h3>
+            <p>还没有发布任何项目</p>
+          </EmptyState>
         )}
       </PageContainer>
     </>

@@ -7,6 +7,7 @@ import type { Article } from '@/types';
 import ImageError from '@/assets/images/image-error.png';
 import { formatDate } from '@/utils';
 import { useAnimationEngine } from '@/utils/ui/animation';
+import { ArticleListSkeleton } from '@/components/common';
 
 export const fadeInUpVariants = {};
 export const staggerContainerVariants = {};
@@ -336,9 +337,9 @@ interface ArticleListProps {
 const ArticleList: React.FC<ArticleListProps> = ({ articles, viewMode = 'timeline', loading = false }) => {
   const { variants, springPresets } = useAnimationEngine();
 
-  // 加载中不显示空状态
+  // 加载中显示骨架屏
   if (loading) {
-    return null;
+    return <ArticleListSkeleton count={5} showImage={true} />;
   }
 
   // 数据加载完成后才判断是否为空

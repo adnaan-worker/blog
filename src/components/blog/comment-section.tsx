@@ -12,12 +12,13 @@ import {
   FiGithub,
   FiMail,
 } from 'react-icons/fi';
-import { Button, Input, Textarea } from 'adnaan-ui';
+import { Button, Input, Textarea, InfiniteScroll } from 'adnaan-ui';
 import { API } from '@/utils/api';
 import type { Comment as CommentType } from '@/types';
 import { storage } from '@/utils';
 import { formatDate, getTimeAgo } from '@/utils';
 import { useAnimationEngine } from '@/utils/ui/animation';
+import { CommentSkeleton } from '@/components/common';
 
 // 评论区容器
 const CommentSectionContainer = styled(motion.div)`
@@ -376,6 +377,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const [comments, setComments] = useState<CommentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
@@ -393,20 +397,44 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   // 扁平化的评论列表
   const flatComments = useMemo(() => flattenComments(comments), [comments]);
 
-  // 获取评论列表
+  // 获取评论列表（初始加载）
   const fetchComments = async () => {
     try {
       setLoading(true);
-      const response = await API.comment.getCommentsByPost(postId, { page: 1, limit: 50 });
+      const response = await API.comment.getCommentsByPost(postId, { page: 1, limit: 20 });
       if (response.code === 200 && response.data) {
         setComments(response.data || []);
         setTotal(response.meta?.pagination?.total ?? 0);
+        setHasMore((response.data || []).length < (response.meta?.pagination?.total ?? 0));
+        setPage(1);
       }
     } catch (error) {
       console.error('获取评论失败:', error);
       adnaan?.toast?.error('获取评论失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 加载更多评论
+  const loadMoreComments = async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    try {
+      setIsLoadingMore(true);
+      const nextPage = page + 1;
+      const response = await API.comment.getCommentsByPost(postId, { page: nextPage, limit: 20 });
+
+      if (response.code === 200 && response.data) {
+        const newComments = response.data || [];
+        setComments((prev) => [...prev, ...newComments]);
+        setPage(nextPage);
+        setHasMore(comments.length + newComments.length < (response.meta?.pagination?.total ?? 0));
+      }
+    } catch (error) {
+      console.error('加载更多评论失败:', error);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -769,13 +797,16 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
         </FormFooter>
       </CommentForm>
 
-      {/* 评论列表 - 扁平化显示 */}
+      {/* 评论列表 - 扁平化显示 + 无限滚动 */}
       {loading ? (
-        <LoadingSpinner>
-          <FiLoader size={20} />
-        </LoadingSpinner>
+        <CommentSkeleton count={3} />
       ) : flatComments.length > 0 ? (
-        <CommentList>{flatComments.map((comment) => renderComment(comment))}</CommentList>
+        <>
+          <CommentList>{flatComments.map((comment) => renderComment(comment))}</CommentList>
+          <InfiniteScroll hasMore={hasMore} loading={isLoadingMore} onLoadMore={loadMoreComments} threshold={200}>
+            {isLoadingMore && <CommentSkeleton count={2} />}
+          </InfiniteScroll>
+        </>
       ) : (
         <EmptyState>
           <FiMessageSquare />

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import YearTimeline from './year-virtual-timeline';
 import type { TimelineItem } from '@/utils/helpers/timeline';
+import { TimelineSkeleton } from '@/components/common';
 
 // 年份数据结构
 interface YearData {
@@ -112,11 +113,11 @@ function MultiYearTimeline<T extends TimelineItem>({
     const loadInitialYears = async () => {
       const yearsToLoad = years.slice(0, initialYearsToLoad);
       const promises = yearsToLoad.map(async (yearData) => {
-        const { items } = await onLoadYearItems(yearData.year, 1);
+        const { items, total } = await onLoadYearItems(yearData.year, 1);
         return {
           year: yearData.year,
           items,
-          totalCount: yearData.count, // 使用年份接口返回的count
+          totalCount: total,
           loaded: true,
         };
       });
@@ -138,11 +139,11 @@ function MultiYearTimeline<T extends TimelineItem>({
       if (nextYears.length === 0) return;
 
       const promises = nextYears.map(async (yearData) => {
-        const { items } = await onLoadYearItems(yearData.year, 1);
+        const { items, total } = await onLoadYearItems(yearData.year, 1);
         return {
           year: yearData.year,
           items,
-          totalCount: yearData.count, // 使用年份接口返回的count
+          totalCount: total, // 使用实际筛选后的total，而不是yearData.count
           loaded: true,
         };
       });
@@ -192,7 +193,9 @@ function MultiYearTimeline<T extends TimelineItem>({
 
   // 条件渲染必须在所有 hooks 之后
   if (loading && loadedYears.length === 0) {
-    return null;
+    // 根据 maxHeight 判断是文章列表还是手记列表
+    const isNoteStyle = Boolean(maxHeight && maxHeight < 400);
+    return <TimelineSkeleton yearCount={4} itemsPerYear={5} noteStyle={isNoteStyle} />;
   }
 
   if (years.length === 0 && emptyState) {

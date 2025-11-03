@@ -202,7 +202,7 @@ const BlogPage: React.FC = () => {
   useEffect(() => {
     if (Object.keys(cleanedFilters).length > 0) {
       setIsLoading(true);
-      // 重新加载年份列表（带筛选条件）
+      // 重新加载年份列表
       API.article.getYears().then((res) => {
         const yearList = res.data || [];
         setYears(yearList);

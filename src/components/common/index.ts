@@ -1,7 +1,7 @@
 export { WaveText } from './wave-text';
 
-// 智能骨架屏（推荐使用）
-export { AutoSkeleton } from './auto-skeleton';
+// 骨架屏组件
+export * from './skeleton';
 
 // SEO组件
 export { SEO } from './seo';
