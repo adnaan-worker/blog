@@ -17,6 +17,7 @@ export const staggerContainerVariants = {};
 const TimelineContainer = styled(motion.div)`
   position: relative;
   padding-left: 1.5rem;
+  margin-left: 0.5rem; /* 给左侧圆点留出空间，防止被截断 */
 
   &::before {
     content: '';

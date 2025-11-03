@@ -44,6 +44,7 @@ const Column = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  min-width: 0; /* 防止内容超出容器 */
 `;
 
 const LoadMoreYearsButton = styled.button`

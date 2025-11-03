@@ -18,6 +18,7 @@ interface YearTimelineProps<T extends TimelineItem> {
 // 样式组件
 const YearContainer = styled(motion.div)`
   margin-bottom: 2rem;
+  margin-left: 0.5rem; /* 给左侧圆点留出空间，防止被截断 */
   background: var(--bg-primary);
 `;
 
@@ -28,6 +29,7 @@ const YearHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-left: 0.5rem;
 
   h3 {
     color: var(--text-primary);
@@ -60,8 +62,8 @@ const YearHeader = styled.div`
 const ScrollableContent = styled.div<{ maxHeight?: number }>`
   max-height: ${(props) => props.maxHeight || 600}px;
   overflow-y: auto;
-  overflow-x: visible;
-  padding-right: 0.5rem;
+  overflow-x: hidden;
+  padding: 0 0.5rem;
 
   /* 自定义滚动条 */
   &::-webkit-scrollbar {
@@ -79,6 +81,10 @@ const ScrollableContent = styled.div<{ maxHeight?: number }>`
 
   &::-webkit-scrollbar-thumb:hover {
     background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
+  }
+
+  @media (max-width: 768px) {
+    padding-right: 0.25rem;
   }
 `;
 
@@ -106,7 +112,7 @@ const TimelineItemWrapper = styled(motion.div)`
   &::before {
     content: '';
     position: absolute;
-    left: -2.4rem;
+    left: -2.25rem;
     top: 0.3rem;
     width: 10px;
     height: 10px;
