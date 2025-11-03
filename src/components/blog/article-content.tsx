@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, memo, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiCalendar, FiClock, FiTag, FiUser } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiTag, FiUser, FiEye } from 'react-icons/fi';
 import { RiRobot2Line } from 'react-icons/ri';
-import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
+import LazyRichTextRenderer from '@/components/rich-text/lazy-rich-text-renderer';
 import RichTextContent from '@/components/rich-text/rich-text-content';
 import ImagePreview from '@/components/blog/image-preview';
 import type { Article } from '@/types';
 import { useAnimationEngine } from '@/utils/ui/animation';
+import { getTimeAgo, formatDate as formatDateUtil } from '@/utils';
+import { RichTextParser } from '@/utils/editor/parser';
 
 // 文章详情页容器
 const ArticleDetailContainer = styled(motion.div)`
@@ -282,23 +284,29 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
     return new Date(dateStr).toISOString().split('T')[0];
   };
 
-  const readTime = Math.ceil((article.content?.length || 0) / 200);
+  // 使用 useMemo 缓存阅读时间计算，避免频繁调用 extractText 导致图片重复加载
+  const readTime = useMemo(() => RichTextParser.calculateReadingTime(article.content || ''), [article.content]);
 
   return (
     <ArticleDetailContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
       <ArticleDetailHeader>
         <ArticleDetailTitle>{article.title}</ArticleDetailTitle>
         <ArticleDetailMeta>
-          <span>
+          <span title="作者">
             <FiUser size={16} /> {authorName}
           </span>
-          <span>
+          <span title="发布时间">
             <FiCalendar size={16} /> {formatDate(article.publishedAt || article.createdAt)}
           </span>
-          <span>
-            <FiClock size={16} /> {readTime} 分钟阅读
+          {article.lastReadAt && (
+            <span title={`上次阅读：${formatDateUtil(article.lastReadAt, 'YYYY-MM-DD HH:mm:ss')}`}>
+              <FiEye size={16} /> {getTimeAgo(article.lastReadAt)}阅读
+            </span>
+          )}
+          <span title="预计阅读时长">
+            <FiClock size={16} /> 约 {readTime} 分钟
           </span>
-          <span>
+          <span title="分类">
             <FiTag size={16} /> {article.category?.name || '未分类'}
           </span>
         </ArticleDetailMeta>
@@ -326,14 +334,15 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
         </ArticleCover>
       )}
 
-      {/* 使用RichTextRenderer处理所有内容 */}
+      {/* 使用LazyRichTextRenderer处理长文章，优化性能 */}
       <ArticleContentWrapper ref={contentRef} className="rich-text-content">
-        <RichTextRenderer
+        <LazyRichTextRenderer
           content={article.content || ''}
           mode="article"
           enableCodeHighlight={true}
           enableImagePreview={true}
           enableTableOfContents={false}
+          chunkSize={10000}
         />
       </ArticleContentWrapper>
 

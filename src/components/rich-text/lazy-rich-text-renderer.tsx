@@ -1,0 +1,260 @@
+import React, { useMemo, useState, useEffect, useRef, memo } from 'react';
+import styled from '@emotion/styled';
+import RichTextRenderer from './rich-text-renderer';
+
+/**
+ * 懒加载富文本渲染器
+ * 用于优化长文章的渲染性能
+ *
+ * 优化策略：
+ * 1. 分块渲染：避免一次性渲染大量内容
+ * 2. 智能滚动恢复：刷新时自动加载足够的内容
+ * 3. 内存优化：及时清理事件监听和定时器
+ * 4. 防闭包陷阱：使用 ref 追踪最新状态
+ * 5. 独立块渲染：每个块独立渲染，避免图片重复加载
+ */
+
+interface LazyRichTextRendererProps {
+  content: string;
+  mode?: 'article' | 'note' | 'comment';
+  enableCodeHighlight?: boolean; // 是否启用代码高亮
+  enableImagePreview?: boolean; // 是否启用图片预览
+  enableTableOfContents?: boolean; // 是否启用目录
+  className?: string;
+  chunkSize?: number; // 每块内容的最大字符数
+}
+
+// 单个内容块渲染器 - 使用 memo 优化
+const ChunkRenderer = memo<{
+  content: string;
+  mode: 'article' | 'note' | 'comment';
+  enableCodeHighlight: boolean;
+  enableImagePreview: boolean;
+  className?: string;
+}>(({ content, mode, enableCodeHighlight, enableImagePreview, className }) => {
+  return (
+    <RichTextRenderer
+      content={content}
+      mode={mode}
+      enableCodeHighlight={enableCodeHighlight}
+      enableImagePreview={enableImagePreview}
+      enableTableOfContents={false}
+      className={className}
+    />
+  );
+});
+
+ChunkRenderer.displayName = 'ChunkRenderer';
+
+// 加载提示容器
+const LoadingContainer = styled.div`
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+`;
+
+// 加载提示卡片
+const LoadingCard = styled.div`
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--bg-tertiary);
+  }
+`;
+
+// 容器 - 确保全宽布局
+const Container = styled.div`
+  width: 100%;
+`;
+
+// 获取当前页面的滚动位置缓存 key
+const getScrollKey = () => `scroll-${window.location.pathname}`;
+
+const LazyRichTextRenderer: React.FC<LazyRichTextRendererProps> = ({
+  content,
+  mode = 'article',
+  enableCodeHighlight = true,
+  enableImagePreview = true,
+  enableTableOfContents = false,
+  className,
+  chunkSize = 5000,
+}) => {
+  // 根据保存的滚动位置智能决定初始块数
+  const initialChunks = useMemo(() => {
+    const savedPos = sessionStorage.getItem(getScrollKey());
+    const scrollY = savedPos ? parseFloat(savedPos) : 0;
+    return scrollY > 1000 ? 3 : 1;
+  }, []);
+
+  const [renderedChunks, setRenderedChunks] = useState(initialChunks);
+  const isRenderingRef = useRef(false);
+  const timerIdRef = useRef<number>(0);
+  const renderedChunksRef = useRef(initialChunks);
+
+  // 智能分块：保持 HTML 结构完整性
+  const chunks = useMemo(() => {
+    if (!content || content.length <= chunkSize) {
+      return [content];
+    }
+
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(content, 'text/html');
+      const elements = Array.from(doc.body.childNodes);
+      const result: string[] = [];
+      let currentChunk = '';
+
+      for (const element of elements) {
+        const html = element instanceof Element ? element.outerHTML : element.textContent || '';
+
+        // 超过限制且当前块不为空时，开始新块
+        if (currentChunk.length > 0 && currentChunk.length + html.length > chunkSize) {
+          result.push(currentChunk);
+          currentChunk = html;
+        } else {
+          currentChunk += html;
+        }
+      }
+
+      if (currentChunk) result.push(currentChunk);
+      return result.length > 0 ? result : [content];
+    } catch (error) {
+      console.warn('内容分块失败，使用原始内容:', error);
+      return [content];
+    }
+  }, [content, chunkSize]);
+
+  // 保存滚动位置（防抖优化）
+  useEffect(() => {
+    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+    const scrollKey = getScrollKey();
+
+    const saveScrollPosition = () => {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        sessionStorage.setItem(scrollKey, String(window.scrollY));
+      }, 300);
+    };
+
+    const handleUnload = () => {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      sessionStorage.setItem(scrollKey, String(window.scrollY));
+    };
+
+    window.addEventListener('scroll', saveScrollPosition, { passive: true });
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      if (scrollTimer) clearTimeout(scrollTimer);
+      window.removeEventListener('scroll', saveScrollPosition);
+      window.removeEventListener('beforeunload', handleUnload);
+    };
+  }, []);
+
+  // 智能滚动恢复：确保有足够内容支持滚动位置
+  useEffect(() => {
+    const savedPos = sessionStorage.getItem(getScrollKey());
+    if (!savedPos || parseFloat(savedPos) <= 1000) return;
+
+    const timer = setTimeout(() => {
+      const { scrollHeight } = document.documentElement;
+      const targetPos = parseFloat(savedPos);
+
+      if (scrollHeight < targetPos + 1000 && renderedChunksRef.current < chunks.length) {
+        setRenderedChunks((prev) => Math.min(prev + 2, chunks.length));
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [chunks.length]);
+
+  // 同步 state 到 ref，避免闭包陷阱
+  useEffect(() => {
+    renderedChunksRef.current = renderedChunks;
+  }, [renderedChunks]);
+
+  // 懒加载：监听滚动，按需加载更多内容
+  useEffect(() => {
+    // 初始化时重置渲染标志
+    isRenderingRef.current = false;
+    timerIdRef.current = 0;
+
+    const loadNextChunk = () => {
+      const currentRendered = renderedChunksRef.current;
+      const totalChunks = chunks.length;
+
+      // 已全部加载或正在渲染中，跳过
+      if (isRenderingRef.current || currentRendered >= totalChunks) {
+        return;
+      }
+
+      const { scrollTop, clientHeight, scrollHeight } = document.documentElement;
+      const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
+
+      // 距离底部 2 屏时触发加载
+      if (distanceToBottom < clientHeight * 2) {
+        isRenderingRef.current = true;
+
+        const renderNext = () => {
+          setRenderedChunks((prev) => Math.min(prev + 1, chunks.length));
+          isRenderingRef.current = false;
+          timerIdRef.current = 0;
+        };
+
+        // 使用 setTimeout 延迟渲染，避免阻塞主线程
+        timerIdRef.current = setTimeout(renderNext, 50) as unknown as number;
+      }
+    };
+
+    window.addEventListener('scroll', loadNextChunk, { passive: true });
+    loadNextChunk(); // 初始检查
+
+    return () => {
+      window.removeEventListener('scroll', loadNextChunk);
+
+      // 清理未完成的异步任务
+      if (timerIdRef.current) {
+        clearTimeout(timerIdRef.current);
+        timerIdRef.current = 0;
+      }
+
+      // 重置渲染标志
+      isRenderingRef.current = false;
+    };
+  }, [chunks.length]);
+
+  // 是否还有更多内容
+  const hasMore = renderedChunks < chunks.length;
+
+  return (
+    <Container>
+      {/* 分块独立渲染，避免重复渲染已加载的内容 */}
+      {chunks.slice(0, renderedChunks).map((chunk, index) => (
+        <ChunkRenderer
+          key={index}
+          content={chunk}
+          mode={mode}
+          enableCodeHighlight={enableCodeHighlight}
+          enableImagePreview={enableImagePreview}
+          className={className}
+        />
+      ))}
+
+      {hasMore && (
+        <LoadingContainer>
+          <LoadingCard>
+            正在加载更多内容... ({renderedChunks}/{chunks.length})
+          </LoadingCard>
+        </LoadingContainer>
+      )}
+    </Container>
+  );
+};
+
+export default LazyRichTextRenderer;

@@ -254,7 +254,7 @@ export const TimelineArticleComponent: React.FC<{ article: Article }> = ({ artic
         <ArticleExcerpt>{article.summary || article.content?.substring(0, 150) + '...' || ''}</ArticleExcerpt>
         <ArticleFooter>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {article.tags?.slice(0, 2).map((tag) => (
+            {article.tags?.slice(0, 2).map((tag: any) => (
               <ArticleTag key={tag.id}>{tag.name}</ArticleTag>
             ))}
           </div>
@@ -302,9 +302,21 @@ export const BlogCardComponent: React.FC<{ article: Article }> = ({ article }) =
             <FiTag size={14} /> {article.category?.name || '未分类'}
           </span>
         </ArticleMeta>
-        <ArticleExcerpt>{article.summary || article.content?.substring(0, 150) + '...' || ''}</ArticleExcerpt>
+        <ArticleExcerpt>
+          {article.summary
+            ? article.summary
+            : article.content
+              ? article.content.substring(0, 150) + (article.content.length > 150 ? '...' : '')
+              : ''}
+        </ArticleExcerpt>
         <ArticleFooter>
-          <ArticleTag>{article.tags?.[0]?.name || article.category?.name || '未分类'}</ArticleTag>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {article.tags && article.tags.length > 0 ? (
+              article.tags.slice(0, 2).map((tag: any) => <ArticleTag key={tag.id}>{tag.name}</ArticleTag>)
+            ) : (
+              <ArticleTag>{article.category?.name || '未分类'}</ArticleTag>
+            )}
+          </div>
           <ReadMoreButton to={`/blog/${article.id}`}>
             阅读更多 <FiArrowRight size={14} />
           </ReadMoreButton>

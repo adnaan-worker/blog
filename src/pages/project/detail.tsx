@@ -23,7 +23,7 @@ import {
 import { API } from '@/utils/api';
 import type { Project } from '@/types';
 import { formatDate } from '@/utils';
-import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
+import LazyRichTextRenderer from '@/components/rich-text/lazy-rich-text-renderer';
 import { RichTextContent } from '@/components/rich-text/rich-text-content';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/blog/detail-page-layout';
 import DetailNoiseBackground from '@/components/blog/detail-noise-background';
@@ -796,7 +796,7 @@ const ProjectDetail: React.FC = () => {
                     {/* 项目内容 */}
                     {project.content ? (
                       <RichTextContent className="rich-text-content">
-                        <RichTextRenderer content={project.content} mode="article" />
+                        <LazyRichTextRenderer content={project.content} mode="article" chunkSize={1000} />
                       </RichTextContent>
                     ) : (
                       <RichTextContent className="rich-text-content">

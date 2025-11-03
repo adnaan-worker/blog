@@ -166,6 +166,7 @@ export interface Article {
   createTime?: string;
   updateTime?: string;
   viewCount?: number;
+  lastReadAt?: string; // 最后阅读时间，用于显示"X分钟前阅读"
   [key: string]: any;
 }
 
@@ -268,6 +269,7 @@ export interface Note {
   viewCount?: number;
   likeCount?: number;
   isLiked?: boolean;
+  lastReadAt?: string; // 最后阅读时间，用于显示"X分钟前阅读"
   author?: {
     id: string | number;
     username: string;

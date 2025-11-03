@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiCalendar, FiTag, FiMapPin, FiCloud, FiHeart, FiEdit3, FiClock } from 'react-icons/fi';
+import { FiArrowLeft, FiCalendar, FiTag, FiMapPin, FiCloud, FiHeart, FiEdit3, FiClock, FiEye } from 'react-icons/fi';
 import styled from '@emotion/styled';
 import { API } from '@/utils/api';
 import type { Note } from '@/types';
-import RichTextRenderer from '@/components/rich-text/rich-text-renderer';
+import LazyRichTextRenderer from '@/components/rich-text/lazy-rich-text-renderer';
 import RichTextContent from '@/components/rich-text/rich-text-content';
 import RichTextStats from '@/components/rich-text/rich-text-stats';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/blog/detail-page-layout';
 import DetailNoiseBackground from '@/components/blog/detail-noise-background';
 import { usePageInfo } from '@/hooks/usePageInfo';
+import { getTimeAgo } from '@/utils';
+import { RichTextParser } from '@/utils/editor/parser';
 import { SEO, AutoSkeleton } from '@/components/common';
 
 const PageContainer = styled(motion.div)`
@@ -609,26 +611,9 @@ const NoteDetail: React.FC = () => {
 
   useEffect(() => {
     loadNote();
-
-    // 立即滚动到顶部，这是页面切换的正常行为
-    window.scrollTo(0, 0);
-
-    // 延迟处理body样式，确保不与滚动锁定管理器冲突
-    const timer = setTimeout(() => {
-      // 确保 body 可以滚动，但不要覆盖滚动锁定管理器的状态
-      if (!document.body.style.position || document.body.style.position === 'static') {
-        document.body.style.overflow = '';
-      }
-    }, 50);
-
     return () => {
-      clearTimeout(timer);
       // 组件卸载时重置页面信息
       setPageInfo(null);
-      // 组件卸载时确保滚动状态正常
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🧹 手记详情页卸载，检查滚动状态');
-      }
     };
   }, [id, setPageInfo]);
 
@@ -679,12 +664,14 @@ const NoteDetail: React.FC = () => {
                     <NoteHeader>
                       <NoteTitle>{note.title}</NoteTitle>
                       <NoteMeta>
-                        <span>
-                          <FiCalendar size={15} /> {formatDateUtil(note.createdAt, 'YYYY-MM-DD')}
+                        <span title="创建时间">
+                          <FiCalendar size={15} /> {formatDateUtil(note.createdAt, 'YYYY-MM-DD HH:mm')}
                         </span>
-                        <span>
-                          <FiClock size={15} /> {formatTime(note.createdAt)}
-                        </span>
+                        {note.lastReadAt && (
+                          <span title={`上次阅读：${formatDateUtil(note.lastReadAt, 'YYYY-MM-DD HH:mm:ss')}`}>
+                            <FiEye size={15} /> {getTimeAgo(note.lastReadAt)}阅读
+                          </span>
+                        )}
                       </NoteMeta>
                     </NoteHeader>
 
@@ -696,12 +683,13 @@ const NoteDetail: React.FC = () => {
                     {/* 手记内容 */}
                     <NoteContentWrapper>
                       <RichTextContent className="rich-text-content">
-                        <RichTextRenderer
+                        <LazyRichTextRenderer
                           content={note.content}
                           mode="note"
                           enableCodeHighlight={true}
                           enableImagePreview={true}
                           enableTableOfContents={false}
+                          chunkSize={1000}
                         />
                       </RichTextContent>
                     </NoteContentWrapper>
@@ -711,16 +699,22 @@ const NoteDetail: React.FC = () => {
                       <RelatedNotes>
                         <RelatedTitle>相关手记</RelatedTitle>
                         <RelatedList>
-                          {note.relatedNotes.map((relatedNote) => (
-                            <RelatedCard key={relatedNote.id} to={`/notes/${relatedNote.id}`}>
-                              <h4>{relatedNote.title || '生活随记'}</h4>
-                              <p>{relatedNote.content.substring(0, 100)}...</p>
-                              <div className="date">
-                                <FiCalendar size={12} />
-                                {formatDateUtil(relatedNote.createdAt, 'YYYY-MM-DD')}
-                              </div>
-                            </RelatedCard>
-                          ))}
+                          {note.relatedNotes.map((relatedNote) => {
+                            // 提取纯文本，去除HTML标签
+                            const plainText = RichTextParser.extractText(relatedNote.content);
+                            const preview = plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+
+                            return (
+                              <RelatedCard key={relatedNote.id} to={`/notes/${relatedNote.id}`}>
+                                <h4>{relatedNote.title || '生活随记'}</h4>
+                                <p>{preview}</p>
+                                <div className="date">
+                                  <FiCalendar size={12} />
+                                  {formatDateUtil(relatedNote.createdAt, 'YYYY-MM-DD')}
+                                </div>
+                              </RelatedCard>
+                            );
+                          })}
                         </RelatedList>
                       </RelatedNotes>
                     )}
@@ -736,16 +730,9 @@ const NoteDetail: React.FC = () => {
                         <InfoItem>
                           <InfoLabel>
                             <FiCalendar size={13} />
-                            日期
+                            创建时间
                           </InfoLabel>
-                          <InfoValue>{formatDateUtil(note.createdAt, 'YYYY-MM-DD')}</InfoValue>
-                        </InfoItem>
-                        <InfoItem>
-                          <InfoLabel>
-                            <FiClock size={13} />
-                            时间
-                          </InfoLabel>
-                          <InfoValue>{formatTime(note.createdAt)}</InfoValue>
+                          <InfoValue>{formatDateUtil(note.createdAt, 'YYYY-MM-DD HH:mm')}</InfoValue>
                         </InfoItem>
                         {note.mood && (
                           <InfoItem>
@@ -776,13 +763,15 @@ const NoteDetail: React.FC = () => {
                             <InfoValue>{note.location}</InfoValue>
                           </InfoItem>
                         )}
-                        {note.readingTime && (
+                        {note.lastReadAt && (
                           <InfoItem>
                             <InfoLabel>
-                              <FiEdit3 size={13} />
-                              阅读
+                              <FiEye size={13} />
+                              最后阅读
                             </InfoLabel>
-                            <InfoValue>约 {note.readingTime} 分钟</InfoValue>
+                            <InfoValue title={formatDateUtil(note.lastReadAt, 'YYYY-MM-DD HH:mm:ss')}>
+                              {getTimeAgo(note.lastReadAt)}
+                            </InfoValue>
                           </InfoItem>
                         )}
                         {note.tags && note.tags.length > 0 && (

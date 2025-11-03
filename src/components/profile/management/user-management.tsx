@@ -284,12 +284,7 @@ const UserManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    const confirmed = await adnaan.modal.confirm({
-      title: '确认删除',
-      content: '确定要删除这个用户吗？此操作无法撤销。',
-      confirmText: '删除',
-      confirmVariant: 'danger',
-    });
+    const confirmed = await adnaan.confirm.delete('确定要删除这个用户吗？删除后将无法恢复。', '确认删除');
 
     if (confirmed) {
       try {
