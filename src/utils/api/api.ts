@@ -82,12 +82,13 @@ export const API = {
       }>(ip ? `/proxy/ip-location/${ip}` : '/proxy/ip-location'),
 
     /**
-     * 天气API代理
+     * 天气API代理（山河天气API）
      * @param city 城市名称
-     * @param format 返回类型 (json|xml)
-     * @returns Promise<ApiResponse<any>>
+     * @param format 返回类型 (json|text)
+     * @returns Promise<ApiResponse<{code: 1, text: "获取成功", data: {...}}>>
+     * @description 返回格式：{ code: 1表示成功, text: 状态文本, data: {city, current, living, ...} }
      */
-    getWeather: (city: string, format: 'json' | 'xml' = 'json') =>
+    getWeather: (city: string, format: 'json' | 'text' = 'json') =>
       http.get<any>(`/proxy/weather/${encodeURIComponent(city)}`, { format }),
 
     /**

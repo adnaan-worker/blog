@@ -21,18 +21,41 @@ export interface LocationInfo {
 
 export interface WeatherInfo {
   code: number;
+  text?: string; // 新接口返回的是 text 而不是 message
   data?: {
+    city?: string;
+    cityEnglish?: string;
+    temp?: string; // 最高温度
+    tempn?: string; // 最低温度
+    weather?: string; // 天气描述
+    wind?: string; // 风向（新接口中是 wind，不是 windDirection）
+    windSpeed?: string; // 风速
+    time?: string;
     current: {
-      temp: string; // 温度，如 "20°C"
-      weather: string; // 天气描述，如 "晴"
-      weatherEnglish: string; // 英文描述
-      humidity: string; // 湿度，如 "60%"
-      windSpeed: string; // 风速
-      windDirection: string; // 风向
+      city?: string;
+      cityEnglish?: string;
+      temp: string; // 当前温度，如 "15.2"
+      weather: string; // 天气描述，如 "多云"
+      weatherEnglish: string; // 英文描述，如 "Cloudy"
+      humidity: string; // 湿度，如 "100%"
+      wind?: string; // 风向
+      windSpeed: string; // 风速，如 "1级"
+      visibility?: string;
+      fahrenheit?: string;
+      air?: string;
+      air_pm25?: string;
+      date?: string;
+      time?: string;
+      image?: string;
     };
-    forecast?: any[]; // 预报数据
+    living?: Array<{
+      name: string;
+      index: string;
+      tips: string;
+    }>;
+    warning?: Record<string, any>;
   };
-  message?: string;
+  message?: string; // 保留向后兼容
 }
 
 // ==================== 缓存管理 ====================
@@ -189,6 +212,17 @@ export const getWeather = async (city: string, forceRefresh = false): Promise<We
     if (response.success && response.data) {
       const weather = response.data;
 
+      // 检查新接口返回的 code 是否为成功状态（code === 1 表示成功）
+      if (weather.code !== undefined && weather.code !== 1) {
+        console.warn(`⚠️ 天气API返回错误: ${weather.text || weather.message || '未知错误'}`);
+        // 返回错误格式的数据，但保持 WeatherInfo 类型
+        return {
+          code: weather.code || 0,
+          text: weather.text || weather.message || '获取天气失败',
+          message: weather.message || weather.text,
+        };
+      }
+
       // 存入缓存
       cache.set(cacheKey, weather, cache['TTL'].WEATHER);
 
@@ -196,10 +230,33 @@ export const getWeather = async (city: string, forceRefresh = false): Promise<We
       return weather;
     }
 
-    throw new Error('获取天气失败');
+    throw new Error('获取天气失败：响应数据为空');
   } catch (error) {
     console.error(`❌ 获取天气失败 (${city}):`, error);
-    throw error;
+
+    // 返回默认天气数据而不是抛出异常（与后端行为一致）
+    return {
+      code: 0,
+      text: '获取天气失败',
+      message: '获取天气失败',
+      data: {
+        city: city,
+        temp: '--',
+        tempn: '--',
+        weather: '未知',
+        wind: '--',
+        windSpeed: '--',
+        time: '',
+        current: {
+          temp: '--',
+          weather: '未知',
+          weatherEnglish: 'Unknown',
+          humidity: '--',
+          windSpeed: '--',
+          wind: '--',
+        },
+      },
+    };
   }
 };
 

@@ -8,6 +8,7 @@ import type { TimelineItem } from '@/components/blog/time-line-masonry';
 export const personalInfo = {
   name: 'adnaan',
   title: '全栈开发工程师',
+  avatar: 'https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100', // 头像路径
   slogan: '用代码书写诗意，以技术创造价值',
   github: 'https://github.com/adnaan-worker',
   email: 'adnaan@gmail.com',

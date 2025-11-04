@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiGithub, FiMail, FiLink } from 'react-icons/fi';
 import { SEO, WordCloud, type WordCloudItem } from '@/components/common';
-import { personalInfo, skillTags, experiences, projects, contactInfo } from '@/data/about-me.data';
+import { personalInfo, skillTags, experiences, contactInfo } from '@/data/about-me.data';
 import { SPRING_PRESETS, useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 import { formatDate } from '@/utils';
 
@@ -202,12 +202,47 @@ const ProfileCard = styled.div`
   border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
 `;
 
+// 头像和基本信息容器
+const ProfileHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+
+  @media (max-width: 768px) {
+    gap: 1rem;
+  }
+`;
+
+// 头像
+const Avatar = styled(motion.img)`
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(var(--accent-rgb), 0.2);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.15);
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 70px;
+    height: 70px;
+  }
+`;
+
+// 姓名和标题容器
+const ProfileNameTitleWrapper = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
 const ProfileName = styled.h1`
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 0.5rem 0;
   letter-spacing: -0.02em;
+  line-height: 1.2;
 
   @media (max-width: 768px) {
     font-size: 1.75rem;
@@ -218,7 +253,7 @@ const ProfileTitle = styled.div`
   font-size: 0.95rem;
   color: var(--accent-color);
   font-weight: 500;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 `;
 
 const ProfileSlogan = styled.div`
@@ -502,114 +537,10 @@ const Tag = styled.span`
   }
 `;
 
-// 项目列表
-const ProjectsList = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-bottom: 3rem;
-`;
-
-const ProjectItem = styled(motion.div)`
-  padding: 1.5rem 0 1.5rem 1.5rem;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
-  position: relative;
-  transition: all 0.3s ease;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 1.75rem;
-    width: 8px;
-    height: 8px;
-    background: var(--accent-color);
-    border-radius: 50%;
-    opacity: 0.6;
-    transition: all 0.3s ease;
-  }
-
-  &:hover {
-    padding-left: 2rem;
-    background: rgba(var(--accent-rgb, 81, 131, 245), 0.02);
-
-    &::before {
-      opacity: 1;
-      transform: scale(1.3);
-      box-shadow: 0 0 0 4px rgba(var(--accent-rgb, 81, 131, 245), 0.1);
-    }
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const ProjectHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.625rem;
-  flex-wrap: wrap;
-`;
-
-const ProjectTitle = styled.h3<{ $featured?: boolean }>`
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  flex: 1;
-
-  &::after {
-    content: ${(props) => (props.$featured ? '"⭐"' : '""')};
-    margin-left: 0.5rem;
-    font-size: 0.875rem;
-  }
-`;
-
-const ProjectLinks = styled.div`
-  display: flex;
-  gap: 0.75rem;
-`;
-
-const ProjectLink = styled.a`
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  border-bottom: 1px solid transparent;
-
-  svg {
-    font-size: 0.875rem;
-  }
-
-  &:hover {
-    color: var(--accent-color);
-    border-bottom-color: var(--accent-color);
-  }
-`;
-
-const ProjectDesc = styled.p`
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0 0 0.625rem 0;
-`;
-
-const ProjectTags = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-`;
-
 const AboutMe: React.FC = () => {
   const { variants } = useAnimationEngine();
 
   const timelineView = useSmartInView({ amount: 0.1 });
-  const projectsView = useSmartInView({ amount: 0.1 });
 
   // 转换技能数据为词云格式
   const skillWords: WordCloudItem[] = skillTags.map((skill) => ({
@@ -641,8 +572,20 @@ const AboutMe: React.FC = () => {
           <Sidebar initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={SPRING_PRESETS.gentle}>
             {/* 个人信息 */}
             <ProfileCard>
-              <ProfileName>{personalInfo.name}</ProfileName>
-              <ProfileTitle>{personalInfo.title}</ProfileTitle>
+              <ProfileHeader>
+                <Avatar
+                  src={personalInfo.avatar}
+                  alt={personalInfo.name}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1, ...SPRING_PRESETS.gentle }}
+                  whileHover={{ scale: 1.05 }}
+                />
+                <ProfileNameTitleWrapper>
+                  <ProfileName>{personalInfo.name}</ProfileName>
+                  <ProfileTitle>{personalInfo.title}</ProfileTitle>
+                </ProfileNameTitleWrapper>
+              </ProfileHeader>
               <ProfileSlogan>"{personalInfo.slogan}"</ProfileSlogan>
               <ProfileBio>{personalInfo.bio}</ProfileBio>
             </ProfileCard>
@@ -731,45 +674,6 @@ const AboutMe: React.FC = () => {
                 </TimelineItem>
               ))}
             </TimelineList>
-
-            {/* 项目作品 */}
-            <SectionTitle initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={SPRING_PRESETS.gentle}>
-              项目作品
-            </SectionTitle>
-            <ProjectsList
-              ref={projectsView.ref as React.RefObject<HTMLDivElement>}
-              initial="hidden"
-              animate={projectsView.isInView ? 'visible' : 'hidden'}
-              variants={variants.stagger}
-            >
-              {projects.map((project) => (
-                <ProjectItem key={project.id} variants={variants.listItem}>
-                  <ProjectHeader>
-                    <ProjectTitle $featured={project.featured}>{project.title}</ProjectTitle>
-                    <ProjectLinks>
-                      {project.link ? (
-                        <ProjectLink href={project.link} target="_blank" rel="noopener noreferrer">
-                          <FiLink />
-                          <span>访问</span>
-                        </ProjectLink>
-                      ) : null}
-                      {project.github ? (
-                        <ProjectLink href={project.github} target="_blank" rel="noopener noreferrer">
-                          <FiGithub />
-                          <span>源码</span>
-                        </ProjectLink>
-                      ) : null}
-                    </ProjectLinks>
-                  </ProjectHeader>
-                  <ProjectDesc>{project.description}</ProjectDesc>
-                  <ProjectTags>
-                    {project.tags.map((tag) => (
-                      <Tag key={tag}>{tag}</Tag>
-                    ))}
-                  </ProjectTags>
-                </ProjectItem>
-              ))}
-            </ProjectsList>
           </MainContent>
         </LayoutGrid>
       </PageContainer>
