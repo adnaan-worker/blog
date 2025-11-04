@@ -47,7 +47,7 @@ const NavButton = styled(Link)`
 
   &:hover {
     background: var(--accent-color-hover);
-    color: var(--accent-color);
+    color: var(--text-primary);
     transform: translateY(-2px);
   }
 

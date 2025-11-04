@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -385,10 +385,17 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
 
-  // 访客信息
+  // 主表单访客信息
   const [guestName, setGuestName] = useState<string>(() => storage.local.get<string>('guest_name') || '');
   const [guestEmail, setGuestEmail] = useState<string>(() => storage.local.get<string>('guest_email') || '');
   const [guestWebsite, setGuestWebsite] = useState<string>(() => storage.local.get<string>('guest_website') || '');
+
+  // 回复表单访客信息（独立状态，避免冲突）
+  const [replyGuestName, setReplyGuestName] = useState<string>(() => storage.local.get<string>('guest_name') || '');
+  const [replyGuestEmail, setReplyGuestEmail] = useState<string>(() => storage.local.get<string>('guest_email') || '');
+  const [replyGuestWebsite, setReplyGuestWebsite] = useState<string>(
+    () => storage.local.get<string>('guest_website') || '',
+  );
 
   const user = storage.local.get('user');
   const token = storage.local.get('token');
@@ -444,9 +451,34 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     }
   }, [postId]);
 
+  // 使用 ref 存储主表单的访客信息，避免在 useEffect 依赖中触发
+  const guestInfoRef = useRef({ guestName, guestEmail, guestWebsite });
+  useEffect(() => {
+    guestInfoRef.current = { guestName, guestEmail, guestWebsite };
+  }, [guestName, guestEmail, guestWebsite]);
+
+  // 当打开回复表单时，同步回复表单的访客信息（从主表单或本地存储）
+  // 只在 replyingTo 改变时同步，避免在输入时被重置
+  useEffect(() => {
+    if (replyingTo !== null) {
+      // 优先使用主表单的值，如果没有则使用本地存储
+      const { guestName: name, guestEmail: email, guestWebsite: website } = guestInfoRef.current;
+      const finalName = name || storage.local.get<string>('guest_name') || '';
+      const finalEmail = email || storage.local.get<string>('guest_email') || '';
+      const finalWebsite = website || storage.local.get<string>('guest_website') || '';
+      setReplyGuestName(finalName);
+      setReplyGuestEmail(finalEmail);
+      setReplyGuestWebsite(finalWebsite);
+    } else {
+      // 关闭回复表单时，清空回复表单的状态
+      setReplyText('');
+    }
+  }, [replyingTo]);
+
   // 提交评论
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // 阻止事件冒泡
     if (!commentText.trim()) return;
 
     // 访客评论验证
@@ -505,17 +537,17 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
     // 访客回复验证
     if (!isLoggedIn) {
-      if (!guestName.trim()) {
+      if (!replyGuestName.trim()) {
         adnaan?.toast?.error('请填写您的姓名');
         return;
       }
-      if (!guestEmail.trim()) {
+      if (!replyGuestEmail.trim()) {
         adnaan?.toast?.error('请填写您的邮箱');
         return;
       }
       // 简单的邮箱格式验证
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(guestEmail)) {
+      if (!emailRegex.test(replyGuestEmail)) {
         adnaan?.toast?.error('邮箱格式不正确');
         return;
       }
@@ -530,14 +562,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
       // 如果是访客，添加访客信息
       if (!isLoggedIn) {
-        replyData.guestName = guestName.trim();
-        replyData.guestEmail = guestEmail.trim();
-        replyData.guestWebsite = guestWebsite.trim() || undefined;
+        replyData.guestName = replyGuestName.trim();
+        replyData.guestEmail = replyGuestEmail.trim();
+        replyData.guestWebsite = replyGuestWebsite.trim() || undefined;
 
         // 保存访客信息到本地存储（下次使用）
-        storage.local.set('guest_name', guestName.trim());
-        storage.local.set('guest_email', guestEmail.trim());
-        storage.local.set('guest_website', guestWebsite.trim());
+        storage.local.set('guest_name', replyGuestName.trim());
+        storage.local.set('guest_email', replyGuestEmail.trim());
+        storage.local.set('guest_website', replyGuestWebsite.trim());
       }
 
       await API.comment.createComment(replyData);
@@ -669,8 +701,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
                   <CommentForm
                     onSubmit={(e) => {
                       e.preventDefault();
+                      e.stopPropagation(); // 阻止事件冒泡
                       handleReply(Number(comment.id));
                     }}
+                    onClick={(e) => e.stopPropagation()} // 阻止点击事件冒泡
                   >
                     {/* 访客信息输入（仅未登录时显示） */}
                     {!isLoggedIn && (
@@ -681,23 +715,32 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
                           gridTemplateColumns: '1fr 1fr',
                           marginBottom: '0.5rem',
                         }}
+                        onClick={(e) => e.stopPropagation()} // 阻止事件冒泡
                       >
                         <Input
                           placeholder="姓名 *"
-                          value={guestName}
-                          onChange={(e) => setGuestName(e.target.value)}
+                          value={replyGuestName}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setReplyGuestName(e.target.value);
+                          }}
                           size="small"
                           required
                           style={{ width: '100%' }}
+                          onClick={(e) => e.stopPropagation()} // 阻止事件冒泡
                         />
                         <Input
                           type="email"
                           placeholder="邮箱 *"
-                          value={guestEmail}
-                          onChange={(e) => setGuestEmail(e.target.value)}
+                          value={replyGuestEmail}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setReplyGuestEmail(e.target.value);
+                          }}
                           size="small"
                           required
                           style={{ width: '100%' }}
+                          onClick={(e) => e.stopPropagation()} // 阻止事件冒泡
                         />
                       </div>
                     )}
@@ -705,18 +748,37 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
                     <Textarea
                       placeholder={`回复 ${author}...`}
                       value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setReplyText(e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()} // 阻止事件冒泡
                       rows={3}
                       size="small"
                       fullWidth
                     />
-                    <FormFooter>
+                    <FormFooter onClick={(e) => e.stopPropagation()}>
                       <FormInfo>{isLoggedIn ? 'Ctrl + Enter 快速发送' : '访客回复需要审核后才能显示'}</FormInfo>
                       <ActionButtonContainer>
-                        <Button variant="ghost" size="small" onClick={() => setReplyingTo(null)}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="small"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setReplyingTo(null);
+                          }}
+                        >
                           取消
                         </Button>
-                        <Button type="submit" size="small" disabled={!replyText.trim()} variant="primary">
+                        <Button
+                          type="submit"
+                          size="small"
+                          disabled={!replyText.trim()}
+                          variant="primary"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <FiSend size={14} />
                           发送
                         </Button>
