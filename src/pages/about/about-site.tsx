@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { SEO, WordCloud, type WordCloudItem, RunningTimeCounter } from '@/components/common';
+import {
+  SEO,
+  WordCloud,
+  type WordCloudItem,
+  RunningTimeCounter,
+  ListPageHeader,
+  type FilterGroup,
+  type FilterValues,
+} from '@/components/common';
 import { siteMilestones, techStack, siteStats } from '@/data/about-site.data';
 import { SPRING_PRESETS, useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 import { formatDate } from '@/utils';
@@ -164,6 +172,20 @@ const PageContainer = styled.div`
   }
 `;
 
+// 页头容器 - 独立在最顶部
+const HeaderContainer = styled.div`
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 2rem 1rem 0;
+  position: relative;
+  z-index: 1;
+
+  @media (max-width: 768px) {
+    padding: 1rem 0.75rem 0;
+  }
+`;
+
 // 左右分栏布局
 const LayoutGrid = styled.div`
   display: grid;
@@ -192,28 +214,6 @@ const Sidebar = styled(motion.aside)`
   @media (max-width: 768px) {
     position: static;
   }
-`;
-
-// 侧边栏标题
-const SidebarTitle = styled.h1`
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
-
-  @media (max-width: 768px) {
-    font-size: 1.75rem;
-  }
-`;
-
-const SidebarDesc = styled.p`
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  line-height: 1.8;
-  margin-bottom: 2.5rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
 `;
 
 // 侧边栏分区
@@ -308,59 +308,6 @@ const StatLabel = styled.span`
 // 主内容区
 const MainContent = styled.main`
   min-width: 0;
-`;
-
-// 筛选器区域
-const FilterSection = styled.div`
-  margin-bottom: 2rem;
-`;
-
-const FilterTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: var(--text-primary);
-
-  @media (max-width: 768px) {
-    font-size: 1.125rem;
-  }
-`;
-
-const FilterBar = styled.div`
-  display: flex;
-  gap: 0.625rem;
-  flex-wrap: wrap;
-`;
-
-const FilterButton = styled.button<{ active: boolean }>`
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  border: 1px solid ${(props) => (props.active ? 'var(--accent-color)' : 'var(--border-color)')};
-  background: ${(props) => (props.active ? 'rgba(var(--accent-rgb), 0.1)' : 'transparent')};
-  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  font-size: 0.875rem;
-  font-weight: ${(props) => (props.active ? '600' : '400')};
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: var(--accent-color);
-    color: var(--accent-color);
-  }
-`;
-
-// 分区标题
-const SectionTitle = styled(motion.h2)`
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0 0 1.5rem;
-  color: var(--text-primary);
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
-
-  @media (max-width: 768px) {
-    font-size: 1.125rem;
-  }
 `;
 
 // 里程碑列表
@@ -495,12 +442,37 @@ const Tag = styled.span`
 
 const AboutSite: React.FC = () => {
   const { variants } = useAnimationEngine();
-  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [filterValues, setFilterValues] = useState<FilterValues>({ category: 'all' });
 
   const milestonesView = useSmartInView({ amount: 0.1 });
 
-  const filteredMilestones =
-    activeCategory === 'all' ? siteMilestones : siteMilestones.filter((m) => m.category === activeCategory);
+  // 筛选组配置
+  const filterGroups: FilterGroup[] = useMemo(
+    () => [
+      {
+        key: 'category',
+        label: '类别',
+        type: 'single',
+        options: [
+          { label: '全部', value: 'all' },
+          { label: '里程碑', value: 'milestone' },
+          { label: '新功能', value: 'feature' },
+          { label: '设计', value: 'design' },
+          { label: '技术', value: 'tech' },
+        ],
+      },
+    ],
+    [],
+  );
+
+  // 根据筛选值过滤里程碑
+  const filteredMilestones = useMemo(() => {
+    const category = filterValues.category as string;
+    if (!category || category === 'all') {
+      return siteMilestones;
+    }
+    return siteMilestones.filter((m) => m.category === category);
+  }, [filterValues]);
 
   // 技术栈权重映射
   const techWeights: Record<string, number> = {
@@ -543,13 +515,23 @@ const AboutSite: React.FC = () => {
         </PageHeadGradient>
       </motion.div>
 
+      {/* 页头 - 独立在最顶部 */}
+      <HeaderContainer>
+        <ListPageHeader
+          title="光阴"
+          subtitle="代码如诗，架构如画，在时间的河流里留下每一次迭代的痕迹，那些调试的夜、重构的风，终会让系统落进理想的经纬"
+          count={filteredMilestones.length}
+          countUnit="个里程碑"
+          filterGroups={filterGroups}
+          filterValues={filterValues}
+          onFilterChange={setFilterValues}
+        />
+      </HeaderContainer>
+
       <PageContainer>
         <LayoutGrid>
           {/* 左侧边栏 - 技术栈 */}
           <Sidebar initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={SPRING_PRESETS.gentle}>
-            <SidebarTitle>关于此站点</SidebarTitle>
-            <SidebarDesc>一个充满诗意与技术美学的现代化博客系统</SidebarDesc>
-
             {/* 统计数据 */}
             <SidebarSection>
               <SidebarSectionTitle>站点统计</SidebarSectionTitle>
@@ -595,38 +577,9 @@ const AboutSite: React.FC = () => {
             </SidebarSection>
           </Sidebar>
 
-          {/* 右侧主内容 - 筛选和历程 */}
+          {/* 右侧主内容 - 发展历程 */}
           <MainContent>
-            {/* 筛选器 */}
-            <FilterSection>
-              <FilterTitle>筛选类别</FilterTitle>
-              <FilterBar>
-                <FilterButton active={activeCategory === 'all'} onClick={() => setActiveCategory('all')}>
-                  全部
-                </FilterButton>
-                <FilterButton active={activeCategory === 'milestone'} onClick={() => setActiveCategory('milestone')}>
-                  里程碑
-                </FilterButton>
-                <FilterButton active={activeCategory === 'feature'} onClick={() => setActiveCategory('feature')}>
-                  新功能
-                </FilterButton>
-                <FilterButton active={activeCategory === 'design'} onClick={() => setActiveCategory('design')}>
-                  设计
-                </FilterButton>
-                <FilterButton active={activeCategory === 'tech'} onClick={() => setActiveCategory('tech')}>
-                  技术
-                </FilterButton>
-              </FilterBar>
-            </FilterSection>
-
             {/* 发展历程 */}
-            <SectionTitle
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1, ...SPRING_PRESETS.gentle }}
-            >
-              发展历程
-            </SectionTitle>
             <MilestonesList
               ref={milestonesView.ref as React.RefObject<HTMLDivElement>}
               initial="hidden"

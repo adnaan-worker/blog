@@ -4,7 +4,19 @@
  */
 
 import React from 'react';
-import { FiHome, FiBookOpen, FiCode, FiInfo, FiMail, FiLogIn, FiUserPlus, FiUser, FiEdit } from 'react-icons/fi';
+import {
+  FiHome,
+  FiBookOpen,
+  FiCode,
+  FiInfo,
+  FiMail,
+  FiLogIn,
+  FiUserPlus,
+  FiUser,
+  FiEdit,
+  FiGlobe,
+  FiSmile,
+} from 'react-icons/fi';
 
 /* ==================== 类型定义 ==================== */
 
@@ -54,12 +66,12 @@ export const mainNavItems: MenuItem[] = [
       {
         path: '/about-site',
         title: '此站点',
-        icon: FiInfo,
+        icon: FiGlobe,
       },
       {
         path: '/about-me',
         title: '自述',
-        icon: FiMail,
+        icon: FiSmile,
       },
     ],
   },

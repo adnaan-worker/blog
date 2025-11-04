@@ -129,13 +129,14 @@ export const ScrollToTop = () => {
     timersRef.current.rafId = requestAnimationFrame(() => {
       if (!isMountedRef.current) return;
 
-      // 延迟确保懒加载组件已渲染
+      // 延迟确保懒加载组件已渲染，同时等待 header 状态重置完成
+      // header 使用 useLayoutEffect 在绘制前重置，这里延迟稍久一点确保不冲突
       timersRef.current.timeoutId = window.setTimeout(() => {
         if (isMountedRef.current && !scrollLock.isLocked()) {
           window.scrollTo(0, 0);
         }
         timersRef.current.timeoutId = null;
-      }, 0);
+      }, 10); // 增加延迟，确保 header 的 useLayoutEffect 先执行
     });
 
     // 清理函数

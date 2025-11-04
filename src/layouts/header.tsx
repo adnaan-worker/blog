@@ -1,13 +1,23 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import React, { useEffect, useLayoutEffect, useState, useRef, useMemo, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { useLocation } from 'react-router-dom';
 import { FiMenu, FiX, FiUser, FiTag, FiBookOpen } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useSpring,
+  useMotionValueEvent,
+  useMotionValue,
+  animate,
+} from 'framer-motion';
 import { logoutUser } from '@/store/modules/userSlice';
 import type { AppDispatch, RootState } from '@/store';
 import { storage } from '@/utils';
 import { useModalScrollLock } from '@/hooks';
+import { useAnimationEngine } from '@/utils/ui/animation';
 import LoginModal from './modules/login-model';
 import RegisterModal from './modules/register-modal';
 import NavLinks from './modules/nav-links';
@@ -20,7 +30,6 @@ import {
   mainNavItems as defaultMainNavItems,
   accountMenuItems,
   getBaseMobileMenuGroups,
-  getLoggedInMobileMenuGroups,
   type MenuItem,
   type MenuGroup,
 } from '@/config/menu.config';
@@ -29,6 +38,7 @@ import {
 
 export interface PageInfo {
   title?: string;
+  subtitle?: string; // 副标题
   tags?: (string | { id?: string | number; name?: string })[];
   category?: string;
 }
@@ -88,14 +98,16 @@ const PageInfoContainer = styled(motion.div)`
   margin-left: 2rem;
   padding-left: 2rem;
   border-left: 1px solid rgba(var(--accent-rgb), 0.15);
-  max-width: 400px;
+  /* 宽度由动画控制，防止内容溢出 */
+  flex-shrink: 0;
+  overflow: hidden;
 
   @media (max-width: 1024px) {
     display: none;
   }
 `;
 
-const PageTitle = styled(motion.h1)`
+const PageTitle = styled.h1`
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -103,17 +115,28 @@ const PageTitle = styled(motion.h1)`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 250px;
 `;
 
-const TagsContainer = styled(motion.div)`
+const PageSubtitle = styled.p`
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-tertiary);
+  margin: 0.25rem 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+  line-height: 1.3;
+`;
+
+const TagsContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
 `;
 
-const Tag = styled(motion.span)`
+const Tag = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -183,6 +206,20 @@ const MobilePageTitle = styled.div`
   }
 `;
 
+const MobilePageSubtitle = styled.div`
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-tertiary);
+  margin-top: 0.375rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+`;
+
 const MobileTagsRow = styled.div`
   display: flex;
   align-items: center;
@@ -239,30 +276,6 @@ const STORAGE_KEYS = {
 const SCROLL_CONFIG = {
   start: 0,
   end: 150,
-} as const;
-
-// Spring 动画配置
-const SPRING_CONFIGS = {
-  nav: {
-    stiffness: 300,
-    damping: 30,
-    mass: 0.3,
-    restDelta: 0.01,
-    restSpeed: 0.5,
-  },
-  pageInfo: {
-    stiffness: 220,
-    damping: 26,
-    mass: 0.7,
-    restDelta: 0.001,
-    restSpeed: 0.01,
-  },
-  tag: {
-    type: 'spring' as const,
-    stiffness: 350,
-    damping: 22,
-    mass: 0.5,
-  },
 } as const;
 
 /* ==================== 辅助函数 ==================== */
@@ -351,47 +364,111 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const navCardRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
+  const isRouteChangingRef = useRef(false);
 
   // ==================== 滚动锁定管理 ====================
   // 当任意模态框打开时自动锁定滚动
   useModalScrollLock(loginModalOpen || registerModalOpen);
 
+  // ==================== 动画引擎 ====================
+  const { springPresets } = useAnimationEngine();
+
   // ==================== 滚动动画 ====================
   const { scrollY } = useScroll();
 
-  // 滚动进度转换 (0-1)
-  const scrollProgress = useTransform(scrollY, [SCROLL_CONFIG.start, SCROLL_CONFIG.end], [0, 1], { clamp: true });
+  // 创建可手动控制的 motion value
+  const smoothProgress = useMotionValue(0);
 
-  // 添加 Spring 弹性
-  const smoothProgress = useSpring(scrollProgress, SPRING_CONFIGS.nav);
+  // 监听滚动变化，更新 smoothProgress
+  useEffect(() => {
+    const updateProgress = (latest: number) => {
+      // 路由切换期间不更新动画进度
+      if (isRouteChangingRef.current) {
+        return;
+      }
 
-  // 导航栏动画属性
+      // 计算滚动进度
+      const progress = Math.max(
+        0,
+        Math.min(1, (latest - SCROLL_CONFIG.start) / (SCROLL_CONFIG.end - SCROLL_CONFIG.start)),
+      );
+
+      // 使用 Spring 动画更新进度
+      animate(smoothProgress, progress, {
+        ...springPresets.microRebound,
+        restDelta: 0.001,
+        restSpeed: 0.01,
+      });
+    };
+
+    const unsubscribe = scrollY.on('change', updateProgress);
+
+    // 初始化
+    updateProgress(scrollY.get());
+
+    return unsubscribe;
+  }, [scrollY, springPresets.microRebound, smoothProgress]);
+
+  // 导航栏动画属性 - 添加更丰富的动画效果
   const borderRadius = useTransform(smoothProgress, [0, 1], [28, 24]);
   const paddingXValue = useTransform(smoothProgress, [0, 1], [20, 16]);
-  const scale = useTransform(smoothProgress, [0, 1], [1, 1]);
+  // 添加微妙的 scale 变化，增强 Q弹 效果
+  const scale = useTransform(smoothProgress, [0, 1], [1, 0.98]);
 
-  // 页面信息动画属性
-  const pageInfoOpacityRaw = useTransform(scrollProgress, [0, 1], [0, 1]);
-  const pageInfoOpacity = useSpring(pageInfoOpacityRaw, SPRING_CONFIGS.pageInfo);
+  // 页面信息显示状态 - 与导航栏收缩同步
+  const [pageInfoShouldShow, setPageInfoShouldShow] = useState(false);
 
-  const pageInfoXRaw = useTransform(scrollProgress, [0, 1], [-20, 0]);
-  const pageInfoX = useSpring(pageInfoXRaw, SPRING_CONFIGS.pageInfo);
+  // ==================== 页面信息动画系统 ====================
+  // 统一的 Spring 配置 - 确保所有动画协调一致，符合物理运动规律
+  // restDelta 和 restSpeed 设置为极小值，确保动画完全停止后才结束，避免抖动
+  const unifiedSpringConfig = useMemo(
+    () => ({
+      ...springPresets.microRebound,
+      restDelta: 0.001,
+      restSpeed: 0.01,
+    }),
+    [springPresets.microRebound],
+  );
+
+  // 动画编排：使用三段式关键帧实现流畅的物理运动
+  // 1️⃣ 导航链接先向左移动 (0 → 0.6 → 1) - 为页面信息让出空间
+  const navLinksXRaw = useTransform(smoothProgress, [0, 0.6, 1], [0, -15, -18]);
+  const navLinksX = useSpring(navLinksXRaw, unifiedSpringConfig);
+
+  // 2️⃣ 页面信息宽度展开 (0 → 0.3 → 1) - 稍后展开，创造层次感
+  const pageInfoWidthRaw = useTransform(smoothProgress, [0, 0.3, 1], [0, 200, 380]);
+  const pageInfoWidth = useSpring(pageInfoWidthRaw, unifiedSpringConfig);
+
+  // 3️⃣ 页面信息透明度渐显 (0 → 0.4 → 1) - 配合宽度展开
+  const pageInfoOpacityRaw = useTransform(smoothProgress, [0, 0.4, 1], [0, 0.5, 1]);
+  const pageInfoOpacity = useSpring(pageInfoOpacityRaw, unifiedSpringConfig);
+
+  // 4️⃣ 页面信息纵向滑入 (0 → 0.5 → 1) - 最后从上到下出现，打造诗意效果
+  const pageInfoYRaw = useTransform(smoothProgress, [0, 0.5, 1], [-12, -6, 0]);
+  const pageInfoY = useSpring(pageInfoYRaw, unifiedSpringConfig);
+
+  // 监听 smoothProgress 变化，同步显示/隐藏状态
+  useMotionValueEvent(smoothProgress, 'change', (latest) => {
+    // 路由切换时不更新状态，避免闪烁
+    if (!isRouteChangingRef.current) {
+      setPageInfoShouldShow(latest > 0.2);
+    }
+  });
 
   // ==================== 移动端菜单配置 ====================
-  const mobileMenuGroups = useMemo<MenuGroup[]>(
-    () =>
-      isLoggedIn
-        ? [
-            ...getBaseMobileMenuGroups(),
-            {
-              title: '用户中心',
-              items: [{ path: '/profile', title: '个人中心', icon: FiUser }],
-            },
-          ]
-        : getBaseMobileMenuGroups(),
-    [isLoggedIn],
-  );
+  // 使用 useMemo 缓存菜单配置，避免不必要的重新计算
+  const mobileMenuGroups = useMemo<MenuGroup[]>(() => {
+    const baseGroups = getBaseMobileMenuGroups();
+    if (!isLoggedIn) return baseGroups;
+
+    return [
+      ...baseGroups,
+      {
+        title: '用户中心',
+        items: [{ path: '/profile', title: '个人中心', icon: FiUser }],
+      },
+    ];
+  }, [isLoggedIn]);
 
   // ==================== 辅助函数 ====================
 
@@ -447,52 +524,91 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
     setMoreDropdownOpen(false);
   }, []);
 
-  // 监听路由变化，当路由不在主导航菜单中时（如个人中心），重置主导航菜单到默认状态
-  useEffect(() => {
+  // 使用 useLayoutEffect 在浏览器绘制前同步执行，避免视觉闪烁
+  useLayoutEffect(() => {
     const currentPath = location.pathname;
+
+    // 标记路由正在切换（在所有状态更新之前设置）
+    isRouteChangingRef.current = true;
+
+    // 立即重置所有状态，确保在浏览器绘制前完成
+    setPageInfoShouldShow(false);
+    setInternalScrolled(false);
+
+    // 立即重置动画进度为 0，强制所有基于 smoothProgress 的动画立即回到初始状态
+    smoothProgress.set(0);
 
     // 如果当前路径不在主导航菜单中（如 /profile），重置主导航菜单
     if (!isPathInMainNav(currentPath)) {
       resetMainNavMenu();
     }
-  }, [location.pathname, isPathInMainNav, resetMainNavMenu]);
 
-  // 监听滚动位置
+    // 延迟恢复，确保新页面完全渲染后才允许页面信息显示
+    const timeoutId = setTimeout(() => {
+      isRouteChangingRef.current = false;
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [location.pathname, isPathInMainNav, resetMainNavMenu, smoothProgress]);
+
+  // 监听滚动位置 - 优化性能，减少不必要的状态更新
   useEffect(() => {
     const currentScroll = window.scrollY;
-    setInternalScrolled(scrolled !== undefined ? scrolled : currentScroll > 10);
+    // 路由切换期间不更新滚动状态
+    if (!isRouteChangingRef.current) {
+      setInternalScrolled(scrolled !== undefined ? scrolled : currentScroll > 10);
+    }
 
     const unsubscribe = scrollY.on('change', (latest) => {
-      setInternalScrolled(scrolled !== undefined ? scrolled : latest > 10);
+      // 路由切换期间不更新滚动状态，避免闪烁
+      if (isRouteChangingRef.current) {
+        return;
+      }
+
+      // 只在状态真正需要改变时才更新，避免不必要的重渲染
+      const shouldScroll = scrolled !== undefined ? scrolled : latest > 10;
+      setInternalScrolled((prev) => (prev !== shouldScroll ? shouldScroll : prev));
     });
 
     return unsubscribe;
   }, [scrollY, scrolled]);
 
-  // 点击外部关闭用户下拉菜单
+  // 点击外部关闭用户下拉菜单 - 只在菜单打开时监听
   useEffect(() => {
+    if (!userDropdownOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setUserDropdownOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    // 延迟添加监听器，避免立即触发
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 0);
 
-  // 鼠标聚光灯效果
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userDropdownOpen]);
+
+  // 鼠标聚光灯效果 - 使用 RAF 优化性能
   useEffect(() => {
     const navCard = navCardRef.current;
     if (!navCard || internalScrolled) return;
 
     let mouseX = 0;
     let mouseY = 0;
+    let rafId: number | null = null;
 
     const updateSpotlight = () => {
-      navCard.style.setProperty('--spotlight-x', `${mouseX}px`);
-      navCard.style.setProperty('--spotlight-y', `${mouseY}px`);
-      rafRef.current = null;
+      if (navCard) {
+        navCard.style.setProperty('--spotlight-x', `${mouseX}px`);
+        navCard.style.setProperty('--spotlight-y', `${mouseY}px`);
+      }
+      rafId = null;
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -500,17 +616,18 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
       mouseX = e.clientX - rect.left;
       mouseY = e.clientY - rect.top;
 
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(updateSpotlight);
+      if (!rafId) {
+        rafId = requestAnimationFrame(updateSpotlight);
       }
     };
 
-    navCard.addEventListener('mousemove', handleMouseMove);
+    navCard.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     return () => {
       navCard.removeEventListener('mousemove', handleMouseMove);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
       }
     };
   }, [internalScrolled]);
@@ -570,12 +687,9 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
           <motion.div
             className="nav-card"
             ref={navCardRef}
-            layout="size"
+            layout="position"
             transition={{
-              layout: {
-                duration: 0.25,
-                ease: [0.23, 1, 0.32, 1],
-              },
+              layout: unifiedSpringConfig,
             }}
             style={{
               display: 'flex',
@@ -583,62 +697,57 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
               borderRadius,
               paddingLeft: paddingXValue,
               paddingRight: paddingXValue,
+              scale,
             }}
           >
-            <div className="nav-card-inner" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              <NavLinks
-                mainNavItems={mainNavItems}
-                onLinkClick={handleLinkClick}
-                moreDropdownOpen={moreDropdownOpen}
-                onDropdownOpen={() => setMoreDropdownOpen(true)}
-                onDropdownClose={() => setMoreDropdownOpen(false)}
-                onDropdownItemClick={handleDropdownItemClick}
-                dropdownRef={dropdownRef as React.RefObject<HTMLDivElement>}
-              />
+            <div
+              className="nav-card-inner"
+              style={{ display: 'flex', alignItems: 'center', width: '100%', minWidth: 0 }}
+            >
+              {/* 导航链接 - 向左移动为页面信息让出空间 */}
+              <motion.div style={{ x: navLinksX, display: 'flex', alignItems: 'center' }}>
+                <NavLinks
+                  mainNavItems={mainNavItems}
+                  onLinkClick={handleLinkClick}
+                  moreDropdownOpen={moreDropdownOpen}
+                  onDropdownOpen={() => setMoreDropdownOpen(true)}
+                  onDropdownClose={() => setMoreDropdownOpen(false)}
+                  onDropdownItemClick={handleDropdownItemClick}
+                  dropdownRef={dropdownRef as React.RefObject<HTMLDivElement>}
+                />
+              </motion.div>
 
-              {/* 桌面端页面信息 */}
-              <AnimatePresence>
-                {pageInfo && (pageInfo.title || pageInfo.tags) && internalScrolled && (
-                  <PageInfoContainer
-                    key="page-info"
-                    style={{ opacity: pageInfoOpacity, x: pageInfoX }}
-                    initial={{ scale: 0.95 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                  >
+              {/* 桌面端页面信息 - 纵向滑入，宽度展开 */}
+              {pageInfo && (pageInfo.title || pageInfo.tags) && pageInfoShouldShow && (
+                <PageInfoContainer
+                  layout={false}
+                  style={{
+                    opacity: pageInfoOpacity,
+                    y: pageInfoY,
+                    width: pageInfoWidth,
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     {pageInfo.title && <PageTitle>{pageInfo.title}</PageTitle>}
+                    {pageInfo.subtitle && <PageSubtitle>{pageInfo.subtitle}</PageSubtitle>}
+                  </div>
 
-                    {pageInfo.tags && pageInfo.tags.length > 0 && (
-                      <TagsContainer>
-                        {pageInfo.tags.slice(0, 2).map((tag, index) => {
-                          const { tagText, tagKey } = extractTagInfo(tag, index);
-                          return (
-                            <Tag
-                              key={tagKey}
-                              initial={{ opacity: 0, scale: 0.85, y: 5 }}
-                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                              transition={{ ...SPRING_CONFIGS.tag, delay: index * 0.08 }}
-                            >
-                              <FiTag />
-                              {tagText}
-                            </Tag>
-                          );
-                        })}
-                        {pageInfo.tags.length > 2 && (
-                          <Tag
-                            initial={{ opacity: 0, scale: 0.85, y: 5 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            transition={{ ...SPRING_CONFIGS.tag, delay: 0.16 }}
-                          >
-                            +{pageInfo.tags.length - 2}
+                  {pageInfo.tags && pageInfo.tags.length > 0 && (
+                    <TagsContainer>
+                      {pageInfo.tags.slice(0, 2).map((tag, index) => {
+                        const { tagText, tagKey } = extractTagInfo(tag, index);
+                        return (
+                          <Tag key={tagKey}>
+                            <FiTag />
+                            {tagText}
                           </Tag>
-                        )}
-                      </TagsContainer>
-                    )}
-                  </PageInfoContainer>
-                )}
-              </AnimatePresence>
+                        );
+                      })}
+                      {pageInfo.tags.length > 2 && <Tag>+{pageInfo.tags.length - 2}</Tag>}
+                    </TagsContainer>
+                  )}
+                </PageInfoContainer>
+              )}
 
               {/* 主题切换和用户菜单 */}
               <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -679,11 +788,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
             initial={{ opacity: 0, y: -15, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -15, scale: 0.96 }}
-            transition={{
-              duration: 0.4,
-              ease: [0.23, 1, 0.32, 1],
-              opacity: { duration: 0.3 },
-            }}
+            transition={springPresets.smooth}
           >
             {pageInfo.title && (
               <MobilePageTitle>
@@ -692,10 +797,12 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
               </MobilePageTitle>
             )}
 
+            {pageInfo.subtitle && <MobilePageSubtitle>{pageInfo.subtitle}</MobilePageSubtitle>}
+
             {pageInfo.tags && pageInfo.tags.length > 0 && (
               <MobileTagsRow>
-                {pageInfo.tags.slice(0, 3).map((tag) => {
-                  const { tagText, tagKey } = extractTagInfo(tag, 0);
+                {pageInfo.tags.slice(0, 3).map((tag, index) => {
+                  const { tagText, tagKey } = extractTagInfo(tag, index);
                   return (
                     <MobileTag key={tagKey}>
                       <FiTag />

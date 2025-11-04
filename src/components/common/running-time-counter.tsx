@@ -3,8 +3,8 @@ import styled from '@emotion/styled';
 import { motion, Variants } from 'framer-motion';
 import { SPRING_PRESETS, useAnimationEngine, EASING } from '@/utils/ui/animation';
 
-// 站点上线时间 - 根据数据文件中的第一个里程碑
-const SITE_LAUNCH_TIME = new Date('2024-01-15T00:00:00.000Z').getTime();
+// 站点上线时间 - 根据第一次提交记录的时间
+const SITE_LAUNCH_TIME = new Date('2025-04-22T16:56:00').getTime();
 
 interface RunningTimeCounterProps {
   className?: string;

@@ -9,6 +9,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch, FiX, FiFilter, FiChevronDown } from 'react-icons/fi';
 import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { usePageInfo } from '@/hooks/usePageInfo';
 
 // ============= 筛选相关类型 =============
 
@@ -354,8 +355,22 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
   onCleanFilterChange,
   defaultFilterCollapsed = true,
 }) => {
+  const { setPageInfo } = usePageInfo();
   const [searchDebounceTimers, setSearchDebounceTimers] = useState<{ [key: string]: NodeJS.Timeout }>({});
   const [isFilterExpanded, setIsFilterExpanded] = useState(!defaultFilterCollapsed);
+
+  // 设置页面信息到 Header（用于滚动后显示）
+  useEffect(() => {
+    setPageInfo({
+      title,
+      subtitle,
+    });
+
+    // 组件卸载时清除页面信息
+    return () => {
+      setPageInfo(null);
+    };
+  }, [title, subtitle, setPageInfo]);
 
   // 清理定时器
   useEffect(() => {

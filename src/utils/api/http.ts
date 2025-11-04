@@ -204,6 +204,13 @@ class HttpRequest {
               }
               // 404 通常不需要全局提示，由业务层处理
               break;
+            case 429:
+              // 请求过多
+              if (config.isDev) {
+                console.error('服务繁忙');
+              }
+              this.showErrorToast('429', '服务繁忙，请稍后重试', '服务繁忙', 5000);
+              break;
             case 500:
               // 服务器错误
               if (config.isDev) {
