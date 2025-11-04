@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSocket } from './useSocket';
-import { getLocationByIP, getBrowser, getDeviceType } from '@/utils/helpers/companion';
+import { getIPLocation, getBrowser, getDeviceType } from '@/utils/helpers/environment';
 
 /**
  * 访客追踪 Hook
@@ -29,12 +29,12 @@ export const useVisitorTracking = () => {
     return '页面';
   };
 
-  // 获取地理位置（仅一次）
+  // 获取地理位置（仅一次）- 使用统一的 environment 工具类
   useEffect(() => {
     if (!locationDataRef.current) {
-      getLocationByIP()
+      getIPLocation()
         .then((loc) => {
-          if (loc) {
+          if (loc.success) {
             locationDataRef.current = { city: loc.city };
           }
         })
@@ -67,12 +67,20 @@ export const useVisitorTracking = () => {
         lastPathRef.current = page;
 
         // 发送访客活动数据
+        // deviceId 通过 Socket 连接时的 auth.device_id 传递，后端会从 socket.clientInfo.deviceId 获取
         socket.emit('visitor_activity', {
           location: locationCity,
           device: deviceType,
           browser,
           page,
           pageTitle,
+        });
+
+        console.log('✅ 上报访客活动:', {
+          location: locationCity,
+          device: deviceType,
+          browser,
+          page: pageTitle,
         });
 
         hasReportedRef.current = true;

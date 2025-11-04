@@ -33,7 +33,7 @@ export const getFullSocketConfig = (): ExtendedSocketConfig => {
     reconnectDelay: 2000,
     maxReconnectAttempts: 5,
     timeout: 15000,
-    transports: ['polling', 'websocket'],
+    transports: ['websocket', 'polling'],
   };
 };
 

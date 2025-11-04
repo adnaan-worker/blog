@@ -3,6 +3,15 @@
  * 收集环境信息、用户行为，提供智能化的关怀文案
  */
 import { API } from '@/utils/api';
+import {
+  getOS as envGetOS,
+  getBrowser as envGetBrowser,
+  getDeviceType as envGetDeviceType,
+  getBatteryInfo as envGetBatteryInfo,
+  getConnectionType as envGetConnectionType,
+  getIPLocation as envGetIPLocation,
+} from '@/utils/helpers/environment';
+
 // ==================== 类型定义 ====================
 
 export interface SmartContext {
@@ -112,101 +121,55 @@ export const checkHoliday = (date: Date): { isHoliday: boolean; holidayName?: st
 };
 
 /**
- * 获取操作系统
+ * 获取操作系统（使用统一环境工具类）
  */
 export const getOS = (): SmartContext['system']['os'] => {
-  const userAgent = navigator.userAgent.toLowerCase();
-  if (userAgent.includes('win')) return 'Windows';
-  if (userAgent.includes('mac')) return 'Mac';
-  if (userAgent.includes('linux')) return 'Linux';
-  if (userAgent.includes('iphone') || userAgent.includes('ipad')) return 'iOS';
-  if (userAgent.includes('android')) return 'Android';
-  return 'Unknown';
+  return envGetOS();
 };
 
 /**
- * 获取浏览器
+ * 获取浏览器（使用统一环境工具类）
  */
 export const getBrowser = (): SmartContext['system']['browser'] => {
-  const userAgent = navigator.userAgent.toLowerCase();
-  if (userAgent.includes('chrome') && !userAgent.includes('edge')) return 'Chrome';
-  if (userAgent.includes('firefox')) return 'Firefox';
-  if (userAgent.includes('safari') && !userAgent.includes('chrome')) return 'Safari';
-  if (userAgent.includes('edge')) return 'Edge';
-  return 'Other';
+  return envGetBrowser();
 };
 
 /**
- * 获取设备类型
+ * 获取设备类型（使用统一环境工具类）
  */
 export const getDeviceType = (): SmartContext['system']['deviceType'] => {
-  const width = window.innerWidth;
-  if (width < 768) return 'mobile';
-  if (width < 1024) return 'tablet';
-  return 'desktop';
+  return envGetDeviceType();
 };
 
 /**
- * 获取电池信息
+ * 获取电池信息（使用统一环境工具类）
  */
 export const getBatteryInfo = async (): Promise<SmartContext['system']['battery'] | undefined> => {
-  try {
-    if ('getBattery' in navigator) {
-      const battery = await (navigator as any).getBattery();
-      return {
-        level: Math.round(battery.level * 100),
-        charging: battery.charging,
-      };
-    }
-  } catch (e) {
-    // 浏览器不支持
-  }
-  return undefined;
+  return await envGetBatteryInfo();
 };
 
 /**
- * 获取网络连接状态
+ * 获取网络连接状态（使用统一环境工具类）
  */
 export const getConnectionType = (): SmartContext['system']['connection'] => {
-  if (!navigator.onLine) return 'offline';
-
-  const connection =
-    (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
-
-  if (connection) {
-    const type = connection.effectiveType;
-    if (type === '4g') return '4g';
-    if (type === '3g') return '3g';
-    if (type === '2g' || type === 'slow-2g') return 'slow';
-  }
-
-  return 'wifi';
+  return envGetConnectionType();
 };
 
 /**
- * 通过IP获取地理位置（免费，无需用户授权）
- * 使用 ip-api.com - 最准确，支持中文
+ * 通过IP获取地理位置（使用后端代理）
  */
 export const getLocationByIP = async (): Promise<SmartContext['location'] | undefined> => {
   try {
-    const response = await fetch('http://ip-api.com/json/?lang=zh-CN&fields=status,country,city,lat,lon,timezone');
+    const location = await envGetIPLocation();
 
-    if (!response.ok) {
-      return undefined;
-    }
-
-    const data = await response.json();
-
-    if (data.status === 'success') {
-      const location = {
-        city: data.city,
-        country: data.country,
-        timezone: data.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        latitude: data.lat,
-        longitude: data.lon,
+    if (location.success) {
+      return {
+        city: location.city,
+        country: location.country,
+        timezone: location.timezone,
+        latitude: location.latitude,
+        longitude: location.longitude,
       };
-
-      return location;
     }
   } catch (e) {
     console.error('❌ IP定位失败:', e);

@@ -65,33 +65,47 @@ export const API = {
   // 代理服务相关API（解决CORS跨域问题）
   proxy: {
     /**
+     * IP地理位置代理
+     * @param ip IP地址（可选，不传则使用请求者IP）
+     * @returns Promise<ApiResponse<{success: boolean, city: string, region: string, country: string, latitude: number, longitude: number, timezone: string, location: string}>>
+     */
+    getIPLocation: (ip?: string) =>
+      http.get<{
+        success: boolean;
+        city: string;
+        region: string;
+        country: string;
+        latitude: number;
+        longitude: number;
+        timezone: string;
+        location: string;
+      }>(ip ? `/proxy/ip-location/${ip}` : '/proxy/ip-location'),
+
+    /**
      * 天气API代理
      * @param city 城市名称
-     * @param type 返回类型 (json|text)
+     * @param format 返回类型 (json|xml)
      * @returns Promise<ApiResponse<any>>
      */
-    getWeather: (city: string, type: 'json' | 'text' = 'json') => http.get<any>('/proxy/weather', { city, type }),
+    getWeather: (city: string, format: 'json' | 'xml' = 'json') =>
+      http.get<any>(`/proxy/weather/${encodeURIComponent(city)}`, { format }),
 
     /**
-     * GET请求代理
-     * @param url 目标URL
-     * @param params 查询参数
+     * 音乐URL代理
+     * @param server 音乐平台 (tencent|netease|kugou)
+     * @param id 歌曲ID
      * @returns Promise<ApiResponse<any>>
      */
-    proxyGet: (url: string, params?: Record<string, any>) => http.get<any>('/proxy/get', { url, ...params }),
+    getMusicUrl: (server: 'tencent' | 'netease' | 'kugou' = 'tencent', id: string) =>
+      http.get<any>('/proxy/music', { server, id }),
 
     /**
-     * 通用代理请求
-     * @param options 代理选项
-     * @returns Promise<ApiResponse<any>>
+     * 清除代理缓存
+     * @param type 缓存类型 (ip|weather|music|all)
+     * @returns Promise<ApiResponse<{success: boolean, deletedCount: number}>>
      */
-    proxy: (options: {
-      url: string;
-      method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-      headers?: Record<string, string>;
-      params?: Record<string, any>;
-      data?: any;
-    }) => http.post<any>('/proxy', options),
+    clearCache: (type: 'ip' | 'weather' | 'music' | 'all' = 'all') =>
+      http.post<{ success: boolean; deletedCount: number }>('/proxy/cache/clear', { type }),
   },
 
   // 项目相关API

@@ -425,26 +425,18 @@ interface SongInfo {
   lrc: string;
 }
 
-// 从Meting-api获取歌曲信息
+// 从后端代理获取歌曲信息
 const fetchSongInfo = async (songId: string, signal?: AbortSignal): Promise<SongInfo | null> => {
   try {
-    const controller = new AbortController();
-    const abortSignal = signal || controller.signal;
+    // 使用后端代理API，避免CORS问题
+    const { API } = await import('@/utils/api');
+    const response = await API.proxy.getMusicUrl('tencent', songId);
 
-    // 10秒超时
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-    const response = await fetch(`https://meting.qjqq.cn/?server=tencent&type=song&id=${songId}`, {
-      signal: abortSignal,
-    });
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error('获取歌曲信息失败');
-    }
-    const data = await response.json();
-    if (Array.isArray(data) && data.length > 0) {
-      return data[0];
+    if (response.success && response.data) {
+      const data = response.data;
+      if (Array.isArray(data) && data.length > 0) {
+        return data[0];
+      }
     }
     return null;
   } catch (error) {
