@@ -79,6 +79,7 @@ const ActivityList = styled.div`
   gap: 1rem;
   max-height: 500px;
   overflow-y: auto;
+  padding: 0 10px;
 
   /* 自定义滚动条 */
   &::-webkit-scrollbar {
@@ -278,7 +279,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   const renderLoadingItems = () =>
     Array.from({ length: 3 }).map((_, index) => (
-      <LoadingItem key={index}>
+      <LoadingItem key={`loading-${index}`}>
         <LoadingSkeleton width="40px" height="40px" style={{ borderRadius: '50%' }} />
         <div style={{ flex: 1 }}>
           <LoadingSkeleton width="80%" height="0.875rem" style={{ marginBottom: '0.5rem' }} />
@@ -308,9 +309,9 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
           </EmptyState>
         ) : (
           <>
-            {activities.map((activity) => (
+            {activities.map((activity, index) => (
               <ActivityItem
-                key={activity.id}
+                key={`activity-${activity.id}-${index}`}
                 clickable={!!(onActivityClick || activity.link)}
                 onClick={() => handleActivityClick(activity)}
               >
