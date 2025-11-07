@@ -149,33 +149,6 @@ const Actions = styled.div`
   border-top: 1px solid var(--border-color);
 `;
 
-const IconButton = styled.button`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--accent-color);
-    color: var(--accent-color);
-  }
-
-  &.danger:hover {
-    border-color: rgb(239, 68, 68);
-    color: rgb(239, 68, 68);
-  }
-`;
-
 const FormGroup = styled.div`
   margin-bottom: 1.25rem;
 `;
@@ -194,26 +167,6 @@ const Pagination = styled.div`
   justify-content: center;
   gap: 0.5rem;
   margin-top: 2rem;
-`;
-
-const PageButton = styled.button<{ active?: boolean }>`
-  padding: 0.5rem 0.875rem;
-  border: 1px solid ${(props) => (props.active ? 'var(--accent-color)' : 'var(--border-color)')};
-  border-radius: 6px;
-  background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
-  color: ${(props) => (props.active ? 'white' : 'var(--text-primary)')};
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover:not(:disabled) {
-    background: ${(props) => (props.active ? 'var(--accent-color-hover)' : 'var(--bg-tertiary)')};
-    border-color: var(--accent-color);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 `;
 
 const UserManagement: React.FC = () => {
@@ -381,14 +334,19 @@ const UserManagement: React.FC = () => {
                   </UserDetails>
 
                   <Actions>
-                    <IconButton onClick={() => handleEdit(user)}>
+                    <Button variant="ghost" size="small" onClick={() => handleEdit(user)} style={{ flex: 1 }}>
                       <FiEdit2 size={16} />
                       编辑
-                    </IconButton>
-                    <IconButton className="danger" onClick={() => handleDelete(Number(user.id))}>
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="small"
+                      onClick={() => handleDelete(Number(user.id))}
+                      style={{ flex: 1 }}
+                    >
                       <FiTrash2 size={16} />
                       删除
-                    </IconButton>
+                    </Button>
                   </Actions>
                 </Card>
               ))}
@@ -396,17 +354,27 @@ const UserManagement: React.FC = () => {
 
             {totalPages > 1 && (
               <Pagination>
-                <PageButton onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                <Button
+                  variant={page === 1 ? 'ghost' : 'outline'}
+                  size="small"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
                   上一页
-                </PageButton>
+                </Button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <PageButton key={p} active={page === p} onClick={() => setPage(p)}>
+                  <Button key={p} variant={page === p ? 'primary' : 'outline'} size="small" onClick={() => setPage(p)}>
                     {p}
-                  </PageButton>
+                  </Button>
                 ))}
-                <PageButton onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+                <Button
+                  variant={page === totalPages ? 'ghost' : 'outline'}
+                  size="small"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
                   下一页
-                </PageButton>
+                </Button>
               </Pagination>
             )}
           </>

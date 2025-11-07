@@ -270,28 +270,32 @@ const GitHubSyncModal: React.FC<GitHubSyncModalProps> = ({ isOpen, onClose, onSy
     <Modal isOpen={isOpen} title="同步 Git 项目" onClose={handleClose} size="large">
       <SyncContainer>
         <PlatformTabs>
-          <TabButton
-            active={platform === 'github'}
+          <Button
+            variant={platform === 'github' ? 'primary' : 'ghost'}
+            size="small"
             onClick={() => {
               setPlatform('github');
               setUsername('');
               setRepos([]);
             }}
+            style={{ flex: 1 }}
           >
             <FiGithub size={16} />
             <span>GitHub</span>
-          </TabButton>
-          <TabButton
-            active={platform === 'gitee'}
+          </Button>
+          <Button
+            variant={platform === 'gitee' ? 'primary' : 'ghost'}
+            size="small"
             onClick={() => {
               setPlatform('gitee');
               setUsername('');
               setRepos([]);
             }}
+            style={{ flex: 1 }}
           >
             <SiGitee size={16} />
             <span>Gitee</span>
-          </TabButton>
+          </Button>
         </PlatformTabs>
 
         <SyncDescription>
@@ -417,37 +421,6 @@ const PlatformTabs = styled.div`
   background: var(--bg-secondary);
   border-radius: 8px;
   border: 1px solid var(--border-color);
-`;
-
-const TabButton = styled.button<{ active?: boolean }>`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  background: ${(props) => (props.active ? 'var(--bg-primary)' : 'transparent')};
-  border: 1px solid ${(props) => (props.active ? 'var(--accent-color)' : 'transparent')};
-  border-radius: 6px;
-  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  font-size: 0.9rem;
-  font-weight: ${(props) => (props.active ? '600' : '500')};
-  cursor: pointer;
-  transition: all 0.2s;
-
-  svg {
-    font-size: 1rem;
-  }
-
-  &:hover {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
 `;
 
 const SyncDescription = styled.div`

@@ -81,7 +81,7 @@ export const cleanFilterValues = (values: FilterValues): Record<string, any> => 
 // Header 容器 - 左右两栏布局
 const Header = styled(motion.div)`
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 600px) 1fr;
   gap: 3rem;
   align-items: start;
   margin-bottom: 2.5rem;
@@ -99,7 +99,9 @@ const LeftContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-width: 0; // 防止文字溢出
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 `;
 
 // 页面标题
@@ -109,9 +111,15 @@ const Title = styled.h1`
   color: var(--text-primary);
   margin: 0;
   letter-spacing: -0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 
   @media (max-width: 768px) {
     font-size: 1.5rem;
+    white-space: normal;
+    overflow: visible;
   }
 `;
 
@@ -151,11 +159,11 @@ const FilterArea = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  min-width: 280px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 
   @media (max-width: 968px) {
-    min-width: 0;
-    width: 100%;
     align-items: stretch;
   }
 `;
