@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef, memo } from 'react';
 import styled from '@emotion/styled';
 import RichTextRenderer from './rich-text-renderer';
+import { throttle } from '@/utils';
 
 /**
  * 懒加载富文本渲染器
@@ -96,6 +97,8 @@ const LazyRichTextRenderer: React.FC<LazyRichTextRendererProps> = ({
   const isRenderingRef = useRef(false);
   const timerIdRef = useRef<number>(0);
   const renderedChunksRef = useRef(initialChunks);
+  const rafIdRef = useRef<number>(0);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // 智能分块：保持 HTML 结构完整性
   const chunks = useMemo(() => {
@@ -162,16 +165,27 @@ const LazyRichTextRenderer: React.FC<LazyRichTextRendererProps> = ({
     const savedPos = sessionStorage.getItem(getScrollKey());
     if (!savedPos || parseFloat(savedPos) <= 1000) return;
 
-    const timer = setTimeout(() => {
-      const { scrollHeight } = document.documentElement;
-      const targetPos = parseFloat(savedPos);
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-      if (scrollHeight < targetPos + 1000 && renderedChunksRef.current < chunks.length) {
-        setRenderedChunks((prev) => Math.min(prev + 2, chunks.length));
-      }
-    }, 100);
+    // 使用 requestAnimationFrame 避免强制重排
+    const rafId = requestAnimationFrame(() => {
+      timer = setTimeout(() => {
+        // 在下一个动画帧中读取布局属性，避免强制重排
+        requestAnimationFrame(() => {
+          const { scrollHeight } = document.documentElement;
+          const targetPos = parseFloat(savedPos);
 
-    return () => clearTimeout(timer);
+          if (scrollHeight < targetPos + 1000 && renderedChunksRef.current < chunks.length) {
+            setRenderedChunks((prev) => Math.min(prev + 2, chunks.length));
+          }
+        });
+      }, 100);
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (timer) clearTimeout(timer);
+    };
   }, [chunks.length]);
 
   // 同步 state 到 ref，避免闭包陷阱
@@ -179,13 +193,71 @@ const LazyRichTextRenderer: React.FC<LazyRichTextRendererProps> = ({
     renderedChunksRef.current = renderedChunks;
   }, [renderedChunks]);
 
-  // 懒加载：监听滚动，按需加载更多内容
+  // 创建 IntersectionObserver 来检测加载触发器（不触发重排）
+  useEffect(() => {
+    if (renderedChunks >= chunks.length) {
+      // 已全部加载，清理观察器
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+      return;
+    }
+
+    // 清理旧的观察器
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    // 等待 DOM 更新后再创建观察器
+    const timer = setTimeout(() => {
+      const sentinel = document.querySelector('[data-lazy-sentinel]') as HTMLElement;
+      if (!sentinel || renderedChunksRef.current >= chunks.length) return;
+
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (entry.isIntersecting && !isRenderingRef.current) {
+            const currentRendered = renderedChunksRef.current;
+            const totalChunks = chunks.length;
+
+            if (currentRendered < totalChunks) {
+              isRenderingRef.current = true;
+              setRenderedChunks((prev) => {
+                const next = Math.min(prev + 1, totalChunks);
+                isRenderingRef.current = false;
+                return next;
+              });
+            }
+          }
+        },
+        {
+          rootMargin: '400px', // 提前 400px 开始加载
+          threshold: 0.01,
+        },
+      );
+
+      observerRef.current.observe(sentinel);
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+    };
+  }, [renderedChunks, chunks.length]);
+
+  // 懒加载：使用优化的滚动监听作为备用方案
   useEffect(() => {
     // 初始化时重置渲染标志
     isRenderingRef.current = false;
     timerIdRef.current = 0;
+    rafIdRef.current = 0;
 
-    const loadNextChunk = () => {
+    // 使用 requestAnimationFrame 包装布局读取，避免强制重排
+    const checkAndLoadNext = () => {
       const currentRendered = renderedChunksRef.current;
       const totalChunks = chunks.length;
 
@@ -194,29 +266,43 @@ const LazyRichTextRenderer: React.FC<LazyRichTextRendererProps> = ({
         return;
       }
 
-      const { scrollTop, clientHeight, scrollHeight } = document.documentElement;
-      const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
+      // 在 requestAnimationFrame 中读取布局属性，避免强制重排
+      rafIdRef.current = requestAnimationFrame(() => {
+        const { scrollTop, clientHeight, scrollHeight } = document.documentElement;
+        const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
 
-      // 距离底部 2 屏时触发加载
-      if (distanceToBottom < clientHeight * 2) {
-        isRenderingRef.current = true;
+        // 距离底部 2 屏时触发加载（备用方案，主要用于初始加载）
+        if (distanceToBottom < clientHeight * 2) {
+          isRenderingRef.current = true;
 
-        const renderNext = () => {
-          setRenderedChunks((prev) => Math.min(prev + 1, chunks.length));
-          isRenderingRef.current = false;
-          timerIdRef.current = 0;
-        };
+          const renderNext = () => {
+            setRenderedChunks((prev) => Math.min(prev + 1, chunks.length));
+            isRenderingRef.current = false;
+            timerIdRef.current = 0;
+          };
 
-        // 使用 setTimeout 延迟渲染，避免阻塞主线程
-        timerIdRef.current = setTimeout(renderNext, 50) as unknown as number;
-      }
+          // 使用 setTimeout 延迟渲染，避免阻塞主线程
+          timerIdRef.current = setTimeout(renderNext, 50) as unknown as number;
+        }
+      });
     };
 
-    window.addEventListener('scroll', loadNextChunk, { passive: true });
-    loadNextChunk(); // 初始检查
+    // 使用节流函数限制检查频率（200ms 节流），主要作为备用方案
+    // IntersectionObserver 是主要检测方式，不会触发重排
+    const throttledCheck = throttle(() => {
+      cancelAnimationFrame(rafIdRef.current);
+      checkAndLoadNext();
+    }, 200);
+
+    // 初始检查
+    requestAnimationFrame(checkAndLoadNext);
+
+    // 备用方案：使用节流的滚动监听（IntersectionObserver 失效时使用）
+    window.addEventListener('scroll', throttledCheck, { passive: true });
 
     return () => {
-      window.removeEventListener('scroll', loadNextChunk);
+      window.removeEventListener('scroll', throttledCheck);
+      cancelAnimationFrame(rafIdRef.current);
 
       // 清理未完成的异步任务
       if (timerIdRef.current) {
@@ -247,11 +333,24 @@ const LazyRichTextRenderer: React.FC<LazyRichTextRendererProps> = ({
       ))}
 
       {hasMore && (
-        <LoadingContainer>
-          <LoadingCard>
-            正在加载更多内容... ({renderedChunks}/{chunks.length})
-          </LoadingCard>
-        </LoadingContainer>
+        <>
+          {/* IntersectionObserver 触发器 */}
+          <div
+            data-lazy-sentinel
+            style={{
+              height: '1px',
+              width: '100%',
+              pointerEvents: 'none',
+              visibility: 'hidden',
+            }}
+            aria-hidden="true"
+          />
+          <LoadingContainer>
+            <LoadingCard>
+              正在加载更多内容... ({renderedChunks}/{chunks.length})
+            </LoadingCard>
+          </LoadingContainer>
+        </>
       )}
     </Container>
   );

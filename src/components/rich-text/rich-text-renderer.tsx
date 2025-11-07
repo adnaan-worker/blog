@@ -121,6 +121,9 @@ const CodeContent = styled.div<{ collapsed: boolean; maxHeight: number }>`
   overflow-y: auto;
   overflow-x: hidden;
   transition: max-height 0.3s ease;
+  /* 使用 GPU 加速，避免强制重排 */
+  will-change: max-height;
+  transform: translateZ(0);
 
   /* 滚动条样式 */
   &::-webkit-scrollbar {
@@ -290,24 +293,47 @@ const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, lang
     return () => observer.disconnect();
   }, []);
 
-  // 动态高亮 - 只在可见时加载
+  // 动态高亮 - 只在可见时加载，使用 requestIdleCallback 优化性能
   React.useEffect(() => {
     if (!isVisible) return;
 
     let canceled = false;
-    (async () => {
-      const hljs = (await import('highlight.js')).default;
-      let html = '';
-      try {
-        html =
-          language && hljs.getLanguage(language)
-            ? hljs.highlight(code, { language }).value
-            : hljs.highlightAuto(code).value;
-      } catch {
-        html = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // 使用 requestIdleCallback 在浏览器空闲时执行高亮，避免阻塞主线程
+    const scheduleHighlight = () => {
+      if (canceled) return;
+
+      const performHighlight = async () => {
+        if (canceled) return;
+
+        const hljs = (await import('highlight.js')).default;
+        let html = '';
+        try {
+          html =
+            language && hljs.getLanguage(language)
+              ? hljs.highlight(code, { language }).value
+              : hljs.highlightAuto(code).value;
+        } catch {
+          html = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        if (!canceled) {
+          // 使用 requestAnimationFrame 确保 DOM 更新在下一帧
+          requestAnimationFrame(() => {
+            if (!canceled) setHighlightedCode(html);
+          });
+        }
+      };
+
+      // 优先使用 requestIdleCallback，fallback 到 setTimeout
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(performHighlight, { timeout: 1000 });
+      } else {
+        setTimeout(performHighlight, 0);
       }
-      if (!canceled) setHighlightedCode(html);
-    })();
+    };
+
+    scheduleHighlight();
+
     return () => {
       canceled = true;
     };

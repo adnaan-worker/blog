@@ -387,19 +387,23 @@ export class RichTextParser {
 
   /**
    * 从HTML中提取纯文本
+   * 注意：为了避免浏览器自动加载图片，会先移除所有图片标签
    */
   static extractText(html: string | null | undefined): string {
     if (!html || typeof html !== 'string') {
       return '';
     }
 
+    // 移除所有图片标签，避免浏览器解析 HTML 时自动加载图片
+    const htmlWithoutImages = html.replace(/<img[^>]*>/gi, '');
+
     if (typeof window !== 'undefined') {
       const div = document.createElement('div');
-      div.innerHTML = html;
+      div.innerHTML = htmlWithoutImages;
       return div.textContent || div.innerText || '';
     }
 
-    return html
+    return htmlWithoutImages
       .replace(/<[^>]*>/g, '')
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
