@@ -4,6 +4,7 @@ export { DataStatsGrid } from './data-stats-grid';
 export { ActivityFeed } from './activity-feed';
 export { QuickActions } from './quick-actions';
 export { AchievementBadges } from './achievement-badges';
+export { AchievementListModal } from './achievement-list-modal';
 
 // Modals
 export { EditProfileModal } from './modals/edit-profile-modal';

@@ -82,6 +82,7 @@ import {
   ActivityFeed,
   QuickActions,
   AchievementBadges,
+  AchievementListModal,
   EditProfileModal,
   NoteManagement,
   ArticleManagement,
@@ -1427,6 +1428,15 @@ const Profile: React.FC = () => {
     adnaan.toast.info(`${achievement.name}: ${achievement.description}`);
   };
 
+  const handleViewAllAchievements = () => {
+    adnaan.modal.info({
+      title: '🏆 所有成就',
+      content: <AchievementListModal achievements={achievements} />,
+      width: 700,
+      size: 'large',
+    });
+  };
+
   // 仪表盘数据
   const [publishTrend, setPublishTrend] = useState<{ month: string; value: number }[]>([]);
   const [todoItems, setTodoItems] = useState<{ id: string; title: string; count: number; type: string }[]>([]);
@@ -1632,7 +1642,11 @@ const Profile: React.FC = () => {
                   <SectionTitle>成就徽章</SectionTitle>
                 </SectionHeader>
                 <Card>
-                  <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+                  <AchievementBadges
+                    achievements={achievements}
+                    onBadgeClick={handleBadgeClick}
+                    onViewAll={handleViewAllAchievements}
+                  />
                 </Card>
               </DashboardSection>
             )}
@@ -1719,7 +1733,12 @@ const Profile: React.FC = () => {
             {/* 成就徽章 */}
             {!isMobile && (
               <Card>
-                <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+                <AchievementBadges
+                  achievements={achievements}
+                  onBadgeClick={handleBadgeClick}
+                  onViewAll={handleViewAllAchievements}
+                  maxDisplay={6}
+                />
               </Card>
             )}
           </UserSection>
@@ -1882,7 +1901,11 @@ const Profile: React.FC = () => {
 
                 {/* 成就徽章 */}
                 <div>
-                  <AchievementBadges achievements={achievements} onBadgeClick={handleBadgeClick} maxDisplay={6} />
+                  <AchievementBadges
+                    achievements={achievements}
+                    onBadgeClick={handleBadgeClick}
+                    onViewAll={handleViewAllAchievements}
+                  />
                 </div>
               </Drawer>
             </>

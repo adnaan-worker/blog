@@ -8,7 +8,8 @@ import { useAnimationEngine } from '@/utils/ui/animation';
 interface AchievementBadgesProps {
   achievements: Achievement[];
   onBadgeClick?: (achievement: Achievement) => void;
-  maxDisplay?: number;
+  onViewAll?: () => void;
+  maxDisplay?: number; // 如果为0或undefined，显示所有成就
 }
 
 // 内容容器（不包含外层卡片样式）
@@ -147,7 +148,12 @@ const LockIcon = styled.div`
   font-size: 8px;
 `;
 
-export const AchievementBadges: React.FC<AchievementBadgesProps> = ({ achievements, onBadgeClick, maxDisplay = 6 }) => {
+export const AchievementBadges: React.FC<AchievementBadgesProps> = ({
+  achievements,
+  onBadgeClick,
+  onViewAll,
+  maxDisplay = 6,
+}) => {
   const { variants } = useAnimationEngine();
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('zh-CN', {
@@ -161,8 +167,8 @@ export const AchievementBadges: React.FC<AchievementBadgesProps> = ({ achievemen
     return Math.min(100, (achievement.progress.current / achievement.progress.target) * 100);
   };
 
-  const displayedAchievements = achievements.slice(0, maxDisplay);
-  const hasMore = achievements.length > maxDisplay;
+  const displayedAchievements = maxDisplay && maxDisplay > 0 ? achievements.slice(0, maxDisplay) : achievements;
+  const hasMore = maxDisplay && maxDisplay > 0 && achievements.length > maxDisplay;
 
   const handleBadgeClick = (achievement: Achievement) => {
     if (onBadgeClick) {
@@ -171,8 +177,11 @@ export const AchievementBadges: React.FC<AchievementBadgesProps> = ({ achievemen
   };
 
   const handleViewAll = () => {
-    // 可以触发查看所有成就的模态框或页面
-    console.log('查看所有成就');
+    if (onViewAll) {
+      onViewAll();
+    } else {
+      console.log('查看所有成就');
+    }
   };
 
   return (
