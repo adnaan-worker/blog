@@ -1,14 +1,33 @@
-const redisManager = require('../utils/redis');
 const { logger } = require('../utils/logger');
 
 /**
  * 访客统计服务
  * 负责存储和查询访客实时数据（数据由前端提供）
+ * 使用内存存储，类似在线人数统计
  */
 class VisitorStatsService {
   constructor() {
-    this.REDIS_ACTIVITY_KEY = 'visitor:activities';
-    // 不再使用 TTL，改为在客户端断开连接时手动清理
+    // 使用内存 Map 存储访客活动，设备ID作为key
+    this.activities = new Map();
+    // 数据变化回调，用于通知 Socket.IO 广播更新
+    this.onChangeCallback = null;
+  }
+
+  /**
+   * 设置数据变化回调
+   * @param {Function} callback - 回调函数
+   */
+  setOnChangeCallback(callback) {
+    this.onChangeCallback = callback;
+  }
+
+  /**
+   * 触发数据变化回调
+   */
+  _triggerChange() {
+    if (this.onChangeCallback) {
+      this.onChangeCallback();
+    }
   }
 
   /**
@@ -21,7 +40,7 @@ class VisitorStatsService {
    * @param {string} visitor.page - 当前页面路径
    * @param {string} visitor.pageTitle - 页面标题
    */
-  async recordActivity(visitor) {
+  recordActivity(visitor) {
     try {
       const { deviceId, location, device, browser, page, pageTitle } = visitor;
 
@@ -41,13 +60,13 @@ class VisitorStatsService {
         timestamp: Date.now(),
       };
 
-      // 使用 Hash 存储访客活动，设备ID作为field
-      // 不设置过期时间，由客户端断开连接时手动清理
-      await redisManager
-        .getClient()
-        .hset(this.REDIS_ACTIVITY_KEY, deviceId, JSON.stringify(activity));
+      // 使用内存 Map 存储访客活动
+      this.activities.set(deviceId, activity);
 
       logger.debug(`✅ 记录访客活动: ${location} - ${device} - ${pageTitle}`);
+
+      // 触发数据变化回调
+      this._triggerChange();
     } catch (error) {
       logger.error('记录访客活动失败:', error);
     }
@@ -59,25 +78,25 @@ class VisitorStatsService {
    * @param {string} page - 新页面路径
    * @param {string} pageTitle - 新页面标题
    */
-  async updateVisitorPage(deviceId, page, pageTitle) {
+  updateVisitorPage(deviceId, page, pageTitle) {
     try {
       if (!deviceId || !page) return;
 
       // 获取现有活动
-      const activityJson = await redisManager.getClient().hget(this.REDIS_ACTIVITY_KEY, deviceId);
+      const activity = this.activities.get(deviceId);
 
-      if (activityJson) {
-        const activity = JSON.parse(activityJson);
+      if (activity) {
         activity.page = page;
         activity.pageTitle = pageTitle || page;
         activity.timestamp = Date.now();
 
         // 更新活动
-        await redisManager
-          .getClient()
-          .hset(this.REDIS_ACTIVITY_KEY, deviceId, JSON.stringify(activity));
+        this.activities.set(deviceId, activity);
 
         logger.debug(`✅ 更新访客页面: ${deviceId} -> ${page}`);
+
+        // 触发数据变化回调
+        this._triggerChange();
       }
     } catch (error) {
       logger.error('更新访客页面失败:', error);
@@ -88,12 +107,15 @@ class VisitorStatsService {
    * 移除访客活动
    * @param {string} deviceId - 设备ID
    */
-  async removeActivity(deviceId) {
+  removeActivity(deviceId) {
     try {
       if (!deviceId) return;
 
-      await redisManager.getClient().hdel(this.REDIS_ACTIVITY_KEY, deviceId);
+      this.activities.delete(deviceId);
       logger.debug(`✅ 移除访客活动: ${deviceId}`);
+
+      // 触发数据变化回调
+      this._triggerChange();
     } catch (error) {
       logger.error('移除访客活动失败:', error);
     }
@@ -103,12 +125,10 @@ class VisitorStatsService {
    * 获取所有活动访客统计
    * @returns {Object} 统计数据
    */
-  async getStats() {
+  getStats() {
     try {
       // 获取所有活动
-      const activitiesData = await redisManager.getClient().hgetall(this.REDIS_ACTIVITY_KEY);
-
-      if (!activitiesData || Object.keys(activitiesData).length === 0) {
+      if (this.activities.size === 0) {
         return {
           onlineCount: 0,
           activities: [],
@@ -116,8 +136,8 @@ class VisitorStatsService {
         };
       }
 
-      // 解析所有活动
-      const activities = Object.values(activitiesData).map(json => JSON.parse(json));
+      // 转换为数组
+      const activities = Array.from(this.activities.values());
 
       // 聚合相同 location + device + page 的访客
       const aggregated = new Map();
@@ -176,32 +196,31 @@ class VisitorStatsService {
    * 此方法用于清理可能遗漏的僵尸数据（如异常断开等）
    * @param {number} expireThreshold - 过期阈值（毫秒），默认5分钟
    */
-  async cleanExpiredActivities(expireThreshold = 5 * 60 * 1000) {
+  cleanExpiredActivities(expireThreshold = 5 * 60 * 1000) {
     try {
-      const activitiesData = await redisManager.getClient().hgetall(this.REDIS_ACTIVITY_KEY);
-
-      if (!activitiesData) return 0;
+      if (this.activities.size === 0) return 0;
 
       const now = Date.now();
       let cleaned = 0;
+      const toDelete = [];
 
-      for (const [deviceId, json] of Object.entries(activitiesData)) {
-        try {
-          const activity = JSON.parse(json);
-
-          if (now - activity.timestamp > expireThreshold) {
-            await redisManager.getClient().hdel(this.REDIS_ACTIVITY_KEY, deviceId);
-            cleaned++;
-          }
-        } catch (error) {
-          // 如果解析失败，直接删除
-          await redisManager.getClient().hdel(this.REDIS_ACTIVITY_KEY, deviceId);
-          cleaned++;
+      // 收集过期活动
+      for (const [deviceId, activity] of this.activities.entries()) {
+        if (now - activity.timestamp > expireThreshold) {
+          toDelete.push(deviceId);
         }
+      }
+
+      // 批量删除
+      for (const deviceId of toDelete) {
+        this.activities.delete(deviceId);
+        cleaned++;
       }
 
       if (cleaned > 0) {
         logger.info(`🧹 清理了 ${cleaned} 个过期访客活动（备用清理）`);
+        // 触发数据变化回调
+        this._triggerChange();
       }
 
       return cleaned;

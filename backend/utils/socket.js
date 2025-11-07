@@ -17,6 +17,9 @@ class SocketManager {
     // 广播节流控制
     this.broadcastTimer = null;
     this.pendingBroadcast = false;
+    // 访客统计广播节流控制
+    this.visitorStatsTimer = null;
+    this.pendingVisitorStatsBroadcast = false;
     this.timers = [];
   }
 
@@ -102,6 +105,11 @@ class SocketManager {
 
     // 启动健康检查
     this.startHealthCheck();
+
+    // 设置访客统计服务的数据变化回调
+    visitorStatsService.setOnChangeCallback(() => {
+      this.broadcastVisitorStats();
+    });
 
     // 静默初始化（日志由 app.js 统一输出）
   }
@@ -230,6 +238,14 @@ class SocketManager {
       // 添加设备到在线列表并广播
       this.addOnlineDevice(socket.clientInfo.deviceId, socket.clientInfo.isStatusMonitor);
       this.broadcastOnlineUsers();
+
+      // 立即发送一次访客统计数据（新连接时）
+      try {
+        const stats = visitorStatsService.getStats();
+        socket.emit('visitor_stats_update', stats);
+      } catch (error) {
+        logger.error('发送初始访客统计失败:', error);
+      }
       // 设置心跳检测
       this.setupHeartbeat(socket);
 
@@ -312,13 +328,13 @@ class SocketManager {
     });
 
     // 处理访客活动上报（前端主动发送完整数据）
-    socket.on('visitor_activity', async data => {
+    socket.on('visitor_activity', data => {
       try {
         const { location, device, browser, page, pageTitle } = data;
         const deviceId = socket.clientInfo?.deviceId;
 
         if (deviceId && !socket.clientInfo.isStatusMonitor) {
-          await visitorStatsService.recordActivity({
+          visitorStatsService.recordActivity({
             deviceId,
             location,
             device,
@@ -335,13 +351,13 @@ class SocketManager {
     });
 
     // 处理页面切换事件（前端提供完整数据）
-    socket.on('page_change', async data => {
+    socket.on('page_change', data => {
       try {
         const { page, pageTitle } = data;
         const deviceId = socket.clientInfo?.deviceId;
 
         if (deviceId && page) {
-          await visitorStatsService.updateVisitorPage(deviceId, page, pageTitle);
+          visitorStatsService.updateVisitorPage(deviceId, page, pageTitle);
           logger.debug(`📄 访客切换页面: ${deviceId} -> ${page}`);
         }
       } catch (error) {
@@ -350,9 +366,9 @@ class SocketManager {
     });
 
     // 处理获取访客统计请求
-    socket.on('get_visitor_stats', async () => {
+    socket.on('get_visitor_stats', () => {
       try {
-        const stats = await visitorStatsService.getStats();
+        const stats = visitorStatsService.getStats();
         socket.emit('visitor_stats_update', stats);
       } catch (error) {
         logger.error('获取访客统计失败:', error);
@@ -422,11 +438,13 @@ class SocketManager {
     this.removeOnlineDevice(deviceId, isStatusMonitor);
     this.broadcastOnlineUsers();
 
-    // 移除访客活动（仅在确认没有其他连接时清理，异步，不阻塞断开）
+    // 移除访客活动（仅在确认没有其他连接时清理）
     if (!isStatusMonitor && deviceId && !hasOtherConnections) {
-      visitorStatsService.removeActivity(deviceId).catch(err => {
+      try {
+        visitorStatsService.removeActivity(deviceId);
+      } catch (err) {
         logger.error('移除访客活动失败:', err);
-      });
+      }
     }
   }
 
@@ -518,6 +536,16 @@ class SocketManager {
       }
     });
     this.timers = [];
+
+    // 清理广播定时器
+    if (this.broadcastTimer) {
+      clearTimeout(this.broadcastTimer);
+      this.broadcastTimer = null;
+    }
+    if (this.visitorStatsTimer) {
+      clearTimeout(this.visitorStatsTimer);
+      this.visitorStatsTimer = null;
+    }
   }
 
   /**
@@ -710,8 +738,43 @@ class SocketManager {
     logger.info(`👥 广播在线人数更新: ${onlineUsers}`);
   }
 
-  // 已移除 broadcastVisitorStats 方法
-  // 现在只通过 get_visitor_stats 事件按需获取数据
+  // 广播访客统计更新（节流优化，避免频繁广播）
+  broadcastVisitorStats() {
+    // 如果已有待执行的广播，标记需要重新广播
+    if (this.visitorStatsTimer) {
+      this.pendingVisitorStatsBroadcast = true;
+      return;
+    }
+
+    // 执行广播
+    this._doBroadcastVisitorStats();
+
+    // 设置节流：1秒内最多广播1次
+    this.visitorStatsTimer = setTimeout(() => {
+      this.visitorStatsTimer = null;
+
+      // 如果期间有新的广播请求，执行一次
+      if (this.pendingVisitorStatsBroadcast) {
+        this.pendingVisitorStatsBroadcast = false;
+        this._doBroadcastVisitorStats();
+      }
+    }, 1000);
+  }
+
+  // 实际执行访客统计广播的内部方法
+  _doBroadcastVisitorStats() {
+    try {
+      const stats = visitorStatsService.getStats();
+
+      this.io.emit('visitor_stats_update', stats);
+
+      logger.debug(
+        `📊 广播访客统计更新: ${stats.onlineCount} 人在线, ${stats.activities.length} 条活动`
+      );
+    } catch (error) {
+      logger.error('广播访客统计失败:', error);
+    }
+  }
 
   getStats() {
     return {

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useSocket } from './useSocket';
+import { useSocket, useSocketEvent } from './useSocket';
 import { getIPLocation, getBrowser, getDeviceType } from '@/utils/helpers/environment';
 
 /**
@@ -9,7 +9,7 @@ import { getIPLocation, getBrowser, getDeviceType } from '@/utils/helpers/enviro
  */
 export const useVisitorTracking = () => {
   const location = useLocation();
-  const socket = useSocket();
+  const { socket, isConnected } = useSocket();
   const hasReportedRef = useRef(false);
   const locationDataRef = useRef<{ city: string } | null>(null);
   const lastPathRef = useRef<string>(''); // 记录上次的路径
@@ -29,6 +29,12 @@ export const useVisitorTracking = () => {
     return '页面';
   };
 
+  // 监听 Socket 断开连接，重置上报标志
+  useSocketEvent('disconnect', () => {
+    hasReportedRef.current = false;
+    console.log('🔄 Socket 断开，重置访客追踪状态');
+  });
+
   // 获取地理位置（仅一次）- 使用统一的 environment 工具类
   useEffect(() => {
     if (!locationDataRef.current) {
@@ -46,7 +52,7 @@ export const useVisitorTracking = () => {
 
   // Socket连接后首次上报
   useEffect(() => {
-    if (!socket || hasReportedRef.current) return;
+    if (!socket || !isConnected || hasReportedRef.current) return;
 
     const reportActivity = async () => {
       try {
@@ -65,6 +71,12 @@ export const useVisitorTracking = () => {
 
         // 记录初始路径
         lastPathRef.current = page;
+
+        // 确保 socket 仍然连接
+        if (!socket.connected) {
+          console.warn('⚠️ Socket 已断开，跳过访客活动上报');
+          return;
+        }
 
         // 发送访客活动数据
         // deviceId 通过 Socket 连接时的 auth.device_id 传递，后端会从 socket.clientInfo.deviceId 获取
@@ -93,11 +105,11 @@ export const useVisitorTracking = () => {
     const timer = setTimeout(reportActivity, 500);
 
     return () => clearTimeout(timer);
-  }, [socket]); // 移除 location.pathname 依赖，只依赖 socket
+  }, [socket, isConnected]); // 监听 socket 和连接状态
 
   // 页面切换时更新
   useEffect(() => {
-    if (!socket || !hasReportedRef.current) return;
+    if (!socket || !isConnected || !hasReportedRef.current) return;
 
     const page = location.pathname;
 
@@ -113,7 +125,7 @@ export const useVisitorTracking = () => {
       page,
       pageTitle,
     });
-  }, [socket, location.pathname]);
+  }, [socket, isConnected, location.pathname]);
 };
 
 export default useVisitorTracking;

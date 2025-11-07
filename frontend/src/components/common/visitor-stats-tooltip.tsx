@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMonitor, FiSmartphone, FiUsers, FiActivity, FiHeart, FiCoffee, FiStar } from 'react-icons/fi';
-import { API } from '@/utils/api';
+import { useSocketEvent, useSocket } from '@/hooks/useSocket';
 import { useAnimationEngine } from '@/utils/ui/animation';
 
 // ==================== 类型定义 ====================
@@ -482,40 +482,45 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
   const [stats, setStats] = useState<VisitorStats | null>(null);
   const [loading, setLoading] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const { socket, isConnected } = useSocket();
 
   // 使用动画引擎
   const { variants, springPresets } = useAnimationEngine();
 
-  // 不再需要位置计算，使用相对定位
+  // 监听 Socket.IO 推送的访客统计更新
+  useSocketEvent(
+    'visitor_stats_update',
+    useCallback((data: VisitorStats) => {
+      if (data) {
+        setStats(data);
+        setLoading(false);
+        console.log('✅ 收到访客统计更新:', data);
+      }
+    }, []),
+  );
 
-  // 点击时获取数据
+  // 显示时主动请求数据
   useEffect(() => {
     if (isVisible) {
       setLoading(true);
 
-      // 通过 HTTP 接口获取访客统计数据
-      API.visitorStats
-        .getVisitorStats()
-        .then((response) => {
-          if (response.success && response.data) {
-            setStats(response.data);
-            console.log('✅ 获取访客统计数据成功:', response.data);
-          } else {
-            console.warn('⚠️ 获取访客统计数据失败:', response.message);
-          }
-        })
-        .catch((error) => {
-          console.error('❌ 获取访客统计数据失败:', error);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      // 如果已连接，立即请求一次数据
+      if (isConnected && socket) {
+        socket.emit('get_visitor_stats');
+      }
+
+      // 设置超时，避免一直加载
+      const timeout = setTimeout(() => {
+        setLoading(false);
+        console.warn('⚠️ 获取访客统计超时');
+      }, 3000);
+
+      return () => clearTimeout(timeout);
     } else {
-      // 隐藏时重置数据
       setStats(null);
       setLoading(false);
     }
-  }, [isVisible]);
+  }, [isVisible, isConnected, socket]);
 
   if (!isVisible) return null;
 

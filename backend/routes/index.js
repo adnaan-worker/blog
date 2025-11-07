@@ -25,7 +25,6 @@ const activityRoutes = require('./activities');
 const projectRoutes = require('./projects');
 const contributionRoutes = require('./contributions');
 const proxyRoutes = require('./proxy');
-const visitorStatsRoutes = require('./visitor-stats');
 
 // 注册模块化路由
 router.use('/auth', authRoutes);
@@ -44,6 +43,5 @@ router.use('/activities', activityRoutes); // 全站活动路由（公开接口�
 router.use('/projects', projectRoutes); // 项目路由
 router.use('/contributions', contributionRoutes); // GitHub + Gitee 贡献统计路由
 router.use('/proxy', proxyRoutes); // 代理服务路由（解决CORS跨域问题）
-router.use('/visitor-stats', visitorStatsRoutes); // 访客统计路由
 
 module.exports = router;
