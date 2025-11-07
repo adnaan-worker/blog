@@ -87,19 +87,6 @@ const SearchContainer = styled.div`
   }
 `;
 
-const SearchInput = styled(Input)`
-  padding-left: 2.5rem;
-`;
-
-const SearchIcon = styled.div`
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-  font-size: 0.9rem;
-`;
-
 const Content = styled.div`
   min-height: 400px;
 `;
@@ -154,25 +141,6 @@ const BookmarkActions = styled.div`
 
   ${BookmarkCard}:hover & {
     opacity: 1;
-  }
-`;
-
-const ActionButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: none;
-  border-radius: 6px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--error-color);
-    color: white;
   }
 `;
 
@@ -392,14 +360,14 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
 
         <HeaderRight>
           <SearchContainer>
-            <SearchInput
+            <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索收藏..."
+              leftIcon={<FiSearch />}
+              variant="filled"
+              size="small"
             />
-            <SearchIcon>
-              <FiSearch />
-            </SearchIcon>
           </SearchContainer>
           <Button variant="secondary" onClick={handleRefresh}>
             <FiRefreshCw size={14} />
@@ -438,9 +406,20 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
                   <BookmarkHeader>
                     <BookmarkTitle>{bookmark.post?.title || `文章 #${bookmark.postId}`}</BookmarkTitle>
                     <BookmarkActions>
-                      <ActionButton onClick={(e) => handleRemoveBookmark(bookmark, e)}>
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        onClick={(e) => handleRemoveBookmark(bookmark, e)}
+                        style={{
+                          width: '2rem',
+                          height: '2rem',
+                          padding: 0,
+                          minWidth: 'auto',
+                          minHeight: 'auto',
+                        }}
+                      >
                         <FiTrash2 size={14} />
-                      </ActionButton>
+                      </Button>
                     </BookmarkActions>
                   </BookmarkHeader>
 

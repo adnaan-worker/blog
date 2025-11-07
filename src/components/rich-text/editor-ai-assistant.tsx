@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiCpu, FiX, FiChevronDown, FiChevronUp, FiCheck, FiLoader } from 'react-icons/fi';
-import { Button } from 'adnaan-ui';
+import { Button, Select } from 'adnaan-ui';
 import { aiWritingHelper } from '@/utils/editor/ai-helper';
 import { processAIContentForEditor } from '@/utils/editor/helpers';
 
@@ -503,30 +503,30 @@ const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onConten
         <OptionsSection>
           <OptionGroup>
             <div className="option-label">写作风格</div>
-            <select value={options.style} onChange={(e) => setOptions((prev) => ({ ...prev, style: e.target.value }))}>
+            <Select value={options.style} onChange={(e) => setOptions((prev) => ({ ...prev, style: e.target.value }))}>
               <option value="professional">专业正式</option>
               <option value="casual">轻松易读</option>
               <option value="academic">学术严谨</option>
               <option value="creative">创意生动</option>
               <option value="storytelling">故事叙述</option>
-            </select>
+            </Select>
           </OptionGroup>
 
           <OptionGroup>
             <div className="option-label">内容长度</div>
-            <select
+            <Select
               value={options.length}
               onChange={(e) => setOptions((prev) => ({ ...prev, length: e.target.value }))}
             >
               <option value="short">简短精炼</option>
               <option value="medium">适中详实</option>
               <option value="long">详细深入</option>
-            </select>
+            </Select>
           </OptionGroup>
 
           <OptionGroup>
             <div className="option-label">翻译语言</div>
-            <select
+            <Select
               value={options.targetLang}
               onChange={(e) => setOptions((prev) => ({ ...prev, targetLang: e.target.value }))}
             >
@@ -536,7 +536,7 @@ const EditorAIAssistant: React.FC<EditorAIAssistantProps> = ({ content, onConten
               <option value="法文">法文</option>
               <option value="德文">德文</option>
               <option value="西班牙文">西班牙文</option>
-            </select>
+            </Select>
           </OptionGroup>
         </OptionsSection>
 

@@ -111,38 +111,6 @@ const SearchContainer = styled.div`
   }
 `;
 
-const SearchInput = styled(Input)`
-  padding-left: 2.5rem;
-`;
-
-const SearchIcon = styled.div`
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-  font-size: 0.9rem;
-`;
-
-const FilterButton = styled.button<{ active?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
-  color: ${(props) => (props.active ? 'white' : 'var(--text-secondary)')};
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: var(--accent-color);
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.1)')};
-  }
-`;
-
 const Content = styled.div`
   min-height: 400px;
 `;
@@ -154,22 +122,6 @@ const FilterBar = styled.div`
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-`;
-
-const FilterTag = styled.button<{ active?: boolean }>`
-  padding: 0.3rem 0.8rem;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
-  color: ${(props) => (props.active ? 'white' : 'var(--text-secondary)')};
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: var(--accent-color);
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.1)')};
-  }
 `;
 
 const CommentsList = styled.div`
@@ -687,30 +639,34 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
 
         <HeaderRight>
           <SearchContainer>
-            <SearchInput
+            <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索评论..."
+              leftIcon={<FiSearch />}
+              variant="filled"
+              size="small"
             />
-            <SearchIcon>
-              <FiSearch />
-            </SearchIcon>
           </SearchContainer>
-          <FilterButton active={showFilters} onClick={() => setShowFilters(!showFilters)}>
-            <FiFilter size={14} />
-            <span style={{ marginLeft: '0.25rem' }}>筛选</span>
-          </FilterButton>
+          <Button
+            variant={showFilters ? 'primary' : 'secondary'}
+            size="small"
+            onClick={() => setShowFilters(!showFilters)}
+            leftIcon={<FiFilter size={14} />}
+          >
+            筛选
+          </Button>
           {isAdmin && (
-            <FilterButton
-              active={viewMode === 'tree'}
+            <Button
+              variant={viewMode === 'tree' ? 'primary' : 'secondary'}
+              size="small"
               onClick={() => setViewMode(viewMode === 'tree' ? 'flat' : 'tree')}
               title={viewMode === 'tree' ? '切换到扁平视图' : '切换到树形视图'}
-            >
-              {viewMode === 'tree' ? <FiGitBranch size={14} /> : <FiList size={14} />}
-            </FilterButton>
+              leftIcon={viewMode === 'tree' ? <FiGitBranch size={14} /> : <FiList size={14} />}
+            />
           )}
-          <Button variant="secondary" onClick={handleRefresh}>
-            <FiRefreshCw size={14} />
+          <Button variant="secondary" size="small" onClick={handleRefresh} leftIcon={<FiRefreshCw size={14} />}>
+            刷新
           </Button>
         </HeaderRight>
       </Header>
@@ -719,27 +675,38 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
         <FilterBar>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>状态：</span>
-            <FilterTag active={selectedStatus === ''} onClick={() => setSelectedStatus('')}>
+            <Button
+              variant={selectedStatus === '' ? 'primary' : 'secondary'}
+              size="small"
+              onClick={() => setSelectedStatus('')}
+              style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '20px' }}
+            >
               全部
-            </FilterTag>
-            <FilterTag
-              active={selectedStatus === 'approved'}
+            </Button>
+            <Button
+              variant={selectedStatus === 'approved' ? 'primary' : 'secondary'}
+              size="small"
               onClick={() => setSelectedStatus(selectedStatus === 'approved' ? '' : 'approved')}
+              style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '20px' }}
             >
               已通过
-            </FilterTag>
-            <FilterTag
-              active={selectedStatus === 'pending'}
+            </Button>
+            <Button
+              variant={selectedStatus === 'pending' ? 'primary' : 'secondary'}
+              size="small"
               onClick={() => setSelectedStatus(selectedStatus === 'pending' ? '' : 'pending')}
+              style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '20px' }}
             >
               待审核
-            </FilterTag>
-            <FilterTag
-              active={selectedStatus === 'spam'}
+            </Button>
+            <Button
+              variant={selectedStatus === 'spam' ? 'primary' : 'secondary'}
+              size="small"
               onClick={() => setSelectedStatus(selectedStatus === 'spam' ? '' : 'spam')}
+              style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '20px' }}
             >
               已驳回
-            </FilterTag>
+            </Button>
           </div>
         </FilterBar>
       )}

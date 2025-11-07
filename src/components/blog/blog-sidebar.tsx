@@ -2,7 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiSearch, FiBarChart2 } from 'react-icons/fi';
-import { Input } from 'adnaan-ui';
+import { Input, Button } from 'adnaan-ui';
 import { useAnimationEngine } from '@/utils/ui/animation';
 
 const SidebarContainer = styled(motion.div)`
@@ -40,12 +40,6 @@ const SidebarCard = styled.div`
       border-radius: 2px;
     }
   }
-`;
-
-// 搜索输入框
-const StyledSearchInput = styled(Input)`
-  font-size: 0.9rem;
-  width: 100%;
 `;
 
 // 分类列表
@@ -95,21 +89,6 @@ const TagCloud = styled.div`
 `;
 
 // 标签项
-const TagItem = styled.button<{ active?: boolean }>`
-  padding: 0.4rem 0.8rem;
-  background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
-  color: ${(props) => (props.active ? 'white' : 'var(--text-secondary)')};
-  border-radius: 20px;
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
-  border: none;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--accent-color);
-    color: white;
-  }
-`;
 
 // 视图切换按钮
 const ViewToggleContainer = styled.div`
@@ -119,27 +98,6 @@ const ViewToggleContainer = styled.div`
   background: var(--bg-secondary);
   border-radius: 6px;
   margin-bottom: 1rem;
-`;
-
-const ViewToggleButton = styled.button<{ active?: boolean }>`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background: ${(props) => (props.active ? 'var(--accent-color)' : 'transparent')};
-  color: ${(props) => (props.active ? 'white' : 'var(--text-secondary)')};
-  border-radius: 4px;
-  font-size: 0.9rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--accent-color-alpha)')};
-    color: ${(props) => (props.active ? 'white' : 'var(--accent-color)')};
-  }
 `;
 
 interface BlogSidebarProps {
@@ -179,7 +137,9 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
     <SidebarContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
       <SidebarCard>
         <h3>搜索文章</h3>
-        <StyledSearchInput
+        <Input
+          size="small"
+          style={{ fontSize: '0.9rem' }}
           type="text"
           placeholder="搜索文章..."
           value={searchQuery}
@@ -192,12 +152,22 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
         <SidebarCard>
           <h3>查看方式</h3>
           <ViewToggleContainer>
-            <ViewToggleButton active={viewMode === 'timeline'} onClick={() => onViewModeChange('timeline')}>
+            <Button
+              variant={viewMode === 'timeline' ? 'primary' : 'ghost'}
+              size="small"
+              onClick={() => onViewModeChange('timeline')}
+              style={{ flex: 1 }}
+            >
               时间线视图
-            </ViewToggleButton>
-            <ViewToggleButton active={viewMode === 'card'} onClick={() => onViewModeChange('card')}>
+            </Button>
+            <Button
+              variant={viewMode === 'card' ? 'primary' : 'ghost'}
+              size="small"
+              onClick={() => onViewModeChange('card')}
+              style={{ flex: 1 }}
+            >
               卡片视图
-            </ViewToggleButton>
+            </Button>
           </ViewToggleContainer>
         </SidebarCard>
       )}
@@ -206,14 +176,25 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
         <h3>文章分类</h3>
         <CategoryList>
           {categories.map((category) => (
-            <CategoryItem
+            <Button
               key={category.name}
-              active={selectedCategory === category.name}
+              variant="ghost"
+              size="small"
               onClick={() => onCategoryClick(category.name)}
+              style={{
+                width: '100%',
+                justifyContent: 'space-between',
+                padding: '0.6rem 0.8rem',
+                fontSize: '0.9rem',
+                textAlign: 'left',
+                background: selectedCategory === category.name ? 'var(--accent-color-alpha)' : 'transparent',
+                color: selectedCategory === category.name ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontWeight: selectedCategory === category.name ? '500' : 'normal',
+              }}
             >
               <span>{category.name}</span>
-              <span>{category.count}</span>
-            </CategoryItem>
+              <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{category.count}</span>
+            </Button>
           ))}
         </CategoryList>
       </SidebarCard>
@@ -222,9 +203,19 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
         <h3>热门标签</h3>
         <TagCloud>
           {tags.map((tag) => (
-            <TagItem key={tag} active={selectedTag === tag} onClick={() => onTagClick(tag)}>
+            <Button
+              key={tag}
+              variant={selectedTag === tag ? 'primary' : 'secondary'}
+              size="small"
+              onClick={() => onTagClick(tag)}
+              style={{
+                padding: '0.4rem 0.8rem',
+                fontSize: '0.85rem',
+                borderRadius: '20px',
+              }}
+            >
               {tag}
-            </TagItem>
+            </Button>
           ))}
         </TagCloud>
       </SidebarCard>
@@ -233,11 +224,24 @@ const BlogSidebar: React.FC<BlogSidebarProps> = ({
         <h3>排序方式</h3>
         <CategoryList>
           {sortOptions.map((option) => (
-            <CategoryItem key={option} active={sortBy === option} onClick={() => onSortClick(option)}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <FiBarChart2 size={14} /> {option}
-              </span>
-            </CategoryItem>
+            <Button
+              key={option}
+              variant="ghost"
+              size="small"
+              onClick={() => onSortClick(option)}
+              style={{
+                width: '100%',
+                justifyContent: 'flex-start',
+                padding: '0.6rem 0.8rem',
+                fontSize: '0.9rem',
+                background: sortBy === option ? 'var(--accent-color-alpha)' : 'transparent',
+                color: sortBy === option ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontWeight: sortBy === option ? '500' : 'normal',
+              }}
+              leftIcon={<FiBarChart2 size={14} />}
+            >
+              {option}
+            </Button>
           ))}
         </CategoryList>
       </SidebarCard>

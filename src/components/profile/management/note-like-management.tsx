@@ -87,19 +87,6 @@ const SearchContainer = styled.div`
   }
 `;
 
-const SearchInput = styled(Input)`
-  padding-left: 2.5rem;
-`;
-
-const SearchIcon = styled.div`
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-  font-size: 0.9rem;
-`;
-
 const Content = styled.div`
   min-height: 400px;
 `;
@@ -146,30 +133,6 @@ const LikeTitle = styled.h3`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-`;
-
-const UnlikeButton = styled(motion.button)`
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 0.5rem;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-
-  &:hover {
-    background: var(--error-color-alpha, rgba(239, 68, 68, 0.1));
-    border-color: var(--error-color);
-    color: var(--error-color);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
 `;
 
 const LikeIcon = styled.div`
@@ -435,14 +398,14 @@ const NoteLikeManagement: React.FC<NoteLikeManagementProps> = ({ className }) =>
 
         <HeaderRight>
           <SearchContainer>
-            <SearchInput
+            <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索手记..."
+              leftIcon={<FiSearch />}
+              variant="filled"
+              size="small"
             />
-            <SearchIcon>
-              <FiSearch />
-            </SearchIcon>
           </SearchContainer>
           <Button variant="secondary" onClick={handleRefresh}>
             <FiRefreshCw size={14} />
@@ -485,14 +448,19 @@ const NoteLikeManagement: React.FC<NoteLikeManagementProps> = ({ className }) =>
                       </LikeIcon>
                       {like.note?.title || like.note?.content.substring(0, 30) + '...'}
                     </LikeTitle>
-                    <UnlikeButton
+                    <Button
+                      variant="outline"
+                      size="small"
+                      style={{
+                        padding: '0.5rem',
+                        minWidth: 'auto',
+                        minHeight: 'auto',
+                      }}
                       onClick={(e) => handleUnlike(e, like.noteId)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
                       title="取消点赞"
                     >
                       <FiX size={16} />
-                    </UnlikeButton>
+                    </Button>
                   </LikeHeader>
 
                   {like.note?.content && (

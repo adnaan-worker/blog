@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { FiTag, FiEdit2, FiTrash2, FiFileText } from 'react-icons/fi';
 import { API } from '@/utils/api';
 import type { Tag } from '@/types';
-import { Modal, Button, Input, Textarea, Pagination } from 'adnaan-ui';
+import { Modal, Button, Input, Textarea, Pagination, ColorPicker } from 'adnaan-ui';
 import ManagementLayout from '../common/management-layout';
 import { useModalScrollLock } from '@/hooks';
 
@@ -124,31 +124,6 @@ const Actions = styled.div`
   }
 `;
 
-const IconButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--accent-color);
-    color: var(--accent-color);
-  }
-
-  &.danger:hover {
-    border-color: rgb(239, 68, 68);
-    color: rgb(239, 68, 68);
-  }
-`;
-
 const FormGroup = styled.div`
   margin-bottom: 1.25rem;
 `;
@@ -159,24 +134,6 @@ const Label = styled.label`
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
-`;
-
-const ColorPicker = styled.input`
-  width: 100%;
-  height: 42px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  cursor: pointer;
-  padding: 4px;
-
-  &::-webkit-color-swatch-wrapper {
-    padding: 0;
-  }
-
-  &::-webkit-color-swatch {
-    border: none;
-    border-radius: 6px;
-  }
 `;
 
 const PaginationWrapper = styled.div`
@@ -317,12 +274,34 @@ const TagManagement: React.FC = () => {
                     </ArticleCount>
 
                     <Actions onClick={(e) => e.stopPropagation()}>
-                      <IconButton onClick={() => handleEdit(tag)}>
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        onClick={() => handleEdit(tag)}
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          padding: 0,
+                          minWidth: 'auto',
+                          minHeight: 'auto',
+                        }}
+                      >
                         <FiEdit2 size={14} />
-                      </IconButton>
-                      <IconButton className="danger" onClick={() => handleDelete(tag.id)}>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        onClick={() => handleDelete(tag.id)}
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          padding: 0,
+                          minWidth: 'auto',
+                          minHeight: 'auto',
+                        }}
+                      >
                         <FiTrash2 size={14} />
-                      </IconButton>
+                      </Button>
                     </Actions>
                   </CardFooter>
                 </Card>
@@ -383,11 +362,7 @@ const TagManagement: React.FC = () => {
 
         <FormGroup>
           <Label>标签颜色</Label>
-          <ColorPicker
-            type="color"
-            value={formData.color}
-            onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-          />
+          <ColorPicker value={formData.color} onChange={(color) => setFormData({ ...formData, color })} />
         </FormGroup>
 
         <FormGroup>
@@ -396,7 +371,7 @@ const TagManagement: React.FC = () => {
             placeholder="请输入标签描述（可选）"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={3}
+            size="small"
           />
         </FormGroup>
       </Modal>

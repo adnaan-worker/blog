@@ -6,7 +6,7 @@ import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiS
 import RichTextEditor from '@/components/rich-text/rich-text-editor';
 import EditorAIAssistant from '@/components/rich-text/editor-ai-assistant';
 import { API } from '@/utils/api';
-import { Button, Input } from 'adnaan-ui';
+import { Button, Input, Textarea, Select } from 'adnaan-ui';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import { useAnimationEngine } from '@/utils/ui/animation';
@@ -281,16 +281,22 @@ const ArticleEditorPage: React.FC = () => {
         {/* 顶部工具栏 */}
         <TopBar>
           <LeftSection>
-            <BackButton onClick={handleExit}>
-              <FiX />
-              <span>退出</span>
-            </BackButton>
+            <Button variant="outline" size="small" onClick={handleExit} leftIcon={<FiX />}>
+              退出
+            </Button>
             <Title>
-              <input
+              <Input
                 type="text"
                 placeholder="请输入文章标题..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                variant="flushed"
+                size="large"
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  padding: '8px 0',
+                }}
               />
             </Title>
           </LeftSection>
@@ -355,11 +361,11 @@ const ArticleEditorPage: React.FC = () => {
                     摘要
                     <OptionalTag>（建议填写）</OptionalTag>
                   </Label>
-                  <textarea
+                  <Textarea
                     placeholder="请输入文章摘要，帮助读者快速了解文章内容..."
                     value={summary}
                     onChange={(e) => setSummary(e.target.value)}
-                    rows={3}
+                    size="small"
                   />
                 </Field>
 
@@ -387,12 +393,10 @@ const ArticleEditorPage: React.FC = () => {
                     分类
                     <RequiredTag>*</RequiredTag>
                   </Label>
-                  <select
+                  <Select
                     value={categoryId || ''}
                     onChange={(e) => setCategoryId(Number(e.target.value) || null)}
-                    style={{
-                      borderColor: !categoryId ? 'var(--error-color, #f56c6c)' : undefined,
-                    }}
+                    error={!categoryId}
                   >
                     <option value="">请选择分类</option>
                     {categories.map((cat) => (
@@ -400,7 +404,7 @@ const ArticleEditorPage: React.FC = () => {
                         {cat.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   {!categoryId && <FieldHint className="error">必须选择文章分类</FieldHint>}
                 </Field>
 
@@ -465,58 +469,9 @@ const LeftSection = styled.div`
   min-width: 0;
 `;
 
-const BackButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    background: var(--bg-secondary);
-  }
-
-  svg {
-    font-size: 18px;
-  }
-`;
-
 const Title = styled.div`
   flex: 1;
   min-width: 0;
-
-  input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--text-primary);
-    font-size: 18px;
-    font-weight: 600;
-    transition: all 0.2s;
-
-    &:hover {
-      background: var(--bg-secondary);
-    }
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      background: var(--bg-primary);
-    }
-
-    &::placeholder {
-      color: var(--text-secondary);
-      font-weight: normal;
-    }
-  }
 `;
 
 const RightSection = styled.div`

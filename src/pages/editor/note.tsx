@@ -256,10 +256,9 @@ const NoteEditorPage: React.FC = () => {
         {/* 顶部工具栏 */}
         <TopBar>
           <LeftSection>
-            <BackButton onClick={handleExit}>
-              <FiX />
-              <span>退出</span>
-            </BackButton>
+            <Button variant="outline" size="small" onClick={handleExit} leftIcon={<FiX />}>
+              退出
+            </Button>
             <Title>
               <input
                 type="text"
@@ -444,28 +443,6 @@ const LeftSection = styled.div`
   gap: 16px;
   flex: 1;
   min-width: 0;
-`;
-
-const BackButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    background: var(--bg-secondary);
-  }
-
-  svg {
-    font-size: 18px;
-  }
 `;
 
 const Title = styled.div`

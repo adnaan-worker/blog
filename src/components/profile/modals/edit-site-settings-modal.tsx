@@ -52,10 +52,6 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
-const StyledTextarea = styled(Textarea)`
-  min-height: 80px;
-`;
-
 const TagsContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -213,7 +209,7 @@ export const EditSiteSettingsModal: React.FC<EditSiteSettingsModalProps> = ({
               value={formData.authorBio || ''}
               onChange={(e) => handleChange('authorBio', e.target.value)}
               placeholder="热衷于探索前沿Web技术..."
-              rows={3}
+              size="small"
             />
           </FormGroup>
           <FormGroup>
@@ -320,7 +316,7 @@ export const EditSiteSettingsModal: React.FC<EditSiteSettingsModalProps> = ({
               value={formData.quote || ''}
               onChange={(e) => handleChange('quote', e.target.value)}
               placeholder="请保持理性，冰冷的数字总是比七彩门的炫法走得更久。"
-              rows={2}
+              size="small"
             />
           </FormGroup>
           <FormGroup>

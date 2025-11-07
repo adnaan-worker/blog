@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch, FiX, FiFilter, FiChevronDown } from 'react-icons/fi';
+import { Input, Button } from 'adnaan-ui';
 import { SPRING_PRESETS } from '@/utils/ui/animation';
 import { usePageInfo } from '@/hooks/usePageInfo';
 
@@ -160,39 +161,6 @@ const FilterArea = styled.div`
 `;
 
 // 筛选折叠按钮
-const FilterToggle = styled(motion.button)`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.85rem;
-  border-radius: 4px;
-  border: none;
-  background: rgba(var(--border-color-rgb, 229, 231, 235), 0.1);
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-
-  &:hover {
-    background: rgba(var(--accent-rgb), 0.1);
-    color: var(--accent-color);
-  }
-
-  svg {
-    font-size: 0.9rem;
-    transition: transform 0.3s ease;
-  }
-
-  [data-theme='dark'] & {
-    background: rgba(255, 255, 255, 0.05);
-
-    &:hover {
-      background: rgba(var(--accent-rgb), 0.15);
-    }
-  }
-`;
 
 const FilterContent = styled(motion.div)`
   display: flex;
@@ -223,64 +191,9 @@ const FilterOptions = styled.div`
   flex: 1;
 `;
 
-const FilterOption = styled(motion.button)<{ active?: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
-  border: none;
-  background: ${(props) => (props.active ? 'rgba(var(--accent-rgb), 0.12)' : 'transparent')};
-  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  font-size: 0.8rem;
-  font-weight: ${(props) => (props.active ? '600' : '400')};
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-
-  &:hover {
-    background: rgba(var(--accent-rgb), 0.08);
-    color: var(--accent-color);
-  }
-
-  svg {
-    font-size: 0.85rem;
-    opacity: 0.8;
-  }
-`;
-
 const SearchContainer = styled.div`
   position: relative;
   flex: 1;
-`;
-
-const SearchInput = styled.input`
-  width: 100%;
-  padding: 0.5rem 2.25rem 0.5rem 0.85rem;
-  border-radius: 4px;
-  border: none;
-  background: rgba(var(--border-color-rgb, 229, 231, 235), 0.1);
-  color: var(--text-primary);
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
-
-  &:focus {
-    outline: none;
-    background: rgba(var(--accent-rgb), 0.08);
-  }
-
-  &::placeholder {
-    color: var(--text-tertiary);
-    opacity: 0.6;
-  }
-
-  [data-theme='dark'] & {
-    background: rgba(255, 255, 255, 0.05);
-
-    &:focus {
-      background: rgba(var(--accent-rgb), 0.12);
-    }
-  }
 `;
 
 const SearchIcon = styled.div`
@@ -427,16 +340,23 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
             <FilterLabel>{group.label}</FilterLabel>
             <FilterOptions>
               {group.options?.map((option) => (
-                <FilterOption
+                <Button
                   key={option.value}
-                  active={filterValues[group.key] === option.value}
+                  variant="ghost"
+                  size="small"
                   onClick={() => handleSingleSelect(group.key, option.value)}
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
+                  style={{
+                    padding: '0.35rem 0.75rem',
+                    fontSize: '0.8rem',
+                    background:
+                      filterValues[group.key] === option.value ? 'rgba(var(--accent-rgb), 0.12)' : 'transparent',
+                    color: filterValues[group.key] === option.value ? 'var(--accent-color)' : 'var(--text-secondary)',
+                    fontWeight: filterValues[group.key] === option.value ? '600' : '400',
+                  }}
+                  leftIcon={option.icon}
                 >
-                  {option.icon}
                   {option.label}
-                </FilterOption>
+                </Button>
               ))}
             </FilterOptions>
           </FilterGroup>
@@ -448,25 +368,34 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
           <FilterGroup key={group.key}>
             <FilterLabel>{group.label}</FilterLabel>
             <SearchContainer>
-              <SearchInput
+              <Input
                 type="text"
                 placeholder={group.placeholder || '搜索...'}
-                defaultValue={searchValue}
+                value={searchValue || ''}
                 onChange={(e) => handleSearch(group.key, e.target.value)}
+                variant="filled"
+                size="small"
+                rightElement={
+                  searchValue ? (
+                    <ClearButton
+                      onClick={() => handleClearSearch(group.key)}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    >
+                      <FiX size={16} />
+                    </ClearButton>
+                  ) : (
+                    <SearchIcon>
+                      <FiSearch size={16} />
+                    </SearchIcon>
+                  )
+                }
+                style={{
+                  fontSize: '0.8rem',
+                  background: 'rgba(var(--border-color-rgb, 229, 231, 235), 0.1)',
+                }}
               />
-              {searchValue ? (
-                <ClearButton
-                  onClick={() => handleClearSearch(group.key)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <FiX />
-                </ClearButton>
-              ) : (
-                <SearchIcon>
-                  <FiSearch />
-                </SearchIcon>
-              )}
             </SearchContainer>
           </FilterGroup>
         );
@@ -506,22 +435,29 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
       {/* 右侧：筛选区域 */}
       {hasFilters && (
         <FilterArea>
-          <FilterToggle
+          <Button
+            variant="ghost"
+            size="small"
             onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            style={{
+              padding: '0.5rem 0.85rem',
+              fontSize: '0.8rem',
+              background: 'rgba(var(--border-color-rgb, 229, 231, 235), 0.1)',
+              color: 'var(--text-secondary)',
+            }}
+            leftIcon={<FiFilter />}
+            rightIcon={
+              <motion.div
+                animate={{ rotate: isFilterExpanded ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ display: 'flex' }}
+              >
+                <FiChevronDown />
+              </motion.div>
+            }
           >
-            <FiFilter />
-            筛选
-            {activeFilterCount > 0 && ` (${activeFilterCount})`}
-            <motion.div
-              animate={{ rotate: isFilterExpanded ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-              style={{ display: 'flex' }}
-            >
-              <FiChevronDown />
-            </motion.div>
-          </FilterToggle>
+            筛选{activeFilterCount > 0 && ` (${activeFilterCount})`}
+          </Button>
 
           <AnimatePresence>
             {isFilterExpanded && (

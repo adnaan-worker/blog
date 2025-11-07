@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
+import { Input, Button } from 'adnaan-ui';
 
 const InputPanelContainer = styled.div`
   display: flex;
@@ -10,46 +11,6 @@ const InputPanelContainer = styled.div`
   border-bottom: 1px solid var(--border-color);
   position: relative;
   z-index: 90;
-
-  input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 14px;
-
-    &:focus {
-      outline: none;
-      border-color: var(--accent-color);
-      box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
-    }
-  }
-
-  button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    background: var(--accent-color);
-    color: var(--text-on-accent);
-    cursor: pointer;
-    font-size: 14px;
-    transition: opacity 0.2s;
-
-    &:hover {
-      opacity: 0.9;
-    }
-
-    &:last-child {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-
-      &:hover {
-        background: var(--bg-secondary);
-      }
-    }
-  }
 `;
 
 interface InputPanelProps {
@@ -78,16 +39,22 @@ export const InputPanel: React.FC<InputPanelProps> = ({ type, value, onChange, o
 
   return (
     <InputPanelContainer>
-      <input
+      <Input
         ref={inputRef}
         type="url"
         placeholder={type === 'link' ? '输入链接地址 (https://...)' : '输入图片地址 (https://...)'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
+        size="small"
+        style={{ flex: 1 }}
       />
-      <button onClick={onConfirm}>插入</button>
-      <button onClick={onCancel}>取消</button>
+      <Button variant="primary" size="small" onClick={onConfirm}>
+        插入
+      </Button>
+      <Button variant="secondary" size="small" onClick={onCancel}>
+        取消
+      </Button>
     </InputPanelContainer>
   );
 };

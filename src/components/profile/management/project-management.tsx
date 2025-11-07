@@ -481,7 +481,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ project, onClose, o
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="简要描述项目"
-            rows={3}
+            size="small"
           />
         </FormGroup>
 
@@ -758,7 +758,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({ project, onClose, o
               })
             }
             placeholder="精美设计, TypeScript 支持, 响应式设计"
-            rows={3}
+            size="small"
           />
         </FormGroup>
       </FormContainer>

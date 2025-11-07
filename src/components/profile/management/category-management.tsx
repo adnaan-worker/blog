@@ -126,31 +126,6 @@ const Actions = styled.div`
   }
 `;
 
-const IconButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--accent-color);
-    color: var(--accent-color);
-  }
-
-  &.danger:hover {
-    border-color: rgb(239, 68, 68);
-    color: rgb(239, 68, 68);
-  }
-`;
-
 const FormGroup = styled.div`
   margin-bottom: 1.25rem;
 `;
@@ -301,12 +276,34 @@ const CategoryManagement: React.FC = () => {
                     </ArticleCount>
 
                     <Actions onClick={(e) => e.stopPropagation()}>
-                      <IconButton onClick={() => handleEdit(category)}>
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        onClick={() => handleEdit(category)}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          padding: 0,
+                          minWidth: 'auto',
+                          minHeight: 'auto',
+                        }}
+                      >
                         <FiEdit2 size={16} />
-                      </IconButton>
-                      <IconButton className="danger" onClick={() => handleDelete(category.id)}>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="small"
+                        onClick={() => handleDelete(category.id)}
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          padding: 0,
+                          minWidth: 'auto',
+                          minHeight: 'auto',
+                        }}
+                      >
                         <FiTrash2 size={16} />
-                      </IconButton>
+                      </Button>
                     </Actions>
                   </CardFooter>
                 </Card>
@@ -371,7 +368,7 @@ const CategoryManagement: React.FC = () => {
             placeholder="请输入分类描述（可选）"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={4}
+            size="small"
           />
         </FormGroup>
       </Modal>

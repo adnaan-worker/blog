@@ -113,22 +113,6 @@ const Tag = styled.span`
   font-size: 0.875rem;
 `;
 
-const TagRemoveButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: white;
-  cursor: pointer;
-  font-size: 1rem;
-
-  &:hover {
-    opacity: 0.8;
-  }
-`;
-
 const AddTagRow = styled.div`
   display: flex;
   gap: 0.5rem;
@@ -286,7 +270,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
             value={formData.authorBio || ''}
             onChange={(e) => handleChange('authorBio', e.target.value)}
             placeholder="热衷于探索前沿Web技术..."
-            rows={3}
+            size="small"
           />
         </FormGroup>
         <FormGroup>
@@ -347,9 +331,20 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
             {(formData.skills || []).map((skill, index) => (
               <Tag key={index}>
                 {skill}
-                <TagRemoveButton type="button" onClick={() => removeSkill(index)}>
+                <Button
+                  variant="ghost"
+                  size="small"
+                  type="button"
+                  onClick={() => removeSkill(index)}
+                  style={{
+                    padding: 0,
+                    minWidth: 'auto',
+                    minHeight: 'auto',
+                    color: 'white',
+                  }}
+                >
                   ×
-                </TagRemoveButton>
+                </Button>
               </Tag>
             ))}
           </TagsContainer>
@@ -419,7 +414,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
             value={formData.quote || ''}
             onChange={(e) => handleChange('quote', e.target.value)}
             placeholder="请保持理性，冰冷的数字总是比七彩门的炫法走得更久。"
-            rows={2}
+            size="small"
           />
         </FormGroup>
         <FormGroup>

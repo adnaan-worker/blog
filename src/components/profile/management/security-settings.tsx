@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiLock, FiDownload, FiTrash2, FiAlertTriangle, FiShield } from 'react-icons/fi';
 import { Button, Input } from 'adnaan-ui';
 import { API } from '@/utils/api';
+import { storage } from '@/utils';
 
 // 样式组件
 const Container = styled.div`
@@ -139,6 +140,8 @@ interface SecuritySettingsProps {
 
 const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
   const navigate = useNavigate();
+  const userInfo = storage.local.get<any>('userInfo');
+  const username = userInfo?.username || userInfo?.email || '';
 
   // 修改密码状态
   const [currentPassword, setCurrentPassword] = useState('');
@@ -292,42 +295,61 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
             </div>
           </SectionHeader>
 
-          <FormGroup>
-            <Label>当前密码</Label>
-            <Input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="请输入当前密码"
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleChangePassword();
+            }}
+          >
+            <input
+              type="text"
+              name="username"
+              value={username}
+              autoComplete="username"
+              readOnly
+              style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, width: 0 }}
+              tabIndex={-1}
+              aria-hidden="true"
             />
-          </FormGroup>
+            <FormGroup>
+              <Label>当前密码</Label>
+              <Input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="请输入当前密码"
+                autoComplete="current-password"
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <Label>新密码</Label>
-            <Input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="请输入新密码（至少8个字符）"
-            />
-          </FormGroup>
+            <FormGroup>
+              <Label>新密码</Label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="请输入新密码（至少8个字符）"
+                autoComplete="new-password"
+              />
+            </FormGroup>
 
-          <FormGroup>
-            <Label>确认新密码</Label>
-            <Input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="请再次输入新密码"
-            />
-          </FormGroup>
+            <FormGroup>
+              <Label>确认新密码</Label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="请再次输入新密码"
+                autoComplete="new-password"
+              />
+            </FormGroup>
 
-          <ButtonGroup>
-            <Button variant="primary" onClick={handleChangePassword} isLoading={isChangingPassword}>
-              <FiLock size={16} />
-              修改密码
-            </Button>
-          </ButtonGroup>
+            <ButtonGroup>
+              <Button type="submit" variant="primary" isLoading={isChangingPassword} leftIcon={<FiLock size={16} />}>
+                修改密码
+              </Button>
+            </ButtonGroup>
+          </form>
         </Section>
 
         {/* 数据导出 */}
@@ -384,22 +406,45 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
             </div>
           </DangerBox>
 
-          <FormGroup>
-            <Label style={{ color: 'var(--error-color)' }}>输入密码确认删除</Label>
-            <Input
-              type="password"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              placeholder="请输入您的密码"
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleDeleteAccount();
+            }}
+          >
+            <input
+              type="text"
+              name="username"
+              value={username}
+              autoComplete="username"
+              readOnly
+              style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', height: 0, width: 0 }}
+              tabIndex={-1}
+              aria-hidden="true"
             />
-          </FormGroup>
+            <FormGroup>
+              <Label style={{ color: 'var(--error-color)' }}>输入密码确认删除</Label>
+              <Input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder="请输入您的密码"
+                autoComplete="current-password"
+              />
+            </FormGroup>
 
-          <ButtonGroup>
-            <Button variant="danger" onClick={handleDeleteAccount} isLoading={isDeleting} disabled={!deletePassword}>
-              <FiTrash2 size={16} />
-              永久删除账户
-            </Button>
-          </ButtonGroup>
+            <ButtonGroup>
+              <Button
+                type="submit"
+                variant="danger"
+                isLoading={isDeleting}
+                disabled={!deletePassword}
+                leftIcon={<FiTrash2 size={16} />}
+              >
+                永久删除账户
+              </Button>
+            </ButtonGroup>
+          </form>
         </Section>
       </Content>
     </Container>

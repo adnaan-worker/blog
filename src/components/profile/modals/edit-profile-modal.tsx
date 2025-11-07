@@ -104,11 +104,6 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
-const StyledTextArea = styled(Textarea)`
-  min-height: 80px;
-  font-size: 0.875rem;
-`;
-
 const ErrorMessage = styled.div`
   color: var(--error-color);
   font-size: 0.75rem;
@@ -290,11 +285,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
           <FormField>
             <Label>个人简介</Label>
-            <StyledTextArea
+            <Textarea
               value={formData.bio}
               onChange={(e) => handleInputChange('bio', e.target.value)}
               placeholder="介绍一下自己..."
               maxLength={500}
+              size="small"
+              style={{ minHeight: '80px', fontSize: '0.875rem' }}
             />
           </FormField>
         </FormSection>

@@ -281,29 +281,6 @@ const CommentActions = styled.div`
   }
 `;
 
-const ActionButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1875rem;
-  padding: 0.1875rem 0.4375rem;
-  background: transparent;
-  border: none;
-  color: var(--text-tertiary);
-  font-size: 0.6875rem;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(var(--accent-rgb), 0.08);
-    color: var(--accent-color);
-  }
-
-  svg {
-    font-size: 0.8125rem;
-  }
-`;
-
 // 回复表单容器
 const ReplyFormContainer = styled(motion.div)`
   margin-top: 0.75rem;
@@ -674,18 +651,27 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
             {/* 操作按钮 */}
             <CommentActions className="comment-actions">
-              <ActionButton
+              <Button
+                variant="ghost"
+                size="small"
                 onClick={() => setReplyingTo(replyingTo === Number(comment.id) ? null : Number(comment.id))}
                 title="回复"
+                style={{ padding: '0.1875rem 0.4375rem', fontSize: '0.6875rem', minHeight: 'auto' }}
               >
                 <FiCornerDownRight />
                 回复
-              </ActionButton>
+              </Button>
               {isOwner && (
-                <ActionButton onClick={() => handleDelete(Number(comment.id))} title="删除">
+                <Button
+                  variant="ghost"
+                  size="small"
+                  onClick={() => handleDelete(Number(comment.id))}
+                  title="删除"
+                  style={{ padding: '0.1875rem 0.4375rem', fontSize: '0.6875rem', minHeight: 'auto' }}
+                >
                   <FiTrash2 />
                   删除
-                </ActionButton>
+                </Button>
               )}
             </CommentActions>
 
@@ -753,7 +739,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
                         setReplyText(e.target.value);
                       }}
                       onClick={(e) => e.stopPropagation()} // 阻止事件冒泡
-                      rows={3}
                       size="small"
                       fullWidth
                     />
@@ -839,7 +824,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
           placeholder={isLoggedIn ? '写下你的评论...' : '写下你的评论...'}
           value={commentText}
           onChange={(e) => setCommentText(e.target.value)}
-          rows={3}
           size="small"
           fullWidth
         />

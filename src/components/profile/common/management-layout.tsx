@@ -175,34 +175,6 @@ const SearchBox = styled.div`
   }
 `;
 
-const StyledSearchInput = styled(Input)`
-  background: var(--bg-secondary);
-  font-size: 0.875rem;
-
-  &:focus {
-    background: var(--bg-primary);
-  }
-`;
-
-const FilterButton = styled.button<{ active?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
-  color: ${(props) => (props.active ? 'white' : 'var(--text-secondary)')};
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: var(--accent-color);
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.1)')};
-  }
-`;
-
 const FilterBar = styled.div<{ showCard?: boolean }>`
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
@@ -211,63 +183,6 @@ const FilterBar = styled.div<{ showCard?: boolean }>`
   gap: 1rem;
   flex-wrap: wrap;
   background: ${(props) => (props.showCard ? 'transparent' : 'var(--bg-primary)')};
-`;
-
-const FilterTag = styled.button<{ active?: boolean }>`
-  padding: 0.3rem 0.8rem;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  background: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--bg-secondary)')};
-  color: ${(props) => (props.active ? 'white' : 'var(--text-secondary)')};
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: var(--accent-color);
-    background: ${(props) => (props.active ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.1)')};
-  }
-`;
-
-const ActionButton = styled(motion.button)<{ variant?: 'primary' | 'secondary' }>`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border-radius: 8px;
-  border: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-
-  ${(props) =>
-    props.variant === 'primary'
-      ? `
-    background: var(--accent-color);
-    color: white;
-    
-    &:hover:not(:disabled) {
-      background: var(--accent-color-hover);
-      transform: translateY(-1px);
-    }
-  `
-      : `
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-color);
-    
-    &:hover:not(:disabled) {
-      background: var(--bg-tertiary);
-      border-color: var(--accent-color);
-    }
-  `}
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 `;
 
 const Content = styled.div<{ showCard?: boolean }>`
@@ -329,16 +244,18 @@ export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
             )}
           </HeaderLeft>
           {createButton || (
-            <ActionButton variant="primary" onClick={onAdd} {...hoverScale}>
-              <FiPlus />
+            <Button variant="primary" size="small" onClick={onAdd} leftIcon={<FiPlus />}>
               添加
-            </ActionButton>
+            </Button>
           )}
         </HeaderTop>
 
         <HeaderRight>
           <SearchBox>
-            <StyledSearchInput
+            <Input
+              variant="filled"
+              size="small"
+              style={{ fontSize: '0.875rem' }}
               type="text"
               placeholder={searchPlaceholder}
               value={searchValue}
@@ -347,15 +264,24 @@ export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
             />
           </SearchBox>
           {onToggleFilters && (
-            <FilterButton active={showFilters} onClick={onToggleFilters}>
-              <FiFilter size={14} />
-              <span style={{ marginLeft: '0.25rem' }}>筛选</span>
-            </FilterButton>
+            <Button
+              variant={showFilters ? 'primary' : 'secondary'}
+              size="small"
+              onClick={onToggleFilters}
+              leftIcon={<FiFilter size={14} />}
+            >
+              筛选
+            </Button>
           )}
-          <ActionButton variant="secondary" onClick={onRefresh} disabled={loading} {...hoverScale}>
-            <FiRefreshCw style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={onRefresh}
+            disabled={loading}
+            leftIcon={<FiRefreshCw style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />}
+          >
             刷新
-          </ActionButton>
+          </Button>
         </HeaderRight>
       </Header>
 
@@ -370,17 +296,32 @@ export const ManagementLayout: React.FC<ManagementLayoutProps> = ({
             <FilterBar showCard={showCard}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>状态：</span>
-                <FilterTag active={selectedFilter === ''} onClick={() => onFilterChange?.('')}>
+                <Button
+                  variant={selectedFilter === '' ? 'primary' : 'secondary'}
+                  size="small"
+                  onClick={() => onFilterChange?.('')}
+                  style={{
+                    padding: '0.3rem 0.8rem',
+                    fontSize: '0.8rem',
+                    borderRadius: '20px',
+                  }}
+                >
                   全部
-                </FilterTag>
+                </Button>
                 {filterOptions.map((option) => (
-                  <FilterTag
+                  <Button
                     key={option.key}
-                    active={selectedFilter === option.key}
+                    variant={selectedFilter === option.key ? 'primary' : 'secondary'}
+                    size="small"
                     onClick={() => onFilterChange?.(selectedFilter === option.key ? '' : option.key)}
+                    style={{
+                      padding: '0.3rem 0.8rem',
+                      fontSize: '0.8rem',
+                      borderRadius: '20px',
+                    }}
                   >
                     {option.label}
-                  </FilterTag>
+                  </Button>
                 ))}
               </div>
             </FilterBar>
