@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiCalendar, FiTag, FiMapPin, FiCloud, FiHeart, FiEdit3, FiClock, FiEye } from 'react-icons/fi';
+import { FiCalendar, FiTag, FiMapPin, FiCloud, FiHeart, FiEdit3, FiClock, FiEye } from 'react-icons/fi';
 import styled from '@emotion/styled';
 import { API } from '@/utils/api';
 import type { Note } from '@/types';
@@ -9,8 +9,13 @@ import LazyRichTextRenderer from '@/components/rich-text/lazy-rich-text-renderer
 import RichTextContent from '@/components/rich-text/rich-text-content';
 import RichTextStats from '@/components/rich-text/rich-text-stats';
 import { useAnimationEngine } from '@/utils/ui/animation';
-import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/blog/detail-page-layout';
-import DetailNoiseBackground from '@/components/blog/detail-noise-background';
+import {
+  DetailPageLayout,
+  DetailMainContent,
+  DetailSidebar,
+  DetailBackLink,
+  DetailNoiseBackground,
+} from '@/components/content';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { getTimeAgo } from '@/utils';
 import { RichTextParser } from '@/utils/editor/parser';
@@ -26,30 +31,6 @@ const PageContainer = styled(motion.div)`
 
   @media (max-width: 768px) {
     padding: 15px 1rem 3rem;
-  }
-`;
-
-// 返回链接 - 优化样式
-const BackLink = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 0.5rem 0;
-
-  svg {
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  &:hover {
-    color: var(--accent-color);
-
-    svg {
-      transform: translateX(-4px);
-    }
   }
 `;
 
@@ -653,9 +634,7 @@ const NoteDetail: React.FC = () => {
         <DetailPageLayout showBackground={true} mainContent={<></>}>
           <DetailNoiseBackground />
           <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
-            <BackLink to="/notes">
-              <FiArrowLeft size={16} /> 返回手记列表
-            </BackLink>
+            <DetailBackLink to="/notes" label="返回手记列表" />
 
             <NoteLayout>
               {/* 主内容区 - 向上弹性划出 */}

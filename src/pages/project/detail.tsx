@@ -9,7 +9,6 @@ import {
   FiGitBranch,
   FiEye,
   FiCalendar,
-  FiArrowLeft,
   FiPackage,
   FiBook,
   FiCode,
@@ -25,8 +24,13 @@ import type { Project } from '@/types';
 import { formatDate } from '@/utils';
 import LazyRichTextRenderer from '@/components/rich-text/lazy-rich-text-renderer';
 import { RichTextContent } from '@/components/rich-text/rich-text-content';
-import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/blog/detail-page-layout';
-import DetailNoiseBackground from '@/components/blog/detail-noise-background';
+import {
+  DetailPageLayout,
+  DetailMainContent,
+  DetailSidebar,
+  DetailBackLink,
+  DetailNoiseBackground,
+} from '@/components/content';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { SEO, ProjectDetailSkeleton } from '@/components/common';
 import { useAnimationEngine } from '@/utils/ui/animation';
@@ -42,21 +46,6 @@ const PageContainer = styled(motion.div)`
 
   @media (max-width: 768px) {
     padding: 15px 1rem 3rem;
-  }
-`;
-
-const BackLink = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: var(--accent-color);
-    transform: translateX(-3px);
   }
 `;
 
@@ -598,9 +587,7 @@ const ProjectDetail: React.FC = () => {
         <DetailPageLayout showBackground={true} mainContent={<></>}>
           <DetailNoiseBackground />
           <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
-            <BackLink to="/projects">
-              <FiArrowLeft /> 返回项目列表
-            </BackLink>
+            <DetailBackLink to="/projects" label="返回项目列表" />
 
             {/* 项目布局 - 参考手记详情页结构 */}
             <ProjectLayout>

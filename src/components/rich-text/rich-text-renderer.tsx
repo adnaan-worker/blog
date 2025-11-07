@@ -4,7 +4,7 @@ import parse, { HTMLReactParserOptions, Element, domToReact } from 'html-react-p
 import 'highlight.js/styles/atom-one-dark.css';
 import '@/styles/rich-text.css';
 import { RichTextParser } from '@/utils/editor/parser';
-import ImagePreview from '../blog/image-preview';
+import { ImagePreview } from '@/components/content';
 import { FiCopy, FiCheck, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
 // 代码块容器

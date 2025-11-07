@@ -97,8 +97,8 @@ import {
   CategoryManagement,
   TagManagement,
   ProjectManagement,
-} from '@/components/profile';
-import type { EditProfileForm } from '@/components/profile/types';
+} from './modules';
+import type { EditProfileForm } from './modules/types';
 import { useUserRole } from '@/hooks/useUserRole';
 
 const ProfileContainer = styled.div`
@@ -1943,7 +1943,7 @@ const Profile: React.FC = () => {
                 </DrawerHeader>
 
                 <QuickActions
-                  onAction={(action) => {
+                  onAction={(action: string) => {
                     setRightDrawerOpen(false);
                     handleQuickAction(action);
                   }}

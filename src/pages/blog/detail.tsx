@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useRef, RefObject, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiArrowLeft, FiChevronLeft, FiChevronRight, FiHeart, FiBookmark, FiShare2 } from 'react-icons/fi';
-import ArticleContent from '@/components/blog/article-content';
-import ArticleToc from '@/components/blog/article-toc';
-import CommentSection from '@/components/blog/comment-section';
+import { FiHeart, FiBookmark, FiShare2 } from 'react-icons/fi';
+import { ArticleContent, ArticleToc } from './modules';
+import { CommentSection } from '@/components/content';
 import styled from '@emotion/styled';
 import { API } from '@/utils/api';
 import type { Article } from '@/types';
 import { useAnimationEngine } from '@/utils/ui/animation';
-import { DetailPageLayout, DetailMainContent, DetailSidebar } from '@/components/blog/detail-page-layout';
-import DetailNoiseBackground from '@/components/blog/detail-noise-background';
+import {
+  DetailPageLayout,
+  DetailMainContent,
+  DetailSidebar,
+  DetailBackLink,
+  DetailNavigation,
+  DetailNoiseBackground,
+} from '@/components/content';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { SEO, ArticleDetailSkeleton } from '@/components/common';
 
@@ -19,86 +24,6 @@ const PageContainer = styled(motion.div)`
   max-width: var(--max-width);
   margin: 0 auto;
   padding-top: 50px;
-`;
-
-// 文章导航按钮
-const ArticleNavigation = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin: 2rem 0;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 1rem;
-  }
-`;
-
-// 导航按钮
-const NavButton = styled(Link)`
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  max-width: 300px;
-
-  &:hover {
-    background: var(--accent-color-hover);
-    color: var(--text-primary);
-    transform: translateY(-2px);
-  }
-
-  &.prev {
-    padding-left: 1rem;
-  }
-
-  &.next {
-    padding-right: 1rem;
-    text-align: right;
-    margin-left: auto;
-  }
-
-  .nav-text {
-    display: flex;
-    flex-direction: column;
-
-    .title {
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 250px;
-    }
-
-    .label {
-      font-size: 0.8rem;
-      opacity: 0.7;
-    }
-  }
-
-  svg {
-    min-width: 20px;
-  }
-
-  &.prev svg {
-    margin-right: 0.5rem;
-  }
-
-  &.next svg {
-    margin-left: 0.5rem;
-  }
-
-  @media (max-width: 768px) {
-    max-width: 100%;
-    width: 100%;
-
-    &.next {
-      margin-left: 0;
-    }
-  }
 `;
 
 // 文章布局容器
@@ -297,22 +222,6 @@ const BookmarkActions = styled(motion.div)`
 
   [data-theme='dark'] & {
     background: rgba(var(--accent-rgb), 0.08);
-  }
-`;
-
-// 返回链接
-const BackLink = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: var(--accent-color);
-    transform: translateX(-3px);
   }
 `;
 
@@ -693,9 +602,7 @@ const BlogDetail: React.FC = () => {
         <NotFoundContainer>
           <h2>加载失败</h2>
           <p>{error}</p>
-          <BackLink to="/blog">
-            <FiArrowLeft /> 返回博客列表
-          </BackLink>
+          <DetailBackLink to="/blog" label="返回博客列表" />
         </NotFoundContainer>
       </PageContainer>
     );
@@ -733,27 +640,11 @@ const BlogDetail: React.FC = () => {
                   />
 
                   {/* 上一篇/下一篇文章导航 */}
-                  <ArticleNavigation>
-                    {prevArticle && (
-                      <NavButton to={`/blog/${prevArticle.id}`} className="prev">
-                        <FiChevronLeft size={20} />
-                        <div className="nav-text">
-                          <span className="label">上一篇</span>
-                          <span className="title">{prevArticle.title}</span>
-                        </div>
-                      </NavButton>
-                    )}
-
-                    {nextArticle && (
-                      <NavButton to={`/blog/${nextArticle.id}`} className="next">
-                        <div className="nav-text">
-                          <span className="label">下一篇</span>
-                          <span className="title">{nextArticle.title}</span>
-                        </div>
-                        <FiChevronRight size={20} />
-                      </NavButton>
-                    )}
-                  </ArticleNavigation>
+                  <DetailNavigation
+                    prevItem={prevArticle ? { id: prevArticle.id, title: prevArticle.title } : undefined}
+                    nextItem={nextArticle ? { id: nextArticle.id, title: nextArticle.title } : undefined}
+                    basePath="/blog"
+                  />
 
                   {/* 相关文章 */}
                   {relatedArticles.length > 0 && (

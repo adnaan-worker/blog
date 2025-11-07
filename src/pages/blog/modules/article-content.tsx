@@ -5,7 +5,7 @@ import { FiCalendar, FiClock, FiTag, FiUser, FiEye } from 'react-icons/fi';
 import { RiRobot2Line } from 'react-icons/ri';
 import LazyRichTextRenderer from '@/components/rich-text/lazy-rich-text-renderer';
 import RichTextContent from '@/components/rich-text/rich-text-content';
-import ImagePreview from '@/components/blog/image-preview';
+import { ImagePreview } from '@/components/content';
 import type { Article } from '@/types';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import { getTimeAgo, formatDate as formatDateUtil } from '@/utils';

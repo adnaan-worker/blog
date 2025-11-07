@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { MultiYearTimeline } from '@/components/blog';
+import { MultiYearTimeline } from '@/components/content';
 import type { TimelineItem } from '@/utils/helpers/timeline';
 import { ListPageHeader, type FilterGroup, type FilterValues } from '@/components/common';
 import { SEO } from '@/components/common';

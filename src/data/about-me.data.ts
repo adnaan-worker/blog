@@ -2,7 +2,7 @@
  * 关于我 - Mock 数据
  */
 
-import type { TimelineItem } from '@/components/blog/time-line-masonry';
+import type { TimelineItem } from '@/utils/helpers/timeline';
 
 // 个人信息
 export const personalInfo = {
