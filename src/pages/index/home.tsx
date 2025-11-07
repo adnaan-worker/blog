@@ -687,20 +687,6 @@ const Home: React.FC = () => {
     }
   };
 
-  // 加载全站活动
-  const loadActivities = async () => {
-    try {
-      setActivitiesLoading(true);
-      const response = await API.activity.getRecentActivities({ page: 1, limit: 10 });
-      setActivities(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error('加载活动失败:', error);
-      setActivities([]);
-    } finally {
-      setActivitiesLoading(false);
-    }
-  };
-
   // 加载精选项目
   const loadProjects = async () => {
     try {
@@ -741,8 +727,6 @@ const Home: React.FC = () => {
       await loadArticles();
       if (!isMounted) return;
       await loadNotes();
-      if (!isMounted) return;
-      await loadActivities();
       if (!isMounted) return;
       await loadProjects();
     };
@@ -1163,7 +1147,8 @@ const Home: React.FC = () => {
 
           {/* 右侧栏 */}
           <RightColumn>
-            <ActivitiesSection activities={activities} loading={activitiesLoading} />
+            {/* ActivitiesSection 现在支持内部数据管理，可以传入空数组让它自己管理 */}
+            <ActivitiesSection />
           </RightColumn>
         </TwoColumnLayout>
 

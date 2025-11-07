@@ -20,3 +20,6 @@ export {
   type FilterOption,
   type FilterValues,
 } from './list-page-header';
+
+// 虚化滚动容器
+export { FadeScrollContainer, type FadeScrollContainerProps } from './fade-scroll-container';

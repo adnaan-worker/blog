@@ -426,9 +426,14 @@ export class AnimationVariants {
       };
     }
 
+    // 移除 x 变换，只使用 opacity 和 scale，避免横向滚动和抖动
     return {
-      hidden: { opacity: 0, x: -20, scale: 0.95 },
-      visible: (custom: number) => ({ opacity: 1, x: 0, scale: 1, transition: { ...spring, delay: custom * 0.05 } }),
+      hidden: { opacity: 0, scale: 0.98 },
+      visible: (custom: number) => ({
+        opacity: 1,
+        scale: 1,
+        transition: { ...spring, delay: custom * 0.05 },
+      }),
     };
   }
 

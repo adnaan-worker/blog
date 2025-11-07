@@ -10,6 +10,7 @@ import { ArticlesSectionProps, NotesSectionProps } from './types';
 // Styled Components
 const ContentSection = styled(motion.section)`
   margin-bottom: 2.5rem;
+  overflow-x: hidden; /* 防止横向滚动条 */
 `;
 
 const SectionTitle = styled(motion.h2)`
@@ -38,6 +39,8 @@ const ArticleGrid = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 0;
+  overflow-x: hidden; /* 防止横向滚动条 */
+  padding: 0 12px;
 `;
 
 const ArticleCard = styled(motion.div)`
@@ -46,8 +49,11 @@ const ArticleCard = styled(motion.div)`
   justify-content: space-between;
   padding: 0.75rem 0;
   border-bottom: 1px solid rgba(229, 231, 235, 0.5);
-  transition: all 0.2s ease;
   position: relative;
+  /* 优化性能，防止抖动 */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 
   /* 左侧彩色指示点 */
   &::before {
@@ -61,7 +67,9 @@ const ArticleCard = styled(motion.div)`
     background: var(--accent-color);
     border-radius: 50%;
     opacity: 0.7;
-    transition: all 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
   }
 
   &:hover {
@@ -198,8 +206,8 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
             key={article.id}
             variants={variants.listItem}
             custom={index}
-            whileHover={{ x: 3, scale: 1.01 }}
-            transition={springPresets.snappy}
+            whileHover={{ scale: 1.005 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
             <ArticleContent>
               <ArticleTitle>{article.title}</ArticleTitle>
@@ -270,8 +278,8 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
             key={note.id}
             variants={variants.listItem}
             custom={index}
-            whileHover={{ x: 3, scale: 1.01 }}
-            transition={springPresets.snappy}
+            whileHover={{ scale: 1.005 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
             <ArticleContent>
               <ArticleTitle>{note.title || '无标题手记'}</ArticleTitle>

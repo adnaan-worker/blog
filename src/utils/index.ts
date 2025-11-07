@@ -37,6 +37,7 @@ export {
   getTimestamp,
   getDaysDiff,
 } from './core/date';
+export { truncateText } from './core/string';
 export { default as scrollLock } from './core/scroll-lock';
 export * from './core/device-id';
 
