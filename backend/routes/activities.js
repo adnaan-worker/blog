@@ -51,5 +51,6 @@ const activityController = require('../controllers/activity.controller');
  *                       type: object
  */
 router.get('/recent', activityController.getRecentActivities);
+router.get('/rooms', activityController.getRoomsInfo);
 
 module.exports = router;

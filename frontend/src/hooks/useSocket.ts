@@ -59,7 +59,7 @@ class SocketManager {
       try {
         listener(this.state);
       } catch (error) {
-        console.error('❌ 状态监听器执行失败:', error);
+        // 静默处理监听器错误，避免影响其他监听器
       }
     });
   }
@@ -72,7 +72,7 @@ class SocketManager {
         try {
           listener(...args);
         } catch (error) {
-          console.error(`❌ 事件监听器执行失败 (${event}):`, error);
+          // 静默处理监听器错误，避免影响其他监听器
         }
       });
     }
@@ -81,7 +81,6 @@ class SocketManager {
   // 设置Socket事件监听
   private setupSocketEvents(socket: Socket) {
     socket.on('connect', () => {
-      console.log('✅ Socket连接成功');
       this.updateState({
         isConnected: true,
         isConnecting: false,
@@ -90,12 +89,11 @@ class SocketManager {
         lastConnected: new Date(),
       });
       this.clearReconnectTimer();
-      this.startConnectionMonitor(); // 启动连接监控
+      this.startConnectionMonitor();
       this.triggerEventListeners('connect');
     });
 
     socket.on('disconnect', (reason) => {
-      console.warn('🔌 Socket断开连接:', reason);
       this.updateState({
         isConnected: false,
         isConnecting: false,
@@ -110,8 +108,6 @@ class SocketManager {
     });
 
     socket.on('connect_error', (error) => {
-      console.error('❌ Socket连接错误:', error.message);
-
       // 检查是否是认证错误
       const isAuthError =
         error.message?.includes('Authentication') || error.message?.includes('Invalid authentication');
@@ -141,9 +137,12 @@ class SocketManager {
       this.lastActivity = new Date();
     });
 
-    // 转发所有其他事件
+    // 转发所有其他事件（优化：减少 Date 对象创建）
     socket.onAny((event, ...args) => {
-      this.lastActivity = new Date(); // 更新活跃时间
+      // 只有特定事件才更新活跃时间，减少对象创建
+      if (event === 'pong' || event === 'visitor_stats_update' || event === 'room_count_update') {
+        this.lastActivity = new Date();
+      }
       this.triggerEventListeners(event, ...args);
     });
   }
@@ -170,9 +169,8 @@ class SocketManager {
           this.socket.emit('ping', { timestamp: Date.now() });
         }
 
-        // 如果超过120秒没有活动，认为连接可能有问题
+        // 如果超过120秒没有活动，认为连接可能有问题，断开重连
         if (timeSinceActivity > 120000) {
-          console.warn('⚠️ Socket连接可能异常，准备重连');
           this.socket.disconnect();
         }
       }
@@ -312,12 +310,11 @@ class SocketManager {
 
   // 发送消息
   public emit(event: string, ...args: any[]): boolean {
-    if (this.socket?.connected) {
-      this.socket.emit(event, ...args);
-      return true;
+    if (!this.socket || !this.state.isConnected) {
+      return false;
     }
-    console.warn(`⚠️ Socket未连接，无法发送事件: ${event}`);
-    return false;
+    this.socket.emit(event, ...args);
+    return true;
   }
 
   // ✅ 清理自动断开定时器
@@ -336,7 +333,6 @@ class SocketManager {
     this.cleanupTimer = setTimeout(() => {
       const totalListeners = this.stateListeners.size + this.eventListeners.size;
       if (totalListeners === 0 && this.refCount === 0) {
-        console.log('📌 Socket无活跃监听器，自动断开连接');
         this.disconnect();
       }
     }, 60000);
@@ -426,9 +422,18 @@ export const useSocket = () => {
   const emit = useCallback((event: string, ...args: any[]) => socketManager.emit(event, ...args), []);
   const reset = useCallback(() => socketManager.reset(), []);
 
+  // 计算连接状态
+  const status = useMemo(() => {
+    if (state.error) return 'error';
+    if (state.isConnecting) return 'connecting';
+    if (state.isConnected) return 'connected';
+    return 'disconnected';
+  }, [state.error, state.isConnecting, state.isConnected]);
+
   return {
     // 状态
     ...state,
+    status,
 
     // 方法
     connect,
@@ -436,7 +441,7 @@ export const useSocket = () => {
     emit,
     reset,
 
-    // Socket实例（高级用法）
+    // Socket实例（高级用法，不推荐直接使用）
     socket: socketManager.getSocket(),
   };
 };
@@ -514,62 +519,23 @@ export const useAutoConnect = (enabled: boolean = true) => {
   return { isConnected, isConnecting, error };
 };
 
-// Socket连接状态管理Hook
-export const useSocketStatus = () => {
-  const { isConnected, isConnecting, error, lastConnected, reconnectAttempts } = useSocket();
-
-  const status = useMemo(() => {
-    if (error) return 'error';
-    if (isConnecting) return 'connecting';
-    if (isConnected) return 'connected';
-    return 'disconnected';
-  }, [isConnected, isConnecting, error]);
-
-  const statusText = useMemo(() => {
-    switch (status) {
-      case 'connected':
-        return '已连接';
-      case 'connecting':
-        return '连接中...';
-      case 'error':
-        return `连接错误: ${error}`;
-      case 'disconnected':
-        return '未连接';
-      default:
-        return '未知状态';
-    }
-  }, [status, error]);
-
-  const connectionInfo = useMemo(
-    () => ({
-      status,
-      statusText,
-      isOnline: isConnected,
-      lastConnected,
-      reconnectAttempts,
-      hasError: !!error,
-    }),
-    [status, statusText, isConnected, lastConnected, reconnectAttempts, error],
-  );
-
-  return connectionInfo;
-};
-
-// 批量事件监听Hook
+// 批量事件监听Hook（简化版）
 export const useSocketEvents = (events: Record<string, (...args: any[]) => void>) => {
   const handlersRef = useRef(events);
   handlersRef.current = events;
 
   useEffect(() => {
     const cleanups: (() => void)[] = [];
+    const eventKeys = Object.keys(events);
 
-    Object.entries(events).forEach(([event, handler]) => {
+    eventKeys.forEach((event) => {
+      const handler = handlersRef.current[event];
       if (event && typeof handler === 'function') {
         const stableHandler = (...args: any[]) => {
           try {
             handlersRef.current[event]?.(...args);
           } catch (error) {
-            console.error(`❌ 批量事件处理器执行失败 (${event}):`, error);
+            // 静默处理事件处理器错误
           }
         };
 
@@ -582,68 +548,6 @@ export const useSocketEvents = (events: Record<string, (...args: any[]) => void>
       cleanups.forEach((cleanup) => cleanup());
     };
   }, [Object.keys(events).join(',')]); // 只在事件名称变化时重新注册
-};
-
-// Socket性能监控Hook
-export const useSocketPerformance = () => {
-  const [metrics, setMetrics] = useState({
-    latency: 0,
-    messageCount: 0,
-    errorCount: 0,
-    uptime: 0,
-  });
-
-  const startTime = useRef(Date.now());
-  const messageCountRef = useRef(0);
-  const errorCountRef = useRef(0);
-
-  useSocketEvent(
-    'pong',
-    useCallback((data: { timestamp: number }) => {
-      const latency = Date.now() - data.timestamp;
-      messageCountRef.current++;
-
-      setMetrics((prev) => ({
-        ...prev,
-        latency,
-        messageCount: messageCountRef.current,
-        uptime: Date.now() - startTime.current,
-      }));
-    }, []),
-  );
-
-  useSocketEvent(
-    'connect_error',
-    useCallback(() => {
-      errorCountRef.current++;
-      setMetrics((prev) => ({
-        ...prev,
-        errorCount: errorCountRef.current,
-      }));
-    }, []),
-  );
-
-  // 发送ping测试延迟
-  const { emit } = useSocket();
-  const measureLatency = useCallback(() => {
-    emit('ping', { timestamp: Date.now() });
-  }, [emit]);
-
-  return {
-    metrics,
-    measureLatency,
-    resetMetrics: useCallback(() => {
-      startTime.current = Date.now();
-      messageCountRef.current = 0;
-      errorCountRef.current = 0;
-      setMetrics({
-        latency: 0,
-        messageCount: 0,
-        errorCount: 0,
-        uptime: 0,
-      });
-    }, []),
-  };
 };
 
 // 导出Socket管理器实例（高级用法）

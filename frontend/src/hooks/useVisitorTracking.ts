@@ -1,24 +1,26 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSocket, useSocketEvent } from './useSocket';
 import { getIPLocation, getBrowser, getDeviceType } from '@/utils/helpers/environment';
+import { getRoomName } from './useRoomCount';
 
 /**
  * 访客追踪 Hook
- * 自动检测并上报访客活动到后端
+ * 自动检测并上报访客活动到后端，使用房间系统进行精确的在线人数统计
  */
 export const useVisitorTracking = () => {
   const location = useLocation();
-  const { socket, isConnected } = useSocket();
+  const { isConnected, emit } = useSocket();
   const hasReportedRef = useRef(false);
   const locationDataRef = useRef<{ city: string } | null>(null);
+  const currentRoomRef = useRef<string | null>(null); // 当前所在的房间
   const lastPathRef = useRef<string>(''); // 记录上次的路径
 
-  // 获取页面标题
-  const getPageTitle = (pathname: string): string => {
+  // 获取页面标题（使用 useMemo 缓存，避免每次渲染都重新计算）
+  const getPageTitle = useCallback((pathname: string): string => {
     if (pathname === '/' || pathname === '/home') return '首页';
-    if (pathname.startsWith('/blog/')) return '博客详情';
-    if (pathname === '/blog') return '博客';
+    if (pathname.startsWith('/blog/')) return '文章详情';
+    if (pathname === '/blog') return '文章';
     if (pathname.startsWith('/notes/')) return '手记详情';
     if (pathname === '/notes') return '手记';
     if (pathname.startsWith('/projects/')) return '项目详情';
@@ -27,12 +29,12 @@ export const useVisitorTracking = () => {
     if (pathname === '/editor') return '编辑器';
     if (pathname === '/about') return '关于';
     return '页面';
-  };
+  }, []);
 
-  // 监听 Socket 断开连接，重置上报标志
+  // 监听 Socket 断开连接，重置状态
   useSocketEvent('disconnect', () => {
     hasReportedRef.current = false;
-    console.log('🔄 Socket 断开，重置访客追踪状态');
+    currentRoomRef.current = null;
   });
 
   // 获取地理位置（仅一次）- 使用统一的 environment 工具类
@@ -44,88 +46,110 @@ export const useVisitorTracking = () => {
             locationDataRef.current = { city: loc.city };
           }
         })
-        .catch((err) => {
-          console.error('获取地理位置失败:', err);
+        .catch(() => {
+          // 地理位置获取失败时使用默认值，静默处理
         });
     }
   }, []);
 
-  // Socket连接后首次上报
+  // 统一的页面处理和房间管理逻辑
   useEffect(() => {
-    if (!socket || !isConnected || hasReportedRef.current) return;
+    if (!isConnected) return;
 
-    const reportActivity = async () => {
+    const handlePageChange = async () => {
       try {
-        // 等待地理位置获取完成（最多等待2秒）
-        let attempts = 0;
-        while (!locationDataRef.current && attempts < 20) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          attempts++;
+        const page = location.pathname;
+        const pageTitle = getPageTitle(page);
+        const newRoomName = getRoomName(page);
+        const oldRoomName = currentRoomRef.current;
+        const isPathChanged = lastPathRef.current !== page;
+
+        // 如果是首次上报，等待地理位置获取（最多等待2秒）
+        if (!hasReportedRef.current) {
+          let attempts = 0;
+          const maxAttempts = 20; // 最多尝试20次，即2秒
+          while (!locationDataRef.current && attempts < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            attempts++;
+          }
         }
 
         const deviceType = getDeviceType();
         const browser = getBrowser();
         const locationCity = locationDataRef.current?.city || '未知';
-        const page = location.pathname;
-        const pageTitle = getPageTitle(page);
 
-        // 记录初始路径
-        lastPathRef.current = page;
+        // 1. 首次上报或路径改变时，发送访客活动数据
+        if (!hasReportedRef.current || isPathChanged) {
+          emit('visitor_activity', {
+            location: locationCity,
+            device: deviceType,
+            browser,
+            page,
+            pageTitle,
+          });
 
-        // 确保 socket 仍然连接
-        if (!socket.connected) {
-          console.warn('⚠️ Socket 已断开，跳过访客活动上报');
-          return;
+          // 更新访客页面信息（仅在路径改变时）
+          if (isPathChanged && hasReportedRef.current) {
+            emit('page_change', {
+              page,
+              pageTitle,
+            });
+          }
         }
 
-        // 发送访客活动数据
-        // deviceId 通过 Socket 连接时的 auth.device_id 传递，后端会从 socket.clientInfo.deviceId 获取
-        socket.emit('visitor_activity', {
-          location: locationCity,
-          device: deviceType,
-          browser,
-          page,
-          pageTitle,
-        });
+        // 2. 房间管理（每次路径改变或首次连接时）
+        if (isPathChanged || !hasReportedRef.current) {
+          // 离开旧房间（仅在路径改变时）
+          if (isPathChanged && oldRoomName && oldRoomName !== newRoomName) {
+            emit('leave', { room: oldRoomName });
+          }
 
-        console.log('✅ 上报访客活动:', {
-          location: locationCity,
-          device: deviceType,
-          browser,
-          page: pageTitle,
-        });
+          // 加入新房间（如果有且与旧房间不同）
+          if (newRoomName && newRoomName !== oldRoomName) {
+            if (emit('join', { room: newRoomName })) {
+              currentRoomRef.current = newRoomName;
+            }
+          } else if (isPathChanged && !newRoomName && oldRoomName) {
+            // 如果新页面没有房间，离开所有房间
+            emit('leave', {});
+            currentRoomRef.current = null;
+          }
+        }
 
+        // 标记已上报
         hasReportedRef.current = true;
+        lastPathRef.current = page;
       } catch (error) {
-        console.error('上报访客活动失败:', error);
+        // 静默处理错误，避免影响用户体验
+        if (process.env.NODE_ENV === 'development') {
+          console.error('处理页面变化失败:', error);
+        }
       }
     };
 
-    // 延迟上报，确保Socket连接稳定
-    const timer = setTimeout(reportActivity, 500);
+    // 延迟处理，确保Socket连接稳定
+    const delay = hasReportedRef.current ? 100 : 500;
+    const timer = setTimeout(handlePageChange, delay);
 
-    return () => clearTimeout(timer);
-  }, [socket, isConnected]); // 监听 socket 和连接状态
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [isConnected, location.pathname, emit, getPageTitle]);
 
-  // 页面切换时更新
+  // 组件卸载时离开房间（使用 cleanup 函数确保资源释放）
   useEffect(() => {
-    if (!socket || !isConnected || !hasReportedRef.current) return;
-
-    const page = location.pathname;
-
-    // 只在路径真正改变时才发送事件
-    if (lastPathRef.current === page) {
-      return;
-    }
-
-    lastPathRef.current = page;
-    const pageTitle = getPageTitle(page);
-
-    socket.emit('page_change', {
-      page,
-      pageTitle,
-    });
-  }, [socket, isConnected, location.pathname]);
+    return () => {
+      // 在组件卸载时离开房间
+      const roomToLeave = currentRoomRef.current;
+      if (roomToLeave) {
+        // 使用 emit 的稳定引用，确保在卸载时也能执行
+        try {
+          emit('leave', { room: roomToLeave });
+        } catch {
+          // 静默处理，避免卸载时出错
+        }
+      }
+    };
+  }, [emit]);
 };
-
 export default useVisitorTracking;

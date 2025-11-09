@@ -21,6 +21,10 @@ class SocketManager {
     this.visitorStatsTimer = null;
     this.pendingVisitorStatsBroadcast = false;
     this.timers = [];
+    // 房间系统：存储房间名 -> Set<socketId>
+    this.rooms = new Map(); // 房间名 -> Set<socketId>
+    // 存储 socketId -> Set<房间名>
+    this.socketRooms = new Map(); // socketId -> Set<房间名>
   }
 
   initialize(server, options = {}) {
@@ -241,7 +245,8 @@ class SocketManager {
 
       // 立即发送一次访客统计数据（新连接时）
       try {
-        const stats = visitorStatsService.getStats();
+        const roomsInfo = this.getRoomsInfo();
+        const stats = visitorStatsService.getStats({ roomCount: roomsInfo });
         socket.emit('visitor_stats_update', stats);
       } catch (error) {
         logger.error('发送初始访客统计失败:', error);
@@ -328,6 +333,7 @@ class SocketManager {
     });
 
     // 处理访客活动上报（前端主动发送完整数据）
+    // 注意：房间管理现在由前端直接通过 join/leave 事件处理，这里不再自动加入房间
     socket.on('visitor_activity', data => {
       try {
         const { location, device, browser, page, pageTitle } = data;
@@ -342,8 +348,6 @@ class SocketManager {
             page,
             pageTitle,
           });
-
-          logger.debug(`📊 收到访客活动: ${location} - ${device} - ${pageTitle}`);
         }
       } catch (error) {
         logger.error('处理访客活动上报失败:', error);
@@ -351,6 +355,7 @@ class SocketManager {
     });
 
     // 处理页面切换事件（前端提供完整数据）
+    // 注意：房间切换现在由前端直接通过 join/leave 事件处理，这里只更新页面信息
     socket.on('page_change', data => {
       try {
         const { page, pageTitle } = data;
@@ -358,20 +363,57 @@ class SocketManager {
 
         if (deviceId && page) {
           visitorStatsService.updateVisitorPage(deviceId, page, pageTitle);
-          logger.debug(`📄 访客切换页面: ${deviceId} -> ${page}`);
         }
       } catch (error) {
         logger.error('处理页面切换事件失败:', error);
       }
     });
 
+    // 处理加入房间事件
+    socket.on('join', data => {
+      try {
+        const { room } = data;
+        if (room) {
+          this.joinRoom(socket, room);
+        }
+      } catch (error) {
+        logger.error('处理加入房间事件失败:', error);
+      }
+    });
+
+    // 处理离开房间事件
+    socket.on('leave', data => {
+      try {
+        const { room } = data;
+        if (room) {
+          this.leaveRoom(socket, room);
+        } else {
+          // 如果没有指定房间，离开所有房间
+          this.leaveAllRooms(socket);
+        }
+      } catch (error) {
+        logger.error('处理离开房间事件失败:', error);
+      }
+    });
+
     // 处理获取访客统计请求
     socket.on('get_visitor_stats', () => {
       try {
-        const stats = visitorStatsService.getStats();
+        const roomsInfo = this.getRoomsInfo();
+        const stats = visitorStatsService.getStats({ roomCount: roomsInfo });
         socket.emit('visitor_stats_update', stats);
       } catch (error) {
         logger.error('获取访客统计失败:', error);
+      }
+    });
+
+    // 处理获取房间信息请求（已集成到 visitor_stats_update 中，保留此接口用于兼容）
+    socket.on('get_rooms_info', () => {
+      try {
+        const roomsInfo = this.getRoomsInfo();
+        socket.emit('rooms_info_update', roomsInfo);
+      } catch (error) {
+        logger.error('获取房间信息失败:', error);
       }
     });
   }
@@ -422,6 +464,9 @@ class SocketManager {
       activeConnections: this.stats.activeConnections,
     });
 
+    // 清理房间
+    this.leaveAllRooms(socket);
+
     // 清理连接记录
     this.connections.delete(socket.id);
 
@@ -445,6 +490,157 @@ class SocketManager {
       } catch (err) {
         logger.error('移除访客活动失败:', err);
       }
+    }
+  }
+
+  // ==================== 房间管理方法 ====================
+
+  /**
+   * 检查 socket 是否在房间中
+   * @param {Socket} socket - Socket 实例
+   * @param {string} roomName - 房间名称
+   * @returns {boolean} 是否在房间中
+   */
+  isInRoom(socket, roomName) {
+    return this.socketRooms.get(socket.id)?.has(roomName) || false;
+  }
+
+  /**
+   * 加入房间
+   * @param {Socket} socket - Socket 实例
+   * @param {string} roomName - 房间名称
+   */
+  joinRoom(socket, roomName) {
+    try {
+      if (!roomName || !socket || this.isInRoom(socket, roomName)) return;
+
+      // 初始化房间
+      if (!this.rooms.has(roomName)) {
+        this.rooms.set(roomName, new Set());
+      }
+
+      // 将 socket 加入房间
+      this.rooms.get(roomName).add(socket.id);
+
+      // 记录 socket 所在的房间
+      if (!this.socketRooms.has(socket.id)) {
+        this.socketRooms.set(socket.id, new Set());
+      }
+      this.socketRooms.get(socket.id).add(roomName);
+
+      // 使用 Socket.IO 的 rooms 功能
+      socket.join(roomName);
+
+      // 广播房间人数更新
+      this.broadcastRoomCount(roomName);
+
+      // 立即触发访客统计广播（包含房间信息）
+      this.broadcastVisitorStats();
+    } catch (error) {
+      logger.error('加入房间失败:', error);
+    }
+  }
+
+  /**
+   * 离开房间
+   * @param {Socket} socket - Socket 实例
+   * @param {string} roomName - 房间名称
+   */
+  leaveRoom(socket, roomName) {
+    try {
+      if (!roomName || !socket) return;
+
+      // 从房间移除 socket
+      if (this.rooms.has(roomName)) {
+        this.rooms.get(roomName).delete(socket.id);
+        // 如果房间为空，删除房间
+        if (this.rooms.get(roomName).size === 0) {
+          this.rooms.delete(roomName);
+        }
+      }
+
+      // 从 socket 的房间记录中移除
+      if (this.socketRooms.has(socket.id)) {
+        this.socketRooms.get(socket.id).delete(roomName);
+        // 如果没有房间了，删除记录
+        if (this.socketRooms.get(socket.id).size === 0) {
+          this.socketRooms.delete(socket.id);
+        }
+      }
+
+      // 使用 Socket.IO 的 leave 功能
+      socket.leave(roomName);
+
+      // 广播房间人数更新
+      this.broadcastRoomCount(roomName);
+    } catch (error) {
+      logger.error('离开房间失败:', error);
+    }
+  }
+
+  /**
+   * 离开所有房间
+   * @param {Socket} socket - Socket 实例
+   */
+  leaveAllRooms(socket) {
+    try {
+      if (!socket) return;
+
+      // 获取 socket 所在的所有房间
+      const rooms = this.socketRooms.get(socket.id);
+      if (rooms) {
+        const roomArray = Array.from(rooms);
+        roomArray.forEach(roomName => {
+          this.leaveRoom(socket, roomName);
+        });
+      }
+    } catch (error) {
+      logger.error('离开所有房间失败:', error);
+    }
+  }
+
+  /**
+   * 获取房间人数
+   * @param {string} roomName - 房间名称
+   * @returns {number} 房间人数
+   */
+  getRoomCount(roomName) {
+    if (!this.rooms.has(roomName)) {
+      return 0;
+    }
+    return this.rooms.get(roomName).size;
+  }
+
+  /**
+   * 获取所有房间信息
+   * @returns {Object} 房间信息 { roomName: count }
+   */
+  getRoomsInfo() {
+    const roomCount = {};
+    for (const [roomName, sockets] of this.rooms.entries()) {
+      roomCount[roomName] = sockets.size;
+    }
+    return roomCount;
+  }
+
+  /**
+   * 广播房间人数更新
+   * @param {string} roomName - 房间名称
+   */
+  broadcastRoomCount(roomName) {
+    try {
+      if (!this.io || !roomName) return;
+
+      const count = this.getRoomCount(roomName);
+
+      // 向房间内的所有客户端广播
+      this.io.to(roomName).emit('room_count_update', {
+        room: roomName,
+        count,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      logger.error('广播房间人数更新失败:', error);
     }
   }
 
@@ -764,13 +960,10 @@ class SocketManager {
   // 实际执行访客统计广播的内部方法
   _doBroadcastVisitorStats() {
     try {
-      const stats = visitorStatsService.getStats();
+      const roomsInfo = this.getRoomsInfo();
+      const stats = visitorStatsService.getStats({ roomCount: roomsInfo });
 
       this.io.emit('visitor_stats_update', stats);
-
-      logger.debug(
-        `📊 广播访客统计更新: ${stats.onlineCount} 人在线, ${stats.activities.length} 条活动`
-      );
     } catch (error) {
       logger.error('广播访客统计失败:', error);
     }

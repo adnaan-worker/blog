@@ -19,6 +19,7 @@ interface VisitorActivity {
 interface VisitorStats {
   onlineCount: number;
   activities: VisitorActivity[]; // 实时访客动态列表
+  roomCount?: Record<string, number>; // 房间人数统计 { roomName: count }
   timestamp: number;
 }
 
@@ -482,7 +483,7 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
   const [stats, setStats] = useState<VisitorStats | null>(null);
   const [loading, setLoading] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const { socket, isConnected } = useSocket();
+  const { isConnected, emit } = useSocket();
 
   // 使用动画引擎
   const { variants, springPresets } = useAnimationEngine();
@@ -494,33 +495,37 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
       if (data) {
         setStats(data);
         setLoading(false);
-        console.log('✅ 收到访客统计更新:', data);
       }
     }, []),
   );
 
-  // 显示时主动请求数据
+  // 显示时主动请求数据（使用防抖，避免频繁请求）
   useEffect(() => {
-    if (isVisible) {
-      setLoading(true);
-
-      // 如果已连接，立即请求一次数据
-      if (isConnected && socket) {
-        socket.emit('get_visitor_stats');
-      }
-
-      // 设置超时，避免一直加载
-      const timeout = setTimeout(() => {
-        setLoading(false);
-        console.warn('⚠️ 获取访客统计超时');
-      }, 3000);
-
-      return () => clearTimeout(timeout);
-    } else {
+    if (!isVisible) {
       setStats(null);
       setLoading(false);
+      return;
     }
-  }, [isVisible, isConnected, socket]);
+
+    setLoading(true);
+
+    // 延迟请求，避免频繁触发
+    const requestTimer = setTimeout(() => {
+      if (isConnected) {
+        emit('get_visitor_stats');
+      }
+    }, 100);
+
+    // 设置超时，避免一直加载
+    const loadingTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
+    return () => {
+      clearTimeout(requestTimer);
+      clearTimeout(loadingTimeout);
+    };
+  }, [isVisible, isConnected, emit]);
 
   if (!isVisible) return null;
 

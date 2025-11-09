@@ -123,15 +123,20 @@ class VisitorStatsService {
 
   /**
    * 获取所有活动访客统计
+   * @param {Object} options - 可选参数
+   * @param {Object} options.roomCount - 房间人数统计（可选，用于增强统计信息）
    * @returns {Object} 统计数据
    */
-  getStats() {
+  getStats(options = {}) {
     try {
+      const { roomCount = {} } = options;
+
       // 获取所有活动
       if (this.activities.size === 0) {
         return {
           onlineCount: 0,
           activities: [],
+          roomCount: {},
           timestamp: Date.now(),
         };
       }
@@ -178,6 +183,7 @@ class VisitorStatsService {
       return {
         onlineCount: activities.length,
         activities: activitiesList,
+        roomCount, // 添加房间人数统计
         timestamp: Date.now(),
       };
     } catch (error) {
@@ -185,6 +191,7 @@ class VisitorStatsService {
       return {
         onlineCount: 0,
         activities: [],
+        roomCount: {},
         timestamp: Date.now(),
       };
     }

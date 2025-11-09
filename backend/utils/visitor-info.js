@@ -5,6 +5,7 @@
 
 const UAParser = require('ua-parser-js');
 const proxyService = require('../services/proxy.service');
+const { logger } = require('./logger');
 
 /**
  * 获取客户端IP地址
@@ -85,7 +86,7 @@ const getLocationFromIP = async ip => {
 
     return '未知';
   } catch (error) {
-    console.error('获取地理位置失败:', error);
+    logger.error('获取地理位置失败:', error);
     return '未知';
   }
 };
@@ -105,7 +106,7 @@ const collectVisitorInfo = async req => {
   try {
     location = await getLocationFromIP(ip);
   } catch (error) {
-    console.error('获取地理位置失败:', error);
+    logger.error('获取地理位置失败:', error);
   }
 
   return {

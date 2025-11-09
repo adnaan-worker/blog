@@ -849,7 +849,13 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       ) : flatComments.length > 0 ? (
         <>
           <CommentList>{flatComments.map((comment) => renderComment(comment))}</CommentList>
-          <InfiniteScroll hasMore={hasMore} loading={isLoadingMore} onLoadMore={loadMoreComments} threshold={200}>
+          <InfiniteScroll
+            hasMore={hasMore}
+            itemCount={flatComments.length}
+            loading={isLoadingMore}
+            onLoadMore={loadMoreComments}
+            threshold={200}
+          >
             {isLoadingMore && <CommentSkeleton count={2} />}
           </InfiniteScroll>
         </>
