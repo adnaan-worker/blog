@@ -720,7 +720,6 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
           onRetry={reloadComments}
           itemCount={comments.length}
           maxHeight="calc(100vh - 400px)"
-          showScrollToTop={true}
           emptyComponent={
             <EmptyState>
               <h3>暂无评论</h3>

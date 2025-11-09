@@ -180,7 +180,6 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
         onRetry={reload}
         itemCount={articles.length}
         maxHeight="calc(100vh - 400px)"
-        showScrollToTop={true}
         emptyComponent={
           <EmptyState>
             <h3>还没有文章</h3>

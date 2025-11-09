@@ -232,7 +232,6 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({ className }) => {
         onRetry={reload}
         itemCount={projects.length}
         maxHeight="calc(100vh - 400px)"
-        showScrollToTop={true}
       >
         {!isLoading && projects.length === 0 ? (
           <EmptyState>

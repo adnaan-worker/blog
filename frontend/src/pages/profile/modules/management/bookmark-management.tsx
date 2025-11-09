@@ -384,7 +384,6 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
           onRetry={reloadBookmarks}
           itemCount={bookmarks.length}
           maxHeight="calc(100vh - 400px)"
-          showScrollToTop={true}
           emptyComponent={
             <EmptyState>
               <h3>暂无收藏</h3>

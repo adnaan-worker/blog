@@ -218,7 +218,6 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
         onRetry={reload}
         itemCount={notes.length}
         maxHeight="calc(100vh - 400px)"
-        showScrollToTop={true}
       >
         {!isLoading && notes.length === 0 ? (
           <EmptyState>

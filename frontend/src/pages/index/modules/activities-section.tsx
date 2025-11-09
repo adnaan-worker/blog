@@ -865,17 +865,16 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({
         <ScrollWrapper>
           <InfiniteScroll
             hasMore={!isExternal && hasMore}
-            loading={loading && activities.length === 0}
+            loading={loading}
             error={error}
             onLoadMore={loadMore}
             onRetry={reload}
             itemCount={activities.length}
             maxHeight="500px"
             threshold={200}
+            enableSkeleton={activities.length === 0}
             emptyComponent={
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                {loading ? '加载中...' : '暂无活动'}
-              </div>
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>暂无活动</div>
             }
           >
             <ActivityGrid initial="hidden" animate="visible" variants={variants.stagger}>

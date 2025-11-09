@@ -42,7 +42,7 @@
     "@tiptap/react": "^3.6.5",
     "@tiptap/starter-kit": "^3.6.5",
     "@types/react-router-dom": "^5.3.3",
-    "adnaan-ui": "^1.1.6",
+    "adnaan-ui": "^1.1.8",
     "axios": "^1.8.4",
     "colorjs.io": "^0.5.2",
     "framer-motion": "^12.7.4",

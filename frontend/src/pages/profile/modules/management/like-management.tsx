@@ -383,7 +383,6 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
           onRetry={reloadLikes}
           itemCount={likes.length}
           maxHeight="calc(100vh - 400px)"
-          showScrollToTop={true}
           emptyComponent={
             <EmptyState>
               <h3>暂无点赞</h3>
