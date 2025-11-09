@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -740,16 +740,10 @@ const formatActivityText = (activity: UserActivity) => {
 };
 
 // Props 接口
-interface ActivitiesSectionProps {
-  activities?: UserActivity[]; // 可选，如果传入则使用，否则组件内部管理
-  loading?: boolean;
-}
+interface ActivitiesSectionProps {}
 
 // 主组件
-export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({
-  activities: externalActivities,
-  loading: externalLoading,
-}) => {
+export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
   const navigate = useNavigate();
@@ -758,84 +752,76 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({
   const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
   const titleView = useSmartInView({ amount: 0.3 });
 
-  // 内部状态管理（如果外部没有传入数据）
-  const [internalActivities, setInternalActivities] = useState<UserActivity[]>([]);
-  const [internalLoading, setInternalLoading] = useState(false);
+  // 内部状态管理
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-
-  // 决定使用外部数据还是内部数据
-  const isExternal = externalActivities !== undefined;
-  const activities = isExternal ? externalActivities : internalActivities;
-  const loading = isExternal ? externalLoading || false : internalLoading;
+  const hasInitializedRef = useRef(false); // 标记是否已经进行过初始加载
 
   // 加载活动数据
-  const loadActivities = useCallback(
-    async (pageNum: number, append = false) => {
-      if (isExternal) return; // 如果使用外部数据，不加载
+  const loadActivities = useCallback(async (pageNum: number, append = false) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-      try {
-        setInternalLoading(true);
-        setError(null);
+      const response = await API.activity.getRecentActivities({ page: pageNum, limit: 10 });
+      const newActivities = Array.isArray(response.data) ? response.data : [];
+      const pagination = (response as any).pagination;
 
-        const response = await API.activity.getRecentActivities({ page: pageNum, limit: 10 });
-        const newActivities = Array.isArray(response.data) ? response.data : [];
-        const pagination = (response as any).pagination;
-
-        // 后端已按时间排序，直接使用
-        if (append) {
-          // 追加模式：合并数据并去重
-          setInternalActivities((prev) => {
-            const existingIds = new Set(prev.map((a) => a.id));
-            const uniqueNew = newActivities.filter((a) => !existingIds.has(a.id));
-            // 后端已排序，直接追加即可
-            return [...prev, ...uniqueNew];
-          });
-        } else {
-          // 初始加载或刷新
-          setInternalActivities(newActivities);
-        }
-
-        // 更新分页状态
-        if (pagination) {
-          setHasMore(pageNum < pagination.totalPages);
-        } else {
-          setHasMore(newActivities.length === 10); // 如果返回10条，可能还有更多
-        }
-      } catch (err: any) {
-        console.error('加载活动失败:', err);
-        setError(err instanceof Error ? err : new Error(err?.message || '加载失败'));
-        setHasMore(false);
-      } finally {
-        setInternalLoading(false);
+      if (append) {
+        setActivities((prev) => {
+          const existingIds = new Set(prev.map((a) => a.id));
+          const uniqueNew = newActivities.filter((a) => !existingIds.has(a.id));
+          return [...prev, ...uniqueNew];
+        });
+      } else {
+        setActivities(newActivities);
       }
-    },
-    [isExternal],
-  );
 
-  // 初始加载
+      if (pagination) {
+        setHasMore(pageNum < pagination.totalPages);
+      } else {
+        // 如果返回的数据少于 limit，说明没有更多数据了
+        setHasMore(newActivities.length === 10);
+      }
+
+      // 如果没有数据且不是追加模式，确保 hasMore 为 false
+      if (!append && newActivities.length === 0) {
+        setHasMore(false);
+      }
+    } catch (err: any) {
+      console.error('加载活动失败:', err);
+      setError(err instanceof Error ? err : new Error(err?.message || '加载失败'));
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 初始加载 - 只在组件挂载时执行一次
   React.useEffect(() => {
-    if (!isExternal && internalActivities.length === 0 && !internalLoading) {
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
       loadActivities(1, false);
     }
-  }, [isExternal, internalActivities.length, internalLoading, loadActivities]);
+  }, [loadActivities]);
 
   // 加载更多
   const loadMore = useCallback(() => {
-    if (isExternal || loading || !hasMore) return;
+    if (loading || !hasMore) return;
     const nextPage = page + 1;
     setPage(nextPage);
     loadActivities(nextPage, true);
-  }, [isExternal, loading, hasMore, page, loadActivities]);
+  }, [loading, hasMore, page, loadActivities]);
 
   // 重新加载
   const reload = useCallback(() => {
-    if (isExternal) return;
     setPage(1);
     setHasMore(true);
     loadActivities(1, false);
-  }, [isExternal, loadActivities]);
+  }, [loadActivities]);
 
   // 处理活动点击
   const handleActivityClick = (link: string | null | undefined) => {
@@ -864,7 +850,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = ({
       <FadeScrollContainer dependencies={[activities.length, loading]}>
         <ScrollWrapper>
           <InfiniteScroll
-            hasMore={!isExternal && hasMore}
+            hasMore={hasMore}
             loading={loading}
             error={error}
             onLoadMore={loadMore}
