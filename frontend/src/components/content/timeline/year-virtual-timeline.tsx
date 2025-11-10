@@ -18,7 +18,6 @@ interface YearTimelineProps<T extends TimelineItem> {
 // 样式组件
 const YearContainer = styled(motion.div)`
   margin-bottom: 2rem;
-  margin-left: 0.5rem; /* 给左侧圆点留出空间，防止被截断 */
   background: var(--bg-primary);
 `;
 

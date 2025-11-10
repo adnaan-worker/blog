@@ -153,6 +153,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
           <Input
             type="text"
             name="username"
+            size="small"
             placeholder="用户名"
             value={formData.username}
             onChange={handleChange}
@@ -163,6 +164,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
           <Input
             type="password"
             name="password"
+            size="small"
             placeholder="密码"
             value={formData.password}
             onChange={handleChange}

@@ -64,7 +64,7 @@ const ActivityGrid = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-left: 12px;
+  padding: 0 0.75rem;
 `;
 
 const ActivityItem = styled(motion.div)`
