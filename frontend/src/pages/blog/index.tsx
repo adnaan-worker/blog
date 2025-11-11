@@ -29,7 +29,6 @@ const Container = styled.div`
 `;
 
 const ArticleCard = styled(motion.div)`
-  background: var(--bg-primary);
   border: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.4);
   border-radius: 10px;
   padding: 1.25rem;
