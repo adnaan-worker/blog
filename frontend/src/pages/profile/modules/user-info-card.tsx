@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import {
@@ -54,6 +54,17 @@ const Avatar = styled.div`
     height: 100%;
     object-fit: cover;
   }
+`;
+
+const AvatarFallback = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 2.5rem;
 `;
 
 const AvatarOverlay = styled(motion.div)`
@@ -148,6 +159,14 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { variants, springPresets } = useAnimationEngine();
 
+  const avatarSrc = useMemo(() => {
+    if (!user.avatar) {
+      return null;
+    }
+
+    return user.avatar;
+  }, [user.avatar]);
+
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
@@ -212,7 +231,13 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
         transition={springPresets.bouncy}
       >
         <Avatar>
-          <img src={user.avatar || '/api/placeholder/120/120'} alt="用户头像" />
+          {avatarSrc ? (
+            <img key={avatarSrc} src={avatarSrc} alt="用户头像" />
+          ) : (
+            <AvatarFallback>
+              <FiUser size={48} />
+            </AvatarFallback>
+          )}
           <AvatarOverlay
             onClick={handleAvatarClick}
             initial={{ opacity: 0 }}

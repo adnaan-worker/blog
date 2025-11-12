@@ -161,6 +161,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const { user, isLoggedIn } = useSelector((state: RootState) => state.user);
   const { variants } = useAnimationEngine();
+  const avatarSrc = user?.avatar || null;
 
   // 处理登出
   const handleLogout = () => {
@@ -171,8 +172,12 @@ const UserMenu: React.FC<UserMenuProps> = ({
   return (
     <div ref={userDropdownRef} style={{ position: 'relative' }}>
       {isLoggedIn ? (
-        <Avatar hasImage onClick={(e) => toggleUserDropdown(e)}>
-          {user?.avatar ? <img src={user.avatar} alt={user.username} /> : <FiUser color="var(--text-secondary)" />}
+        <Avatar hasImage={Boolean(avatarSrc)} onClick={(e) => toggleUserDropdown(e)}>
+          {avatarSrc ? (
+            <img key={avatarSrc} src={avatarSrc} alt={user?.username} />
+          ) : (
+            <FiUser color="var(--text-secondary)" />
+          )}
         </Avatar>
       ) : (
         <Avatar onClick={(e) => toggleUserDropdown(e)}>
@@ -187,8 +192,8 @@ const UserMenu: React.FC<UserMenuProps> = ({
               <>
                 <UserDropdownHeader>
                   <Avatar>
-                    {user?.avatar ? (
-                      <img src={user.avatar} alt={user.username} />
+                    {avatarSrc ? (
+                      <img key={`dropdown-${avatarSrc}`} src={avatarSrc} alt={user?.username} />
                     ) : (
                       <FiUser color="var(--text-secondary)" />
                     )}

@@ -9,6 +9,10 @@ export interface User {
   avatar?: string;
   role?: string;
   status?: string;
+  fullName?: string;
+  bio?: string;
+  joinDate?: string;
+  lastLoginTime?: string;
 }
 
 interface UserState {
@@ -21,11 +25,11 @@ interface UserState {
 
 // 从本地存储获取用户信息初始化状态
 const getUserFromStorage = () => {
-  const userData = storage.local.get('user');
+  const userData = storage.local.get<User>('user');
   const tokenData = storage.local.get('token');
   if (userData && tokenData) {
     return {
-      user: userData as any,
+      user: userData,
       token: tokenData as string,
       isLoggedIn: true,
       loading: false,
@@ -52,12 +56,33 @@ const userSlice = createSlice({
       state.token = action.payload.token;
       state.isLoggedIn = true;
       state.error = null;
+      storage.local.set('user', action.payload.user);
+      storage.local.set('token', action.payload.token);
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
+    },
+    updateUser: (state, action: PayloadAction<Partial<User>>) => {
+      const updates = action.payload;
+      const hasAvatarUpdate = Object.prototype.hasOwnProperty.call(updates, 'avatar');
+      if (!state.user) {
+        state.user = {
+          ...(updates as User),
+        };
+      } else {
+        const nextUser: User = {
+          ...state.user,
+          ...updates,
+        };
+        state.user = nextUser;
+      }
+
+      if (state.user) {
+        storage.local.set('user', state.user);
+      }
     },
     logout: (state) => {
       state.user = null;
@@ -68,7 +93,7 @@ const userSlice = createSlice({
   },
 });
 
-export const { setUser, setLoading, setError, logout } = userSlice.actions;
+export const { setUser, setLoading, setError, updateUser, logout } = userSlice.actions;
 
 export const login = (username: string, password: string) => async (dispatch: any) => {
   try {
@@ -78,8 +103,6 @@ export const login = (username: string, password: string) => async (dispatch: an
     const response = await API.user.login({ username, password });
     if (response.code === 200) {
       dispatch(setUser({ user: response.data.user, token: response.data.token }));
-      storage.local.set('user', response.data.user);
-      storage.local.set('token', response.data.token);
       adnaan.toast.success('登录成功', '欢迎回来');
     } else {
       dispatch(setError(response.message || '登录失败'));

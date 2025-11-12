@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAnimationEngine, SPRING_PRESETS } from '@/utils/ui/animation';
@@ -100,6 +100,8 @@ import {
 } from './modules';
 import type { EditProfileForm } from './modules/types';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAppDispatch } from '@/store';
+import { updateUser } from '@/store/modules/userSlice';
 
 const ProfileContainer = styled.div`
   margin: 0 auto;
@@ -926,28 +928,6 @@ const TodoBadge = styled.div<{ variant?: 'primary' | 'warning' | 'error' }>`
   }};
 `;
 
-const EmptyState = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-  text-align: center;
-  color: var(--text-secondary);
-
-  svg {
-    font-size: 3rem;
-    opacity: 0.3;
-    margin-bottom: 1rem;
-  }
-
-  p {
-    margin: 0;
-    font-size: 0.9rem;
-    opacity: 0.7;
-  }
-`;
-
 // Tab类型定义
 interface Tab {
   id: string;
@@ -957,6 +937,34 @@ interface Tab {
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  const syncGlobalUser = useCallback(
+    (profile: UserProfile) => {
+      dispatch(
+        updateUser({
+          id: profile.id,
+          username: profile.username,
+          email: profile.email,
+          avatar: profile.avatar,
+          role: profile.role,
+          status: profile.status,
+          fullName: profile.fullName,
+          bio: profile.bio,
+          joinDate: profile.joinDate,
+          lastLoginTime: profile.lastLoginTime,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
+  const withCacheBust = useCallback((url?: string | null) => {
+    if (!url) return '';
+    if (url.startsWith('data:')) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}_=${Date.now()}`;
+  }, []);
 
   // 动画引擎
   const { variants } = useAnimationEngine();
@@ -1110,6 +1118,7 @@ const Profile: React.FC = () => {
     try {
       const response = await API.user.getProfile();
       setUser(response.data);
+      syncGlobalUser(response.data);
     } catch (error: any) {
       console.error('加载用户资料失败:', error);
     } finally {
@@ -1244,7 +1253,7 @@ const Profile: React.FC = () => {
       let avatarUrl = user.avatar;
       if (avatarFile) {
         const avatarResponse = await API.user.uploadAvatar(avatarFile);
-        avatarUrl = avatarResponse.data.avatar;
+        avatarUrl = withCacheBust(avatarResponse.data.data.url);
       }
 
       // 更新用户资料
@@ -1257,15 +1266,13 @@ const Profile: React.FC = () => {
       const response = await API.user.updateProfile(updateData);
 
       // 更新本地状态
-      setUser((prev) =>
-        prev
-          ? {
-              ...prev,
-              ...response.data,
-              avatar: avatarUrl,
-            }
-          : null,
-      );
+      const updatedUser: UserProfile = {
+        ...user,
+        ...response.data,
+        avatar: avatarUrl,
+      };
+      setUser(updatedUser);
+      syncGlobalUser(updatedUser);
 
       adnaan.toast.success('个人资料更新成功！');
       setIsEditModalOpen(false);
@@ -1284,14 +1291,12 @@ const Profile: React.FC = () => {
       const response = await API.user.uploadAvatar(file);
 
       // 更新头像
-      setUser((prev) =>
-        prev
-          ? {
-              ...prev,
-              avatar: response.data.avatar,
-            }
-          : null,
-      );
+      const updatedUser: UserProfile = {
+        ...user,
+        avatar: withCacheBust(response.data.data.url),
+      };
+      setUser(updatedUser);
+      syncGlobalUser(updatedUser);
 
       adnaan.toast.success('头像更新成功！');
     } catch (error: any) {

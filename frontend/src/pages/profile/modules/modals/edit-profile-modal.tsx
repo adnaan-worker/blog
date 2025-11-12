@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiSave, FiUpload } from 'react-icons/fi';
+import { FiSave, FiUpload, FiUser } from 'react-icons/fi';
 import { Button, Input, Textarea } from 'adnaan-ui';
 import { Modal } from 'adnaan-ui';
 import type { UserProfile, EditProfileForm } from '../types';
@@ -56,6 +56,16 @@ const AvatarPreview = styled.div`
     height: 100%;
     object-fit: cover;
   }
+`;
+
+const AvatarFallback = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
 `;
 
 const AvatarUploadButton = styled.button`
@@ -233,7 +243,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           <SectionTitle>👤 头像</SectionTitle>
           <AvatarSection>
             <AvatarPreview>
-              <img src={avatarPreview || '/api/placeholder/80/80'} alt="头像预览" />
+              {avatarPreview ? (
+                <img key={avatarPreview} src={avatarPreview} alt="头像预览" />
+              ) : (
+                <AvatarFallback>
+                  <FiUser size={32} />
+                </AvatarFallback>
+              )}
             </AvatarPreview>
             <div>
               <AvatarUploadButton onClick={() => document.getElementById('avatar-upload')?.click()}>
