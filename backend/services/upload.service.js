@@ -63,8 +63,6 @@ class UploadService {
       // 生成文件信息
       const fileInfo = this.generateFileInfo(file, user);
 
-      // 保存文件信息到数据库（如果需要）
-      // await this.saveFileRecord(fileInfo);
 
       return success(fileInfo, '头像上传成功');
     } catch (error) {

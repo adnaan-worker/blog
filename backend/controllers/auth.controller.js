@@ -49,6 +49,15 @@ exports.register = asyncHandler(async (req, res) => {
     );
   }
 
+  //用户名不能为中文
+  const chineseRegex = /[\u4e00-\u9fa5]/;
+  if (chineseRegex.test(userData.username)) {
+    return res.apiValidationError(
+      [{ field: 'username', message: '用户名字符非法' }],
+      '参数验证失败'
+    );
+  }
+
   // 调用注册服务
   const result = await authService.register(userData);
 

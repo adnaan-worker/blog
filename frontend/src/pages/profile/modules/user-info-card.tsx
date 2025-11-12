@@ -125,33 +125,6 @@ const DetailItem = styled.div`
   }
 `;
 
-const SocialLinks = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-`;
-
-const SocialLink = styled.a`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-  text-decoration: none;
-
-  &:hover {
-    background: var(--accent-color);
-    color: white;
-    transform: translateY(-2px);
-  }
-`;
-
 const LoadingOverlay = styled.div`
   position: absolute;
   top: 0;
