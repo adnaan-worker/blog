@@ -17,11 +17,9 @@ const MobileMenuContainer = styled(motion.div)<{ scrolled?: boolean }>`
   flex-direction: column;
   overflow: hidden;
   touch-action: none;
-
-  /* 背景和模糊效果 - 增强模糊，防止内容穿透 */
-  background: var(--bg-primary);
-  backdrop-filter: saturate(180%) blur(40px);
-  -webkit-backdrop-filter: saturate(180%) blur(40px);
+  background: rgba(var(--bg-primary-rgb, 255, 255, 255), 0.85);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
 
   /* 阴影效果 - 与 header.scrolled 一致 */
   box-shadow:
@@ -42,20 +40,20 @@ const MobileMenuContainer = styled(motion.div)<{ scrolled?: boolean }>`
     padding-top: var(--header-height);
   `
       : `
-    /* 非滚动状态：从 header 底部展开 */
-    top: calc(var(--header-height) + 10px);
+    top: 0;
     left: 0;
     right: 0;
     width: 100%;
     max-width: 100vw;
-    max-height: 65vh; /* 限制最大高度为视口的65% */
-    border-radius: 0 0 24px 24px;
-    padding-top: 0;
+    max-height: 85vh; /* 增加最大高度，避免内容被截断 */
+    border-radius: 24px;
+    padding-top: var(--header-height); /* 直接从 header 高度开始显示内容 */
+    box-shadow: none; /* 移除顶部阴影，避免与 header 产生断层 */
   `}
 
   /* 暗色模式 - 增强模糊 */
   [data-theme='dark'] & {
-    background: var(--bg-primary);
+    background: rgba(var(--bg-secondary-rgb, 30, 30, 30), 0.85);
     box-shadow:
       0 6px 24px 0 rgba(0, 0, 0, 0.5),
       0 0 0 1px rgba(255, 255, 255, 0.08),
@@ -68,18 +66,33 @@ const MobileMenuContent = styled(motion.div)`
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
-  padding: 1rem;
+  padding: 0.75rem 1rem 1rem;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 
-  /* 暗色模式遮罩 */
-  [data-theme='dark'] &::after {
+  /* 添加顶部渐变遮罩，增强与header的融合感 */
+  &::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 12px;
     background: linear-gradient(
-      to top,
-      var(--bg-primary) 0%,
-      var(--bg-primary) 15%,
-      rgba(var(--bg-primary-rgb, 0, 0, 0), 0.85) 50%,
-      transparent 100%
+      to bottom,
+      rgba(var(--bg-primary-rgb, 255, 255, 255), 0.8),
+      rgba(var(--bg-primary-rgb, 255, 255, 255), 0.1)
+    );
+    z-index: 2;
+    pointer-events: none;
+    margin: -0.75rem -1rem 0;
+  }
+
+  [data-theme='dark'] &::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(var(--bg-secondary-rgb, 30, 30, 30), 0.8),
+      rgba(var(--bg-secondary-rgb, 30, 30, 30), 0.1)
     );
   }
 

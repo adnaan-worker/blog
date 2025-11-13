@@ -20,7 +20,9 @@
   --text-tertiary: #767676; /* 三级文本颜色 */
   --text-on-accent: #ffffff; /* 主题色上的文本颜色 */
   --bg-primary: oklch(100% 0 0/1); /* 主背景颜色 */
+  --bg-primary-rgb: 255, 255, 255; /* 主背景RGB值 - 用于rgba() */
   --bg-secondary: #f7f9fb; /* 次背景颜色 */
+  --bg-secondary-rgb: 247, 249, 251; /* 次背景RGB值 - 用于rgba() */
   --bg-tertiary: #efefef; /* 三级背景颜色 */
   /* 主题色默认值 - 在动态注入前使用 */
   --accent-color-light: #5183f5; /* 默认亮色主题 */
@@ -127,7 +129,9 @@
 
   /* 背景颜色 - 使用更现代的深色调色板 */
   --bg-primary: oklch(22.728% 0.003823 285.091612/1); /* 主背景 - 纯黑偏灰 */
+  --bg-primary-rgb: 30, 30, 30; /* 主背景RGB值 - 用于rgba() */
   --bg-secondary: #1a1a1a; /* 次背景 - 深灰 */
+  --bg-secondary-rgb: 26, 26, 26; /* 次背景RGB值 - 用于rgba() */
   --bg-tertiary: #2a2a2a; /* 三级背景 - 中灰 */
 
   /* 边框和分隔 */
