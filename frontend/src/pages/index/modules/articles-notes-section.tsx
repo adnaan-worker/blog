@@ -11,6 +11,22 @@ import { ArticlesSectionProps, NotesSectionProps } from './types';
 const ContentSection = styled(motion.section)`
   margin-bottom: 2.5rem;
   overflow-x: hidden; /* 防止横向滚动条 */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+  & * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  & *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
 `;
 
 const SectionTitle = styled(motion.h2)`

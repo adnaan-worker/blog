@@ -33,6 +33,22 @@ import type { UserActivity } from '@/types';
 const ContentSection = styled(motion.section)`
   margin-bottom: 2.5rem;
   overflow-x: hidden; /* 防止横向滚动条 */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+  & * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  & *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
 `;
 
 const SectionTitle = styled(motion.h2)`
@@ -58,6 +74,22 @@ const SectionTitle = styled(motion.h2)`
 
 const ScrollWrapper = styled.div`
   max-height: 500px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+  & * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  & *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
 `;
 
 const ActivityGrid = styled(motion.div)`
@@ -75,10 +107,6 @@ const ActivityItem = styled(motion.div)`
   border-bottom: 1px solid rgba(229, 231, 235, 0.5);
   position: relative;
   cursor: pointer;
-  /* 优化性能，防止抖动 */
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
 
   &:last-of-type {
     border-bottom: none;
@@ -178,13 +206,17 @@ const ActivityBubble = styled.div`
   background: rgba(107, 114, 126, 0.05);
   color: var(--text-primary);
   font-size: 0.8125rem;
-  line-height: 1.5;
+  line-height: 20px;
   word-break: break-word;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  text-overflow: ellipsis;
+  white-space: normal;
+
+  & > .clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+  }
   transition: background 0.2s ease;
 
   [data-theme='dark'] & {
@@ -204,14 +236,18 @@ const ActivitySecondary = styled.div`
   margin-left: 2rem;
   font-size: 0.8125rem;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 20px;
   color: var(--text-primary);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  text-overflow: ellipsis;
+
+  & > .clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+  }
   word-break: break-word;
+  white-space: normal;
   transition: color 0.2s ease;
 
   ${ActivityItem}:hover & {
@@ -890,9 +926,13 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
                     {formatted.content && formatted.content.trim() && (
                       <>
                         {formatted.showBubble ? (
-                          <ActivityBubble>{formatted.content}</ActivityBubble>
+                          <ActivityBubble>
+                            <span className="clamp-3">{formatted.content}</span>
+                          </ActivityBubble>
                         ) : (
-                          <ActivitySecondary>{formatted.content}</ActivitySecondary>
+                          <ActivitySecondary>
+                            <span className="clamp-2">{formatted.content}</span>
+                          </ActivitySecondary>
                         )}
                       </>
                     )}
