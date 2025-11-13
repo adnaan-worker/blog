@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import type { TimelineItem } from '@/utils/helpers/timeline';
+import { FadeScrollContainer } from '@/components/common';
 
 // 年份容器Props
 interface YearTimelineProps<T extends TimelineItem> {
@@ -64,22 +65,13 @@ const ScrollableContent = styled.div<{ maxHeight?: number }>`
   overflow-x: hidden;
   padding: 0 0.5rem;
 
-  /* 自定义滚动条 */
+  /* 隐藏滚动条（保留滚动） */
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
   &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
-    border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
+    width: 0;
+    height: 0;
+    display: none; /* Chrome/Safari */
   }
 
   @media (max-width: 768px) {
@@ -228,35 +220,37 @@ function YearTimeline<T extends TimelineItem>({
         <span className="count">{totalCount} 篇</span>
       </YearHeader>
 
-      <ScrollableContent ref={scrollRef} onScroll={handleScroll} maxHeight={maxHeight}>
-        <TimelineList>
-          <AnimatePresence mode="popLayout">
-            {items.map((item, index) => (
-              <TimelineItemWrapper
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{
-                  ...springPresets.snappy,
-                  delay: index * 0.03,
-                }}
-              >
-                {renderItem(item, index)}
-              </TimelineItemWrapper>
-            ))}
-          </AnimatePresence>
-        </TimelineList>
+      <FadeScrollContainer dependencies={[items.length, isLoadingMore, hasMore]}>
+        <ScrollableContent ref={scrollRef} onScroll={handleScroll} maxHeight={maxHeight}>
+          <TimelineList>
+            <AnimatePresence mode="popLayout">
+              {items.map((item, index) => (
+                <TimelineItemWrapper
+                  key={item.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{
+                    ...springPresets.snappy,
+                    delay: index * 0.03,
+                  }}
+                >
+                  {renderItem(item, index)}
+                </TimelineItemWrapper>
+              ))}
+            </AnimatePresence>
+          </TimelineList>
 
-        {isLoadingMore && (
-          <LoadingMore>
-            <div className="spinner"></div>
-            <span>加载更多...</span>
-          </LoadingMore>
-        )}
+          {isLoadingMore && (
+            <LoadingMore>
+              <div className="spinner"></div>
+              <span>加载更多...</span>
+            </LoadingMore>
+          )}
 
-        {!hasMore && items.length > 5 && <NoMoreData>已加载全部{year}年的内容</NoMoreData>}
-      </ScrollableContent>
+          {!hasMore && items.length > 5 && <NoMoreData>已加载全部{year}年的内容</NoMoreData>}
+        </ScrollableContent>
+      </FadeScrollContainer>
     </YearContainer>
   );
 }

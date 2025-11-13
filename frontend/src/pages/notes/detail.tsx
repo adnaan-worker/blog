@@ -7,7 +7,6 @@ import { API } from '@/utils/api';
 import type { Note } from '@/types';
 import LazyRichTextRenderer from '@/components/rich-text/lazy-rich-text-renderer';
 import RichTextContent from '@/components/rich-text/rich-text-content';
-import RichTextStats from '@/components/rich-text/rich-text-stats';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import {
   DetailPageLayout,
@@ -50,6 +49,9 @@ const NoteLayout = styled.div`
 const NoteMain = styled.div`
   flex: 1;
   min-width: 0;
+  @media (max-width: 860px) {
+    display: contents;
+  }
 `;
 
 // 手记侧边栏 - 使用 sticky 定位
@@ -64,6 +66,27 @@ const NoteSidebar = styled.div`
   @media (max-width: 860px) {
     position: static;
     width: 100%;
+  }
+`;
+
+const MainContentFlex = styled(DetailMainContent)`
+  @media (max-width: 860px) {
+    display: contents;
+  }
+`;
+
+const SidebarFlex = styled(DetailSidebar)`
+  @media (max-width: 860px) {
+    display: none;
+  }
+`;
+
+const MobileOnly = styled.div`
+  display: none;
+  @media (max-width: 860px) {
+    display: block;
+    width: 100%;
+    margin-bottom: 2rem;
   }
 `;
 
@@ -84,6 +107,9 @@ const NoteHeader = styled.div`
 
   @media (max-width: 640px) {
     padding: 1.5rem;
+  }
+  @media (max-width: 860px) {
+    order: 0;
   }
 `;
 
@@ -144,6 +170,9 @@ const NoteContentWrapper = styled.div`
   @media (max-width: 640px) {
     padding: 1.5rem;
   }
+  @media (max-width: 860px) {
+    order: 2;
+  }
 `;
 
 // 手记信息卡片 - 优化样式
@@ -168,6 +197,11 @@ const NoteInfoCard = styled.div`
       box-shadow: 0 6px 32px rgba(0, 0, 0, 0.3);
     }
   }
+
+  @media (max-width: 860px) {
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
 `;
 
 // 卡片标题
@@ -178,6 +212,10 @@ const CardTitle = styled.div`
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: 0.02em;
+  @media (max-width: 860px) {
+    padding: 0.9rem 1rem;
+    font-size: 0.85rem;
+  }
 `;
 
 // 信息列表
@@ -185,6 +223,9 @@ const InfoList = styled.ul`
   list-style: none;
   padding: 1.25rem 1.5rem;
   margin: 0;
+  @media (max-width: 860px) {
+    padding: 0.75rem 1rem;
+  }
 `;
 
 // 信息项 - 优化间距和样式
@@ -206,6 +247,10 @@ const InfoItem = styled.li`
   &:last-child {
     padding-bottom: 0;
   }
+  @media (max-width: 860px) {
+    padding: 0.6rem 0;
+    gap: 0.75rem;
+  }
 `;
 
 // 信息标签
@@ -223,6 +268,10 @@ const InfoLabel = styled.span`
     color: var(--accent-color);
     opacity: 0.8;
   }
+  @media (max-width: 860px) {
+    font-size: 0.75rem;
+    min-width: 52px;
+  }
 `;
 
 // 信息值
@@ -231,6 +280,9 @@ const InfoValue = styled.div`
   font-size: 0.85rem;
   color: var(--text-secondary);
   line-height: 1.5;
+  @media (max-width: 860px) {
+    font-size: 0.8rem;
+  }
 `;
 
 // 标签容器
@@ -262,6 +314,10 @@ const Tag = styled.span`
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.2);
+  }
+  @media (max-width: 860px) {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
   }
 `;
 
@@ -321,11 +377,18 @@ const MoodIndicator = styled.div<{ mood: string }>`
         `;
     }
   }}
+  @media (max-width: 860px) {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
+  }
 `;
 
 // 相关手记容器
 const RelatedNotes = styled.div`
   margin-top: 3rem;
+  @media (max-width: 860px) {
+    order: 3;
+  }
 `;
 
 // 相关手记标题
@@ -620,6 +683,76 @@ const NoteDetail: React.FC = () => {
     }
   };
 
+  const NoteInfoCardContent: React.FC = () => (
+    <>
+      <CardTitle>手记信息</CardTitle>
+      <InfoList>
+        <InfoItem>
+          <InfoLabel>
+            <FiCalendar size={13} />
+            创建时间
+          </InfoLabel>
+          <InfoValue>{formatDateUtil(note!.createdAt, 'YYYY-MM-DD HH:mm')}</InfoValue>
+        </InfoItem>
+        {note!.mood && (
+          <InfoItem>
+            <InfoLabel>
+              <FiHeart size={13} />
+              心情
+            </InfoLabel>
+            <InfoValue>
+              <MoodIndicator mood={note!.mood}>{note!.mood}</MoodIndicator>
+            </InfoValue>
+          </InfoItem>
+        )}
+        {note!.weather && (
+          <InfoItem>
+            <InfoLabel>
+              <FiCloud size={13} />
+              天气
+            </InfoLabel>
+            <InfoValue>{note!.weather}</InfoValue>
+          </InfoItem>
+        )}
+        {note!.location && (
+          <InfoItem>
+            <InfoLabel>
+              <FiMapPin size={13} />
+              地点
+            </InfoLabel>
+            <InfoValue>{note!.location}</InfoValue>
+          </InfoItem>
+        )}
+        {note!.lastReadAt && (
+          <InfoItem>
+            <InfoLabel>
+              <FiEye size={13} />
+              最后阅读
+            </InfoLabel>
+            <InfoValue title={formatDateUtil(note!.lastReadAt, 'YYYY-MM-DD HH:mm:ss')}>
+              {getTimeAgo(note!.lastReadAt)}
+            </InfoValue>
+          </InfoItem>
+        )}
+        {note!.tags && note!.tags.length > 0 && (
+          <InfoItem>
+            <InfoLabel>
+              <FiTag size={13} />
+              标签
+            </InfoLabel>
+            <InfoValue>
+              <TagsContainer>
+                {note!.tags.map((tag) => (
+                  <Tag key={tag}>{tag}</Tag>
+                ))}
+              </TagsContainer>
+            </InfoValue>
+          </InfoItem>
+        )}
+      </InfoList>
+    </>
+  );
+
   return (
     <>
       <SEO
@@ -638,7 +771,7 @@ const NoteDetail: React.FC = () => {
 
             <NoteLayout>
               {/* 主内容区 - 向上弹性划出 */}
-              <DetailMainContent>
+              <MainContentFlex>
                 <NoteMain>
                   {/* 标题和元数据卡片 */}
                   <NoteHeader>
@@ -655,10 +788,11 @@ const NoteDetail: React.FC = () => {
                     </NoteMeta>
                   </NoteHeader>
 
-                  {/* 内容统计 */}
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <RichTextStats content={note.content} showDetailed={true} />
-                  </div>
+                  <MobileOnly>
+                    <NoteInfoCard>
+                      <NoteInfoCardContent />
+                    </NoteInfoCard>
+                  </MobileOnly>
 
                   {/* 手记内容 */}
                   <NoteContentWrapper>
@@ -699,80 +833,16 @@ const NoteDetail: React.FC = () => {
                     </RelatedNotes>
                   )}
                 </NoteMain>
-              </DetailMainContent>
+              </MainContentFlex>
 
               {/* 侧边栏 - 快速淡入 */}
-              <DetailSidebar>
+              <SidebarFlex>
                 <NoteSidebar>
                   <NoteInfoCard>
-                    <CardTitle>手记信息</CardTitle>
-                    <InfoList>
-                      <InfoItem>
-                        <InfoLabel>
-                          <FiCalendar size={13} />
-                          创建时间
-                        </InfoLabel>
-                        <InfoValue>{formatDateUtil(note.createdAt, 'YYYY-MM-DD HH:mm')}</InfoValue>
-                      </InfoItem>
-                      {note.mood && (
-                        <InfoItem>
-                          <InfoLabel>
-                            <FiHeart size={13} />
-                            心情
-                          </InfoLabel>
-                          <InfoValue>
-                            <MoodIndicator mood={note.mood}>{note.mood}</MoodIndicator>
-                          </InfoValue>
-                        </InfoItem>
-                      )}
-                      {note.weather && (
-                        <InfoItem>
-                          <InfoLabel>
-                            <FiCloud size={13} />
-                            天气
-                          </InfoLabel>
-                          <InfoValue>{note.weather}</InfoValue>
-                        </InfoItem>
-                      )}
-                      {note.location && (
-                        <InfoItem>
-                          <InfoLabel>
-                            <FiMapPin size={13} />
-                            地点
-                          </InfoLabel>
-                          <InfoValue>{note.location}</InfoValue>
-                        </InfoItem>
-                      )}
-                      {note.lastReadAt && (
-                        <InfoItem>
-                          <InfoLabel>
-                            <FiEye size={13} />
-                            最后阅读
-                          </InfoLabel>
-                          <InfoValue title={formatDateUtil(note.lastReadAt, 'YYYY-MM-DD HH:mm:ss')}>
-                            {getTimeAgo(note.lastReadAt)}
-                          </InfoValue>
-                        </InfoItem>
-                      )}
-                      {note.tags && note.tags.length > 0 && (
-                        <InfoItem>
-                          <InfoLabel>
-                            <FiTag size={13} />
-                            标签
-                          </InfoLabel>
-                          <InfoValue>
-                            <TagsContainer>
-                              {note.tags.map((tag) => (
-                                <Tag key={tag}>{tag}</Tag>
-                              ))}
-                            </TagsContainer>
-                          </InfoValue>
-                        </InfoItem>
-                      )}
-                    </InfoList>
+                    <NoteInfoCardContent />
                   </NoteInfoCard>
                 </NoteSidebar>
-              </DetailSidebar>
+              </SidebarFlex>
             </NoteLayout>
           </PageContainer>
         </DetailPageLayout>
