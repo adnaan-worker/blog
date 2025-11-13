@@ -6,6 +6,7 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/react-19.0.0-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/typescript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![OSS Compass Analyze](https://compass.gitee.com/badge/sf0ku2y6.svg)](https://compass.gitee.com/analyze/sf0ku2y6)
 
 ## 📖 目录
 
