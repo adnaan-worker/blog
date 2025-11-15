@@ -17,7 +17,7 @@ const tagRoutes = require('./tags');
 const categoryRoutes = require('./categories');
 const systemRoutes = require('./system');
 const exampleRoutes = require('./example');
-const aiRoutes = require('./ai');
+const aiRoutes = require('./ai-langchain'); // LangChain AI 路由
 const statusRoutes = require('./status');
 const noteRoutes = require('./notes');
 const siteSettingsRoutes = require('./site-settings');
@@ -35,7 +35,7 @@ router.use('/tags', tagRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/system', systemRoutes);
 router.use('/example', exampleRoutes);
-router.use('/ai', aiRoutes);
+router.use('/ai', aiRoutes); // LangChain AI 路由
 router.use('/status', statusRoutes);
 router.use('/notes', noteRoutes);
 router.use('/site-settings', siteSettingsRoutes);

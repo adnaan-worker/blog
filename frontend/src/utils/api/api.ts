@@ -596,85 +596,42 @@ export const API = {
     },
   },
 
-  // AI写作助手相关
+  // AI写作助手相关 (基于 LangChain)
   ai: {
     /**
      * 简单聊天
      * @param message 消息内容
-     * @param sessionId 会话ID
-     * @returns Promise<ApiResponse<{ message: string; sessionId: string; timestamp: string }>>
+     * @returns Promise<ApiResponse<{ message: string; timestamp: string }>>
      */
-    chat: (
-      message: string,
-      sessionId?: string,
-    ): Promise<ApiResponse<{ message: string; sessionId: string; timestamp: string }>> => {
-      return http.post('/ai/chat', { message, sessionId });
+    chat: (message: string): Promise<ApiResponse<{ message: string; timestamp: string }>> => {
+      return http.post('/ai/chat', { message });
     },
 
     /**
-     * 流式聊天
+     * 对话聊天（带记忆）
      * @param message 消息内容
-     * @param sessionId 会话ID
-     * @param onChunk 流式数据回调
-     * @returns Promise<string>
+     * @returns Promise<ApiResponse<{ message: string; timestamp: string }>>
      */
-    streamChat: async (message: string, sessionId?: string, onChunk?: (chunk: string) => void): Promise<string> => {
-      return await http.streamPost('/ai/stream-chat', { message, sessionId }, onChunk);
+    conversation: (message: string): Promise<ApiResponse<{ message: string; timestamp: string }>> => {
+      return http.post('/ai/conversation', { message });
     },
 
     /**
-     * 内容生成
+     * 生成文章
      * @param params 生成参数
-     * @returns Promise<ApiResponse<{ type: string; content: string; timestamp: string }>>
+     * @returns Promise<ApiResponse<{ content: string; timestamp: string }>>
      */
-    generate: (
-      params: AIGenerateParams,
-    ): Promise<ApiResponse<{ type: string; content: string; timestamp: string }>> => {
-      return http.post('/ai/generate', params);
+    generateArticle: (params: {
+      title: string;
+      keywords?: string[];
+      wordCount?: number;
+      style?: string;
+    }): Promise<ApiResponse<{ content: string; timestamp: string }>> => {
+      return http.post('/ai/generate/article', params);
     },
 
-    /**
-     * 智能写作助手（异步）
-     * @param params 写作助手参数
-     * @returns Promise<ApiResponse<{ taskId: string; status: string; message: string }>>
-     */
-    writingAssistant: (
-      params: AIWritingParams,
-    ): Promise<ApiResponse<{ taskId: string; status: string; message: string }>> => {
-      return http.post('/ai/writing-assistant', params);
-    },
-
-    /**
-     * 批量内容生成（异步）
-     * @param tasks 任务列表
-     * @returns Promise<ApiResponse<{ taskId: string; status: string; message: string }>>
-     */
-    batchGenerate: (
-      tasks: AIGenerateParams[],
-    ): Promise<ApiResponse<{ taskId: string; status: string; message: string }>> => {
-      return http.post('/ai/batch-generate', { tasks });
-    },
-
-    /**
-     * 获取任务状态
-     * @param taskId 任务ID
-     * @returns Promise<ApiResponse<AITaskStatus>>
-     */
-    getTaskStatus: (taskId: string): Promise<ApiResponse<AITaskStatus>> => {
-      return http.get(`/ai/task/${taskId}`);
-    },
-
-    /**
-     * 获取用户任务列表
-     * @param params 查询参数
-     * @returns Promise<ApiResponse<PaginationResult<AITaskStatus>>>
-     */
-    getUserTasks: (params?: {
-      page?: number;
-      limit?: number;
-    }): Promise<ApiResponse<PaginationResult<AITaskStatus>>> => {
-      return http.get('/ai/tasks', params);
-    },
+    // 队列相关 API 已删除，改用 Socket.IO 流式输出
+    // 使用 useAIStream Hook 进行流式 AI 交互
 
     /**
      * 获取用户配额
@@ -685,36 +642,27 @@ export const API = {
     },
 
     /**
-     * 获取聊天历史
-     * @returns Promise<ApiResponse<{ history: AIChatMessage[]; count: number }>>
-     */
-    getChatHistory: (): Promise<ApiResponse<{ history: AIChatMessage[]; count: number }>> => {
-      return http.get('/ai/history');
-    },
-
-    /**
-     * 清除聊天历史
+     * 清除对话记忆
      * @returns Promise<ApiResponse<null>>
      */
-    clearChatHistory: (): Promise<ApiResponse<null>> => {
-      return http.delete('/ai/history');
+    clearMemory: (): Promise<ApiResponse<null>> => {
+      return http.delete('/ai/memory');
     },
 
     /**
      * 获取AI服务状态
-     * @returns Promise<ApiResponse<{ provider: string; available: boolean; timestamp: string }>>
+     * @returns Promise<ApiResponse<{ provider: string; model: string; available: boolean }>>
      */
-    getStatus: (): Promise<ApiResponse<{ provider: string; available: boolean; timestamp: string }>> => {
+    getStatus: (): Promise<ApiResponse<{ provider: string; model: string; available: boolean }>> => {
       return http.get('/ai/status');
     },
 
     /**
-     * 删除AI任务
-     * @param taskId 任务ID
-     * @returns Promise<ApiResponse<null>>
+     * 获取队列统计
+     * @returns Promise<ApiResponse<Record<string, any>>>
      */
-    deleteTask: (taskId: string): Promise<ApiResponse<null>> => {
-      return http.delete(`/ai/task/${taskId}`);
+    getQueueStats: (): Promise<ApiResponse<Record<string, any>>> => {
+      return http.get('/ai/queue/stats');
     },
   },
 };

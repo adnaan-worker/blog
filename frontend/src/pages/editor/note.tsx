@@ -16,12 +16,12 @@ import {
   FiSettings,
 } from 'react-icons/fi';
 import RichTextEditor from '@/components/rich-text/rich-text-editor';
-import EditorAIAssistant from '@/components/rich-text/editor-ai-assistant';
 import { API } from '@/utils/api';
 import { Button, Input } from 'adnaan-ui';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import { useAnimationEngine } from '@/utils/ui/animation';
+import { useSocket } from '@/hooks/useSocket';
 
 interface Note {
   id: number;
@@ -38,6 +38,9 @@ const NoteEditorPage: React.FC = () => {
   const { variants, level } = useAnimationEngine();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // 初始化 Socket 连接（用于 AI 助手）
+  useSocket();
   const noteId = searchParams.get('id');
 
   const [title, setTitle] = useState('');
@@ -50,7 +53,6 @@ const NoteEditorPage: React.FC = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalData, setOriginalData] = useState({
@@ -279,14 +281,6 @@ const NoteEditorPage: React.FC = () => {
               <FiSettings />
               <span>属性</span>
             </Button>
-            <Button
-              variant={showAIAssistant ? 'primary' : 'outline'}
-              size="small"
-              onClick={() => setShowAIAssistant(!showAIAssistant)}
-            >
-              <FiCpu />
-              <span>AI助手</span>
-            </Button>
             <Button variant={isPrivate ? 'outline' : 'outline'} size="small" onClick={() => setIsPrivate(!isPrivate)}>
               {isPrivate ? <FiLock /> : <FiUnlock />}
               <span>{isPrivate ? '私密' : '公开'}</span>
@@ -304,18 +298,6 @@ const NoteEditorPage: React.FC = () => {
           <EditorSection>
             <RichTextEditor content={content} onChange={setContent} placeholder="记录此刻的心情..." />
           </EditorSection>
-
-          {/* AI助手面板 */}
-          {showAIAssistant && (
-            <AIAssistantPanel>
-              <EditorAIAssistant
-                content={content}
-                onContentUpdate={setContent}
-                isVisible={showAIAssistant}
-                onToggle={() => setShowAIAssistant(false)}
-              />
-            </AIAssistantPanel>
-          )}
 
           {/* 右侧边栏 - 可折叠 */}
           {showSidebar && (

@@ -4,12 +4,12 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiSettings } from 'react-icons/fi';
 import RichTextEditor from '@/components/rich-text/rich-text-editor';
-import EditorAIAssistant from '@/components/rich-text/editor-ai-assistant';
 import { API } from '@/utils/api';
 import { Button, Input, Textarea, Select } from 'adnaan-ui';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import { useAnimationEngine } from '@/utils/ui/animation';
+import { useSocket } from '@/hooks/useSocket';
 
 interface Article {
   id: number;
@@ -36,6 +36,9 @@ const ArticleEditorPage: React.FC = () => {
   const { variants, level } = useAnimationEngine();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // 初始化 Socket 连接（用于 AI 助手）
+  useSocket();
   const articleId = searchParams.get('id');
 
   const [title, setTitle] = useState('');
@@ -49,7 +52,6 @@ const ArticleEditorPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalData, setOriginalData] = useState({
@@ -311,14 +313,6 @@ const ArticleEditorPage: React.FC = () => {
               <FiSettings />
               <span>设置</span>
             </Button>
-            <Button
-              variant={showAIAssistant ? 'primary' : 'outline'}
-              size="small"
-              onClick={() => setShowAIAssistant(!showAIAssistant)}
-            >
-              <FiCpu />
-              <span>AI助手</span>
-            </Button>
             <Button variant="outline" size="small" onClick={() => handleSave(true)} disabled={isSaving}>
               <FiSave />
               <span>保存草稿</span>
@@ -336,18 +330,6 @@ const ArticleEditorPage: React.FC = () => {
           <EditorSection>
             <RichTextEditor content={content} onChange={setContent} placeholder="开始编写你的文章..." />
           </EditorSection>
-
-          {/* AI助手面板 */}
-          {showAIAssistant && (
-            <AIAssistantPanel>
-              <EditorAIAssistant
-                content={content}
-                onContentUpdate={setContent}
-                isVisible={showAIAssistant}
-                onToggle={() => setShowAIAssistant(false)}
-              />
-            </AIAssistantPanel>
-          )}
 
           {/* 右侧边栏 - 可折叠 */}
           {showSidebar && (

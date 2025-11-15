@@ -12,6 +12,7 @@ export interface SocketState {
 
 import { getSocketConfig } from '@/utils/config/socket';
 import { getDeviceId } from '@/utils/core/device-id';
+import { storage } from '@/utils';
 
 // Socket配置 - 使用统一的配置管理
 const SOCKET_CONFIG = {
@@ -242,6 +243,7 @@ class SocketManager {
           token: SOCKET_CONFIG.authKey,
           client_type: 'web_client',
           device_id: deviceId, // 添加设备ID用于精准统计在线人数
+          jwtToken: storage.local.get('token'), // 添加JWT token用于AI功能
         },
         extraHeaders: {
           Authorization: SOCKET_CONFIG.authKey,

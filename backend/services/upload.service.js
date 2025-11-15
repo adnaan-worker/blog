@@ -63,7 +63,6 @@ class UploadService {
       // 生成文件信息
       const fileInfo = this.generateFileInfo(file, user);
 
-
       return success(fileInfo, '头像上传成功');
     } catch (error) {
       // 清理上传的文件

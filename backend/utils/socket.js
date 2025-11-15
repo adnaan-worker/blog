@@ -156,6 +156,20 @@ class SocketManager {
       const token = socket.handshake.auth.token || socket.handshake.headers.authorization;
       const userAgent = socket.handshake.headers['user-agent'];
       const deviceId = socket.handshake.auth.device_id; // 获取设备ID
+      const jwtToken = socket.handshake.auth.jwtToken; // 获取JWT token用于AI功能
+
+      // 解析JWT token获取用户ID（用于AI功能）
+      if (jwtToken) {
+        try {
+          const jwt = require('jsonwebtoken');
+          const decoded = jwt.verify(jwtToken, process.env.JWT_SECRET);
+          socket.userId = decoded.id; // 设置用户ID
+          logger.debug('✅ Socket JWT解析成功', { userId: socket.userId });
+        } catch (error) {
+          logger.warn('⚠️ Socket JWT解析失败', { error: error.message });
+          // JWT失败不影响连接，只是AI功能需要登录
+        }
+      }
 
       // 记录连接信息
       socket.clientInfo = {
@@ -165,6 +179,7 @@ class SocketManager {
         isStatusMonitor: userAgent && userAgent.includes('StatusMonitor'),
         authToken: token ? token.substring(0, 8) + '...' : 'none', // 记录令牌前缀用于调试
         deviceId: deviceId || null, // 存储设备ID
+        userId: socket.userId || null, // 用户ID
       };
 
       logger.info('🔗 新的Socket.IO连接尝试（已通过鉴权）', {
@@ -419,7 +434,11 @@ class SocketManager {
   }
 
   registerCustomHandlers(socket) {
-    // 注册所有自定义事件处理器
+    // 使用模块化处理器
+    const { registerAllHandlers } = require('../sockets');
+    registerAllHandlers(socket, this.io);
+
+    // 注册旧的自定义事件处理器（如果有）
     for (const [event, handler] of this.eventHandlers) {
       socket.on(event, async data => {
         try {

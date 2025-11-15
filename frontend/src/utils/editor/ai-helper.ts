@@ -29,21 +29,14 @@ export class AIWritingHelper {
     options: {
       wordCount?: number;
       style?: string;
-      tone?: string;
     } = {},
   ): Promise<string> {
-    const params: AIGenerateParams = {
-      type: 'article',
-      params: {
-        title,
-        keywords,
-        wordCount: options.wordCount || 1000,
-        style: options.style || '专业且易懂',
-        tone: options.tone || '友好',
-      },
-    };
-
-    const response = await API.ai.generate(params);
+    const response = await API.ai.generateArticle({
+      title,
+      keywords,
+      wordCount: options.wordCount || 1500,
+      style: options.style || '专业且易懂',
+    });
     return this.processContentForRichText(response.data.content);
   }
 
@@ -53,16 +46,17 @@ export class AIWritingHelper {
    * @param keywords 关键词
    */
   async generateTitle(content: string, keywords: string[] = []): Promise<string> {
-    const params: AIGenerateParams = {
-      type: 'title',
-      params: {
-        prompt: content.substring(0, 500), // 取前500字符作为提示
-        keywords,
-      },
-    };
+    const { taskId } = (
+      await API.ai.writingAssistant({
+        action: 'generate_title',
+        content: content.substring(0, 500),
+        params: { keywords },
+      })
+    ).data;
 
-    const response = await API.ai.generate(params);
-    return this.processContentForRichText(response.data.content);
+    return new Promise((resolve, reject) => {
+      this.pollTaskResult(taskId, resolve, reject);
+    });
   }
 
   /**
@@ -70,15 +64,16 @@ export class AIWritingHelper {
    * @param content 文章内容
    */
   async generateSummary(content: string): Promise<string> {
-    const params: AIGenerateParams = {
-      type: 'summary',
-      params: {
-        prompt: content,
-      },
-    };
+    const { taskId } = (
+      await API.ai.writingAssistant({
+        action: 'generate_summary',
+        content,
+      })
+    ).data;
 
-    const response = await API.ai.generate(params);
-    return this.processContentForRichText(response.data.content);
+    return new Promise((resolve, reject) => {
+      this.pollTaskResult(taskId, resolve, reject);
+    });
   }
 
   /**
@@ -87,16 +82,16 @@ export class AIWritingHelper {
    * @param keywords 关键词
    */
   async generateOutline(title: string, keywords: string[] = []): Promise<string> {
-    const params: AIGenerateParams = {
-      type: 'outline',
-      params: {
-        title,
-        keywords,
-      },
-    };
+    const { taskId } = (
+      await API.ai.writingAssistant({
+        action: 'generate_outline',
+        params: { topic: title, keywords },
+      })
+    ).data;
 
-    const response = await API.ai.generate(params);
-    return this.processContentForRichText(response.data.content);
+    return new Promise((resolve, reject) => {
+      this.pollTaskResult(taskId, resolve, reject);
+    });
   }
 
   /**
@@ -108,21 +103,17 @@ export class AIWritingHelper {
     content: string,
     style: string = '更加流畅和专业',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
-    const params: AIWritingParams = {
+    const response = await API.ai.writingAssistant({
       action: 'polish',
       content,
-      params: {
-        style,
-      },
-    };
-
-    const response = await API.ai.writingAssistant(params);
+      params: { style },
+    });
     const taskId = response.data.taskId;
 
     return {
       taskId,
       onComplete: (callback: (result: string) => void) => {
-        this.pollTaskResult(taskId, callback);
+        this.pollTaskResult(taskId, callback, () => {});
       },
     };
   }
@@ -136,21 +127,17 @@ export class AIWritingHelper {
     content: string,
     improvements: string = '提高可读性和逻辑性',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
-    const params: AIWritingParams = {
+    const response = await API.ai.writingAssistant({
       action: 'improve',
       content,
-      params: {
-        prompt: improvements,
-      },
-    };
-
-    const response = await API.ai.writingAssistant(params);
+      params: { improvements },
+    });
     const taskId = response.data.taskId;
 
     return {
       taskId,
       onComplete: (callback: (result: string) => void) => {
-        this.pollTaskResult(taskId, callback);
+        this.pollTaskResult(taskId, callback, () => {});
       },
     };
   }
@@ -164,21 +151,17 @@ export class AIWritingHelper {
     content: string,
     length: 'short' | 'medium' | 'long' = 'medium',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
-    const params: AIWritingParams = {
+    const response = await API.ai.writingAssistant({
       action: 'expand',
       content,
-      params: {
-        length,
-      },
-    };
-
-    const response = await API.ai.writingAssistant(params);
+      params: { length },
+    });
     const taskId = response.data.taskId;
 
     return {
       taskId,
       onComplete: (callback: (result: string) => void) => {
-        this.pollTaskResult(taskId, callback);
+        this.pollTaskResult(taskId, callback, () => {});
       },
     };
   }
@@ -192,21 +175,17 @@ export class AIWritingHelper {
     content: string,
     targetLang: string = '英文',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
-    const params: AIWritingParams = {
+    const response = await API.ai.writingAssistant({
       action: 'translate',
       content,
-      params: {
-        targetLang,
-      },
-    };
-
-    const response = await API.ai.writingAssistant(params);
+      params: { targetLang },
+    });
     const taskId = response.data.taskId;
 
     return {
       taskId,
       onComplete: (callback: (result: string) => void) => {
-        this.pollTaskResult(taskId, callback);
+        this.pollTaskResult(taskId, callback, () => {});
       },
     };
   }
@@ -220,21 +199,17 @@ export class AIWritingHelper {
     content: string,
     length: 'short' | 'medium' | 'long' = 'medium',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
-    const params: AIWritingParams = {
+    const response = await API.ai.writingAssistant({
       action: 'continue',
       content,
-      params: {
-        length,
-      },
-    };
-
-    const response = await API.ai.writingAssistant(params);
+      params: { length },
+    });
     const taskId = response.data.taskId;
 
     return {
       taskId,
       onComplete: (callback: (result: string) => void) => {
-        this.pollTaskResult(taskId, callback);
+        this.pollTaskResult(taskId, callback, () => {});
       },
     };
   }
@@ -248,21 +223,17 @@ export class AIWritingHelper {
     content: string,
     style: 'professional' | 'casual' | 'academic' | 'creative' | 'storytelling' = 'professional',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
-    const params: AIWritingParams = {
+    const response = await API.ai.writingAssistant({
       action: 'rewrite',
       content,
-      params: {
-        style,
-      },
-    };
-
-    const response = await API.ai.writingAssistant(params);
+      params: { style },
+    });
     const taskId = response.data.taskId;
 
     return {
       taskId,
       onComplete: (callback: (result: string) => void) => {
-        this.pollTaskResult(taskId, callback);
+        this.pollTaskResult(taskId, callback, () => {});
       },
     };
   }
@@ -276,65 +247,35 @@ export class AIWritingHelper {
     content: string,
     length: 'short' | 'medium' | 'long' = 'medium',
   ): Promise<{ taskId: string; onComplete: (callback: (result: string) => void) => void }> {
-    const params: AIWritingParams = {
+    const response = await API.ai.writingAssistant({
       action: 'summarize',
       content,
-      params: {
-        length,
-      },
-    };
-
-    const response = await API.ai.writingAssistant(params);
+      params: { length },
+    });
     const taskId = response.data.taskId;
 
     return {
       taskId,
       onComplete: (callback: (result: string) => void) => {
-        this.pollTaskResult(taskId, callback);
+        this.pollTaskResult(taskId, callback, () => {});
       },
     };
   }
 
   /**
-   * 流式聊天写作助手
-   * @param message 用户消息
-   * @param onChunk 流式数据回调
-   * @param sessionId 会话ID
+   * 对话聊天（带记忆）
    */
-  async streamWritingChat(message: string, onChunk: (chunk: string) => void, sessionId?: string): Promise<string> {
-    return await API.ai.streamChat(message, sessionId, onChunk);
+  async conversationChat(message: string): Promise<string> {
+    const response = await API.ai.conversation(message);
+    return response.data.message;
   }
 
   /**
-   * 批量生成内容
-   * @param tasks 任务列表
+   * 简单聊天
    */
-  async batchGenerate(
-    tasks: Array<{
-      type: 'title' | 'summary' | 'outline';
-      content?: string;
-      title?: string;
-      keywords?: string[];
-    }>,
-  ): Promise<{ taskId: string; onComplete: (callback: (results: any[]) => void) => void }> {
-    const aiTasks: AIGenerateParams[] = tasks.map((task) => ({
-      type: task.type,
-      params: {
-        title: task.title,
-        keywords: task.keywords || [],
-        prompt: task.content,
-      },
-    }));
-
-    const response = await API.ai.batchGenerate(aiTasks);
-    const taskId = response.data.taskId;
-
-    return {
-      taskId,
-      onComplete: (callback: (results: any[]) => void) => {
-        this.pollTaskResult(taskId, callback);
-      },
-    };
+  async chat(message: string): Promise<string> {
+    const response = await API.ai.chat(message);
+    return response.data.message;
   }
 
   /**
@@ -345,7 +286,8 @@ export class AIWritingHelper {
    */
   private async pollTaskResult(
     taskId: string,
-    callback: (result: any) => void,
+    resolve: (result: any) => void,
+    reject: (reason?: any) => void,
     maxAttempts: number = 60,
   ): Promise<void> {
     let attempts = 0;
@@ -358,27 +300,16 @@ export class AIWritingHelper {
 
         if (task.status === 'completed') {
           this.clearTaskPolling(taskId);
-
-          // 修复：正确处理返回的结果格式
-          let finalResult = task.result;
-
-          // 如果返回的是对象格式（包含action, originalContent, result, params）
-          if (finalResult && typeof finalResult === 'object' && finalResult.result) {
-            finalResult = finalResult.result;
-          }
-
-          // 如果返回的是批量生成结果
-          if (finalResult && typeof finalResult === 'object' && finalResult.results) {
-            finalResult = finalResult.results;
-          }
-
-          callback(finalResult);
+          // 处理完成的任务结果
+          const result = task.result || task;
+          const processedResult = this.processContentForRichText(result);
+          resolve(processedResult);
         } else if (task.status === 'failed') {
           this.clearTaskPolling(taskId);
-          throw new Error(task.error || '任务执行失败');
+          reject(new Error('任务执行失败'));
         } else if (attempts >= maxAttempts) {
           this.clearTaskPolling(taskId);
-          throw new Error('任务执行超时');
+          reject(new Error('任务执行超时'));
         } else {
           // 继续轮询
           const timeout = setTimeout(poll, 2000);
@@ -386,7 +317,7 @@ export class AIWritingHelper {
         }
       } catch (error) {
         this.clearTaskPolling(taskId);
-        throw error;
+        reject(error);
       }
     };
 

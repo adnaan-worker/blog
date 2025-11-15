@@ -15,13 +15,12 @@ const environment = require('./config/environment');
 const { requestLogger, errorLogger, logger } = require('./utils/logger');
 const { monitorMiddleware } = require('./utils/monitor');
 const { responseMiddleware } = require('./utils/response');
-const { aiService } = require('./services/ai.service');
-const { aiTaskWorker } = require('./workers/ai-task-worker');
+const aiProvider = require('./services/langchain/ai-provider.service');
+const { initializeQueues, shutdownQueues } = require('./queues');
 const specs = require('./config/swagger.config');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
 const routes = require('./routes');
 const socketManager = require('./utils/socket');
-const statusController = require('./controllers/status.controller');
 
 // 获取环境配置
 const config = environment.get();
@@ -177,32 +176,31 @@ const startServer = async () => {
   console.log('========================================\n');
 
   try {
-    // 1. 初始化AI服务
-    await aiService.init();
-    console.log('✅ AI服务初始化成功');
-
-    // 2. 启动AI任务处理器（会自动连接Redis）
-    await aiTaskWorker.start();
-    const taskWorkerStatus = aiTaskWorker.getStatus();
-    console.log(`✅ AI任务处理器启动成功 [${taskWorkerStatus.mode}]`);
+    // 1. 初始化 LangChain AI 服务
+    await aiProvider.initialize();
+    console.log('✅ LangChain AI 服务初始化成功');
   } catch (error) {
     console.log('⚠️  AI服务初始化失败:', error.message);
   }
 
-  // 3. 初始化 Socket.IO（静默模式）
+  // 2. 初始化 Socket.IO（模块化处理器自动注册）
   socketManager.initialize(server);
   console.log('✅ Socket.IO 服务已启动');
 
-  // 4. 初始化状态相关的 Socket 事件处理器（静默模式）
-  statusController.initializeSocketHandlers();
-
-  // 5. 配置服务器超时
+  // 3. 配置服务器超时
   server.timeout = 30000; // 30秒超时
   server.keepAliveTimeout = 65000; // Keep-alive超时
   server.headersTimeout = 66000; // Headers超时
 
-  // 6. 启动HTTP服务器
+  // 4. 启动HTTP服务器
   server.listen(PORT, async () => {
+    // 5. HTTP服务器启动后，再启动队列系统（避免阻塞）
+    try {
+      await initializeQueues();
+      console.log('✅ 队列系统启动成功');
+    } catch (error) {
+      console.log('⚠️  队列系统启动失败:', error.message);
+    }
     console.log('\n========================================');
     console.log('✅ 服务器启动完成');
     console.log('========================================\n');
@@ -211,16 +209,16 @@ const startServer = async () => {
     console.log(`💚 健康检查: http://localhost:${PORT}/api/system/health`);
     console.log(`📊 系统监控: http://localhost:${PORT}/status`);
     console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
-    console.log(`🤖 AI服务: ${aiService.isServiceAvailable() ? '✅ 可用' : '❌ 不可用'}`);
-    console.log(`🔄 任务队列: ${aiTaskWorker.getStatus().isRunning ? '✅ 运行中' : '❌ 未启动'}`);
+    console.log(`🤖 AI服务: ${aiProvider.isAvailable() ? '✅ 可用' : '❌ 不可用'}`);
+    console.log(`🔄 队列系统: ✅ 运行中`);
     console.log('\n========================================\n');
 
     // 记录到日志文件
     logger.info('🚀 服务器启动成功', {
       port: PORT,
       environment: config.nodeEnv,
-      aiService: aiService.isServiceAvailable() ? '可用' : '不可用',
-      taskWorker: aiTaskWorker.getStatus().isRunning ? '运行中' : '未启动',
+      aiService: aiProvider.isAvailable() ? '可用' : '不可用',
+      queueSystem: '运行中',
     });
   });
 };
@@ -253,9 +251,10 @@ async function gracefulShutdown(signal) {
     logger.info('2️⃣ 关闭 Socket.IO 服务...');
     await socketManager.shutdown();
 
-    // 3. 关闭 AI 任务处理器
-    logger.info('3️⃣ 关闭 AI 任务处理器...');
-    await aiTaskWorker.stop();
+    // 3. 关闭队列系统
+    logger.info('3️⃣ 关闭队列系统...');
+    await shutdownQueues();
+    logger.info('✅ 队列系统已关闭');
 
     // 4. 关闭数据库连接
     logger.info('4️⃣ 关闭数据库连接...');

@@ -6,6 +6,7 @@ import { API } from '@/utils';
 import { EditorToolbar } from './toolbar/editor-toolbar';
 import { CommandMenu } from './toolbar/command-menu';
 import { InputPanel } from './toolbar/input-panel';
+import { AIAssistant } from './ai-assistant';
 import { createExtensions } from '@/utils/editor/extensions';
 import {
   uploadImage,
@@ -170,6 +171,23 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
     },
   });
 
+  // AI助手文本插入处理
+  const handleAIInsertText = useCallback(
+    (text: string, replace: boolean = false) => {
+      if (!editor) return;
+
+      if (replace) {
+        // 替换选中的文本
+        const { from, to } = editor.state.selection;
+        editor.chain().focus().deleteRange({ from, to }).insertContent(text).run();
+      } else {
+        // 在光标位置插入文本
+        editor.chain().focus().insertContent(text).run();
+      }
+    },
+    [editor],
+  );
+
   // 组件挂载/卸载处理
   useEffect(() => {
     return () => {
@@ -301,8 +319,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange, plac
       {isUploading && <UploadingIndicator>正在上传图片...</UploadingIndicator>}
 
       {/* 编辑器内容区 */}
-      <div className="tiptap-editor-container">
+      <div className="tiptap-editor-container" style={{ position: 'relative' }}>
         <EditorContent editor={editor} />
+
+        {/* AI助手 - 优化版 */}
+        <AIAssistant editor={editor} editorRef={editorRef} />
       </div>
 
       {/* 斜杠命令菜单 */}
@@ -344,6 +365,12 @@ const EditorWrapper = styled.div<{ maxHeight?: string }>`
     overflow-y: auto;
     min-height: 200px;
     max-height: ${(props) => (props.maxHeight ? `calc(${props.maxHeight} - 50px)` : 'none')};
+    outline: none;
+
+    &:focus,
+    &:focus-within {
+      outline: none;
+    }
 
     &::-webkit-scrollbar {
       width: 6px;
@@ -371,12 +398,10 @@ const EditorWrapper = styled.div<{ maxHeight?: string }>`
       outline: none;
     }
 
+    /* 隐藏原生placeholder，使用自定义的AI助手placeholder */
     p.is-editor-empty:first-of-type::before {
-      content: attr(data-placeholder);
-      color: var(--text-secondary);
-      float: left;
-      height: 0;
-      pointer-events: none;
+      content: '';
+      display: none;
     }
   }
 
