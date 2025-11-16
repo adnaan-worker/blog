@@ -27,7 +27,10 @@ export const useAIStream = () => {
   // 监听流式数据块
   useSocketEvent('ai:chunk', (data: { chunk: string; taskId: string; action?: string }) => {
     setState((prev) => {
-      // 不检查taskId，直接累积内容
+      // 检查 taskId 是否匹配，防止多任务混淆
+      if (data.taskId && prev.currentTaskId && data.taskId !== prev.currentTaskId) {
+        return prev; // 忽略不匹配的数据
+      }
       const newContent = prev.streamContent + data.chunk;
       return {
         ...prev,
@@ -43,10 +46,16 @@ export const useAIStream = () => {
 
   // 监听生成完成
   useSocketEvent('ai:done', (data: { taskId: string; action?: string }) => {
-    setState((prev) => ({
-      ...prev,
-      isStreaming: false,
-    }));
+    setState((prev) => {
+      // 检查 taskId 是否匹配
+      if (data.taskId && prev.currentTaskId && data.taskId !== prev.currentTaskId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        isStreaming: false,
+      };
+    });
   });
 
   // 监听错误
@@ -62,12 +71,16 @@ export const useAIStream = () => {
 
   // 监听取消
   useSocketEvent('ai:cancelled', (data: { taskId: string }) => {
-    if (data.taskId === state.currentTaskId) {
-      setState((prev) => ({
+    setState((prev) => {
+      // 检查 taskId 是否匹配
+      if (data.taskId && prev.currentTaskId && data.taskId !== prev.currentTaskId) {
+        return prev;
+      }
+      return {
         ...prev,
         isStreaming: false,
-      }));
-    }
+      };
+    });
   });
 
   /**
@@ -205,6 +218,58 @@ export const useAIStream = () => {
     callbackRef.current = null;
   }, []);
 
+  /**
+   * 流式总结
+   */
+  const streamSummarize = useCallback(
+    (content: string, length: 'short' | 'medium' | 'long' = 'medium', onChunk?: (chunk: string) => void) => {
+      if (!isConnected) {
+        setState((prev) => ({ ...prev, error: 'Socket 未连接' }));
+        return null;
+      }
+
+      const taskId = `summarize_${Date.now()}`;
+      setState({
+        isStreaming: true,
+        streamContent: '',
+        currentTaskId: taskId,
+        error: null,
+      });
+
+      callbackRef.current = onChunk || null;
+
+      emit('ai:stream_summarize', { content, length, taskId });
+      return taskId;
+    },
+    [isConnected, emit],
+  );
+
+  /**
+   * 流式翻译
+   */
+  const streamTranslate = useCallback(
+    (content: string, targetLang: string = '英文', onChunk?: (chunk: string) => void) => {
+      if (!isConnected) {
+        setState((prev) => ({ ...prev, error: 'Socket 未连接' }));
+        return null;
+      }
+
+      const taskId = `translate_${Date.now()}`;
+      setState({
+        isStreaming: true,
+        streamContent: '',
+        currentTaskId: taskId,
+        error: null,
+      });
+
+      callbackRef.current = onChunk || null;
+
+      emit('ai:stream_translate', { content, targetLang, taskId });
+      return taskId;
+    },
+    [isConnected, emit],
+  );
+
   return {
     // 状态
     isConnected,
@@ -218,6 +283,8 @@ export const useAIStream = () => {
     streamPolish,
     streamImprove,
     streamExpand,
+    streamSummarize,
+    streamTranslate,
     cancelTask,
     reset,
   };

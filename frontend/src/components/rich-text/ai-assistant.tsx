@@ -10,7 +10,10 @@ import {
   FiMaximize2,
   FiMessageSquare,
   FiLoader,
+  FiCpu,
   FiFeather,
+  FiFileText,
+  FiGlobe,
 } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
 import { useAIStream } from '@/hooks/useAIStream';
@@ -47,6 +50,15 @@ const FloatingToolbar = styled(motion.div)<{ position: { top: number; left: numb
     border-right: 6px solid transparent;
     border-bottom: 6px solid var(--border-color);
   }
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    left: 50% !important;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 2rem);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 `;
 
 const ToolbarButton = styled(motion.button)`
@@ -78,6 +90,18 @@ const ToolbarButton = styled(motion.button)`
   &:active {
     transform: translateY(0);
   }
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    min-height: 44px; /* 触摸友好 */
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
 `;
 
 // 内联预览卡片 - 紧贴选中文本下方
@@ -96,6 +120,18 @@ const InlinePreviewCard = styled(motion.div)<{ position: { top: number; left: nu
   z-index: 999;
   display: flex;
   flex-direction: column;
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    position: fixed;
+    top: auto !important;
+    left: 1rem !important;
+    right: 1rem;
+    bottom: 1rem;
+    width: auto;
+    max-width: none;
+    max-height: 70vh;
+  }
 `;
 
 const PreviewHeader = styled.div`
@@ -301,49 +337,65 @@ const KeyboardHint = styled.div`
 // 空内容提示 - 类似placeholder的样式
 const EmptyStateTrigger = styled.div`
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  padding: 2rem 3rem;
-  color: var(--text-secondary);
-  font-size: 1rem;
+  top: 6rem;
+  left: 3rem;
+  text-align: left;
+  color: var(--text-tertiary);
+  font-size: 0.9375rem;
   pointer-events: none;
+  user-select: none;
   z-index: 1;
+  padding: 0;
 
   a {
     color: var(--accent-color);
     text-decoration: none;
+    pointer-events: all;
     cursor: pointer;
-    pointer-events: auto;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-weight: 500;
 
     &:hover {
+      opacity: 0.8;
       text-decoration: underline;
-      color: var(--accent-color-hover, var(--accent-color));
     }
   }
 
   @media (max-width: 768px) {
-    padding: 1.5rem 2rem;
-    font-size: 0.95rem;
-    gap: 0.5rem;
+    top: 4rem;
+    left: 1.5rem;
+    right: 1.5rem;
+    font-size: 0.875rem;
 
-    kbd {
-      padding: 0.125rem 0.375rem;
+    a {
+      display: block;
+      margin-left: 0;
+      margin-top: 0.75rem;
+      padding: 0.625rem 1rem;
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
-      border-radius: 4px;
-      font-family: 'Monaco', 'Menlo', monospace;
+      border-radius: 8px;
+      text-align: center;
     }
   }
 `;
 
 // AI操作配置
 const AI_ACTIONS = [
-  { id: 'polish', label: '润色', icon: <FiEdit3 />, hotkey: '⌘1' },
-  { id: 'expand', label: '扩写', icon: <FiMaximize2 />, hotkey: '⌘2' },
-  { id: 'improve', label: '改进', icon: <FiZap />, hotkey: '⌘3' },
-  { id: 'summarize', label: '总结', icon: <FiMessageSquare />, hotkey: '⌘4' },
+  { id: 'polish', label: '润色', icon: <FiEdit3 />, hotkey: '⌘1', color: '#6366f1' },
+  { id: 'improve', label: '改进', icon: <FiZap />, hotkey: '⌘2', color: '#8b5cf6' },
+  { id: 'expand', label: '扩写', icon: <FiMaximize2 />, hotkey: '⌘3', color: '#ec4899' },
+  { id: 'summarize', label: '总结', icon: <FiFileText />, hotkey: '⌘4', color: '#f59e0b' },
+  {
+    id: 'translate',
+    label: '翻译',
+    icon: <FiGlobe />,
+    hotkey: '⌘5',
+    color: '#10b981',
+    submenu: ['英文', '日文', '韩文', '法文', '德文', '西班牙文'],
+  },
 ];
 
 interface AIAssistantProps {
@@ -372,6 +424,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
     streamPolish,
     streamImprove,
     streamExpand,
+    streamSummarize,
+    streamTranslate,
     cancelTask,
     reset,
   } = useAIStream();
@@ -381,18 +435,34 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
     if (!editor) return;
 
     const checkEmpty = () => {
+      // 获取纯文本内容
       const text = editor.getText().trim();
-      const isEmpty = text.length === 0;
-      setShowEmptyTrigger(isEmpty && !showToolbar && !showPreview);
+      // 获取 HTML 内容
+      const html = editor.getHTML();
+
+      // 更严格的判断：检查是否只有空段落或完全为空
+      const isEmptyHTML = html === '<p></p>' || html === '' || html === '<p><br></p>';
+      const isEmptyText = text.length === 0 || text === '';
+      const isEmpty = isEmptyHTML && isEmptyText;
+
+      // 只有真正为空时才显示，且不在其他状态中
+      setShowEmptyTrigger(isEmpty && !showToolbar && !showPreview && !showWritingDialog);
     };
 
+    // 初始检查
     checkEmpty();
+
+    // 监听编辑器更新
     editor.on('update', checkEmpty);
+
+    // 监听编辑器内容变化（包括 setContent）
+    editor.on('transaction', checkEmpty);
 
     return () => {
       editor.off('update', checkEmpty);
+      editor.off('transaction', checkEmpty);
     };
-  }, [editor, showToolbar, showPreview]);
+  }, [editor, showToolbar, showPreview, showWritingDialog]);
 
   // 监听文本选择
   useEffect(() => {
@@ -493,16 +563,23 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
           case 'expand':
             streamExpand(selectedText, 'medium');
             break;
+          case 'summarize':
+            streamSummarize(selectedText, 'medium');
+            break;
+          case 'translate':
+            // 默认翻译为英文，后续可以添加语言选择
+            streamTranslate(selectedText, '英文');
+            break;
           default:
             adnaan.toast.error('暂不支持该功能');
             setShowPreview(false);
         }
-      } catch (err: any) {
-        adnaan.toast.error(err.message || 'AI处理失败');
+      } catch (error: any) {
+        adnaan.toast.error(error.message || 'AI操作失败');
         setShowPreview(false);
       }
     },
-    [selectedText, streamPolish, streamImprove, streamExpand, reset],
+    [selectedText, streamPolish, streamImprove, streamExpand, streamSummarize, streamTranslate, reset],
   );
 
   // 接受AI建议

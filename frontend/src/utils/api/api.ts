@@ -630,6 +630,33 @@ export const API = {
       return http.post('/ai/generate/article', params);
     },
 
+    /**
+     * 生成标题（异步任务，返回jobId）
+     * @param params 内容参数
+     * @returns Promise<ApiResponse<{ jobId: string; status: string }>>
+     */
+    generateTitle: (params: { content: string }): Promise<ApiResponse<{ jobId: string; status: string }>> => {
+      return http.post('/ai/generate/title', params);
+    },
+
+    /**
+     * 生成摘要（异步任务，返回jobId）
+     * @param params 内容参数
+     * @returns Promise<ApiResponse<{ jobId: string; status: string }>>
+     */
+    generateSummary: (params: { content: string }): Promise<ApiResponse<{ jobId: string; status: string }>> => {
+      return http.post('/ai/generate/summary', params);
+    },
+
+    /**
+     * 查询任务状态
+     * @param jobId 任务ID
+     * @returns Promise<ApiResponse<{ status: string; result: any; progress: number }>>
+     */
+    getTaskStatus: (jobId: string): Promise<ApiResponse<{ status: string; result: any; progress: number }>> => {
+      return http.get(`/ai/task/${jobId}`);
+    },
+
     // 队列相关 API 已删除，改用 Socket.IO 流式输出
     // 使用 useAIStream Hook 进行流式 AI 交互
 
@@ -657,13 +684,7 @@ export const API = {
       return http.get('/ai/status');
     },
 
-    /**
-     * 获取队列统计
-     * @returns Promise<ApiResponse<Record<string, any>>>
-     */
-    getQueueStats: (): Promise<ApiResponse<Record<string, any>>> => {
-      return http.get('/ai/queue/stats');
-    },
+    // 队列相关功能已废弃，改用 Socket.IO 流式输出
   },
 };
 

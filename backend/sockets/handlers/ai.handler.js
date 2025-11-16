@@ -14,6 +14,8 @@ class AIHandler extends BaseSocketHandler {
     this.on('ai:stream_polish', this.handleStreamPolish);
     this.on('ai:stream_improve', this.handleStreamImprove);
     this.on('ai:stream_expand', this.handleStreamExpand);
+    this.on('ai:stream_summarize', this.handleStreamSummarize);
+    this.on('ai:stream_translate', this.handleStreamTranslate);
     this.on('ai:cancel', this.handleCancel);
   }
 
@@ -22,7 +24,16 @@ class AIHandler extends BaseSocketHandler {
    */
   async handleStreamChat(socket, io, data) {
     const { message, sessionId } = data;
-    const userId = socket.userId || socket.id;
+    const userId = socket.userId;
+
+    // 检查用户是否登录
+    if (!userId) {
+      this.emit(socket, 'ai:error', {
+        sessionId,
+        error: '请先登录后使用AI功能',
+      });
+      return;
+    }
 
     try {
       // 检查配额
@@ -64,7 +75,16 @@ class AIHandler extends BaseSocketHandler {
    */
   async handleStreamPolish(socket, io, data) {
     const { content, style = '更加流畅和专业', taskId } = data;
-    const userId = socket.userId || socket.id;
+    const userId = socket.userId;
+
+    // 检查用户是否登录
+    if (!userId) {
+      this.emit(socket, 'ai:error', {
+        taskId,
+        error: '请先登录后使用AI功能',
+      });
+      return;
+    }
 
     try {
       // 检查配额
@@ -106,7 +126,16 @@ class AIHandler extends BaseSocketHandler {
    */
   async handleStreamImprove(socket, io, data) {
     const { content, improvements = '提高可读性和逻辑性', taskId } = data;
-    const userId = socket.userId || socket.id;
+    const userId = socket.userId;
+
+    // 检查用户是否登录
+    if (!userId) {
+      this.emit(socket, 'ai:error', {
+        taskId,
+        error: '请先登录后使用AI功能',
+      });
+      return;
+    }
 
     try {
       // 检查配额
@@ -148,7 +177,16 @@ class AIHandler extends BaseSocketHandler {
    */
   async handleStreamExpand(socket, io, data) {
     const { content, length = 'medium', taskId } = data;
-    const userId = socket.userId || socket.id;
+    const userId = socket.userId;
+
+    // 检查用户是否登录
+    if (!userId) {
+      this.emit(socket, 'ai:error', {
+        taskId,
+        error: '请先登录后使用AI功能',
+      });
+      return;
+    }
 
     try {
       // 检查配额
@@ -178,6 +216,108 @@ class AIHandler extends BaseSocketHandler {
       this.emit(socket, 'ai:done', { taskId, action: 'expand' });
     } catch (error) {
       this.log('error', '流式扩展失败', { userId, error: error.message });
+      this.emit(socket, 'ai:error', {
+        taskId,
+        error: error.message,
+      });
+    }
+  }
+
+  /**
+   * 流式总结
+   */
+  async handleStreamSummarize(socket, io, data) {
+    const { content, length = 'medium', taskId } = data;
+    const userId = socket.userId;
+
+    // 检查用户是否登录
+    if (!userId) {
+      this.emit(socket, 'ai:error', {
+        taskId,
+        error: '请先登录后使用AI功能',
+      });
+      return;
+    }
+
+    try {
+      // 检查配额
+      const quota = await aiQuotaService.checkGenerateQuota(userId);
+      if (!quota.available) {
+        this.emit(socket, 'ai:error', {
+          taskId,
+          error: `每日生成次数已达上限(${quota.limit})`,
+        });
+        return;
+      }
+
+      this.log('info', '开始流式总结', { userId, taskId });
+
+      // 流式生成
+      await aiWriting.streamSummarizeContent(content, length, chunk => {
+        this.emit(socket, 'ai:chunk', {
+          taskId,
+          chunk,
+          action: 'summarize',
+        });
+      });
+
+      // 更新配额
+      await aiQuotaService.incrementGenerateUsage(userId);
+
+      this.emit(socket, 'ai:done', { taskId, action: 'summarize' });
+    } catch (error) {
+      this.log('error', '流式总结失败', { userId, error: error.message });
+      this.emit(socket, 'ai:error', {
+        taskId,
+        error: error.message,
+      });
+    }
+  }
+
+  /**
+   * 流式翻译
+   */
+  async handleStreamTranslate(socket, io, data) {
+    const { content, targetLang = '英文', taskId } = data;
+    const userId = socket.userId;
+
+    // 检查用户是否登录
+    if (!userId) {
+      this.emit(socket, 'ai:error', {
+        taskId,
+        error: '请先登录后使用AI功能',
+      });
+      return;
+    }
+
+    try {
+      // 检查配额
+      const quota = await aiQuotaService.checkGenerateQuota(userId);
+      if (!quota.available) {
+        this.emit(socket, 'ai:error', {
+          taskId,
+          error: `每日生成次数已达上限(${quota.limit})`,
+        });
+        return;
+      }
+
+      this.log('info', '开始流式翻译', { userId, taskId, targetLang });
+
+      // 流式生成
+      await aiWriting.streamTranslateContent(content, targetLang, chunk => {
+        this.emit(socket, 'ai:chunk', {
+          taskId,
+          chunk,
+          action: 'translate',
+        });
+      });
+
+      // 更新配额
+      await aiQuotaService.incrementGenerateUsage(userId);
+
+      this.emit(socket, 'ai:done', { taskId, action: 'translate' });
+    } catch (error) {
+      this.log('error', '流式翻译失败', { userId, error: error.message });
       this.emit(socket, 'ai:error', {
         taskId,
         error: error.message,

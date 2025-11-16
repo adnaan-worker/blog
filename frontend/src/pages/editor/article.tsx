@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiSettings } from 'react-icons/fi';
+import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiSettings, FiZap } from 'react-icons/fi';
 import RichTextEditor from '@/components/rich-text/rich-text-editor';
+import { AIFloatingTask } from '@/components/ai-floating-task';
+import { useAITasks } from '@/hooks/useAITasks';
 import { API } from '@/utils/api';
 import { Button, Input, Textarea, Select } from 'adnaan-ui';
 import { SEO } from '@/components/common';
@@ -54,6 +56,9 @@ const ArticleEditorPage: React.FC = () => {
   const [tags, setTags] = useState<Tag[]>([]);
   const [showSidebar, setShowSidebar] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // AI 任务管理
+  const { tasks, createTask, deleteTask, clearCompleted } = useAITasks();
   const [originalData, setOriginalData] = useState({
     title: '',
     content: '',
@@ -268,6 +273,52 @@ const ArticleEditorPage: React.FC = () => {
     navigate(-1);
   };
 
+  // 生成标题
+  const handleGenerateTitle = async () => {
+    if (!content) {
+      adnaan.toast.error('请先输入文章内容');
+      return;
+    }
+
+    try {
+      await createTask('generate_title', { content });
+      adnaan.toast.success('标题生成任务已创建');
+    } catch (error: any) {
+      adnaan.toast.error(error.message || '创建任务失败');
+    }
+  };
+
+  // 生成摘要
+  const handleGenerateSummary = async () => {
+    if (!content) {
+      adnaan.toast.error('请先输入文章内容');
+      return;
+    }
+
+    try {
+      await createTask('generate_summary', { content });
+      adnaan.toast.success('摘要生成任务已创建');
+    } catch (error: any) {
+      adnaan.toast.error(error.message || '创建任务失败');
+    }
+  };
+
+  // 应用AI生成结果（直接应用，不弹窗）
+  const handleApplyResult = (taskId: string, result: any) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
+    if (task.type === 'generate_title' && result?.titles?.[0]) {
+      setTitle(result.titles[0]);
+      deleteTask(taskId);
+      adnaan.toast.success('标题已应用');
+    } else if (task.type === 'generate_summary' && result?.summary) {
+      setSummary(result.summary);
+      deleteTask(taskId);
+      adnaan.toast.success('摘要已应用');
+    }
+  };
+
   // 加载状态由路由级别的Suspense处理，不需要额外显示
   return (
     <>
@@ -287,19 +338,17 @@ const ArticleEditorPage: React.FC = () => {
               退出
             </Button>
             <Title>
-              <Input
-                type="text"
-                placeholder="请输入文章标题..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                variant="flushed"
-                size="large"
-                style={{
-                  fontSize: '18px',
-                  fontWeight: 600,
-                  padding: '8px 0',
-                }}
-              />
+              <TitleInputWrapper>
+                <TitleInput
+                  type="text"
+                  placeholder="请输入文章标题..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                <AIGenerateButton onClick={handleGenerateTitle} disabled={!content} title="AI 生成标题">
+                  <FiZap />
+                </AIGenerateButton>
+              </TitleInputWrapper>
             </Title>
           </LeftSection>
 
@@ -339,15 +388,21 @@ const ArticleEditorPage: React.FC = () => {
 
                 {/* 摘要 */}
                 <Field>
-                  <Label>
-                    摘要
-                    <OptionalTag>（建议填写）</OptionalTag>
-                  </Label>
+                  <LabelWithButton>
+                    <Label>
+                      摘要
+                      <OptionalTag>（建议填写）</OptionalTag>
+                    </Label>
+                    <AIGenerateButton onClick={handleGenerateSummary} disabled={!content} title="AI 生成摘要">
+                      <FiZap />
+                    </AIGenerateButton>
+                  </LabelWithButton>
                   <Textarea
                     placeholder="请输入文章摘要，帮助读者快速了解文章内容..."
                     value={summary}
                     onChange={(e) => setSummary(e.target.value)}
                     size="small"
+                    rows={3}
                   />
                 </Field>
 
@@ -413,6 +468,9 @@ const ArticleEditorPage: React.FC = () => {
             </Sidebar>
           )}
         </MainContent>
+
+        {/* AI 悬浮任务条 */}
+        <AIFloatingTask tasks={tasks} onApply={handleApplyResult} onClose={deleteTask} onCloseAll={clearCompleted} />
       </EditorContainer>
     </>
   );
@@ -454,6 +512,79 @@ const LeftSection = styled.div`
 const Title = styled.div`
   flex: 1;
   min-width: 0;
+`;
+
+// 标题输入框包装器
+const TitleInputWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border-bottom: 2px solid var(--border-color);
+  transition: border-color 0.2s ease;
+
+  &:focus-within {
+    border-color: var(--accent-color);
+  }
+`;
+
+// 标题输入框
+const TitleInput = styled.input`
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 8px 0;
+  color: var(--text-primary);
+  min-width: 0;
+
+  &::placeholder {
+    color: var(--text-tertiary);
+    font-weight: 400;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
+`;
+
+// AI 生成按钮
+const AIGenerateButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-secondary);
+    color: var(--accent-color);
+    transform: scale(1.1);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 `;
 
 const RightSection = styled.div`
@@ -621,9 +752,16 @@ const Label = styled.label`
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
+  margin-bottom: 8px;
+  display: block;
+`;
+
+// Label 和按钮的容器
+const LabelWithButton = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  margin-bottom: 8px;
 `;
 
 // 必填标记

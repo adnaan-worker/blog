@@ -87,43 +87,7 @@ class AIWritingService {
     return this.processContent(result);
   }
 
-  /**
-   * 续写内容
-   */
-  async continueContent(content, length = 'medium') {
-    const lengthMap = {
-      short: '1-2段',
-      medium: '3-5段',
-      long: '5-10段',
-    };
-    const lengthInstruction = lengthMap[length] || lengthMap.medium;
-
-    logger.info('续写内容', { contentLength: content.length, length });
-
-    const result = await aiProvider.generateWithTemplate(prompts.CONTINUE_TEMPLATE, {
-      content,
-      lengthInstruction,
-    });
-
-    return this.processContent(result);
-  }
-
-  /**
-   * 改写风格
-   */
-  async rewriteStyle(content, style = 'professional') {
-    const styleDescription =
-      prompts.STYLE_DESCRIPTIONS[style] || prompts.STYLE_DESCRIPTIONS.professional;
-
-    logger.info('改写风格', { contentLength: content.length, style });
-
-    const result = await aiProvider.generateWithTemplate(prompts.REWRITE_TEMPLATE, {
-      content,
-      styleDescription,
-    });
-
-    return this.processContent(result);
-  }
+  // 续写和改写风格功能已废弃（使用频率低，可通过扩写和自定义提示词实现）
 
   /**
    * 翻译内容
@@ -140,21 +104,22 @@ class AIWritingService {
   }
 
   /**
-   * 生成标题
+   * 生成标题（返回纯文本）
    */
   async generateTitle(content, keywords = []) {
     logger.info('生成标题', { contentLength: content.length });
 
     const result = await aiProvider.generateWithTemplate(prompts.TITLE_TEMPLATE, {
-      content: content.substring(0, 500),
+      content,
       keywords: keywords.join(', '),
     });
 
-    return this.processContent(result);
+    // 返回纯文本，去除HTML标签
+    return this.extractPlainText(result);
   }
 
   /**
-   * 生成摘要
+   * 生成摘要（返回纯文本）
    */
   async generateSummary(content) {
     logger.info('生成摘要', { contentLength: content.length });
@@ -163,7 +128,8 @@ class AIWritingService {
       content,
     });
 
-    return this.processContent(result);
+    // 返回纯文本，去除HTML标签
+    return this.extractPlainText(result);
   }
 
   /**
@@ -229,6 +195,39 @@ class AIWritingService {
   }
 
   /**
+   * 流式总结内容
+   */
+  async streamSummarizeContent(content, length, onChunk) {
+    const summaryInstruction =
+      prompts.SUMMARY_LENGTH_INSTRUCTIONS[length] || prompts.SUMMARY_LENGTH_INSTRUCTIONS.medium;
+
+    logger.info('流式总结内容', { contentLength: content.length, length });
+
+    const result = await aiProvider.streamGenerateWithTemplate(
+      prompts.SUMMARIZE_TEMPLATE,
+      { content, summaryInstruction },
+      onChunk
+    );
+
+    return this.processContent(result);
+  }
+
+  /**
+   * 流式翻译内容
+   */
+  async streamTranslateContent(content, targetLang, onChunk) {
+    logger.info('流式翻译内容', { contentLength: content.length, targetLang });
+
+    const result = await aiProvider.streamGenerateWithTemplate(
+      prompts.TRANSLATE_TEMPLATE,
+      { content, targetLang },
+      onChunk
+    );
+
+    return this.processContent(result);
+  }
+
+  /**
    * 处理生成的内容
    */
   processContent(content) {
@@ -251,6 +250,31 @@ class AIWritingService {
     processed = processed.replace(/\s*class=""\s*/gi, ' ');
 
     return processed.trim() || '<p></p>';
+  }
+
+  /**
+   * 提取纯文本（用于标题和摘要）
+   */
+  extractPlainText(content) {
+    if (!content || typeof content !== 'string') {
+      return '';
+    }
+
+    let text = content.trim();
+
+    // 移除 Markdown 代码块标记
+    text = text.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '');
+
+    // 移除 HTML 标签
+    text = text.replace(/<[^>]+>/g, '');
+
+    // 移除多余的空白
+    text = text.replace(/\s+/g, ' ').trim();
+
+    // 移除 Markdown 标记
+    text = text.replace(/[#*_`~]/g, '');
+
+    return text;
   }
 }
 

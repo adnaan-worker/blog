@@ -142,41 +142,7 @@ const SUMMARIZE_TEMPLATE = `${MARKDOWN_SYSTEM_PROMPT}
 
 使用标准Markdown格式输出总结内容。`;
 
-// 续写模板
-const CONTINUE_TEMPLATE = `${MARKDOWN_SYSTEM_PROMPT}
-
-【续写任务】
-续写长度：{lengthInstruction}
-
-已有内容：
-{content}
-
-请基于上述内容进行续写：
-1. 延续原有风格和语气
-2. 保持逻辑连贯性
-3. 深化主题或引入新观点
-4. 内容充实、有深度
-5. 使用适当的HTML格式
-
-只输出续写的新内容（Markdown格式）。`;
-
-// 改写风格模板
-const REWRITE_TEMPLATE = `${MARKDOWN_SYSTEM_PROMPT}
-
-【改写风格任务】
-目标风格：{styleDescription}
-
-原文：
-{content}
-
-请用{styleDescription}的风格重写上述内容：
-1. 完全改变表达方式和语气
-2. 保留核心内容和观点
-3. 使用符合目标风格的词汇和句式
-4. 调整段落结构以适应新风格
-5. 保持内容完整性和准确性
-
-使用标准Markdown格式输出改写后的完整内容。`;
+// 续写和改写风格模板已废弃（使用频率低）
 
 // 翻译模板
 const TRANSLATE_TEMPLATE = `${MARKDOWN_SYSTEM_PROMPT}
@@ -197,32 +163,40 @@ const TRANSLATE_TEMPLATE = `${MARKDOWN_SYSTEM_PROMPT}
 直接输出翻译后的HTML内容。`;
 
 // 生成标题模板
-const TITLE_TEMPLATE = `你是一个专业的内容创作助手。请生成吸引人的标题列表，使用纯净HTML列表格式输出。
+const TITLE_TEMPLATE = `你是一个专业的文章标题生成助手。请根据文章内容生成一个简洁、吸引人的标题。
 
 文章内容: {content}
 关键词: {keywords}
 
 要求：
-- 使用纯净HTML列表格式输出：<ul><li>标题1</li><li>标题2</li></ul>
-- 生成5-8个吸引人的标题
-- 标题要SEO友好、吸引人
-- 每个标题都要有所不同
-- 标题要准确反映文章内容
-- 不要添加任何CSS类名或额外包装`;
+1. 只生成一个标题，不要生成列表
+2. 标题长度控制在 10-20 个字
+3. 标题要简洁有力，一针见血
+4. 突出核心主题和关键词
+5. 避免冗长的修饰语
+6. 不要使用"深度解析"、"完全指南"等套话
+7. 直接输出标题文本，不要任何HTML标签或格式
+
+示例：
+- 好的标题："React Hooks 最佳实践"
+- 不好的标题："【深度解析】一文读懂 React Hooks 最佳实践完全指南"
+
+直接输出标题文本：`;
 
 // 生成摘要模板
-const SUMMARY_TEMPLATE = `你是一个专业的内容创作助手。请使用纯净HTML格式生成摘要内容，使用 <strong> 强调要点。不要添加任何CSS类名。
+const SUMMARY_TEMPLATE = `你是一个专业的文章摘要生成助手。请根据文章内容生成简洁的摘要。
 
 文章内容: {content}
 
 要求：
-- 使用纯净HTML格式输出（<p> <strong> 等标签）
-- 生成一个详细的摘要（200-300字）
-- 准确概括文章主要内容
-- 结构清晰，要点突出
-- 语言简洁但信息丰富
-- 不要使用任何CSS类名
-- 不要包装在div容器中`;
+1. 生成一个简洁的摘要（100-150字）
+2. 准确概括文章核心内容和要点
+3. 语言简洁流畅，逻辑清晰
+4. 突出文章的主要观点和价值
+5. 直接输出纯文本，不要任何HTML标签或格式
+6. 不要使用"本文"、"文章"等开头
+
+直接输出摘要文本：`;
 
 // 生成大纲模板
 const OUTLINE_TEMPLATE = `你是一个专业的内容创作助手。请生成详细的文章大纲，使用纯净HTML格式。
@@ -293,8 +267,6 @@ function getTaskTemplate(taskType) {
     improve: IMPROVE_TEMPLATE,
     expand: EXPAND_TEMPLATE,
     summarize: SUMMARIZE_TEMPLATE,
-    continue: CONTINUE_TEMPLATE,
-    rewrite: REWRITE_TEMPLATE,
     translate: TRANSLATE_TEMPLATE,
     title: TITLE_TEMPLATE,
     summary: SUMMARY_TEMPLATE,
@@ -316,8 +288,6 @@ module.exports = {
   IMPROVE_TEMPLATE,
   EXPAND_TEMPLATE,
   SUMMARIZE_TEMPLATE,
-  CONTINUE_TEMPLATE,
-  REWRITE_TEMPLATE,
   TRANSLATE_TEMPLATE,
   TITLE_TEMPLATE,
   SUMMARY_TEMPLATE,

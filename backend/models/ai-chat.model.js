@@ -21,15 +21,38 @@ module.exports = sequelize => {
         field: 'session_id',
         comment: '会话ID',
       },
-      role: {
-        type: DataTypes.ENUM('human', 'ai', 'system'),
-        allowNull: false,
-        comment: '消息角色：human(用户), ai(AI回复), system(系统提示)',
-      },
-      content: {
+      message: {
         type: DataTypes.TEXT,
         allowNull: false,
-        comment: '消息内容',
+        comment: '用户消息',
+      },
+      response: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        comment: 'AI回复',
+      },
+      context: {
+        type: DataTypes.JSON,
+        comment: '上下文信息',
+      },
+      tokens: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: '消耗的token数量',
+      },
+      duration: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+        comment: '响应时间(毫秒)',
+      },
+      status: {
+        type: DataTypes.ENUM('success', 'failed', 'processing'),
+        defaultValue: 'success',
+        comment: '状态',
+      },
+      error: {
+        type: DataTypes.TEXT,
+        comment: '错误信息',
       },
       type: {
         type: DataTypes.ENUM('chat', 'blog_assistant', 'writing_assistant'),

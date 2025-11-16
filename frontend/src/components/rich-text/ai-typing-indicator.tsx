@@ -17,6 +17,16 @@ const TypingContainer = styled(motion.div)`
   z-index: 1000;
   min-width: 280px;
   pointer-events: none;
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    left: 1rem !important;
+    right: 1rem;
+    bottom: 1rem !important;
+    min-width: auto;
+    width: calc(100% - 2rem);
+    padding: 0.875rem 1rem;
+  }
 `;
 
 const IconWrapper = styled.div`

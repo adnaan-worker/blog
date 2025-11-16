@@ -11,7 +11,6 @@ export { setupHttpConfig } from './api/http-config';
 
 // 编辑器相关模块
 export { RichTextParser } from './editor/parser';
-export { aiWritingHelper, AIWritingHelper, AI_WRITING_TEMPLATES } from './editor/ai-helper';
 export * from './editor/helpers';
 export * from './editor/extensions';
 

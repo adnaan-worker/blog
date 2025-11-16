@@ -43,6 +43,13 @@ const DialogContainer = styled(motion.div)`
   overflow: hidden;
   display: flex;
   flex-direction: column;
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    max-height: 90vh;
+    border-radius: 12px;
+    margin: 0.5rem;
+  }
 `;
 
 // 对话框头部
@@ -53,6 +60,11 @@ const DialogHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 const HeaderTitle = styled.div`
@@ -104,6 +116,11 @@ const DialogContent = styled.div`
       background: var(--text-secondary);
     }
   }
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 // 快捷模板网格
@@ -112,6 +129,12 @@ const TemplateGrid = styled.div`
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 0.75rem;
   margin-bottom: 1.5rem;
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 `;
 
 const TemplateCard = styled(motion.button)`
@@ -132,6 +155,15 @@ const TemplateCard = styled(motion.button)`
 
   &:active {
     transform: translateY(0);
+  }
+
+  /* 移动端优化 */
+  @media (max-width: 768px) {
+    padding: 0.875rem;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .icon {

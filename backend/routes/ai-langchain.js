@@ -127,6 +127,82 @@ router.post('/generate/article', authMiddleware.verifyToken, aiController.genera
 
 /**
  * @swagger
+ * /api/ai/generate/title:
+ *   post:
+ *     summary: 生成标题
+ *     description: 根据文章内容生成多个标题选项
+ *     tags: [AI基础]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: 文章内容
+ *     responses:
+ *       200:
+ *         description: 生成成功
+ */
+router.post('/generate/title', authMiddleware.verifyToken, aiController.generateTitle);
+
+/**
+ * @swagger
+ * /api/ai/generate/summary:
+ *   post:
+ *     summary: 生成摘要
+ *     description: 根据文章内容生成摘要
+ *     tags: [AI基础]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: 文章内容
+ *     responses:
+ *       200:
+ *         description: 生成成功
+ */
+router.post('/generate/summary', authMiddleware.verifyToken, aiController.generateSummary);
+
+/**
+ * @swagger
+ * /api/ai/task/:jobId:
+ *   get:
+ *     summary: 查询任务状态
+ *     description: 查询异步任务的执行状态和结果
+ *     tags: [AI基础]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: jobId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 任务ID
+ *     responses:
+ *       200:
+ *         description: 查询成功
+ */
+router.get('/task/:jobId', authMiddleware.verifyToken, aiController.getTaskStatus);
+
+/**
+ * @swagger
  * /api/ai/quota:
  *   get:
  *     summary: 获取用户AI配额
@@ -187,44 +263,7 @@ router.get('/quota', authMiddleware.verifyToken, aiController.getQuota);
  */
 router.get('/status', authMiddleware.verifyToken, aiController.getStatus);
 
-/**
- * @swagger
- * /api/ai/queue/stats:
- *   get:
- *     summary: 获取任务队列统计
- *     description: 查看AI任务队列的状态和统计信息
- *     tags: [AI基础]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: 获取成功
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 200
- *                 data:
- *                   type: object
- *                   properties:
- *                     waiting:
- *                       type: integer
- *                       description: 等待中的任务数
- *                     active:
- *                       type: integer
- *                       description: 执行中的任务数
- *                     completed:
- *                       type: integer
- *                       description: 已完成的任务数
- *                     failed:
- *                       type: integer
- *                       description: 失败的任务数
- */
-router.get('/queue/stats', authMiddleware.verifyToken, aiController.getQueueStats);
-
+// 注意：队列相关功能已废弃，改用 Socket.IO 流式输出
 // 注意：对话聊天（带记忆）功能已迁移到 /api/ai/conversation
 // 注意：清除记忆功能已迁移到 DELETE /api/ai/conversation 和 DELETE /api/ai/conversation/:sessionId
 
