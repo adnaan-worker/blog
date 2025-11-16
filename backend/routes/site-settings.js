@@ -6,8 +6,8 @@ const siteSettingsController = require('../controllers/site-settings.controller'
 /**
  * @swagger
  * tags:
- *   name: 网站设置
- *   description: 网站设置相关接口
+ *   name: 站点设置
+ *   description: 🎨 站点配置、主题设置、SEO配置
  */
 
 /**
@@ -15,7 +15,7 @@ const siteSettingsController = require('../controllers/site-settings.controller'
  * /api/site-settings:
  *   get:
  *     summary: 获取网站设置（公开）
- *     tags: [网站设置]
+ *     tags: [站点设置]
  *     responses:
  *       200:
  *         description: 获取成功
@@ -27,7 +27,7 @@ router.get('/', siteSettingsController.getSiteSettings);
  * /api/site-settings:
  *   put:
  *     summary: 更新网站设置（仅管理员）
- *     tags: [网站设置]
+ *     tags: [站点设置]
  *     security:
  *       - bearerAuth: []
  *     requestBody:

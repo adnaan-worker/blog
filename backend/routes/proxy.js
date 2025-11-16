@@ -5,8 +5,8 @@ const proxyController = require('../controllers/proxy.controller');
 /**
  * @swagger
  * tags:
- *   name: 代理服务
- *   description: 第三方 API 代理接口，解决 CORS 跨域问题
+ *   name: 代理
+ *   description: 🔄 CORS代理服务、跨域请求（天气、IP定位、音乐）
  */
 
 /**
@@ -15,7 +15,7 @@ const proxyController = require('../controllers/proxy.controller');
  *   get:
  *     summary: 天气 API 代理
  *     description: 通过后端代理获取山河天气 API 数据
- *     tags: [代理服务]
+ *     tags: [代理]
  *     parameters:
  *       - in: query
  *         name: city
@@ -60,7 +60,7 @@ router.get('/weather/:city', proxyController.getWeather);
  *   get:
  *     summary: IP 地理位置代理
  *     description: 获取 IP 地理位置信息
- *     tags: [代理服务]
+ *     tags: [代理]
  *     parameters:
  *       - in: query
  *         name: ip
@@ -85,7 +85,7 @@ router.get('/ip-location/:ip', proxyController.getIPLocation);
  *   get:
  *     summary: 音乐 URL 代理
  *     description: 获取音乐播放 URL
- *     tags: [代理服务]
+ *     tags: [代理]
  *     parameters:
  *       - in: query
  *         name: server
@@ -117,7 +117,7 @@ router.get('/music', proxyController.getMusicUrl);
  *   post:
  *     summary: 清除代理缓存
  *     description: 清除指定类型或全部代理缓存
- *     tags: [代理服务]
+ *     tags: [代理]
  *     requestBody:
  *       content:
  *         application/json:

@@ -8,30 +8,47 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: '博客系统 API 文档',
-      version: '1.0.0',
-      description: '基于 Node.js + Express + MySQL + Redis 的博客系统后端 API',
+      title: '光阴副本博客系统 API',
+      version: '2.6.0',
+      description: `
+# 光阴副本博客系统 API 文档
+
+基于 **Node.js + Express + MySQL + Redis + LangChain** 的现代化全栈博客系统。
+
+## 核心功能
+- 🔐 **用户认证**：JWT Token + Redis 会话管理
+- 📝 **内容管理**：文章、笔记、项目、评论
+- 🤖 **AI 功能**：LangChain 集成，支持智能对话和内容生成
+- 📊 **数据统计**：访问统计、活动记录、贡献统计
+- 🔍 **搜索功能**：全文搜索、标签分类
+- 🎨 **主题系统**：支持亮色/暗色主题切换
+
+## 技术栈
+- **后端框架**：Express.js
+- **数据库**：MySQL + Sequelize ORM
+- **缓存**：Redis
+- **AI集成**：LangChain + OpenAI/智谱AI
+- **实时通信**：Socket.IO
+- **任务队列**：BullMQ
+      `,
       contact: {
-        name: 'API 支持',
-        email: 'support@blog-api.com',
+        name: 'adnaan',
+        email: '1662877157@qq.com',
+        url: 'http://www.adnaan.cn',
       },
       license: {
-        name: 'MIT',
-        url: 'https://opensource.org/licenses/MIT',
+        name: 'MPL-2.0',
+        url: 'https://opensource.org/licenses/MPL-2.0',
       },
     },
     servers: [
       {
         url: `http://localhost:${config.port}`,
-        description: '开发环境服务器',
+        description: '本地开发环境',
       },
       {
         url: 'http://api.adnaan.cn',
-        description: '生产环境服务器 (HTTP)',
-      },
-      {
-        url: 'http://api.adnaan.cn',
-        description: '生产环境服务器 (HTTPS)',
+        description: '生产环境（HTTPS）',
       },
     ],
     components: {
@@ -146,6 +163,103 @@ const options = {
             },
           },
         },
+        Category: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: '分类ID' },
+            name: { type: 'string', description: '分类名称' },
+            slug: { type: 'string', description: '分类别名' },
+            description: { type: 'string', description: '分类描述' },
+            postCount: { type: 'integer', description: '文章数量' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        Note: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: '笔记ID' },
+            title: { type: 'string', description: '笔记标题' },
+            content: { type: 'string', description: '笔记内容' },
+            tags: { type: 'array', items: { type: 'string' } },
+            isPublic: { type: 'boolean', description: '是否公开' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        Project: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: '项目ID' },
+            name: { type: 'string', description: '项目名称' },
+            description: { type: 'string', description: '项目描述' },
+            url: { type: 'string', description: '项目链接' },
+            github: { type: 'string', description: 'GitHub仓库' },
+            tags: { type: 'array', items: { type: 'string' } },
+            status: { type: 'string', enum: ['active', 'archived', 'planning'] },
+            createdAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        AIChat: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', description: '消息ID' },
+            userId: { type: 'integer', description: '用户ID' },
+            sessionId: { type: 'string', description: '会话ID' },
+            role: {
+              type: 'string',
+              enum: ['human', 'ai', 'system'],
+              description: '消息角色',
+            },
+            content: { type: 'string', description: '消息内容' },
+            type: {
+              type: 'string',
+              enum: ['chat', 'blog_assistant', 'writing_assistant'],
+              description: '聊天类型',
+            },
+            metadata: {
+              type: 'object',
+              properties: {
+                tokens: { type: 'integer', description: 'Token消耗' },
+                duration: { type: 'integer', description: '响应时间(ms)' },
+              },
+            },
+            createdAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        AIConversation: {
+          type: 'object',
+          properties: {
+            sessionId: { type: 'string', description: '会话ID' },
+            messages: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/AIChat' },
+            },
+            total: { type: 'integer', description: '消息总数' },
+          },
+        },
+        AIQuota: {
+          type: 'object',
+          properties: {
+            chat: {
+              type: 'object',
+              properties: {
+                used: { type: 'integer', description: '已使用次数' },
+                limit: { type: 'integer', description: '限制次数' },
+                remaining: { type: 'integer', description: '剩余次数' },
+              },
+            },
+            generate: {
+              type: 'object',
+              properties: {
+                used: { type: 'integer' },
+                limit: { type: 'integer' },
+                remaining: { type: 'integer' },
+              },
+            },
+            resetAt: { type: 'string', format: 'date-time', description: '重置时间' },
+          },
+        },
         Error: {
           type: 'object',
           properties: {
@@ -186,39 +300,67 @@ const options = {
     tags: [
       {
         name: '认证',
-        description: '用户认证相关接口',
+        description: '🔐 用户注册、登录、登出、Token刷新',
       },
       {
         name: '用户',
-        description: '用户管理相关接口',
+        description: '👤 用户信息管理、个人资料、头像上传',
       },
       {
         name: '文章',
-        description: '文章管理相关接口',
+        description: '📝 文章的增删改查、发布、草稿、归档',
       },
       {
         name: '评论',
-        description: '评论管理相关接口',
+        description: '💬 评论管理、回复、审核、删除',
       },
       {
         name: '标签',
-        description: '标签管理相关接口',
+        description: '🏷️ 标签的创建、编辑、删除、文章关联',
       },
       {
         name: '分类',
-        description: '分类管理相关接口',
+        description: '📂 分类管理、层级结构、文章分类',
+      },
+      {
+        name: '笔记',
+        description: '📔 个人笔记管理、公开/私密笔记',
+      },
+      {
+        name: '项目',
+        description: '🚀 项目展示、GitHub集成、项目状态',
+      },
+      {
+        name: 'AI基础',
+        description: '🤖 AI聊天、文章生成、配额管理（无记忆）',
+      },
+      {
+        name: 'AI对话',
+        description: '💭 多轮对话、会话管理、历史记录（带记忆）',
       },
       {
         name: '系统',
-        description: '系统监控和健康检查接口',
+        description: '⚙️ 系统监控、健康检查、性能指标',
       },
       {
-        name: '示例',
-        description: '统一响应格式示例接口',
+        name: '状态',
+        description: '📊 访问统计、在线用户、系统状态',
       },
       {
-        name: 'AI',
-        description: 'AI聊天和智能代理接口',
+        name: '活动',
+        description: '📈 用户活动记录、时间线、成就系统',
+      },
+      {
+        name: '贡献',
+        description: '🎯 GitHub/Gitee贡献统计',
+      },
+      {
+        name: '代理',
+        description: '🔄 CORS代理服务、跨域请求',
+      },
+      {
+        name: '站点设置',
+        description: '🎨 站点配置、主题设置、SEO配置',
       },
     ],
   },

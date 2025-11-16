@@ -9,7 +9,7 @@ const userController = require('../controllers/user.controller');
  * @swagger
  * tags:
  *   name: 用户
- *   description: 用户管理相关接口
+ *   description: 👤 用户信息管理、个人资料、头像上传、活动记录、成就系统
  */
 
 /**

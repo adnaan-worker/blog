@@ -39,34 +39,6 @@ exports.chat = asyncHandler(async (req, res) => {
 });
 
 /**
- * 对话聊天（带记忆）
- */
-exports.conversationChat = asyncHandler(async (req, res) => {
-  const { message } = req.body;
-  const userId = req.user?.id || req.ip;
-
-  if (!message || message.trim() === '') {
-    return res.apiValidationError([{ field: 'message', message: '消息不能为空' }]);
-  }
-
-  // 检查配额
-  const quota = await aiQuotaService.checkChatQuota(userId);
-  if (!quota.available) {
-    return res.apiError(`每日聊天次数已达上限(${quota.limit})`, 429);
-  }
-
-  const response = await aiProvider.conversationChat(userId, message);
-
-  // 更新配额
-  await aiQuotaService.incrementChatUsage(userId);
-
-  return res.apiSuccess({
-    message: response,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-/**
  * 生成文章
  */
 exports.generateArticle = asyncHandler(async (req, res) => {
@@ -108,17 +80,6 @@ exports.getQuota = asyncHandler(async (req, res) => {
   const quota = await aiQuotaService.getQuotaStats(userId);
 
   return res.apiSuccess(quota);
-});
-
-/**
- * 清除对话记忆
- */
-exports.clearMemory = asyncHandler(async (req, res) => {
-  const userId = req.user?.id || req.ip;
-
-  aiProvider.clearMemory(userId);
-
-  return res.apiSuccess(null, '对话记忆已清除');
 });
 
 /**

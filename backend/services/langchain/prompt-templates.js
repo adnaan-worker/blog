@@ -1,7 +1,39 @@
 /**
  * AI Prompt 模板库
- * 统一管理所有 AI 生成任务的 Prompt
+ * 统一管理所有 AI 生成任务的 Prompt 和 System Prompt
  */
+
+// ==================== System Prompts ====================
+// 用于对话场景的系统提示词
+
+const SYSTEM_PROMPTS = {
+  // 默认提示
+  DEFAULT: '你是一个智能助手，请用简洁、专业的语言回答。',
+
+  // 写作助手（默认）
+  WRITING: '你是一个智能写作助手，帮助用户创作和优化内容。请用简洁、专业的语言回答。',
+
+  // 编程助手
+  CODING: '你是一个编程助手，帮助用户解决编程问题。请提供清晰的代码示例和解释。',
+
+  // 翻译助手
+  TRANSLATION: '你是一个专业翻译助手，请提供准确、流畅的翻译。',
+
+  // 学习助手
+  LEARNING: '你是一个学习助手，帮助用户理解和学习知识。请用通俗易懂的语言解释。',
+
+  // 创意助手
+  CREATIVE: '你是一个创意助手，帮助用户产生新想法和灵感。请发挥想象力，提供独特的见解。',
+
+  // 分析助手
+  ANALYSIS: '你是一个分析助手，帮助用户分析和理解数据。请提供客观、详细的分析。',
+
+  // 客服助手
+  CUSTOMER_SERVICE: '你是一个客服助手，帮助用户解决问题。请保持友好、耐心和专业。',
+};
+
+// ==================== Task Templates ====================
+// 用于特定任务的模板提示词
 
 // Markdown 系统提示词
 const MARKDOWN_SYSTEM_PROMPT = `你是一个高级AI写作助手，专门为富文本编辑器生成格式完美的Markdown内容。
@@ -230,7 +262,54 @@ const STYLE_DESCRIPTIONS = {
   storytelling: '故事叙述',
 };
 
+// ==================== Helper Functions ====================
+
+/**
+ * 获取 System Prompt
+ * @param {string} type - Prompt 类型
+ * @returns {string}
+ */
+function getSystemPrompt(type = 'DEFAULT') {
+  return SYSTEM_PROMPTS[type] || SYSTEM_PROMPTS.DEFAULT;
+}
+
+/**
+ * 获取所有可用的 System Prompt 类型
+ * @returns {Array}
+ */
+function getAvailablePromptTypes() {
+  return Object.keys(SYSTEM_PROMPTS);
+}
+
+/**
+ * 获取任务模板
+ * @param {string} taskType - 任务类型
+ * @returns {string}
+ */
+function getTaskTemplate(taskType) {
+  const templates = {
+    article: ARTICLE_TEMPLATE,
+    polish: POLISH_TEMPLATE,
+    improve: IMPROVE_TEMPLATE,
+    expand: EXPAND_TEMPLATE,
+    summarize: SUMMARIZE_TEMPLATE,
+    continue: CONTINUE_TEMPLATE,
+    rewrite: REWRITE_TEMPLATE,
+    translate: TRANSLATE_TEMPLATE,
+    title: TITLE_TEMPLATE,
+    summary: SUMMARY_TEMPLATE,
+    outline: OUTLINE_TEMPLATE,
+  };
+  return templates[taskType];
+}
+
 module.exports = {
+  // System Prompts
+  SYSTEM_PROMPTS,
+  getSystemPrompt,
+  getAvailablePromptTypes,
+
+  // Task Templates
   MARKDOWN_SYSTEM_PROMPT,
   ARTICLE_TEMPLATE,
   POLISH_TEMPLATE,
@@ -243,6 +322,9 @@ module.exports = {
   TITLE_TEMPLATE,
   SUMMARY_TEMPLATE,
   OUTLINE_TEMPLATE,
+  getTaskTemplate,
+
+  // Helper Mappings
   LENGTH_INSTRUCTIONS,
   SUMMARY_LENGTH_INSTRUCTIONS,
   STYLE_DESCRIPTIONS,

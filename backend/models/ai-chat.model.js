@@ -12,69 +12,55 @@ module.exports = sequelize => {
       userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        field: 'user_id', // 映射到数据库的下划线字段
+        field: 'user_id',
         comment: '用户ID',
       },
       sessionId: {
         type: DataTypes.STRING(100),
         allowNull: false,
-        field: 'session_id', // 映射到数据库的下划线字段
+        field: 'session_id',
         comment: '会话ID',
       },
-      message: {
-        type: DataTypes.TEXT,
+      role: {
+        type: DataTypes.ENUM('human', 'ai', 'system'),
         allowNull: false,
-        comment: '用户消息',
+        comment: '消息角色：human(用户), ai(AI回复), system(系统提示)',
       },
-      response: {
+      content: {
         type: DataTypes.TEXT,
         allowNull: false,
-        comment: 'AI回复',
+        comment: '消息内容',
       },
       type: {
         type: DataTypes.ENUM('chat', 'blog_assistant', 'writing_assistant'),
         defaultValue: 'chat',
         comment: '聊天类型',
       },
-      context: {
+      metadata: {
         type: DataTypes.JSON,
-        comment: '上下文信息',
-      },
-      tokens: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-        comment: '消耗的token数量',
-      },
-      duration: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-        comment: '响应时间(毫秒)',
-      },
-      status: {
-        type: DataTypes.ENUM('success', 'failed', 'processing'),
-        defaultValue: 'success',
-        comment: '状态',
-      },
-      error: {
-        type: DataTypes.TEXT,
-        comment: '错误信息',
+        comment: '消息元数据（tokens、duration等）',
       },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
-        field: 'created_at', // 映射到数据库的下划线字段
+        field: 'created_at',
       },
       updatedAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
-        field: 'updated_at', // 映射到数据库的下划线字段
+        field: 'updated_at',
       },
     },
     {
-      tableName: 'ai_chats', // 明确指定表名
+      tableName: 'ai_chats',
       timestamps: true,
       createdAt: 'createdAt',
       updatedAt: 'updatedAt',
+      indexes: [
+        { fields: ['user_id'] },
+        { fields: ['session_id'] },
+        { fields: ['session_id', 'created_at'] }, // 用于按时间排序获取历史
+      ],
     }
   );
 

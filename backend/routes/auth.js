@@ -7,7 +7,7 @@ const authController = require('../controllers/auth.controller');
  * @swagger
  * tags:
  *   name: 认证
- *   description: 用户认证相关接口
+ *   description: 🔐 用户注册、登录、登出、Token刷新
  */
 
 /**
@@ -29,9 +29,11 @@ const authController = require('../controllers/auth.controller');
  *               username:
  *                 type: string
  *                 description: 用户名或邮箱
+ *                 example: "admin"
  *               password:
  *                 type: string
  *                 description: 密码
+ *                 example: "password123"
  *     responses:
  *       200:
  *         description: 登录成功
@@ -68,13 +70,16 @@ router.post('/login', authController.login);
  *               username:
  *                 type: string
  *                 description: 用户名
+ *                 example: "newuser"
  *               email:
  *                 type: string
  *                 format: email
  *                 description: 邮箱
+ *                 example: "user@example.com"
  *               password:
  *                 type: string
  *                 description: 密码
+ *                 example: "password123"
  *     responses:
  *       201:
  *         description: 注册成功

@@ -94,20 +94,37 @@ class EnvironmentManager {
         enabled: process.env.ENABLE_MONITORING === 'true',
       },
 
-      // AI配置
+      // AI配置 - 统一配置格式
       ai: {
+        // 当前使用的提供商
         provider: process.env.AI_PROVIDER || 'zhipu',
-        zhipuApiKey: process.env.ZHIPU_API_KEY,
-        openaiApiKey: process.env.OPENAI_API_KEY,
-        openaiBaseUrl: process.env.OPENAI_BASE_URL,
-        baiduApiKey: process.env.BAIDU_API_KEY,
-        baiduSecretKey: process.env.BAIDU_SECRET_KEY,
-        aliyunApiKey: process.env.ALIYUN_API_KEY,
-        customAiUrl: process.env.CUSTOM_AI_URL,
-        customAiKey: process.env.CUSTOM_AI_KEY,
+
+        // 当前使用的模型（如果不指定，使用提供商的默认模型）
+        model: process.env.AI_MODEL,
+
+        // 统一的 API Key
+        apiKey: process.env.AI_API_KEY,
+
+        // 自定义 Base URL（可选，用于网关或自定义端点）
+        baseURL: process.env.AI_BASE_URL,
+
+        // 模型参数
         temperature: parseFloat(process.env.AI_TEMPERATURE) || 0.7,
-        maxTokens: parseInt(process.env.AI_MAX_TOKENS) || 4000,
-        modelName: process.env.AI_MODEL_NAME || 'gpt-3.5-turbo',
+        maxTokens: parseInt(process.env.AI_MAX_TOKENS) || 2000,
+
+        // 请求配置
+        timeout: parseInt(process.env.AI_TIMEOUT) || 30000, // 请求超时时间（毫秒）
+        maxRetries: parseInt(process.env.AI_MAX_RETRIES) || 3, // 最大重试次数
+        retryDelay: parseInt(process.env.AI_RETRY_DELAY) || 1000, // 重试延迟（毫秒）
+
+        // 并发控制
+        maxConcurrentPerUser: parseInt(process.env.AI_MAX_CONCURRENT_PER_USER) || 3, // 每用户最大并发请求数
+
+        // 历史消息配置
+        maxHistoryMessages: parseInt(process.env.AI_MAX_HISTORY_MESSAGES) || 20, // 最大历史消息数量
+
+        // 默认 System Prompt 类型
+        defaultPromptType: process.env.AI_DEFAULT_PROMPT_TYPE || 'WRITING',
       },
     };
 
@@ -119,21 +136,38 @@ class EnvironmentManager {
    * 获取数据库连接池配置
    */
   getDatabasePool() {
-    const basePool = {
-      acquire: 30000,
-      idle: 10000,
-    };
+    // 从环境变量读取，或使用默认值
+    const acquire = parseInt(process.env.DB_POOL_ACQUIRE) || 30000;
+    const idle = parseInt(process.env.DB_POOL_IDLE) || 10000;
 
-    switch (this.env) {
-      case 'development':
-        return { ...basePool, max: 10, min: 0 };
-      case 'test':
-        return { ...basePool, max: 5, min: 0 };
-      case 'production':
-        return { ...basePool, max: 20, min: 5 };
-      default:
-        return { ...basePool, max: 10, min: 0 };
+    // 根据环境设置连接池大小
+    let max, min;
+    if (process.env.DB_POOL_MAX && process.env.DB_POOL_MIN) {
+      // 如果环境变量指定了，使用环境变量
+      max = parseInt(process.env.DB_POOL_MAX);
+      min = parseInt(process.env.DB_POOL_MIN);
+    } else {
+      // 否则根据环境使用默认值
+      switch (this.env) {
+        case 'development':
+          max = 10;
+          min = 0;
+          break;
+        case 'test':
+          max = 5;
+          min = 0;
+          break;
+        case 'production':
+          max = 20;
+          min = 5;
+          break;
+        default:
+          max = 10;
+          min = 0;
+      }
     }
+
+    return { acquire, idle, max, min };
   }
 
   /**

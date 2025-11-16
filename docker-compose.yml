@@ -96,11 +96,28 @@ services:
       - SOCKET_IO_TRANSPORTS=${SOCKET_IO_TRANSPORTS:-polling,websocket}
       - SOCKET_IO_UPGRADE_TIMEOUT=${SOCKET_IO_UPGRADE_TIMEOUT:-10000}
       - SOCKET_IO_PATH=${SOCKET_IO_PATH:-/socket.io}
+      # AI 服务配置（新格式）
       - AI_PROVIDER=${AI_PROVIDER:-zhipu}
-      - ZHIPU_API_KEY=${ZHIPU_API_KEY}
+      - AI_API_KEY=${AI_API_KEY}
+      - AI_MODEL=${AI_MODEL}
+      - AI_BASE_URL=${AI_BASE_URL}
       - AI_TEMPERATURE=${AI_TEMPERATURE:-0.7}
-      - AI_MAX_TOKENS=${AI_MAX_TOKENS:-1000}
-      - AI_MODEL_NAME=${AI_MODEL_NAME:-gpt-3.5-turbo}
+      - AI_MAX_TOKENS=${AI_MAX_TOKENS:-2000}
+      # AI 请求配置
+      - AI_TIMEOUT=${AI_TIMEOUT:-30000}
+      - AI_MAX_RETRIES=${AI_MAX_RETRIES:-3}
+      - AI_RETRY_DELAY=${AI_RETRY_DELAY:-1000}
+      # AI 并发控制
+      - AI_MAX_CONCURRENT_PER_USER=${AI_MAX_CONCURRENT_PER_USER:-3}
+      # AI 历史消息配置
+      - AI_MAX_HISTORY_MESSAGES=${AI_MAX_HISTORY_MESSAGES:-20}
+      # AI 默认 Prompt 类型
+      - AI_DEFAULT_PROMPT_TYPE=${AI_DEFAULT_PROMPT_TYPE:-WRITING}
+      # 数据库连接池配置
+      - DB_POOL_MAX=${DB_POOL_MAX:-20}
+      - DB_POOL_MIN=${DB_POOL_MIN:-5}
+      - DB_POOL_ACQUIRE=${DB_POOL_ACQUIRE:-30000}
+      - DB_POOL_IDLE=${DB_POOL_IDLE:-10000}
     networks:
       - blog-network
     depends_on:

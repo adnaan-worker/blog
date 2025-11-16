@@ -5,8 +5,8 @@ const statusController = require('../controllers/status.controller');
 /**
  * @swagger
  * tags:
- *   name: 状态管理
- *   description: 系统状态推送和管理
+ *   name: 状态
+ *   description: 📊 访问统计、在线用户、系统状态推送
  */
 
 /**
@@ -14,7 +14,7 @@ const statusController = require('../controllers/status.controller');
  * /api/status:
  *   post:
  *     summary: 接收状态推送
- *     tags: [状态管理]
+ *     tags: [状态]
  *     requestBody:
  *       required: true
  *       content:
@@ -71,7 +71,7 @@ router.post('/', statusController.receiveStatus);
  * /api/status/cache:
  *   get:
  *     summary: 获取缓存状态信息
- *     tags: [状态管理]
+ *     tags: [状态]
  *     responses:
  *       200:
  *         description: 获取缓存状态成功
@@ -108,7 +108,7 @@ router.post('/', statusController.receiveStatus);
  *                       description: 多少秒后将清理缓存
  *   delete:
  *     summary: 手动清理缓存
- *     tags: [状态管理]
+ *     tags: [状态]
  *     responses:
  *       200:
  *         description: 缓存清理成功

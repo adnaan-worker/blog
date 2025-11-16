@@ -6,8 +6,8 @@ const noteController = require('../controllers/note.controller');
 /**
  * @swagger
  * tags:
- *   name: 手记
- *   description: 手记管理相关接口
+ *   name: 笔记
+ *   description: 📔 个人笔记管理、公开/私密笔记
  */
 
 /**
@@ -81,7 +81,7 @@ const noteController = require('../controllers/note.controller');
  *   get:
  *     summary: 获取公开手记列表（前台展示）
  *     description: 返回所有公开手记，不需要登录
- *     tags: [手记]
+ *     tags: [笔记]
  *     parameters:
  *       - in: query
  *         name: page
@@ -131,7 +131,7 @@ router.get('/', noteController.getNotesList);
  *   get:
  *     summary: 获取我的手记列表（个人中心管理）
  *     description: 普通用户返回自己的所有手记（包括私密），管理员返回所有手记
- *     tags: [手记]
+ *     tags: [笔记]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -185,7 +185,7 @@ router.get('/my', authMiddleware.verifyToken, noteController.getMyNotes);
  * /api/notes/stats:
  *   get:
  *     summary: 获取用户手记统计
- *     tags: [手记]
+ *     tags: [笔记]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -201,7 +201,7 @@ router.get('/stats', authMiddleware.verifyToken, noteController.getNoteStats);
  * /api/notes/metadata:
  *   get:
  *     summary: 获取手记元数据（常用标签、心情等）
- *     tags: [手记]
+ *     tags: [笔记]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -217,7 +217,7 @@ router.get('/metadata', authMiddleware.verifyToken, noteController.getNoteMetada
  * /api/notes/{id}:
  *   get:
  *     summary: 获取手记详情
- *     tags: [手记]
+ *     tags: [笔记]
  *     parameters:
  *       - in: path
  *         name: id
@@ -245,7 +245,7 @@ router.get('/:id', authMiddleware.optionalAuth, noteController.getNoteById);
  * /api/notes:
  *   post:
  *     summary: 创建手记
- *     tags: [手记]
+ *     tags: [笔记]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -295,7 +295,7 @@ router.post('/', authMiddleware.verifyToken, noteController.createNote);
  * /api/notes/{id}:
  *   put:
  *     summary: 更新手记
- *     tags: [手记]
+ *     tags: [笔记]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -345,7 +345,7 @@ router.put('/:id', authMiddleware.verifyToken, noteController.updateNote);
  * /api/notes/{id}:
  *   delete:
  *     summary: 删除手记
- *     tags: [手记]
+ *     tags: [笔记]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -370,7 +370,7 @@ router.delete('/:id', authMiddleware.verifyToken, noteController.deleteNote);
  * /api/notes/{id}/like:
  *   post:
  *     summary: 切换手记点赞状态
- *     tags: [手记]
+ *     tags: [笔记]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -395,7 +395,7 @@ router.post('/:id/like', authMiddleware.optionalAuth, noteController.toggleNoteL
  * /api/notes/user/likes:
  *   get:
  *     summary: 获取用户手记点赞列表
- *     tags: [手记]
+ *     tags: [笔记]
  *     security:
  *       - bearerAuth: []
  *     parameters:
