@@ -33,7 +33,7 @@ services:
       - VITE_APP_VERSION=${VITE_APP_VERSION:-1.0.0}
       - VITE_APP_AUTHOR=${VITE_APP_AUTHOR:-adnaan}
     volumes:
-      - ./blog-node-service/uploads:/usr/share/nginx/html/uploads:ro # 挂载上传文件目录
+      - ./backend/uploads:/usr/share/nginx/html/uploads:ro # 挂载上传文件目录
     networks:
       - blog-network
     depends_on:
@@ -124,8 +124,8 @@ services:
       - mysql
       - redis
     volumes:
-      - ./blog-node-service/logs:/app/logs
-      - ./blog-node-service/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+      - ./backend/uploads:/app/uploads
       - /etc/localtime:/etc/localtime:ro # 同步时区
     healthcheck:
       test:
@@ -156,7 +156,7 @@ services:
       MYSQL_COLLATION_SERVER: ${MYSQL_COLLATION_SERVER:-utf8mb4_unicode_ci}
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./blog-node-service/scripts:/docker-entrypoint-initdb.d
+      - ./backend/scripts:/docker-entrypoint-initdb.d
     networks:
       - blog-network
     command: --default-authentication-plugin=mysql_native_password
