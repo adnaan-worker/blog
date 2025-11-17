@@ -33,14 +33,14 @@ class StatusHandler extends BaseSocketHandler {
    * 处理状态推送
    */
   async handlePush(socket, io, data) {
-    this.log('info', '收到状态推送', { computer: data.computer_name });
-
-    const savedStatus = await statusService.saveStatus({
-      appName: data.app_name,
-      windowTitle: data.window_title,
+    this.log('info', '收到状态推送', {
+      computer: data.computer_name,
+      appName: data.appName,
       action: data.action,
-      computerName: data.computer_name,
     });
+
+    // 直接传递完整的数据，让 service 层处理
+    const savedStatus = await statusService.saveStatus(data);
 
     // 广播给所有客户端
     const status = await statusService.getCurrentStatusWithHistory(3);
