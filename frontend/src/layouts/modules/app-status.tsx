@@ -21,6 +21,7 @@ import { getAppIcon, getAppColor } from '@/utils/ui/icons';
 // 备用图标（当图片加载失败时使用）
 const FALLBACK_ICONS: Record<string, React.ReactNode> = {
   Cursor: <FiCode />,
+  Windsurf: <FiCode />,
   'VS Code': <FiCode />,
   PyCharm: <FiCode />,
   'IntelliJ IDEA': <FiCode />,

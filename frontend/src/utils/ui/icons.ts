@@ -39,6 +39,10 @@ const APP_ICON_CONFIGS: Record<string, Omit<AppIconConfig, 'name'>> = {
     icon: LOCAL_ICONS.cursor,
     color: '#007ACC',
   },
+  Windsurf: {
+    icon: LOCAL_ICONS.windsurf,
+    color: '#0078D4',
+  },
   'VS Code': {
     icon: LOCAL_ICONS.vscode,
     color: '#007ACC',
