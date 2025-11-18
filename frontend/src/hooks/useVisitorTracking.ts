@@ -1,8 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useSocket, useSocketEvent } from './useSocket';
+import { useVisitor, getRoomName } from './useSocket';
 import { getIPLocation, getBrowser, getDeviceType } from '@/utils/helpers/environment';
-import { getRoomName } from './useRoomCount';
 
 /**
  * 访客追踪 Hook
@@ -10,7 +9,7 @@ import { getRoomName } from './useRoomCount';
  */
 export const useVisitorTracking = () => {
   const location = useLocation();
-  const { isConnected, emit } = useSocket();
+  const { isConnected, reportActivity, reportPageChange, joinRoom, leaveRoom } = useVisitor();
   const hasReportedRef = useRef(false);
   const locationDataRef = useRef<{ city: string } | null>(null);
   const currentRoomRef = useRef<string | null>(null); // 当前所在的房间
@@ -31,11 +30,13 @@ export const useVisitorTracking = () => {
     return '页面';
   }, []);
 
-  // 监听 Socket 断开连接，重置状态
-  useSocketEvent('disconnect', () => {
-    hasReportedRef.current = false;
-    currentRoomRef.current = null;
-  });
+  // 连接断开时重置状态
+  useEffect(() => {
+    if (!isConnected) {
+      hasReportedRef.current = false;
+      currentRoomRef.current = null;
+    }
+  }, [isConnected]);
 
   // 获取地理位置（仅一次）- 使用统一的 environment 工具类
   useEffect(() => {
@@ -80,7 +81,7 @@ export const useVisitorTracking = () => {
 
         // 1. 首次上报或路径改变时，发送访客活动数据
         if (!hasReportedRef.current || isPathChanged) {
-          emit('visitor_activity', {
+          reportActivity({
             location: locationCity,
             device: deviceType,
             browser,
@@ -90,7 +91,7 @@ export const useVisitorTracking = () => {
 
           // 更新访客页面信息（仅在路径改变时）
           if (isPathChanged && hasReportedRef.current) {
-            emit('page_change', {
+            reportPageChange({
               page,
               pageTitle,
             });
@@ -101,17 +102,16 @@ export const useVisitorTracking = () => {
         if (isPathChanged || !hasReportedRef.current) {
           // 离开旧房间（仅在路径改变时）
           if (isPathChanged && oldRoomName && oldRoomName !== newRoomName) {
-            emit('leave', { room: oldRoomName });
+            leaveRoom(oldRoomName);
           }
 
           // 加入新房间（如果有且与旧房间不同）
           if (newRoomName && newRoomName !== oldRoomName) {
-            if (emit('join', { room: newRoomName })) {
-              currentRoomRef.current = newRoomName;
-            }
+            joinRoom(newRoomName);
+            currentRoomRef.current = newRoomName;
           } else if (isPathChanged && !newRoomName && oldRoomName) {
             // 如果新页面没有房间，离开所有房间
-            emit('leave', {});
+            leaveRoom(oldRoomName);
             currentRoomRef.current = null;
           }
         }
@@ -134,7 +134,7 @@ export const useVisitorTracking = () => {
     return () => {
       clearTimeout(timer);
     };
-  }, [isConnected, location.pathname, emit, getPageTitle]);
+  }, [isConnected, location.pathname, reportActivity, reportPageChange, joinRoom, leaveRoom, getPageTitle]);
 
   // 组件卸载时离开房间（使用 cleanup 函数确保资源释放）
   useEffect(() => {
@@ -142,14 +142,13 @@ export const useVisitorTracking = () => {
       // 在组件卸载时离开房间
       const roomToLeave = currentRoomRef.current;
       if (roomToLeave) {
-        // 使用 emit 的稳定引用，确保在卸载时也能执行
         try {
-          emit('leave', { room: roomToLeave });
+          leaveRoom(roomToLeave);
         } catch {
           // 静默处理，避免卸载时出错
         }
       }
     };
-  }, [emit]);
+  }, [leaveRoom]);
 };
 export default useVisitorTracking;

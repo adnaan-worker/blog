@@ -3,25 +3,9 @@ import { createPortal } from 'react-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMonitor, FiSmartphone, FiUsers, FiActivity, FiHeart, FiCoffee, FiStar } from 'react-icons/fi';
-import { useSocketEvent, useSocket } from '@/hooks/useSocket';
+import { useVisitor } from '@/hooks/useSocket';
 import { useAnimationEngine } from '@/utils/ui/animation';
-
-// ==================== 类型定义 ====================
-interface VisitorActivity {
-  id: string;
-  location: string; // 地区：如 "北京", "上海", "广东深圳"
-  device: 'desktop' | 'mobile' | 'tablet'; // 设备类型
-  page: string; // 页面路径
-  pageTitle: string; // 页面标题
-  count: number; // 该组合的人数
-}
-
-interface VisitorStats {
-  onlineCount: number;
-  activities: VisitorActivity[]; // 实时访客动态列表
-  roomCount?: Record<string, number>; // 房间人数统计 { roomName: count }
-  timestamp: number;
-}
+import type { VisitorStats, VisitorActivity } from '@/types';
 
 interface VisitorStatsTooltipProps {
   isVisible: boolean;
@@ -483,21 +467,21 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
   const [stats, setStats] = useState<VisitorStats | null>(null);
   const [loading, setLoading] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const { isConnected, emit } = useSocket();
+  const { isConnected, requestStats, onStatsUpdate } = useVisitor();
 
   // 使用动画引擎
   const { variants, springPresets } = useAnimationEngine();
 
-  // 监听 Socket.IO 推送的访客统计更新
-  useSocketEvent(
-    'visitor_stats_update',
-    useCallback((data: VisitorStats) => {
+  // 监听访客统计更新
+  useEffect(() => {
+    const unsub = onStatsUpdate((data) => {
       if (data) {
         setStats(data);
         setLoading(false);
       }
-    }, []),
-  );
+    });
+    return unsub;
+  }, [onStatsUpdate]);
 
   // 显示时主动请求数据（使用防抖，避免频繁请求）
   useEffect(() => {
@@ -512,7 +496,7 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
     // 延迟请求，避免频繁触发
     const requestTimer = setTimeout(() => {
       if (isConnected) {
-        emit('get_visitor_stats');
+        requestStats();
       }
     }, 100);
 
@@ -525,7 +509,7 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
       clearTimeout(requestTimer);
       clearTimeout(loadingTimeout);
     };
-  }, [isVisible, isConnected, emit]);
+  }, [isVisible, isConnected, requestStats]);
 
   if (!isVisible) return null;
 

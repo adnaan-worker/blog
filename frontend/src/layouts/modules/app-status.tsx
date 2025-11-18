@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { keyframes, css } from '@emotion/react';
-import { useSocket, useSocketEvents } from '@/hooks/useSocket';
+import { useStatus } from '@/hooks/useSocket';
+import type { StatusData, StatusResponse } from '@/types';
 import {
   FiChrome,
   FiCode,
@@ -46,33 +47,6 @@ const FALLBACK_ICONS: Record<string, React.ReactNode> = {
   深夜时光: <FiStar />,
   default: <FiMonitor />,
 };
-
-// 状态数据接口
-interface StatusData {
-  appName: string;
-  appIcon: string;
-  appType: 'app' | 'music';
-  displayInfo: string;
-  action: string; // 添加动作状态
-  timestamp: string;
-  computer_name: string;
-  active_app?: string; // 原始应用窗口标题（包含歌曲信息等）
-}
-
-// 统一的Socket响应格式
-interface SocketResponse<T = any> {
-  success: boolean;
-  message: string;
-  data?: T;
-  error?: string;
-  timestamp: string;
-  source?: string;
-}
-
-interface StatusResponse {
-  current: StatusData | null;
-  history: StatusData[];
-}
 
 // 动画定义
 const pulse = keyframes`
@@ -254,8 +228,8 @@ const getDefaultStatus = (): StatusData => {
       timestamp: new Date().toISOString(),
       computer_name: 'Default',
     };
-  } else if (hour >= 6 && hour < 9) {
-    // 早晨 6-9点
+  } else if (hour >= 6 && hour < 8) {
+    // 早晨 6-8点
     return {
       appName: '早晨时光',
       appIcon: 'morning',
@@ -265,8 +239,8 @@ const getDefaultStatus = (): StatusData => {
       timestamp: new Date().toISOString(),
       computer_name: 'Default',
     };
-  } else if (hour >= 9 && hour < 12) {
-    // 上午工作 9-12点
+  } else if (hour >= 8 && hour < 12) {
+    // 上午工作 8-12点
     return {
       appName: '工作状态',
       appIcon: 'work',
@@ -276,8 +250,8 @@ const getDefaultStatus = (): StatusData => {
       timestamp: new Date().toISOString(),
       computer_name: 'Default',
     };
-  } else if (hour >= 12 && hour < 14) {
-    // 午休 12-14点
+  } else if (hour >= 12 && hour < 13) {
+    // 午休 12-13点
     return {
       appName: '午间休息',
       appIcon: 'lunch',
@@ -287,8 +261,8 @@ const getDefaultStatus = (): StatusData => {
       timestamp: new Date().toISOString(),
       computer_name: 'Default',
     };
-  } else if (hour >= 14 && hour < 18) {
-    // 下午工作 14-18点
+  } else if (hour >= 13 && hour < 18) {
+    // 下午工作 13-18点
     return {
       appName: '工作状态',
       appIcon: 'work',
@@ -325,33 +299,11 @@ const getDefaultStatus = (): StatusData => {
 
 // 主组件
 const AppStatus: React.FC = () => {
-  const { isConnected, emit } = useSocket();
-
-  const [statusData, setStatusData] = useState<StatusResponse>({ current: null, history: [] });
+  const { status, isConnected } = useStatus();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 
-  // 使用useCallback优化事件处理器
-  const handleStatusUpdated = useCallback((response: SocketResponse<StatusResponse>) => {
-    if (response.success && response.data) {
-      setStatusData(response.data);
-    }
-  }, []);
-
-  const handleConnect = useCallback(() => {
-    emit('status:request');
-  }, [emit]);
-
-  // 使用批量事件监听
-  const socketEvents = useMemo(
-    () => ({
-      'status:updated': handleStatusUpdated,
-      connect: handleConnect,
-    }),
-    [handleStatusUpdated, handleConnect],
-  );
-
-  useSocketEvents(socketEvents);
+  const statusData = status || { current: null, history: [] };
 
   // 图片加载错误处理
   const handleImageError = useCallback((appName: string) => {

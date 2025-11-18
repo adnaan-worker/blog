@@ -1,4 +1,5 @@
 const { logger } = require('../utils/logger');
+const { socketError } = require('../utils/socket-response');
 
 /**
  * Socket 事件处理器基类
@@ -44,21 +45,25 @@ class BaseSocketHandler {
   }
 
   /**
-   * 错误处理
+   * 错误处理（增强版）
    */
   handleError(socket, event, error) {
     this.log('error', `事件处理失败: ${event}`, {
       socketId: socket.id,
+      userId: socket.userId,
       error: error.message,
       stack: error.stack,
+      errorType: error.type || error.name,
     });
 
-    socket.emit('error', {
+    // 使用统一的错误响应格式
+    const errorResponse = socketError(error, error.message || '处理请求时发生错误', {
       handler: this.name,
       event,
-      message: error.message,
-      timestamp: Date.now(),
+      type: error.type || 'internal',
     });
+
+    socket.emit('error', errorResponse.toJSON());
   }
 
   /**

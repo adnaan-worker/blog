@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -16,7 +16,7 @@ import {
   FiGlobe,
 } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
-import { useAIStream } from '@/hooks/useAIStream';
+import { useAI } from '@/hooks/useSocket';
 import { Editor } from '@tiptap/react';
 import { AIWritingDialog } from './ai-writing-dialog';
 import { AITypingIndicator } from './ai-typing-indicator';
@@ -416,19 +416,92 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
   const [selectedRange, setSelectedRange] = useState<{ from: number; to: number } | null>(null);
   const [currentAction, setCurrentAction] = useState('');
 
-  const {
-    isConnected,
-    isStreaming,
-    streamContent,
-    streamChat,
-    streamPolish,
-    streamImprove,
-    streamExpand,
-    streamSummarize,
-    streamTranslate,
-    cancelTask,
-    reset,
-  } = useAIStream();
+  const ai = useAI();
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamContent, setStreamContent] = useState('');
+  const taskIdRef = useRef<string | null>(null);
+
+  // 监听 AI 事件
+  useEffect(() => {
+    const unsubChunk = ai.onChunk((data) => {
+      if (data.taskId === taskIdRef.current) {
+        setStreamContent((prev) => prev + data.chunk);
+      }
+    });
+
+    const unsubDone = ai.onDone((data) => {
+      if (data.taskId === taskIdRef.current) {
+        setIsStreaming(false);
+      }
+    });
+
+    const unsubError = ai.onError((data) => {
+      if (data.taskId === taskIdRef.current) {
+        setIsStreaming(false);
+        adnaan.toast.error(data.error);
+      }
+    });
+
+    return () => {
+      unsubChunk();
+      unsubDone();
+      unsubError();
+    };
+  }, [ai]);
+
+  // 辅助函数
+  const reset = useCallback(() => {
+    setStreamContent('');
+    setIsStreaming(false);
+    taskIdRef.current = null;
+  }, []);
+
+  const startStream = useCallback(
+    (action: string, text: string, options?: any) => {
+      const taskId = `task_${Date.now()}`;
+      taskIdRef.current = taskId;
+      setIsStreaming(true);
+      setStreamContent('');
+
+      switch (action) {
+        case 'polish':
+          ai.polish(text, taskId, options?.style);
+          break;
+        case 'improve':
+          ai.improve(text, taskId, options?.improvements);
+          break;
+        case 'expand':
+          ai.expand(text, taskId, options?.length);
+          break;
+        case 'summarize':
+          ai.summarize(text, taskId, options?.length);
+          break;
+        case 'translate':
+          ai.translate(text, taskId, options?.targetLang);
+          break;
+      }
+    },
+    [ai],
+  );
+
+  const cancelTask = useCallback(() => {
+    if (taskIdRef.current) {
+      ai.cancel(taskIdRef.current);
+      reset();
+    }
+  }, [ai, reset]);
+
+  const isConnected = ai.isConnected;
+  // 简化的辅助函数，自动生成 taskId
+  const streamPolish = (text: string, style?: string) => startStream('polish', text, { style });
+  const streamImprove = (text: string, improvements?: string) => startStream('improve', text, { improvements });
+  const streamExpand = (text: string, length?: string) => startStream('expand', text, { length });
+  const streamSummarize = (text: string, length?: string) => startStream('summarize', text, { length });
+  const streamTranslate = (text: string, targetLang: string) => startStream('translate', text, { targetLang });
+  const streamChat = (message: string) => {
+    // Chat 功能暂不支持
+    adnaan.toast.info('聊天功能开发中');
+  };
 
   // 检测编辑器是否为空
   useEffect(() => {

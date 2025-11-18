@@ -14,7 +14,7 @@ import {
   FiSend,
 } from 'react-icons/fi';
 import { Button, Textarea } from 'adnaan-ui';
-import { useAIStream } from '@/hooks/useAIStream';
+import { useAIStream } from '@/hooks/useSocket';
 
 // 对话框遮罩
 const DialogOverlay = styled(motion.div)`
@@ -361,7 +361,7 @@ export const AIWritingDialog: React.FC<AIWritingDialogProps> = ({ isOpen, onClos
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const { isConnected, isStreaming, streamContent, streamChat, cancelTask, reset } = useAIStream();
+  const { isConnected, isStreaming, content, stop, reset } = useAIStream();
 
   // 选择模板
   const handleSelectTemplate = useCallback((template: (typeof WRITING_TEMPLATES)[0]) => {
@@ -391,12 +391,12 @@ export const AIWritingDialog: React.FC<AIWritingDialogProps> = ({ isOpen, onClos
   // 关闭对话框
   const handleClose = useCallback(() => {
     if (isGenerating) {
-      cancelTask();
+      stop();
     }
     onClose();
     setPrompt('');
     setIsGenerating(false);
-  }, [isGenerating, cancelTask, onClose]);
+  }, [isGenerating, stop, onClose]);
 
   // 键盘快捷键
   React.useEffect(() => {

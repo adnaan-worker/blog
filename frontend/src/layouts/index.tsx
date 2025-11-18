@@ -12,7 +12,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
 import PageLoading from '@/components/common/page-loading';
 import { setupHttpConfig } from '@/utils/api/http-config';
-import { useAutoConnect, useVisitorTracking } from '@/hooks';
+import { useVisitorTracking } from '@/hooks';
 import { AppDispatch } from '@/store';
 import { API } from '@/utils';
 import type { SiteSettings } from '@/types';
@@ -88,9 +88,6 @@ const RootLayout = () => {
 
   // 监听系统主题变化（自动在 auto 模式下启用）
   useSystemTheme();
-
-  // 自动连接Socket.IO（用于在线人数统计等实时功能）
-  useAutoConnect(true);
 
   // 访客活动追踪（自动上报地区、设备、页面等信息）
   useVisitorTracking();

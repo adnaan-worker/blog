@@ -1,557 +1,597 @@
+/**
+ * Socket Hook - 性能优化版
+ * 单例模式 + 事件总线 + 自动清理
+ */
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
-
-// Socket状态接口
-export interface SocketState {
-  isConnected: boolean;
-  isConnecting: boolean;
-  error: string | null;
-  reconnectAttempts: number;
-  lastConnected: Date | null;
-}
-
 import { getSocketConfig } from '@/utils/config/socket';
 import { getDeviceId } from '@/utils/core/device-id';
 import { storage } from '@/utils';
+import type {
+  SocketResponse,
+  StatusResponse,
+  VisitorStats,
+  VisitorActivityData,
+  VisitorPageChangeData,
+  AIChunkData,
+  AIDoneData,
+  AIErrorData,
+} from '@/types';
 
-// Socket配置 - 使用统一的配置管理
+// Socket 连接状态枚举
+enum SocketStatus {
+  IDLE = 'idle',
+  CONNECTING = 'connecting',
+  CONNECTED = 'connected',
+  DISCONNECTED = 'disconnected',
+  ERROR = 'error',
+}
+
+// Socket 配置
 const SOCKET_CONFIG = {
   ...getSocketConfig(),
   reconnectDelay: 2000,
   maxReconnectAttempts: 2,
   timeout: 15000,
-};
+} as const;
 
-// 全局Socket管理器类
+// 全局 Socket 管理器（单例 + 事件总线）
 class SocketManager {
+  private static instance: SocketManager;
   private socket: Socket | null = null;
-  private state: SocketState = {
-    isConnected: false,
-    isConnecting: false,
-    error: null,
-    reconnectAttempts: 0,
-    lastConnected: null,
-  };
+  private isConnected = false;
+  private isConnecting = false;
+  private listeners = new Map<string, Set<Function>>();
+  private refCount = 0; // 引用计数
+  private reconnectAttempts = 0; // 重连次数
+  private maxReconnectAttempts = 5; // 最大重连次数
+  private heartbeatTimer: NodeJS.Timeout | null = null; // 心跳定时器
+  private heartbeatInterval = 30000; // 心跳间隔 30秒
 
-  // 状态监听器
-  private stateListeners = new Set<(state: SocketState) => void>();
+  private constructor() {}
 
-  // 事件监听器
-  private eventListeners = new Map<string, Set<(...args: any[]) => void>>();
-
-  // 重连定时器
-  private reconnectTimer: NodeJS.Timeout | null = null;
-
-  // 连接Promise（防止重复连接）
-  private connectPromise: Promise<boolean> | null = null;
-
-  // 连接监控
-  private connectionMonitor: NodeJS.Timeout | null = null;
-  private lastActivity: Date = new Date();
-
-  // ✅ 引用计数和自动清理
-  private refCount = 0;
-  private cleanupTimer: NodeJS.Timeout | null = null;
-
-  // 更新状态并通知所有监听器
-  private updateState(updates: Partial<SocketState>) {
-    this.state = { ...this.state, ...updates };
-    this.stateListeners.forEach((listener) => {
-      try {
-        listener(this.state);
-      } catch (error) {
-        // 静默处理监听器错误，避免影响其他监听器
-      }
-    });
-  }
-
-  // 触发事件监听器
-  private triggerEventListeners(event: string, ...args: any[]) {
-    const listeners = this.eventListeners.get(event);
-    if (listeners) {
-      listeners.forEach((listener) => {
-        try {
-          listener(...args);
-        } catch (error) {
-          // 静默处理监听器错误，避免影响其他监听器
-        }
-      });
+  static getInstance(): SocketManager {
+    if (!SocketManager.instance) {
+      SocketManager.instance = new SocketManager();
     }
+    return SocketManager.instance;
   }
 
-  // 设置Socket事件监听
-  private setupSocketEvents(socket: Socket) {
-    socket.on('connect', () => {
-      this.updateState({
-        isConnected: true,
-        isConnecting: false,
-        error: null,
-        reconnectAttempts: 0,
-        lastConnected: new Date(),
-      });
-      this.clearReconnectTimer();
-      this.startConnectionMonitor();
-      this.triggerEventListeners('connect');
-    });
-
-    socket.on('disconnect', (reason) => {
-      this.updateState({
-        isConnected: false,
-        isConnecting: false,
-      });
-
-      this.triggerEventListeners('disconnect', reason);
-
-      // 非主动断开时安排重连
-      if (reason !== 'io client disconnect' && this.state.reconnectAttempts < SOCKET_CONFIG.maxReconnectAttempts) {
-        this.scheduleReconnect();
-      }
-    });
-
-    socket.on('connect_error', (error) => {
-      // 检查是否是认证错误
-      const isAuthError =
-        error.message?.includes('Authentication') || error.message?.includes('Invalid authentication');
-
-      if (isAuthError) {
-        this.updateState({
-          isConnected: false,
-          isConnecting: false,
-          error: `认证失败: ${error.message}`,
-        });
-        this.triggerEventListeners('connect_error', error);
-        return; // 认证错误不重连
-      }
-
-      this.updateState({
-        isConnected: false,
-        isConnecting: false,
-        error: `连接失败: ${error.message}`,
-      });
-
-      this.triggerEventListeners('connect_error', error);
-      this.scheduleReconnect();
-    });
-
-    // 处理pong响应
-    socket.on('pong', () => {
-      this.lastActivity = new Date();
-    });
-
-    // 转发所有其他事件（优化：减少 Date 对象创建）
-    socket.onAny((event, ...args) => {
-      // 只有特定事件才更新活跃时间，减少对象创建
-      if (event === 'pong' || event === 'visitor_stats_update' || event === 'room_count_update') {
-        this.lastActivity = new Date();
-      }
-      this.triggerEventListeners(event, ...args);
-    });
-  }
-
-  // 清理重连定时器
-  private clearReconnectTimer() {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-  }
-
-  // 启动连接监控
-  private startConnectionMonitor() {
-    this.clearConnectionMonitor();
-
-    this.connectionMonitor = setInterval(() => {
-      if (this.socket?.connected) {
-        // 检查连接活跃度
-        const timeSinceActivity = Date.now() - this.lastActivity.getTime();
-
-        // 如果超过60秒没有活动，发送ping测试连接
-        if (timeSinceActivity > 60000) {
-          this.socket.emit('ping', { timestamp: Date.now() });
-        }
-
-        // 如果超过120秒没有活动，认为连接可能有问题，断开重连
-        if (timeSinceActivity > 120000) {
-          this.socket.disconnect();
-        }
-      }
-    }, 30000); // 每30秒检查一次
-  }
-
-  // 清理连接监控
-  private clearConnectionMonitor() {
-    if (this.connectionMonitor) {
-      clearInterval(this.connectionMonitor);
-      this.connectionMonitor = null;
-    }
-  }
-
-  // 安排重连
-  private scheduleReconnect() {
-    if (this.state.reconnectAttempts >= SOCKET_CONFIG.maxReconnectAttempts) {
-      this.updateState({
-        error: '达到最大重连次数',
-        isConnecting: false,
-      });
-      return;
-    }
-
-    this.clearReconnectTimer();
-
-    const delay = Math.min(SOCKET_CONFIG.reconnectDelay * Math.pow(2, this.state.reconnectAttempts), 30000);
-
-    this.reconnectTimer = setTimeout(() => {
-      this.updateState({
-        reconnectAttempts: this.state.reconnectAttempts + 1,
-        isConnecting: true,
-      });
+  // 增加引用
+  addRef() {
+    this.refCount++;
+    if (this.refCount === 1) {
       this.connect();
-    }, delay);
+    }
   }
 
-  // 连接Socket
-  public async connect(): Promise<boolean> {
-    // 如果已连接，直接返回成功
-    if (this.socket?.connected) {
-      return true;
-    }
-
-    // 如果正在连接，返回现有Promise
-    if (this.connectPromise) {
-      return this.connectPromise;
-    }
-
-    this.connectPromise = new Promise<boolean>((resolve) => {
-      this.updateState({ isConnecting: true, error: null });
-
-      // 清理旧连接
-      if (this.socket) {
-        this.socket.disconnect();
-        this.socket = null;
-      }
-
-      // 获取设备唯一ID
-      const deviceId = getDeviceId();
-
-      // 创建新连接
-      const socket = io(SOCKET_CONFIG.url, {
-        transports: ['polling', 'websocket'],
-        timeout: SOCKET_CONFIG.timeout,
-        forceNew: true,
-        reconnection: false, // 禁用自动重连，手动管理
-        auth: {
-          token: SOCKET_CONFIG.authKey,
-          client_type: 'web_client',
-          device_id: deviceId, // 添加设备ID用于精准统计在线人数
-          jwtToken: storage.local.get('token'), // 添加JWT token用于AI功能
-        },
-        extraHeaders: {
-          Authorization: SOCKET_CONFIG.authKey,
-        },
-        // 如果配置了 WebSocket URL，使用它作为 WebSocket 传输的目标
-        ...(SOCKET_CONFIG.wsUrl && {
-          upgrade: true,
-          rememberUpgrade: true,
-        }),
-      });
-
-      this.socket = socket;
-      this.setupSocketEvents(socket);
-
-      // 连接超时处理
-      const timeout = setTimeout(() => {
-        if (!socket.connected) {
-          this.updateState({
-            isConnecting: false,
-            error: '连接超时',
-          });
-          resolve(false);
+  // 减少引用
+  removeRef() {
+    this.refCount--;
+    // 当没有任何组件使用时，延迟断开（避免频繁连接）
+    if (this.refCount <= 0) {
+      this.refCount = 0;
+      setTimeout(() => {
+        if (this.refCount === 0) {
+          this.disconnect();
         }
-      }, SOCKET_CONFIG.timeout);
+      }, 60000); // 60秒后断开
+    }
+  }
 
-      // 监听连接结果
-      const onConnect = () => {
-        clearTimeout(timeout);
-        this.connectPromise = null;
-        resolve(true);
-      };
+  // 连接 Socket
+  private connect() {
+    if (this.socket?.connected || this.isConnecting) return;
 
-      const onError = () => {
-        clearTimeout(timeout);
-        this.connectPromise = null;
-        resolve(false);
-      };
+    this.isConnecting = true;
+    const token = storage.local.get('token');
+    const deviceId = getDeviceId();
 
-      socket.once('connect', onConnect);
-      socket.once('connect_error', onError);
+    this.socket = io(SOCKET_CONFIG.url, {
+      transports: ['websocket', 'polling'],
+      auth: {
+        token: SOCKET_CONFIG.authKey,
+        jwtToken: token || '',
+        device_id: deviceId, // 注意：后端用的是 device_id 而不是 deviceId
+      },
+      reconnection: true,
+      reconnectionDelay: SOCKET_CONFIG.reconnectDelay,
+      reconnectionAttempts: SOCKET_CONFIG.maxReconnectAttempts,
+      timeout: SOCKET_CONFIG.timeout,
     });
 
-    return this.connectPromise;
+    this.socket.on('connect', () => {
+      this.isConnected = true;
+      this.isConnecting = false;
+      this.reconnectAttempts = 0; // 连接成功后重置重连次数
+      this.startHeartbeat(); // 启动心跳
+      this.emit('_internal:connect');
+    });
+
+    this.socket.on('disconnect', () => {
+      this.isConnected = false;
+      this.isConnecting = false;
+      this.emit('_internal:disconnect');
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('[Socket] Connection error:', error.message);
+      this.isConnecting = false;
+      this.reconnectAttempts++;
+
+      // 如果超过最大重连次数，停止重连
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        console.warn('[Socket] 达到最大重连次数，停止重连');
+        this.socket?.disconnect();
+      }
+    });
+
+    // 注册已有的监听器
+    this.listeners.forEach((callbacks, event) => {
+      if (!event.startsWith('_internal:')) {
+        callbacks.forEach((callback) => {
+          this.socket?.on(event, callback as any);
+        });
+      }
+    });
   }
 
   // 断开连接
-  public disconnect() {
-    this.clearReconnectTimer();
-    this.clearConnectionMonitor();
-    this.clearCleanupTimer();
-
+  private disconnect() {
+    this.stopHeartbeat();
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
     }
-
-    this.updateState({
-      isConnected: false,
-      isConnecting: false,
-      error: null,
-      reconnectAttempts: 0,
-    });
-
-    this.connectPromise = null;
+    this.isConnected = false;
+    this.isConnecting = false;
   }
 
-  // 发送消息
-  public emit(event: string, ...args: any[]): boolean {
-    if (!this.socket || !this.state.isConnected) {
-      return false;
-    }
-    this.socket.emit(event, ...args);
-    return true;
+  // 启动心跳
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.socket?.connected) {
+        this.socket.emit('ping');
+      }
+    }, this.heartbeatInterval);
   }
 
-  // ✅ 清理自动断开定时器
-  private clearCleanupTimer() {
-    if (this.cleanupTimer) {
-      clearTimeout(this.cleanupTimer);
-      this.cleanupTimer = null;
+  // 停止心跳
+  private stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
     }
   }
 
-  // ✅ 启动自动清理定时器
-  private startCleanupTimer() {
-    this.clearCleanupTimer();
-
-    // 60秒后如果没有监听器，自动断开连接
-    this.cleanupTimer = setTimeout(() => {
-      const totalListeners = this.stateListeners.size + this.eventListeners.size;
-      if (totalListeners === 0 && this.refCount === 0) {
-        this.disconnect();
-      }
-    }, 60000);
+  // 手动重连（暴露给外部使用）
+  reconnect() {
+    this.reconnectAttempts = 0;
+    this.disconnect();
+    this.connect();
   }
 
-  // 添加状态监听器（✅ 带引用计数）
-  public addStateListener(listener: (state: SocketState) => void): () => void {
-    this.stateListeners.add(listener);
-    this.refCount++;
-    this.clearCleanupTimer(); // 有新监听器，取消自动清理
-
-    // 立即调用一次，提供当前状态
-    listener(this.state);
-
-    return () => {
-      this.stateListeners.delete(listener);
-      this.refCount--;
-
-      // 如果没有监听器了，启动自动清理定时器
-      if (this.stateListeners.size === 0 && this.eventListeners.size === 0) {
-        this.startCleanupTimer();
-      }
-    };
-  }
-
-  // 添加事件监听器（✅ 带引用计数）
-  public addEventListener(event: string, listener: (...args: any[]) => void): () => void {
-    if (!this.eventListeners.has(event)) {
-      this.eventListeners.set(event, new Set());
+  // 监听事件（自动去重）
+  on(event: string, callback: Function): () => void {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
     }
 
-    this.eventListeners.get(event)!.add(listener);
-    this.refCount++;
-    this.clearCleanupTimer(); // 有新监听器，取消自动清理
+    const callbacks = this.listeners.get(event)!;
 
-    return () => {
-      const listeners = this.eventListeners.get(event);
-      if (listeners) {
-        listeners.delete(listener);
-        if (listeners.size === 0) {
-          this.eventListeners.delete(event);
-        }
+    // 防止重复添加
+    if (callbacks.has(callback)) {
+      return () => this.off(event, callback);
+    }
+
+    callbacks.add(callback);
+
+    // 只有非内部事件才注册到 socket
+    if (!event.startsWith('_internal:')) {
+      this.socket?.on(event, callback as any);
+    }
+
+    return () => this.off(event, callback);
+  }
+
+  // 移除监听
+  private off(event: string, callback: Function) {
+    const callbacks = this.listeners.get(event);
+    if (callbacks) {
+      callbacks.delete(callback);
+      if (!event.startsWith('_internal:')) {
+        this.socket?.off(event, callback as any);
       }
-      this.refCount--;
-
-      // 如果没有监听器了，启动自动清理定时器
-      if (this.stateListeners.size === 0 && this.eventListeners.size === 0) {
-        this.startCleanupTimer();
+      // 如果该事件没有监听器了，删除整个 Set
+      if (callbacks.size === 0) {
+        this.listeners.delete(event);
       }
-    };
+    }
   }
 
-  // 获取当前状态
-  public getState(): SocketState {
-    return { ...this.state };
+  // 发送事件
+  emit(event: string, data?: any) {
+    // 内部事件直接触发本地监听器
+    if (event.startsWith('_internal:')) {
+      const callbacks = this.listeners.get(event);
+      if (callbacks) {
+        callbacks.forEach((callback) => callback(data));
+      }
+    } else {
+      this.socket?.emit(event, data);
+    }
   }
 
-  // 获取Socket实例
-  public getSocket(): Socket | null {
-    return this.socket;
-  }
-
-  // 重置状态（用于手动重试）
-  public reset() {
-    this.clearReconnectTimer();
-    this.updateState({
-      error: null,
-      reconnectAttempts: 0,
-    });
+  // 获取连接状态
+  getConnected() {
+    return this.isConnected;
   }
 }
 
-// 全局Socket管理器实例
-const socketManager = new SocketManager();
+const socketManager = SocketManager.getInstance();
 
-// 主要的Socket Hook
-export const useSocket = () => {
-  const [state, setState] = useState<SocketState>(socketManager.getState());
+// ==================== Hooks ====================
 
-  useEffect(() => {
-    const cleanup = socketManager.addStateListener(setState);
-    return cleanup;
-  }, []);
-
-  const connect = useCallback(() => socketManager.connect(), []);
-  const disconnect = useCallback(() => socketManager.disconnect(), []);
-  const emit = useCallback((event: string, ...args: any[]) => socketManager.emit(event, ...args), []);
-  const reset = useCallback(() => socketManager.reset(), []);
-
-  // 计算连接状态
-  const status = useMemo(() => {
-    if (state.error) return 'error';
-    if (state.isConnecting) return 'connecting';
-    if (state.isConnected) return 'connected';
-    return 'disconnected';
-  }, [state.error, state.isConnecting, state.isConnected]);
-
-  return {
-    // 状态
-    ...state,
-    status,
-
-    // 方法
-    connect,
-    disconnect,
-    emit,
-    reset,
-
-    // Socket实例（高级用法，不推荐直接使用）
-    socket: socketManager.getSocket(),
-  };
-};
-
-// Socket事件监听Hook
-export const useSocketEvent = (
-  event: string | null,
-  handler: (...args: any[]) => void,
-  options: { enabled?: boolean; deps?: any[] } = {},
-) => {
-  const { enabled = true, deps = [] } = options;
-  const handlerRef = useRef(handler);
-  const cleanupRef = useRef<(() => void) | null>(null);
-
-  // 更新handler引用
-  handlerRef.current = handler;
+/**
+ * 基础 Socket Hook（性能优化版）
+ */
+export function useSocket() {
+  const [isConnected, setIsConnected] = useState(socketManager.getConnected());
 
   useEffect(() => {
-    // 清理之前的监听器
-    if (cleanupRef.current) {
-      cleanupRef.current();
-      cleanupRef.current = null;
-    }
+    // 增加引用计数
+    socketManager.addRef();
 
-    // 条件监听：event为null或enabled为false时不监听
-    if (!event || !enabled) {
-      return;
-    }
-
-    const stableHandler = (...args: any[]) => {
-      try {
-        handlerRef.current(...args);
-      } catch (error) {
-        console.error(`❌ 事件处理器执行失败 (${event}):`, error);
-      }
-    };
-
-    cleanupRef.current = socketManager.addEventListener(event, stableHandler);
+    // 监听连接状态变化
+    const unsubConnect = socketManager.on('_internal:connect', () => setIsConnected(true));
+    const unsubDisconnect = socketManager.on('_internal:disconnect', () => setIsConnected(false));
 
     return () => {
-      if (cleanupRef.current) {
-        cleanupRef.current();
-        cleanupRef.current = null;
-      }
+      unsubConnect();
+      unsubDisconnect();
+      socketManager.removeRef();
     };
-  }, [event, enabled, ...deps]);
-};
+  }, []); // 空依赖，只执行一次
 
-// 自动连接Hook（可选）
-export const useAutoConnect = (enabled: boolean = true) => {
-  const { isConnected, isConnecting, error, connect } = useSocket();
-  const connectAttemptedRef = useRef(false);
+  // 使用 useCallback 缓存函数，避免子组件重渲染
+  const emit = useCallback((event: string, data?: any) => {
+    socketManager.emit(event, data);
+  }, []);
+
+  const on = useCallback((event: string, callback: Function) => {
+    return socketManager.on(event, callback);
+  }, []);
+
+  const reconnect = useCallback(() => {
+    socketManager.reconnect();
+  }, []);
+
+  return useMemo(
+    () => ({
+      isConnected,
+      emit,
+      on,
+      reconnect,
+    }),
+    [isConnected, emit, on, reconnect],
+  );
+}
+
+/**
+ * 状态服务 Hook（性能优化版）
+ */
+export function useStatus() {
+  const { isConnected, emit, on } = useSocket();
+  const [status, setStatus] = useState<StatusResponse | null>(null);
+  const hasRequestedRef = useRef(false);
 
   useEffect(() => {
-    // 防止多个组件同时触发连接
-    if (enabled && !isConnected && !isConnecting && !error && !connectAttemptedRef.current) {
-      connectAttemptedRef.current = true;
+    if (!isConnected) return;
 
-      connect().finally(() => {
-        // 连接完成后重置标志，允许重新连接
-        setTimeout(() => {
-          connectAttemptedRef.current = false;
-        }, 1000);
-      });
+    // 监听状态更新
+    const unsub = on('status:updated', (response: SocketResponse<StatusResponse>) => {
+      if (response.success && response.data) {
+        setStatus(response.data);
+      }
+    });
+
+    // 只在首次连接时请求一次
+    if (!hasRequestedRef.current) {
+      hasRequestedRef.current = true;
+      // 延迟请求，避免与连接事件冲突
+      setTimeout(() => emit('status:request'), 100);
     }
-  }, [enabled, isConnected, isConnecting, error, connect]);
 
-  // 重置连接标志当enabled变化时
+    return unsub;
+  }, [isConnected]); // 移除 emit 和 on 依赖
+
+  return useMemo(() => ({ status, isConnected }), [status, isConnected]);
+}
+
+/**
+ * 访客服务 Hook（性能优化版）
+ */
+export function useVisitor() {
+  const { isConnected, emit, on } = useSocket();
+
+  // 使用 useCallback 缓存所有方法
+  const reportActivity = useCallback((data: VisitorActivityData) => emit('visitor_activity', data), [emit]);
+
+  const reportPageChange = useCallback((data: VisitorPageChangeData) => emit('visitor_page_change', data), [emit]);
+
+  const joinRoom = useCallback((room: string) => emit('join', { room }), [emit]);
+
+  const leaveRoom = useCallback((room: string) => emit('leave', { room }), [emit]);
+
+  const requestStats = useCallback(() => emit('get_visitor_stats'), [emit]);
+
+  const onStatsUpdate = useCallback(
+    (callback: (stats: VisitorStats) => void) => on('visitor_stats_update', callback),
+    [on],
+  );
+
+  const onOnlineUpdate = useCallback(
+    (callback: (data: { count: number; timestamp: number }) => void) => on('online_users_update', callback),
+    [on],
+  );
+
+  const onRoomUpdate = useCallback(
+    (callback: (data: { room: string; count: number }) => void) => on('room_count_update', callback),
+    [on],
+  );
+
+  return useMemo(
+    () => ({
+      isConnected,
+      reportActivity,
+      reportPageChange,
+      joinRoom,
+      leaveRoom,
+      requestStats,
+      onStatsUpdate,
+      onOnlineUpdate,
+      onRoomUpdate,
+    }),
+    [
+      isConnected,
+      reportActivity,
+      reportPageChange,
+      joinRoom,
+      leaveRoom,
+      requestStats,
+      onStatsUpdate,
+      onOnlineUpdate,
+      onRoomUpdate,
+    ],
+  );
+}
+
+/**
+ * AI 服务 Hook（性能优化版）
+ */
+export function useAI() {
+  const { isConnected, emit, on } = useSocket();
+
+  // 缓存所有方法
+  const polish = useCallback(
+    (content: string, taskId: string, style?: string) => emit('ai:stream_polish', { content, taskId, style }),
+    [emit],
+  );
+
+  const improve = useCallback(
+    (content: string, taskId: string, improvements?: string) =>
+      emit('ai:stream_improve', { content, taskId, improvements }),
+    [emit],
+  );
+
+  const expand = useCallback(
+    (content: string, taskId: string, length?: string) => emit('ai:stream_expand', { content, taskId, length }),
+    [emit],
+  );
+
+  const summarize = useCallback(
+    (content: string, taskId: string, length?: string) => emit('ai:stream_summarize', { content, taskId, length }),
+    [emit],
+  );
+
+  const translate = useCallback(
+    (content: string, taskId: string, targetLang: string) =>
+      emit('ai:stream_translate', { content, taskId, targetLang }),
+    [emit],
+  );
+
+  const cancel = useCallback((taskId: string) => emit('ai:cancel', { taskId }), [emit]);
+
+  const onChunk = useCallback((callback: (data: AIChunkData) => void) => on('ai:chunk', callback), [on]);
+
+  const onDone = useCallback((callback: (data: AIDoneData) => void) => on('ai:done', callback), [on]);
+
+  const onError = useCallback((callback: (data: AIErrorData) => void) => on('ai:error', callback), [on]);
+
+  return useMemo(
+    () => ({
+      isConnected,
+      polish,
+      improve,
+      expand,
+      summarize,
+      translate,
+      cancel,
+      onChunk,
+      onDone,
+      onError,
+    }),
+    [isConnected, polish, improve, expand, summarize, translate, cancel, onChunk, onDone, onError],
+  );
+}
+
+/**
+ * AI 流式输出 Hook（高级封装）
+ */
+export function useAIStream() {
+  const ai = useAI();
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [content, setContent] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const taskIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!enabled) {
-      connectAttemptedRef.current = false;
-    }
-  }, [enabled]);
+    const unsubChunk = ai.onChunk((data) => {
+      if (data.taskId === taskIdRef.current) {
+        setContent((prev) => prev + data.chunk);
+      }
+    });
 
-  return { isConnected, isConnecting, error };
-};
+    const unsubDone = ai.onDone((data) => {
+      if (data.taskId === taskIdRef.current) {
+        setIsStreaming(false);
+      }
+    });
 
-// 批量事件监听Hook（简化版）
-export const useSocketEvents = (events: Record<string, (...args: any[]) => void>) => {
-  const handlersRef = useRef(events);
-  handlersRef.current = events;
-
-  useEffect(() => {
-    const cleanups: (() => void)[] = [];
-    const eventKeys = Object.keys(events);
-
-    eventKeys.forEach((event) => {
-      const handler = handlersRef.current[event];
-      if (event && typeof handler === 'function') {
-        const stableHandler = (...args: any[]) => {
-          try {
-            handlersRef.current[event]?.(...args);
-          } catch (error) {
-            // 静默处理事件处理器错误
-          }
-        };
-
-        const cleanup = socketManager.addEventListener(event, stableHandler);
-        cleanups.push(cleanup);
+    const unsubError = ai.onError((data) => {
+      if (data.taskId === taskIdRef.current) {
+        setIsStreaming(false);
+        setError(data.error);
       }
     });
 
     return () => {
-      cleanups.forEach((cleanup) => cleanup());
+      unsubChunk();
+      unsubDone();
+      unsubError();
     };
-  }, [Object.keys(events).join(',')]); // 只在事件名称变化时重新注册
-};
+  }, [ai]);
 
-// 导出Socket管理器实例（高级用法）
-export { socketManager };
-export default useSocket;
+  const start = useCallback(
+    (action: 'polish' | 'improve' | 'expand' | 'summarize' | 'translate', text: string, options?: any) => {
+      const taskId = `task_${Date.now()}`;
+      taskIdRef.current = taskId;
+      setIsStreaming(true);
+      setContent('');
+      setError(null);
+
+      switch (action) {
+        case 'polish':
+          ai.polish(text, taskId, options?.style);
+          break;
+        case 'improve':
+          ai.improve(text, taskId, options?.improvements);
+          break;
+        case 'expand':
+          ai.expand(text, taskId, options?.length);
+          break;
+        case 'summarize':
+          ai.summarize(text, taskId, options?.length);
+          break;
+        case 'translate':
+          ai.translate(text, taskId, options?.targetLang);
+          break;
+      }
+
+      return taskId;
+    },
+    [ai],
+  );
+
+  const stop = useCallback(() => {
+    if (taskIdRef.current) {
+      ai.cancel(taskIdRef.current);
+      setIsStreaming(false);
+    }
+  }, [ai]);
+
+  const reset = useCallback(() => {
+    setContent('');
+    setError(null);
+    setIsStreaming(false);
+    taskIdRef.current = null;
+  }, []);
+
+  return useMemo(
+    () => ({
+      isConnected: ai.isConnected,
+      isStreaming,
+      content,
+      error,
+      start,
+      stop,
+      reset,
+    }),
+    [ai.isConnected, isStreaming, content, error, start, stop, reset],
+  );
+}
+
+/**
+ * 在线人数 Hook
+ */
+export function useOnlineUsers() {
+  const { onOnlineUpdate } = useVisitor();
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const unsub = onOnlineUpdate((data) => {
+      setOnlineCount(data.count);
+      setLastUpdate(new Date(data.timestamp));
+    });
+    return unsub;
+  }, [onOnlineUpdate]);
+
+  return useMemo(() => ({ onlineCount, lastUpdate }), [onlineCount, lastUpdate]);
+}
+
+/**
+ * 房间人数 Hook
+ */
+export function useRoomCount(roomName: string | null) {
+  const { onRoomUpdate, onStatsUpdate } = useVisitor();
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const unsubRoom = onRoomUpdate((data) => {
+      if (data.room === roomName) {
+        setCount(data.count);
+      }
+    });
+
+    const unsubStats = onStatsUpdate((stats) => {
+      if (roomName && stats.roomCount && stats.roomCount[roomName] !== undefined) {
+        setCount(stats.roomCount[roomName]);
+      }
+    });
+
+    return () => {
+      unsubRoom();
+      unsubStats();
+    };
+  }, [roomName, onRoomUpdate, onStatsUpdate]);
+
+  return count;
+}
+
+/**
+ * 工具函数：根据路径获取房间名
+ */
+export function getRoomName(pathname: string): string | null {
+  if (pathname === '/' || pathname === '/home') return 'home';
+  if (pathname.startsWith('/blog/')) {
+    const id = pathname.split('/')[2];
+    return id ? `blog_${id}` : null;
+  }
+  if (pathname === '/blog') return 'blog_list';
+  if (pathname.startsWith('/notes/')) {
+    const id = pathname.split('/')[2];
+    return id ? `note_${id}` : null;
+  }
+  if (pathname === '/notes') return 'notes_list';
+  if (pathname.startsWith('/projects/')) {
+    const id = pathname.split('/')[2];
+    return id ? `project_${id}` : null;
+  }
+  if (pathname === '/projects') return 'projects_list';
+  if (pathname === '/profile') return 'profile';
+  if (pathname.startsWith('/editor')) return 'editor';
+  if (pathname === '/about') return 'about';
+  return null;
+}
