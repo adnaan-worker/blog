@@ -77,19 +77,22 @@ export interface AIStreamRequest {
 }
 
 export interface AIChunkData {
-  taskId: string;
+  taskId?: string;
+  sessionId?: string; // 支持 chat 功能
   chunk: string;
   type?: string;
   action?: string;
 }
 
 export interface AIDoneData {
-  taskId: string;
-  action: string;
+  taskId?: string;
+  sessionId?: string; // 支持 chat 功能
+  action?: string;
 }
 
 export interface AIErrorData {
-  taskId: string;
+  taskId?: string;
+  sessionId?: string; // 支持 chat 功能
   error: string;
 }
 

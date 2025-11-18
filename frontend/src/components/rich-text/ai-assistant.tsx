@@ -420,23 +420,31 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamContent, setStreamContent] = useState('');
   const taskIdRef = useRef<string | null>(null);
+  const previewCardRef = useRef<HTMLDivElement>(null);
+  const selectionRectRef = useRef<DOMRect | null>(null);
 
   // 监听 AI 事件
   useEffect(() => {
     const unsubChunk = ai.onChunk((data) => {
-      if (data.taskId === taskIdRef.current) {
+      // 支持 taskId 和 sessionId
+      const id = data.taskId || data.sessionId;
+      if (id === taskIdRef.current) {
         setStreamContent((prev) => prev + data.chunk);
       }
     });
 
     const unsubDone = ai.onDone((data) => {
-      if (data.taskId === taskIdRef.current) {
+      // 支持 taskId 和 sessionId
+      const id = data.taskId || data.sessionId;
+      if (id === taskIdRef.current) {
         setIsStreaming(false);
       }
     });
 
     const unsubError = ai.onError((data) => {
-      if (data.taskId === taskIdRef.current) {
+      // 支持 taskId 和 sessionId
+      const id = data.taskId || data.sessionId;
+      if (id === taskIdRef.current) {
         setIsStreaming(false);
         adnaan.toast.error(data.error);
       }
@@ -499,8 +507,11 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
   const streamSummarize = (text: string, length?: string) => startStream('summarize', text, { length });
   const streamTranslate = (text: string, targetLang: string) => startStream('translate', text, { targetLang });
   const streamChat = (message: string) => {
-    // Chat 功能暂不支持
-    adnaan.toast.info('聊天功能开发中');
+    const sessionId = `session_${Date.now()}`;
+    taskIdRef.current = sessionId;
+    setIsStreaming(true);
+    setStreamContent('');
+    ai.chat(message, sessionId);
   };
 
   // 检测编辑器是否为空
@@ -572,17 +583,37 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
           const toolbarWidth = 300;
           const toolbarHeight = 50;
           const padding = 10;
+          const bottomSafeZone = 100; // 底部安全区域，避免被截断
 
+          // 优先在选区下方显示
           let top = rect.bottom + padding;
           let left = rect.left + rect.width / 2 - toolbarWidth / 2;
 
-          // 边界检测
-          if (left < padding) left = padding;
+          // 检查底部空间是否足够
+          const spaceBelow = window.innerHeight - rect.bottom;
+          const spaceAbove = rect.top;
+
+          // 如果下方空间不足，且上方空间更大，则显示在上方
+          if (spaceBelow < toolbarHeight + bottomSafeZone && spaceAbove > spaceBelow) {
+            top = rect.top - toolbarHeight - padding;
+          }
+
+          // 左右边界检测
+          if (left < padding) {
+            left = padding;
+          }
           if (left + toolbarWidth > window.innerWidth - padding) {
             left = window.innerWidth - toolbarWidth - padding;
           }
+
+          // 确保不超出顶部
+          if (top < padding) {
+            top = padding;
+          }
+
+          // 确保不超出底部
           if (top + toolbarHeight > window.innerHeight - padding) {
-            top = rect.top - toolbarHeight - padding;
+            top = window.innerHeight - toolbarHeight - padding;
           }
 
           setToolbarPosition({ top, left });
@@ -610,16 +641,47 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
       setCurrentAction(actionId);
       setShowToolbar(false);
 
-      // 计算预览卡片位置（在选中文本下方）
+      // 计算预览卡片位置（智能选择上方或下方）
       const selection = window.getSelection();
       const range = selection?.getRangeAt(0);
       const rect = range?.getBoundingClientRect();
 
       if (rect) {
-        setPreviewPosition({
-          top: rect.bottom + 10,
-          left: Math.max(10, rect.left),
-        });
+        // 保存选区位置供后续动态调整使用
+        selectionRectRef.current = rect;
+
+        const previewHeight = 200; // 预览卡片预估高度
+        const padding = 10;
+        const bottomSafeZone = 100;
+
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+
+        let top = rect.bottom + padding;
+        let left = Math.max(padding, rect.left);
+
+        // 如果下方空间不足，且上方空间更大，则显示在上方
+        if (spaceBelow < previewHeight + bottomSafeZone && spaceAbove > spaceBelow) {
+          top = rect.top - previewHeight - padding;
+        }
+
+        // 确保不超出右边界
+        const maxLeft = window.innerWidth - 400 - padding; // 400是预览卡片宽度
+        if (left > maxLeft) {
+          left = maxLeft;
+        }
+
+        // 确保不超出底部
+        if (top + previewHeight > window.innerHeight - padding) {
+          top = window.innerHeight - previewHeight - padding;
+        }
+
+        // 确保不超出顶部
+        if (top < padding) {
+          top = padding;
+        }
+
+        setPreviewPosition({ top, left });
       }
 
       setShowPreview(true);
@@ -709,6 +771,76 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
     [editor, reset, streamChat],
   );
 
+  // 生成时禁用编辑器
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(!isStreaming);
+  }, [editor, isStreaming]);
+
+  // 动态调整预览窗口位置（当内容变化导致高度变化时）
+  useEffect(() => {
+    if (!showPreview || !previewCardRef.current || !selectionRectRef.current) return;
+
+    const adjustPosition = () => {
+      const previewCard = previewCardRef.current;
+      const rect = selectionRectRef.current;
+      if (!previewCard || !rect) return;
+
+      const previewHeight = previewCard.offsetHeight;
+      const padding = 10;
+      const bottomSafeZone = 100;
+
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+
+      let top = rect.bottom + padding;
+      let left = Math.max(padding, rect.left);
+
+      // 如果下方空间不足，且上方空间更大，则显示在上方
+      if (spaceBelow < previewHeight + bottomSafeZone && spaceAbove > spaceBelow) {
+        top = rect.top - previewHeight - padding;
+      }
+
+      // 确保不超出右边界
+      const maxLeft = window.innerWidth - 400 - padding;
+      if (left > maxLeft) {
+        left = maxLeft;
+      }
+
+      // 确保不超出底部
+      if (top + previewHeight > window.innerHeight - padding) {
+        top = window.innerHeight - previewHeight - padding;
+      }
+
+      // 确保不超出顶部
+      if (top < padding) {
+        top = padding;
+      }
+
+      setPreviewPosition({ top, left });
+    };
+
+    // 初始调整
+    adjustPosition();
+
+    // 使用 ResizeObserver 监听高度变化
+    const resizeObserver = new ResizeObserver(() => {
+      adjustPosition();
+    });
+
+    resizeObserver.observe(previewCardRef.current);
+
+    // 监听窗口大小变化
+    window.addEventListener('resize', adjustPosition);
+    window.addEventListener('scroll', adjustPosition, true);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', adjustPosition);
+      window.removeEventListener('scroll', adjustPosition, true);
+    };
+  }, [showPreview, streamContent]);
+
   // 监听流式内容并实时更新编辑器（使用requestAnimationFrame优化性能）
   useEffect(() => {
     if (!isGeneratingFromEmpty || !streamContent || !editor) return;
@@ -720,7 +852,11 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
         // 它会自动检测未闭合的代码块并保护代码块内容不被误解析
         const htmlContent = RichTextParser.streamMarkdownToHtml(streamContent);
         editor.commands.setContent(htmlContent);
+        // 滚动到底部
         editor.commands.focus('end');
+        // 强制滚动到可见区域
+        const editorElement = editor.view.dom;
+        editorElement.scrollTop = editorElement.scrollHeight;
       } catch (error) {
         console.error('❌ 更新编辑器失败:', error);
       }
@@ -732,11 +868,14 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
   // 监听生成完成
   useEffect(() => {
     if (isGeneratingFromEmpty && !isStreaming && streamContent) {
-      // 生成完成
+      // 生成完成，重新启用编辑器
       setIsGeneratingFromEmpty(false);
+      if (editor) {
+        editor.setEditable(true);
+      }
       adnaan.toast.success('内容已生成');
     }
-  }, [isGeneratingFromEmpty, isStreaming, streamContent]);
+  }, [isGeneratingFromEmpty, isStreaming, streamContent, editor]);
 
   // 键盘快捷键
   useEffect(() => {
@@ -816,6 +955,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
       <AnimatePresence>
         {showPreview && (
           <InlinePreviewCard
+            ref={previewCardRef}
             position={previewPosition}
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -895,6 +1035,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
             isVisible={true}
             charCount={streamContent?.replace(/<[^>]*>/g, '').length || 0}
             editorRef={editorRef}
+            onStop={cancelTask}
           />
         )}
       </AnimatePresence>

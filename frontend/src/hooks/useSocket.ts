@@ -374,6 +374,11 @@ export function useAI() {
   const { isConnected, emit, on } = useSocket();
 
   // 缓存所有方法
+  const chat = useCallback(
+    (message: string, sessionId: string) => emit('ai:stream_chat', { message, sessionId }),
+    [emit],
+  );
+
   const polish = useCallback(
     (content: string, taskId: string, style?: string) => emit('ai:stream_polish', { content, taskId, style }),
     [emit],
@@ -412,6 +417,7 @@ export function useAI() {
   return useMemo(
     () => ({
       isConnected,
+      chat,
       polish,
       improve,
       expand,
@@ -422,7 +428,7 @@ export function useAI() {
       onDone,
       onError,
     }),
-    [isConnected, polish, improve, expand, summarize, translate, cancel, onChunk, onDone, onError],
+    [isConnected, chat, polish, improve, expand, summarize, translate, cancel, onChunk, onDone, onError],
   );
 }
 

@@ -27,71 +27,86 @@ import { CodeBlockComponent } from '@/components/rich-text/code-block-component'
 // 创建 lowlight 实例,支持更多语言
 const lowlight = createLowlight(common);
 
+// 全局缓存扩展实例，所有编辑器共享
+let cachedExtensions: any[] | null = null;
+
 /**
  * 创建扩展配置
- * 使用函数而非直接导出数组,避免重复创建扩展实例
+ * 使用缓存机制，确保所有编辑器实例共享同一组扩展
  */
-export const createExtensions = () => [
-  StarterKit.configure({
-    codeBlock: false, // 禁用,使用 CodeBlockLowlight
-    strike: false, // 禁用,使用自定义配置
-    heading: {
-      levels: [1, 2, 3, 4, 5, 6],
-    },
-  }),
-  CodeBlockLowlight.extend({
-    addNodeView() {
-      return ReactNodeViewRenderer(CodeBlockComponent);
-    },
-  }).configure({
-    lowlight,
-    defaultLanguage: 'javascript',
-  }),
-  Placeholder.configure({
-    placeholder: ({ node }) => {
-      if (node.type.name === 'heading') {
-        return '标题';
-      }
-      return '输入 / 唤起命令菜单,或直接开始输入...';
-    },
-  }),
-  ResizableImage.configure({
-    allowBase64: false,
-    inline: false,
-    HTMLAttributes: {
-      class: 'editor-image',
-    },
-  }),
-  TextAlign.configure({
-    types: ['heading', 'paragraph'],
-    alignments: ['left', 'center', 'right', 'justify'],
-  }),
-  Link.configure({
-    openOnClick: false,
-    HTMLAttributes: {
-      target: '_blank',
-      rel: 'noopener noreferrer',
-    },
-  }),
-  // 文字样式扩展(TextStyle 必须在 Color 之前)
-  TextStyle,
-  Color,
-  Highlight.configure({
-    multicolor: true,
-  }),
-  // 表格
-  Table,
-  TableRow,
-  TableHeader,
-  TableCell,
-  // 任务列表
-  TaskList,
-  TaskItem.configure({
-    nested: true,
-  }),
-  // 其他
-  Underline,
-  Strike,
-  Subscript,
-  Superscript,
-];
+export const createExtensions = () => {
+  // 如果已经创建过，直接返回缓存的实例
+  if (cachedExtensions) {
+    return cachedExtensions;
+  }
+
+  // 创建扩展实例
+  cachedExtensions = [
+    StarterKit.configure({
+      codeBlock: false, // 禁用,使用 CodeBlockLowlight
+      strike: false, // 禁用,使用自定义配置
+      link: false, // 禁用 StarterKit 中的 Link，使用自定义配置
+      underline: false, // 禁用 StarterKit 中的 Underline，使用自定义配置
+      heading: {
+        levels: [1, 2, 3, 4, 5, 6],
+      },
+    }),
+    CodeBlockLowlight.extend({
+      addNodeView() {
+        return ReactNodeViewRenderer(CodeBlockComponent);
+      },
+    }).configure({
+      lowlight,
+      defaultLanguage: 'javascript',
+    }),
+    Placeholder.configure({
+      placeholder: ({ node }) => {
+        if (node.type.name === 'heading') {
+          return '标题';
+        }
+        return '输入 / 唤起命令菜单,或直接开始输入...';
+      },
+    }),
+    ResizableImage.configure({
+      allowBase64: false,
+      inline: false,
+      HTMLAttributes: {
+        class: 'editor-image',
+      },
+    }),
+    TextAlign.configure({
+      types: ['heading', 'paragraph'],
+      alignments: ['left', 'center', 'right', 'justify'],
+    }),
+    Link.configure({
+      openOnClick: false,
+      HTMLAttributes: {
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      },
+    }),
+    // 文字样式扩展(TextStyle 必须在 Color 之前)
+    TextStyle,
+    Color,
+    Highlight.configure({
+      multicolor: true,
+    }),
+    // 表格
+    Table,
+    TableRow,
+    TableHeader,
+    TableCell,
+    // 任务列表
+    TaskList,
+    TaskItem.configure({
+      nested: true,
+    }),
+    // 其他
+    Underline,
+    Strike,
+    Subscript,
+    Superscript,
+  ];
+
+  return cachedExtensions;
+};

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiZap } from 'react-icons/fi';
+import { FiZap, FiX, FiPause } from 'react-icons/fi';
+import { Button } from 'adnaan-ui';
 
 const TypingContainer = styled(motion.div)`
   position: fixed;
@@ -15,8 +16,8 @@ const TypingContainer = styled(motion.div)`
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  min-width: 280px;
-  pointer-events: none;
+  min-width: 320px;
+  pointer-events: auto;
 
   /* 移动端优化 */
   @media (max-width: 768px) {
@@ -154,13 +155,30 @@ const CharCount = styled.span`
   font-weight: 600;
 `;
 
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+
+  button {
+    min-width: auto !important;
+    padding: 0.5rem !important;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
+
 interface AITypingIndicatorProps {
   isVisible: boolean;
   charCount: number;
   editorRef?: React.RefObject<HTMLDivElement | null>;
+  onStop?: () => void;
 }
 
-export const AITypingIndicator: React.FC<AITypingIndicatorProps> = ({ isVisible, charCount, editorRef }) => {
+export const AITypingIndicator: React.FC<AITypingIndicatorProps> = ({ isVisible, charCount, editorRef, onStop }) => {
   const [position, setPosition] = useState({ bottom: 0, left: 0 });
 
   useEffect(() => {
@@ -218,6 +236,13 @@ export const AITypingIndicator: React.FC<AITypingIndicatorProps> = ({ isVisible,
           <div className="bar" />
         </ProgressBar>
       </Content>
+      {onStop && (
+        <ActionButtons>
+          <Button variant="ghost" size="small" onClick={onStop} title="停止生成">
+            <FiX size={16} />
+          </Button>
+        </ActionButtons>
+      )}
     </TypingContainer>
   );
 };
