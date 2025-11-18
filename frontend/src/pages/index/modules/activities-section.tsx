@@ -802,7 +802,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
       setLoading(true);
       setError(null);
 
-      const response = await API.activity.getRecentActivities({ page: pageNum, limit: 10 });
+      const response = await API.activity.getRecentActivities({ page: pageNum, limit: 5 });
       const newActivities = Array.isArray(response.data) ? response.data : [];
       const pagination = (response as any).pagination;
 
@@ -820,7 +820,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
         setHasMore(pageNum < pagination.totalPages);
       } else {
         // 如果返回的数据少于 limit，说明没有更多数据了
-        setHasMore(newActivities.length === 10);
+        setHasMore(newActivities.length === 5);
       }
 
       // 如果没有数据且不是追加模式，确保 hasMore 为 false
