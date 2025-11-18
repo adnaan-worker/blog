@@ -10,7 +10,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import Strike from '@tiptap/extension-strike';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import { common, createLowlight } from 'lowlight';
+import { createLowlight } from 'lowlight';
 import { TextStyle, Color } from '@tiptap/extension-text-style';
 import Highlight from '@tiptap/extension-highlight';
 import { Table } from '@tiptap/extension-table';
@@ -24,8 +24,41 @@ import Superscript from '@tiptap/extension-superscript';
 import { ResizableImage } from '@/components/rich-text/resizable-image';
 import { CodeBlockComponent } from '@/components/rich-text/code-block-component';
 
-// 创建 lowlight 实例,支持更多语言
-const lowlight = createLowlight(common);
+// 只导入常用语言，大幅减小打包体积（从1.1MB降到约100KB）
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import java from 'highlight.js/lib/languages/java';
+import cpp from 'highlight.js/lib/languages/cpp';
+import css from 'highlight.js/lib/languages/css';
+import xml from 'highlight.js/lib/languages/xml'; // HTML
+import json from 'highlight.js/lib/languages/json';
+import markdown from 'highlight.js/lib/languages/markdown';
+import bash from 'highlight.js/lib/languages/bash';
+import sql from 'highlight.js/lib/languages/sql';
+import go from 'highlight.js/lib/languages/go';
+import rust from 'highlight.js/lib/languages/rust';
+import php from 'highlight.js/lib/languages/php';
+
+// 创建 lowlight 实例，只注册常用语言
+const lowlight = createLowlight();
+lowlight.register('javascript', javascript);
+lowlight.register('typescript', typescript);
+lowlight.register('python', python);
+lowlight.register('java', java);
+lowlight.register('cpp', cpp);
+lowlight.register('c', cpp); // C 和 C++ 使用相同的语法
+lowlight.register('css', css);
+lowlight.register('html', xml);
+lowlight.register('xml', xml);
+lowlight.register('json', json);
+lowlight.register('markdown', markdown);
+lowlight.register('bash', bash);
+lowlight.register('shell', bash);
+lowlight.register('sql', sql);
+lowlight.register('go', go);
+lowlight.register('rust', rust);
+lowlight.register('php', php);
 
 // 全局缓存扩展实例，所有编辑器共享
 let cachedExtensions: any[] | null = null;

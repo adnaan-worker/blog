@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import compression from 'vite-plugin-compression';
+import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -47,6 +48,103 @@ export default defineConfig(({ mode }) => {
           filename: 'dist/stats.html',
           template: 'treemap', // 使用树状图，更直观
         }),
+      // PWA 支持
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.svg'],
+        manifest: {
+          name: '光阴副本博客',
+          short_name: '光阴副本',
+          description: '一个集 AI 智能、实时通信、全栈架构于一体的现代化博客平台',
+          theme_color: '#6366f1',
+          background_color: '#ffffff',
+          display: 'standalone',
+          orientation: 'portrait-primary',
+          scope: '/',
+          start_url: '/',
+          icons: [
+            {
+              src: '/favicon.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'any',
+            },
+            {
+              src: '/favicon.svg',
+              sizes: 'any',
+              type: 'image/svg+xml',
+              purpose: 'maskable',
+            },
+          ],
+          shortcuts: [
+            {
+              name: '写文章',
+              short_name: '写文章',
+              description: '创建新文章',
+              url: '/editor/article',
+              icons: [{ src: '/favicon.svg', sizes: 'any' }],
+            },
+            {
+              name: '写手记',
+              short_name: '写手记',
+              description: '创建新手记',
+              url: '/editor/note',
+              icons: [{ src: '/favicon.svg', sizes: 'any' }],
+            },
+          ],
+        },
+        workbox: {
+          // 缓存策略
+          runtimeCaching: [
+            {
+              // API 请求 - Network First
+              urlPattern: /^https:\/\/.*\/api\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'api-cache',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 5, // 5分钟
+                },
+                networkTimeoutSeconds: 10,
+              },
+            },
+            {
+              // 静态资源 - Cache First
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'image-cache',
+                expiration: {
+                  maxEntries: 200,
+                  maxAgeSeconds: 60 * 60 * 24 * 7, // 7天
+                },
+              },
+            },
+            {
+              // 字体文件
+              urlPattern: /\.(?:woff|woff2|ttf|otf|eot)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'font-cache',
+                expiration: {
+                  maxEntries: 30,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1年
+                },
+              },
+            },
+          ],
+          // 清理过期缓存
+          cleanupOutdatedCaches: true,
+          // 跳过等待
+          skipWaiting: true,
+          // 立即接管客户端
+          clientsClaim: true,
+        },
+        devOptions: {
+          enabled: false, // 开发环境不启用，避免影响热更新
+        },
+      }),
     ].filter(Boolean),
     base: '/',
     server: {

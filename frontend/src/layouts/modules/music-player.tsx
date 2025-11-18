@@ -13,6 +13,7 @@ import {
   FiMessageSquare,
 } from 'react-icons/fi';
 import musicListData from '@/data/music-list.json';
+import { API } from '@/utils/api';
 
 // 动画配置常量
 const ANIMATION_DURATION = {
@@ -429,7 +430,6 @@ interface SongInfo {
 const fetchSongInfo = async (songId: string, signal?: AbortSignal): Promise<SongInfo | null> => {
   try {
     // 使用后端代理API，避免CORS问题
-    const { API } = await import('@/utils/api');
     const response = await API.proxy.getMusicUrl('tencent', songId);
 
     if (response.success && response.data) {
