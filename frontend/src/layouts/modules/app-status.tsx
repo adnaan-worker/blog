@@ -338,12 +338,6 @@ const AppStatus: React.FC = () => {
     }
   }, []);
 
-  const handleStatusCurrent = useCallback((response: SocketResponse<StatusResponse> & { isInactive?: boolean }) => {
-    if (response.success && response.data) {
-      setStatusData(response.data);
-    }
-  }, []);
-
   const handleConnect = useCallback(() => {
     emit('status:request');
   }, [emit]);
@@ -352,10 +346,9 @@ const AppStatus: React.FC = () => {
   const socketEvents = useMemo(
     () => ({
       'status:updated': handleStatusUpdated,
-      'status:current': handleStatusCurrent,
       connect: handleConnect,
     }),
-    [handleStatusUpdated, handleStatusCurrent, handleConnect],
+    [handleStatusUpdated, handleConnect],
   );
 
   useSocketEvents(socketEvents);

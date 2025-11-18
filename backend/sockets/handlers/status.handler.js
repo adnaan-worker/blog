@@ -26,7 +26,12 @@ class StatusHandler extends BaseSocketHandler {
     }
 
     const status = await statusService.getCurrentStatusWithHistory(3);
-    this.emit(socket, 'status:response', status);
+
+    // 使用统一的 status:updated 事件格式
+    this.emit(socket, 'status:updated', {
+      success: true,
+      data: status,
+    });
   }
 
   /**
