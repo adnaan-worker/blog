@@ -19,6 +19,9 @@ const Profile = lazy(() => import('@/pages/profile'));
 const ArticleEditor = lazy(() => import('@/pages/editor/article'));
 const NoteEditor = lazy(() => import('@/pages/editor/note'));
 
+// 友链页面
+const Friends = lazy(() => import('@/pages/friends'));
+
 // 关于页面
 const AboutSite = lazy(() => import('@/pages/about/about-site'));
 const AboutMe = lazy(() => import('@/pages/about/about-me'));
@@ -52,6 +55,7 @@ export const createRouteElements = () => ({
       <NoteEditor />
     </Suspense>
   ),
+  friends: <Friends />,
   aboutSite: <AboutSite />,
   aboutMe: <AboutMe />,
   notFound: <NotFound />,
