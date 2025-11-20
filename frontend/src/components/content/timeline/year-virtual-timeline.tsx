@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from '@emotion/styled';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import type { TimelineItem } from '@/utils/helpers/timeline';
 import { FadeScrollContainer } from '@/components/common';
+import { useVirtualScroll } from '@/hooks/useVirtualScroll';
 
 // 年份容器Props
 interface YearTimelineProps<T extends TimelineItem> {
@@ -170,15 +171,33 @@ function YearTimeline<T extends TimelineItem>({
     setHasMore(initialItems.length < totalCount);
   }, [initialItems, totalCount, year]);
 
+  // 使用虚拟滚动 Hook
+  const {
+    visibleItems,
+    visibleRange,
+    topSpacer,
+    bottomSpacer,
+    handleScroll: handleVirtualScroll,
+    recordItemHeight,
+  } = useVirtualScroll({
+    items,
+    threshold: pageSize,
+    estimatedHeight: 200,
+    overscan: 5,
+  });
+
   // 监听滚动加载更多
   const handleScroll = useCallback(() => {
     const scrollEl = scrollRef.current;
-    if (!scrollEl || isLoadingMore || !hasMore) return;
+    if (!scrollEl) return;
 
     const { scrollTop, scrollHeight, clientHeight } = scrollEl;
 
+    // 虚拟滚动计算
+    handleVirtualScroll(scrollTop, clientHeight);
+
     // 距离底部200px时触发加载
-    if (scrollTop + clientHeight >= scrollHeight - 200) {
+    if (!isLoadingMore && hasMore && scrollTop + clientHeight >= scrollHeight - 200) {
       setIsLoadingMore(true);
 
       const loadMore = async () => {
@@ -211,7 +230,7 @@ function YearTimeline<T extends TimelineItem>({
 
       loadMore();
     }
-  }, [year, page, totalCount, isLoadingMore, hasMore, onLoadMore]);
+  }, [year, page, totalCount, isLoadingMore, hasMore, onLoadMore, handleVirtualScroll]);
 
   return (
     <YearContainer initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={springPresets.gentle}>
@@ -223,22 +242,31 @@ function YearTimeline<T extends TimelineItem>({
       <FadeScrollContainer dependencies={[items.length, isLoadingMore, hasMore]}>
         <ScrollableContent ref={scrollRef} onScroll={handleScroll} maxHeight={maxHeight}>
           <TimelineList>
-            <AnimatePresence mode="popLayout">
-              {items.map((item, index) => (
+            {/* 顶部占位 */}
+            {topSpacer > 0 && <div style={{ height: topSpacer }} />}
+
+            {/* 渲染可见项 */}
+            {visibleItems.map((item, index) => {
+              const actualIndex = visibleRange.start + index;
+              return (
                 <TimelineItemWrapper
                   key={item.id}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={false}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{
-                    ...springPresets.snappy,
-                    delay: index * 0.03,
+                  transition={springPresets.snappy}
+                  ref={(el) => {
+                    if (el) {
+                      recordItemHeight(item.id, el.offsetHeight);
+                    }
                   }}
                 >
-                  {renderItem(item, index)}
+                  {renderItem(item, actualIndex)}
                 </TimelineItemWrapper>
-              ))}
-            </AnimatePresence>
+              );
+            })}
+
+            {/* 底部占位 */}
+            {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} />}
           </TimelineList>
 
           {isLoadingMore && (

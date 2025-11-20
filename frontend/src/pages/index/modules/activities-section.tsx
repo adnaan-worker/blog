@@ -24,9 +24,9 @@ import {
 } from 'react-icons/fi';
 import { getTimeAgo, RichTextParser, truncateText } from '@/utils';
 import { useAnimationEngine, useSmartInView, useSpringInteractions } from '@/utils/ui/animation';
-import { InfiniteScroll } from 'adnaan-ui';
 import { API } from '@/utils/api';
 import { FadeScrollContainer } from '@/components/common';
+import { useVirtualScroll } from '@/hooks/useVirtualScroll';
 import type { UserActivity } from '@/types';
 
 // Styled Components
@@ -73,21 +73,12 @@ const SectionTitle = styled(motion.h2)`
 `;
 
 const ScrollWrapper = styled.div`
-  max-height: 500px;
+  height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
   -ms-overflow-style: none;
   scrollbar-width: none;
   &::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
-  }
-  & * {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  & *::-webkit-scrollbar {
-    width: 0;
-    height: 0;
     display: none;
   }
 `;
@@ -97,6 +88,8 @@ const ActivityGrid = styled(motion.div)`
   flex-direction: column;
   gap: 0;
   padding: 0 0.75rem;
+  position: relative;
+  min-height: 100%;
 `;
 
 const ActivityItem = styled(motion.div)`
@@ -796,6 +789,22 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const hasInitializedRef = useRef(false); // 标记是否已经进行过初始加载
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 使用虚拟滚动 Hook
+  const {
+    visibleItems,
+    visibleRange,
+    topSpacer,
+    bottomSpacer,
+    handleScroll: handleVirtualScroll,
+    recordItemHeight,
+  } = useVirtualScroll({
+    items: activities,
+    threshold: 30, // 提高阈值，只有数据量大时才启用虚拟滚动
+    estimatedHeight: 100,
+    overscan: 8,
+  });
 
   // 加载活动数据
   const loadActivities = useCallback(async (pageNum: number, append = false) => {
@@ -803,7 +812,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
       setLoading(true);
       setError(null);
 
-      const response = await API.activity.getRecentActivities({ page: pageNum, limit: 5 });
+      const response = await API.activity.getRecentActivities({ page: pageNum, limit: 10 });
       const newActivities = Array.isArray(response.data) ? response.data : [];
       const pagination = (response as any).pagination;
 
@@ -821,7 +830,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
         setHasMore(pageNum < pagination.totalPages);
       } else {
         // 如果返回的数据少于 limit，说明没有更多数据了
-        setHasMore(newActivities.length === 5);
+        setHasMore(newActivities.length === 10);
       }
 
       // 如果没有数据且不是追加模式，确保 hasMore 为 false
@@ -845,13 +854,23 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
     }
   }, [loadActivities]);
 
-  // 加载更多
-  const loadMore = useCallback(() => {
-    if (loading || !hasMore) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-    loadActivities(nextPage, true);
-  }, [loading, hasMore, page, loadActivities]);
+  // 滚动处理（虚拟滚动 + 加载更多）
+  const handleScroll = useCallback(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollEl;
+
+    // 虚拟滚动计算
+    handleVirtualScroll(scrollTop, clientHeight);
+
+    // 距离底部200px时触发加载
+    if (!loading && hasMore && scrollTop + clientHeight >= scrollHeight - 200) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      loadActivities(nextPage, true);
+    }
+  }, [loading, hasMore, page, loadActivities, handleVirtualScroll]);
 
   // 重新加载
   const reload = useCallback(() => {
@@ -885,23 +904,16 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
       </SectionTitle>
 
       <FadeScrollContainer dependencies={[activities.length, loading]}>
-        <ScrollWrapper>
-          <InfiniteScroll
-            hasMore={hasMore}
-            loading={loading}
-            error={error}
-            onLoadMore={loadMore}
-            onRetry={reload}
-            itemCount={activities.length}
-            maxHeight="500px"
-            threshold={200}
-            enableSkeleton={activities.length === 0}
-            emptyComponent={
-              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>暂无活动</div>
-            }
-          >
+        <ScrollWrapper ref={scrollRef} onScroll={handleScroll}>
+          {activities.length === 0 && !loading ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>暂无活动</div>
+          ) : (
             <ActivityGrid initial="hidden" animate="visible" variants={variants.stagger}>
-              {activities.map((activity, index) => {
+              {/* 顶部占位 */}
+              {topSpacer > 0 && <div style={{ height: topSpacer }} />}
+
+              {visibleItems.map((activity, index) => {
+                const actualIndex = visibleRange.start + index;
                 const formatted = formatActivityText(activity);
                 const activityTime = getTimeAgo(activity.timestamp);
                 const IconComponent = formatted.icon || FiMapPin;
@@ -911,8 +923,13 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
                     key={activity.id}
                     onClick={() => handleActivityClick(activity.link)}
                     variants={variants.listItem}
-                    custom={index}
+                    custom={actualIndex}
                     {...itemInteractions}
+                    ref={(el) => {
+                      if (el) {
+                        recordItemHeight(activity.id, el.offsetHeight);
+                      }
+                    }}
                   >
                     <ActivityHeader>
                       <ActivityIcon color={formatted.color}>
@@ -939,8 +956,25 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
                   </ActivityItem>
                 );
               })}
+
+              {/* 底部占位 */}
+              {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} />}
+
+              {/* 加载状态 */}
+              {loading && (
+                <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-tertiary)' }}>加载中...</div>
+              )}
+
+              {/* 没有更多提示 */}
+              {!hasMore && activities.length > 0 && (
+                <div
+                  style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}
+                >
+                  已加载全部活动
+                </div>
+              )}
             </ActivityGrid>
-          </InfiniteScroll>
+          )}
         </ScrollWrapper>
       </FadeScrollContainer>
     </ContentSection>

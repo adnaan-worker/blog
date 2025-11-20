@@ -406,6 +406,7 @@ const BlogPage: React.FC = () => {
             renderItem={(item, index) => renderArticleItem(item as unknown as Article, index)}
             onLoadYearItems={loadYearItems}
             initialYearsToLoad={4}
+            pageSize={10}
             loading={isLoading}
             emptyState={emptyStateComponent}
           />

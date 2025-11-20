@@ -359,6 +359,7 @@ const NotesPage: React.FC = () => {
             renderItem={(item, index) => renderNoteItem(item as unknown as Note, index)}
             onLoadYearItems={loadYearItems}
             initialYearsToLoad={4}
+            pageSize={10}
             loading={isLoading}
             emptyState={emptyStateComponent}
             maxHeight={300}
