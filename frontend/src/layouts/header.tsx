@@ -549,7 +549,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
     }, 200);
 
     return () => clearTimeout(timeoutId);
-  }, [location.pathname, isPathInMainNav, resetMainNavMenu, smoothProgress]);
+  }, [location.pathname, isPathInMainNav, resetMainNavMenu]);
 
   // 监听滚动位置 - 优化性能，减少不必要的状态更新
   useEffect(() => {

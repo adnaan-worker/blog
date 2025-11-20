@@ -85,7 +85,7 @@ const ProjectHeader = styled.div`
 
 const ProjectTitle = styled.h3`
   font-size: 1.2rem;
-  font-weight: 700;
+  font-weight: 500;
   margin: 0;
   color: var(--text-primary);
   line-height: 1.3;
@@ -158,8 +158,8 @@ const ProjectMetaInfo = styled.div`
 `;
 
 const ProjectDescription = styled.p`
-  font-size: 0.95rem;
-  color: var(--text-secondary);
+  font-size: 0.85rem;
+  color: var(--text-tertiary);
   line-height: 1.7;
   margin: 0;
   display: -webkit-box;
