@@ -7,10 +7,12 @@ import { API } from '@/utils/api';
 import type { Project } from '@/types';
 import { formatDate } from '@/utils';
 import { Pagination } from 'adnaan-ui';
-import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
+import { useAnimationEngine, useSmartInView, useSpringInteractions } from '@/utils/ui/animation';
 import { ListPageHeader, type FilterGroup, type FilterValues, ProjectListSkeleton } from '@/components/common';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
+
+import { getLanguageIcon } from '@/utils/ui/language-icons';
 
 // 样式组件
 const PageContainer = styled.div`
@@ -19,7 +21,6 @@ const PageContainer = styled.div`
   margin: 0 auto;
   padding: 2rem 1rem;
   min-height: calc(100vh - 200px);
-  /* 移动端优化 - 防止内容溢出 */
   overflow-x: hidden;
 
   @media (max-width: 768px) {
@@ -30,37 +31,39 @@ const PageContainer = styled.div`
 const ProjectsList = styled(motion.div)`
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1rem;
 `;
 
 const ProjectItem = styled(motion.div)`
   position: relative;
-  padding: 1.5rem 0;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.5);
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: rgba(var(--bg-secondary-rgb), 0.2);
+  border: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.2);
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
-    opacity: 0.8;
-  }
-
-  &:last-child {
-    border-bottom: none;
+    background: rgba(var(--bg-secondary-rgb), 0.5);
+    border-color: rgba(var(--accent-rgb), 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   }
 
   @media (max-width: 768px) {
-    padding: 1.25rem 0;
+    padding: 1.25rem;
   }
 `;
 
 const ProjectInner = styled.div`
-  position: relative;
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 2rem;
-  align-items: center;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem;
+  align-items: flex-start;
 
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
@@ -69,14 +72,11 @@ const ProjectInner = styled.div`
 const ProjectMain = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.8rem;
   min-width: 0;
-  /* 移动端优化 - 防止内容溢出 */
-  max-width: 100%;
-  overflow-x: hidden;
 `;
 
-const ProjectTitleRow = styled.div`
+const ProjectHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -84,15 +84,11 @@ const ProjectTitleRow = styled.div`
 `;
 
 const ProjectTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: 700;
   margin: 0;
   color: var(--text-primary);
-  line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
+  line-height: 1.3;
 
   a {
     color: inherit;
@@ -103,49 +99,19 @@ const ProjectTitle = styled.h3`
       color: var(--accent-color);
     }
   }
-
-  @media (max-width: 768px) {
-    font-size: 1rem;
-  }
 `;
 
-const StatusBadge = styled.span<{ status: string }>`
+const ProjectLanguage = styled.div<{ color: string }>`
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
+  gap: 0.4rem;
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  background: ${(props) => {
-    switch (props.status) {
-      case 'active':
-        return 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.08))';
-      case 'developing':
-        return 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.08))';
-      case 'paused':
-        return 'linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.08))';
-      case 'archived':
-        return 'linear-gradient(135deg, rgba(107, 114, 128, 0.15), rgba(107, 114, 128, 0.08))';
-      default:
-        return 'linear-gradient(135deg, rgba(107, 114, 128, 0.15), rgba(107, 114, 128, 0.08))';
-    }
-  }};
-  color: ${(props) => {
-    switch (props.status) {
-      case 'active':
-        return '#10b981';
-      case 'developing':
-        return '#3b82f6';
-      case 'paused':
-        return '#fbbf24';
-      case 'archived':
-        return '#6b7280';
-      default:
-        return '#6b7280';
-    }
-  }};
+  padding: 0.2rem 0.6rem;
+  background: ${(props) => `${props.color}15`};
+  color: ${(props) => props.color};
+  border-radius: 20px;
+  border: 1px solid ${(props) => `${props.color}30`};
 
   &::before {
     content: '';
@@ -156,27 +122,19 @@ const StatusBadge = styled.span<{ status: string }>`
   }
 `;
 
-const ProjectMetaRow = styled.div`
+const ProjectFooter = styled.div`
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 1rem;
-  flex-wrap: wrap;
-`;
+  height: 100%;
+  justify-content: space-between;
 
-const ProjectLanguage = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  color: var(--accent-color);
-  font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  background: rgba(var(--accent-rgb), 0.08);
-  border-radius: 4px;
-
-  &::before {
-    content: '◆';
-    font-size: 0.7rem;
+  @media (max-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 0.5rem;
+    width: 100%;
   }
 `;
 
@@ -259,7 +217,7 @@ const ProjectActions = styled.div`
   }
 `;
 
-const ProjectLink = styled.a`
+const ProjectLink = styled(motion.a)`
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -268,7 +226,10 @@ const ProjectLink = styled.a`
   font-size: 0.75rem;
   font-weight: 500;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
   white-space: nowrap;
 
   &.primary {
@@ -346,18 +307,71 @@ interface ProjectCardProps {
   variants: any;
 }
 
+const StatusBadge = styled.span<{ status: string }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: ${(props) => {
+    switch (props.status) {
+      case 'active':
+        return 'rgba(16, 185, 129, 0.1)';
+      case 'developing':
+        return 'rgba(59, 130, 246, 0.1)';
+      case 'paused':
+        return 'rgba(251, 191, 36, 0.1)';
+      case 'archived':
+        return 'rgba(107, 114, 128, 0.1)';
+      default:
+        return 'rgba(107, 114, 128, 0.1)';
+    }
+  }};
+  color: ${(props) => {
+    switch (props.status) {
+      case 'active':
+        return '#10b981';
+      case 'developing':
+        return '#3b82f6';
+      case 'paused':
+        return '#fbbf24';
+      case 'archived':
+        return '#6b7280';
+      default:
+        return '#6b7280';
+    }
+  }};
+
+  &::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+`;
+
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, variants }) => {
+  const itemInteractions = useSpringInteractions({ hoverScale: 1.01, hoverY: -2 });
+  const linkInteractions = useSpringInteractions({ hoverScale: 1.05, hoverY: -1, tapScale: 0.95 });
+
+  const langConfig = getLanguageIcon(project.language);
+
   return (
-    <ProjectItem variants={variants} custom={index}>
+    <ProjectItem variants={variants} custom={index} {...itemInteractions}>
       <ProjectInner>
         <ProjectMain>
-          <ProjectTitleRow>
+          <ProjectHeader>
             <ProjectTitle>
               <Link to={`/projects/${project.slug}`}>{project.title}</Link>
             </ProjectTitle>
-            {project.language && <ProjectLanguage>{project.language}</ProjectLanguage>}
             <StatusBadge status={project.status}>{statusTextMap[project.status]}</StatusBadge>
-          </ProjectTitleRow>
+            {project.language && <ProjectLanguage color={langConfig.color}>{project.language}</ProjectLanguage>}
+          </ProjectHeader>
 
           {project.description && <ProjectDescription>{project.description}</ProjectDescription>}
 
@@ -372,36 +386,50 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, variants }) =
           </ProjectInfo>
         </ProjectMain>
 
-        <ProjectMetaInfo>
-          {project.stars > 0 && (
-            <MetaItem>
-              <FiStar /> {project.stars}
-            </MetaItem>
-          )}
-          {project.forks > 0 && (
-            <MetaItem>
-              <FiGitBranch /> {project.forks}
-            </MetaItem>
-          )}
-          {project.startedAt && (
-            <MetaItem>
-              <FiCalendar /> {formatDate(project.startedAt, 'MM-DD')}
-            </MetaItem>
-          )}
-        </ProjectMetaInfo>
+        <ProjectFooter>
+          <ProjectMetaInfo>
+            {project.stars > 0 && (
+              <MetaItem title="Stars">
+                <FiStar /> {project.stars}
+              </MetaItem>
+            )}
+            {project.forks > 0 && (
+              <MetaItem title="Forks">
+                <FiGitBranch /> {project.forks}
+              </MetaItem>
+            )}
+            {project.startedAt && (
+              <MetaItem title="创建时间">
+                <FiCalendar /> {formatDate(project.startedAt, 'MM-DD')}
+              </MetaItem>
+            )}
+          </ProjectMetaInfo>
 
-        <ProjectActions>
-          {project.githubUrl && (
-            <ProjectLink href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="primary">
-              <FiGithub /> GitHub
-            </ProjectLink>
-          )}
-          {project.demoUrl && (
-            <ProjectLink href={project.demoUrl} target="_blank" rel="noopener noreferrer" className="secondary">
-              <FiExternalLink /> Demo
-            </ProjectLink>
-          )}
-        </ProjectActions>
+          <ProjectActions>
+            {project.githubUrl && (
+              <ProjectLink
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="secondary" // 改为 secondary 样式，更低调
+                {...linkInteractions}
+              >
+                <FiGithub /> 源码
+              </ProjectLink>
+            )}
+            {project.demoUrl && (
+              <ProjectLink
+                href={project.demoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="secondary"
+                {...linkInteractions}
+              >
+                <FiExternalLink /> 演示
+              </ProjectLink>
+            )}
+          </ProjectActions>
+        </ProjectFooter>
       </ProjectInner>
     </ProjectItem>
   );

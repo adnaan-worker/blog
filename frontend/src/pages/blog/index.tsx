@@ -10,7 +10,7 @@ import { API } from '@/utils/api';
 import type { Article, Category, Tag } from '@/types';
 import { formatDate } from '@/utils';
 import { FiCalendar, FiEye, FiHeart, FiMessageSquare, FiClock } from 'react-icons/fi';
-import { useAnimationEngine } from '@/utils/ui/animation';
+import { useAnimationEngine, useSpringInteractions } from '@/utils/ui/animation';
 
 const PageContainer = styled(motion.div)`
   min-height: 100vh;
@@ -29,38 +29,41 @@ const Container = styled.div`
 `;
 
 const ArticleCard = styled(motion.div)`
-  border: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.4);
-  border-radius: 10px;
-  padding: 1.25rem;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  padding: 1rem 1.2rem;
+  margin: 0 0 0.8rem 0;
+  border-radius: 12px;
+  background: rgba(var(--bg-secondary-rgb), 0.2);
+  border: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.2);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   cursor: pointer;
 
   &:hover {
-    background: var(--bg-secondary);
-    border-color: rgba(var(--accent-rgb), 0.3);
-    box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.08);
-    transform: translateY(-2px) translateX(2px);
-  }
-
-  [data-theme='dark'] & {
-    border-color: rgba(255, 255, 255, 0.08);
-
-    &:hover {
-      border-color: rgba(var(--accent-rgb), 0.4);
-    }
+    background: rgba(var(--bg-secondary-rgb), 0.5);
+    border-color: rgba(var(--accent-rgb), 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
   }
 `;
 
-const ArticleTitle = styled.h3`
-  font-size: 1.05rem;
-  font-weight: 600;
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+`;
+
+const ArticleTitle = styled.div`
+  font-size: 1.1rem;
   color: var(--text-primary);
-  margin: 0 0 0.75rem 0;
+  margin: 0;
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  flex: 1;
 
   transition: color 0.2s ease;
 
@@ -69,76 +72,100 @@ const ArticleTitle = styled.h3`
   }
 `;
 
+const PublishDate = styled.time`
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  font-family: var(--font-code);
+  white-space: nowrap;
+  margin-top: 0.2rem;
+  opacity: 0.8;
+`;
+
 const ArticleExcerpt = styled.p`
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
   line-height: 1.6;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.8rem 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  opacity: 0.9;
+  opacity: 0.85;
 `;
 
-const ArticleMeta = styled.div`
+const ArticleFooter = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.75rem;
+`;
+
+const FooterLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 1;
+  min-width: 0;
+`;
+
+const FooterRight = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
-  font-size: 0.75rem;
   color: var(--text-tertiary);
-  padding-top: 0.75rem;
-  border-top: 1px dashed rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
+  flex-shrink: 0;
+  opacity: 0.9; // 提高对比度
+`;
+
+const Divider = styled.span`
+  width: 1px;
+  height: 10px;
+  background-color: var(--text-tertiary);
+  opacity: 0.3;
+`;
+
+const CategoryBadge = styled.span`
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent-color);
+  background: rgba(var(--accent-rgb), 0.08);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
 `;
 
 const MetaItem = styled.div`
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  opacity: 0.85;
+  opacity: 0.7;
+  white-space: nowrap;
 
   svg {
     font-size: 0.85rem;
-    opacity: 0.7;
-  }
-
-  strong {
-    font-weight: 600;
-    color: var(--accent-color);
-    margin-left: 0.15rem;
   }
 `;
 
-const CategoryBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.6rem;
-  background: rgba(var(--accent-rgb), 0.1);
-  color: var(--accent-color);
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  margin-left: auto;
-`;
-
-const TagList = styled.div`
+const MiniTagList = styled.div`
   display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin-top: 0.5rem;
+  gap: 0.5rem;
+  overflow: hidden;
+
+  @media (max-width: 640px) {
+    display: none; // 移动端隐藏标签，保持简洁
+  }
 `;
 
 const Tag = styled.span`
-  color: var(--accent-color);
-  font-size: 0.7rem;
-  opacity: 0.75;
-  font-weight: 400;
+  color: var(--text-tertiary);
+  opacity: 0.7;
+  font-size: 0.75rem;
 
   &::before {
     content: '#';
-    opacity: 0.6;
-    margin-right: 0.1em;
+    opacity: 0.5;
+    margin-right: 1px;
   }
 `;
 
@@ -162,6 +189,7 @@ const EmptyState = styled.div`
 
 const BlogPage: React.FC = () => {
   const { variants, level } = useAnimationEngine();
+  const cardInteractions = useSpringInteractions({ hoverScale: 1.02, hoverY: -4 }); // 增强一点浮动感
   const [years, setYears] = useState<Array<{ year: number; count: number }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -290,59 +318,57 @@ const BlogPage: React.FC = () => {
   // 渲染单个文章项目
   const renderArticleItem = (article: Article, index: number) => (
     <Link to={`/blog/${article.id}`} style={{ textDecoration: 'none' }}>
-      <ArticleCard>
-        <ArticleTitle>{article.title}</ArticleTitle>
+      <ArticleCard {...cardInteractions}>
+        <CardHeader>
+          <ArticleTitle>{article.title}</ArticleTitle>
+          <PublishDate>{formatDate(article.createdAt, 'MM-DD')}</PublishDate>
+        </CardHeader>
 
         {article.excerpt && <ArticleExcerpt>{article.excerpt}</ArticleExcerpt>}
 
-        {article.tags && article.tags.length > 0 && (
-          <TagList>
-            {article.tags.slice(0, 3).map((tag: any) => (
-              <Tag key={typeof tag === 'string' ? tag : tag.name}>{typeof tag === 'string' ? tag : tag.name}</Tag>
-            ))}
-          </TagList>
-        )}
+        <ArticleFooter>
+          <FooterLeft>
+            {article.category && (
+              <>
+                <CategoryBadge>
+                  {typeof article.category === 'string' ? article.category : article.category.name}
+                </CategoryBadge>
+                {article.tags && article.tags.length > 0 && <Divider />}
+              </>
+            )}
 
-        <ArticleMeta>
-          <MetaItem>
-            <FiCalendar />
-            {formatDate(article.createdAt, 'MM-DD')}
-          </MetaItem>
+            {article.tags && article.tags.length > 0 && (
+              <MiniTagList>
+                {article.tags.slice(0, 3).map((tag: any) => (
+                  <Tag key={typeof tag === 'string' ? tag : tag.name}>{typeof tag === 'string' ? tag : tag.name}</Tag>
+                ))}
+              </MiniTagList>
+            )}
+          </FooterLeft>
 
-          {article.readTime && (
-            <MetaItem>
-              <FiClock />
-              {article.readTime} 分钟
-            </MetaItem>
-          )}
-
-          {article.viewCount && article.viewCount > 0 && (
-            <MetaItem>
-              <FiEye />
-              <strong>{article.viewCount}</strong>
-            </MetaItem>
-          )}
-
-          {article.likeCount && article.likeCount > 0 && (
-            <MetaItem>
-              <FiHeart />
-              <strong>{article.likeCount}</strong>
-            </MetaItem>
-          )}
-
-          {article.commentCount && article.commentCount > 0 && (
-            <MetaItem>
-              <FiMessageSquare />
-              <strong>{article.commentCount}</strong>
-            </MetaItem>
-          )}
-
-          {article.category && (
-            <CategoryBadge>
-              {typeof article.category === 'string' ? article.category : article.category.name}
-            </CategoryBadge>
-          )}
-        </ArticleMeta>
+          <FooterRight>
+            {article.viewCount && article.viewCount > 0 && (
+              <MetaItem title="阅读">
+                <FiEye /> {article.viewCount}
+              </MetaItem>
+            )}
+            {article.likeCount && article.likeCount > 0 && (
+              <MetaItem title="点赞">
+                <FiHeart /> {article.likeCount}
+              </MetaItem>
+            )}
+            {article.commentCount && article.commentCount > 0 && (
+              <MetaItem title="评论">
+                <FiMessageSquare /> {article.commentCount}
+              </MetaItem>
+            )}
+            {article.readTime && (
+              <MetaItem title="阅读时间">
+                <FiClock /> {article.readTime}m
+              </MetaItem>
+            )}
+          </FooterRight>
+        </ArticleFooter>
       </ArticleCard>
     </Link>
   );

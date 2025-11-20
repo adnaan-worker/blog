@@ -368,14 +368,30 @@ const Title = styled(motion.h1)`
   }
 
   @keyframes wave {
-    0% { transform: rotate(0deg); }
-    10% { transform: rotate(14deg); }
-    20% { transform: rotate(-8deg); }
-    30% { transform: rotate(14deg); }
-    40% { transform: rotate(-4deg); }
-    50% { transform: rotate(10deg); }
-    60% { transform: rotate(0deg); }
-    100% { transform: rotate(0deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    10% {
+      transform: rotate(14deg);
+    }
+    20% {
+      transform: rotate(-8deg);
+    }
+    30% {
+      transform: rotate(14deg);
+    }
+    40% {
+      transform: rotate(-4deg);
+    }
+    50% {
+      transform: rotate(10deg);
+    }
+    60% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(0deg);
+    }
   }
 
   @media (max-width: 768px) {
@@ -756,11 +772,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
             </motion.span>
           </Description>
 
-          <SkillTags
-            initial="hidden"
-            animate={showRest ? 'visible' : 'hidden'}
-            variants={variants.stagger}
-          >
+          <SkillTags initial="hidden" animate={showRest ? 'visible' : 'hidden'} variants={variants.stagger}>
             <motion.span variants={variants.listItem}>
               <FiCode size={14} /> 开发者
             </motion.span>
@@ -803,8 +815,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
               initial={{ opacity: 1, scale: 1 }}
               {...socialInteractions}
               style={{
-                background:
-                  'linear-gradient(135deg, rgba(var(--gradient-from), 0.08), rgba(var(--gradient-to), 0.08))',
+                background: 'linear-gradient(135deg, rgba(var(--gradient-from), 0.08), rgba(var(--gradient-to), 0.08))',
               }}
             >
               <Icon name="bilibili" size={18} />
@@ -839,7 +850,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
             <CardFront className="glass glass-highlight">
               <ProfileImage>
                 <img
-                  src={siteSettings?.avatar || "https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100"}
+                  src={
+                    siteSettings?.avatar ||
+                    'https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100'
+                  }
                   alt={siteSettings?.authorName || '头像'}
                 />
               </ProfileImage>
@@ -890,49 +904,45 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
 
             <CardBack className="glass glass-highlight">
               <CardBackContent>
-                    <CardTitle>关于我</CardTitle>
-                    <p
-                      style={{
-                        fontSize: '0.85rem',
-                        lineHeight: '1.5',
-                        marginBottom: '0.8rem',
-                        color: 'var(--text-secondary)',
-                      }}
-                    >
-                      {siteSettings?.authorBio || ''}
-                    </p>
+                <CardTitle>关于我</CardTitle>
+                <p
+                  style={{
+                    fontSize: '0.85rem',
+                    lineHeight: '1.5',
+                    marginBottom: '0.8rem',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  {siteSettings?.authorBio || ''}
+                </p>
 
-                    <CardTitle>技能标签</CardTitle>
-                    <SkillList>
-                      {siteSettings?.skills?.map((skill, index) => (
-                        <SkillItem key={index}>{skill}</SkillItem>
-                      ))}
-                    </SkillList>
+                <CardTitle>技能标签</CardTitle>
+                <SkillList>
+                  {siteSettings?.skills?.map((skill, index) => (
+                    <SkillItem key={index}>{skill}</SkillItem>
+                  ))}
+                </SkillList>
 
-                    <CardFlipHint>
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                      </svg>
-                      返回正面
-                    </CardFlipHint>
-                  </CardBackContent>
+                <CardFlipHint>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                  </svg>
+                  返回正面
+                </CardFlipHint>
+              </CardBackContent>
             </CardBack>
           </ProfileCard>
         </HeroImage>
       </HeroContainer>
-      
-      <Quote
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.8 }}
-        transition={{ ...springPresets.floaty, delay: 0.5 }}
-      >
+
+      <Quote initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} transition={{ ...springPresets.floaty, delay: 0.5 }}>
         {siteSettings?.quote || ''} {siteSettings?.quoteAuthor && `—— ${siteSettings.quoteAuthor}`}
       </Quote>
 
@@ -940,15 +950,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
         <motion.div initial="initial" animate="animate" variants={mouseScrollVariants}>
           <svg viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="1" y="1" width="26" height="38" rx="13" stroke="currentColor" strokeWidth="2" />
-            <motion.rect
-              x="12"
-              y="10"
-              width="4"
-              height="8"
-              rx="2"
-              fill="currentColor"
-              variants={scrollWheelVariants}
-            />
+            <motion.rect x="12" y="10" width="4" height="8" rx="2" fill="currentColor" variants={scrollWheelVariants} />
           </svg>
         </motion.div>
       </ScrollIndicator>

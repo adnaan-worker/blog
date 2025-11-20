@@ -64,7 +64,7 @@ const Home: React.FC = () => {
   // 文章和手记数据
   const [articles, setArticles] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
-  
+
   // 项目数据
   const [projects, setProjects] = useState<Project[]>([]);
   // 当前选中的项目索引
