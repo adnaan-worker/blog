@@ -11,7 +11,7 @@ import MeteorBackground from '@/components/common/meteor-background';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
 import PageLoading from '@/components/common/page-loading';
-import { setupHttpConfig } from '@/utils/api/http-config';
+import { setupHttpConfig } from '@/utils/api';
 import { useVisitorTracking } from '@/hooks';
 import { AppDispatch } from '@/store';
 import { API } from '@/utils';

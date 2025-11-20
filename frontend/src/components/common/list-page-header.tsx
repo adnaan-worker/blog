@@ -4,13 +4,14 @@
  * 支持集成筛选功能
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSearch, FiX, FiFilter, FiChevronDown, FiTrash2 } from 'react-icons/fi';
 import { Input, Button } from 'adnaan-ui';
 import { useAnimationEngine } from '@/utils/ui/animation';
-import { usePageInfo } from '@/hooks/usePageInfo';
+import { usePageInfo, useMediaQuery } from '@/hooks';
+import { debounce } from '@/utils';
 
 // ============= 筛选相关类型 =============
 
@@ -368,7 +369,7 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
 }) => {
   const { setPageInfo } = usePageInfo();
   const { variants, springPresets } = useAnimationEngine();
-  const [searchDebounceTimers, setSearchDebounceTimers] = useState<{ [key: string]: NodeJS.Timeout }>({});
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [isFilterExpanded, setIsFilterExpanded] = useState(!defaultFilterCollapsed);
 
   // 设置页面信息到 Header（用于滚动后显示）
@@ -383,13 +384,6 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
       setPageInfo(null);
     };
   }, [title, subtitle, setPageInfo]);
-
-  // 清理定时器
-  useEffect(() => {
-    return () => {
-      Object.values(searchDebounceTimers).forEach((timer) => clearTimeout(timer));
-    };
-  }, [searchDebounceTimers]);
 
   // 当筛选值变化时，自动清理并通知
   useEffect(() => {
@@ -407,22 +401,15 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
     onFilterChange({ ...filterValues, [key]: newValue });
   };
 
-  // 处理搜索（带防抖）
-  const handleSearch = (key: string, value: string) => {
-    if (!onFilterChange) return;
-
-    // 清除之前的定时器
-    if (searchDebounceTimers[key]) {
-      clearTimeout(searchDebounceTimers[key]);
-    }
-
-    // 设置新的定时器
-    const timer = setTimeout(() => {
-      onFilterChange({ ...filterValues, [key]: value.trim() || undefined });
-    }, 300);
-
-    setSearchDebounceTimers({ ...searchDebounceTimers, [key]: timer });
-  };
+  // 处理搜索（带防抖）- 使用 useMemo 避免重复创建
+  const handleSearch = useMemo(
+    () =>
+      debounce((key: string, value: string) => {
+        if (!onFilterChange) return;
+        onFilterChange({ ...filterValues, [key]: value.trim() || undefined });
+      }, 300),
+    [onFilterChange, filterValues],
+  );
 
   // 清除单个筛选条件
   const handleClearFilter = (key: string) => {
@@ -563,14 +550,14 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
   }, [filterValues, filterGroups]);
 
   return (
-    <Header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={springPresets.gentle}>
+    <Header variants={variants.fadeIn}>
       {/* 左侧：标题区域 */}
       <LeftContent>
         <Title>{title}</Title>
         {subtitle && <Subtitle>{subtitle}</Subtitle>}
         {showStats && count !== undefined && (
           <StatsInfo>
-            <span className="text">共收录</span>
+            {!isMobile && <span className="text">共收录</span>}
             <span className="count">{count}</span>
             <span className="text">{countUnit}</span>
           </StatsInfo>

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import styled from '@emotion/styled';
 import { MdFormatColorText, MdFormatColorFill } from 'react-icons/md';
 import { TEXT_COLORS, HIGHLIGHT_COLORS } from '@/utils/editor/helpers';
+import { useClickOutside } from '@/hooks';
 
 const ColorPickerDropdown = styled.div`
   position: relative;
@@ -148,18 +149,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ type, editor, isOpen, 
   };
 
   // 点击外部关闭菜单
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
+  useClickOutside(menuRef, onClose, isOpen);
 
   return (
     <ColorPickerDropdown ref={menuRef}>

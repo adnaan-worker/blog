@@ -7,6 +7,7 @@ import { useAnimationEngine } from '@/utils/ui/animation';
 import { useOnlineUsers } from '@/hooks/useSocket';
 import { useSiteSettings } from './index';
 import VisitorStatsTooltip from '@/components/common/visitor-stats-tooltip';
+import { useClickOutside } from '@/hooks';
 
 // 使用motion组件增强动画效果
 const MotionFooter = motion.footer;
@@ -368,37 +369,16 @@ const Footer = () => {
   // 访客统计 Tooltip 状态
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const onlineUsersRef = useRef<HTMLSpanElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // 点击外部关闭 tooltip
-  useEffect(() => {
-    if (!isTooltipVisible) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-
-      // 检查点击是否在在线人数元素内
-      const isClickInsideTrigger = onlineUsersRef.current?.contains(target);
-
-      // 检查点击是否在 tooltip 内
-      const isClickInsideTooltip = target?.closest('[data-tooltip-container]');
-
-      // 如果点击既不在触发元素内，也不在 tooltip 内，则关闭
-      if (!isClickInsideTrigger && !isClickInsideTooltip) {
-        setIsTooltipVisible(false);
-      }
-    };
-
-    // 使用捕获阶段，确保在其他事件处理器之前执行
-    // 延迟添加监听器，避免点击触发元素时立即关闭
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('click', handleClickOutside, true);
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('click', handleClickOutside, true);
-    };
-  }, [isTooltipVisible]);
+  // 使用增强版 useClickOutside，排除触发器和 tooltip 本身
+  useClickOutside(tooltipRef, () => setIsTooltipVisible(false), {
+    enabled: isTooltipVisible,
+    excludeRefs: onlineUsersRef,
+    excludeSelectors: ['[data-tooltip-container]'],
+    useCapture: true,
+    delay: 100,
+  });
 
   // 如果还在加载中，返回 null 或显示加载占位符
   if (loading) {
@@ -554,11 +534,13 @@ const Footer = () => {
                     </OnlineUsers>
 
                     {/* 访客统计 Tooltip - 相对定位 */}
-                    <VisitorStatsTooltip
-                      isVisible={isTooltipVisible}
-                      targetRef={onlineUsersRef}
-                      onlineCount={onlineCount}
-                    />
+                    <div ref={tooltipRef}>
+                      <VisitorStatsTooltip
+                        isVisible={isTooltipVisible}
+                        targetRef={onlineUsersRef}
+                        onlineCount={onlineCount}
+                      />
+                    </div>
                   </div>
                   |{' '}
                 </>

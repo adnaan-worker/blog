@@ -6,6 +6,8 @@ import '@/styles/rich-text.css';
 import { RichTextParser } from '@/utils/editor/parser';
 import { ImagePreview } from '@/components/content';
 import { FiCopy, FiCheck, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { useClipboard } from '@/hooks';
+import adnaan from 'adnaan-ui';
 
 // 代码块容器
 const CodeBlockContainer = styled.div`
@@ -266,7 +268,6 @@ interface SimpleCodeBlockProps {
 
 const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, language }) => {
   const [highlightedCode, setHighlightedCode] = React.useState<string>('');
-  const [copied, setCopied] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const codeBlockRef = React.useRef<HTMLDivElement>(null);
@@ -343,15 +344,22 @@ const SimpleCodeBlock: React.FC<SimpleCodeBlockProps> = React.memo(({ code, lang
   const lineCount = useMemo(() => code.split('\n').length, [code]);
   const shouldShowExpand = lineCount > 20;
   const maxCollapsedHeight = 400;
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('复制失败:', err);
-    }
-  }, [code]);
+
+  // 使用 useClipboard Hook
+  const { copy, copied } = useClipboard({
+    timeout: 2000,
+    onSuccess: () => {
+      adnaan.toast.success('代码已复制到剪贴板');
+    },
+    onError: (error) => {
+      adnaan.toast.error('复制失败');
+      console.error('复制失败:', error);
+    },
+  });
+
+  const handleCopy = useCallback(() => {
+    copy(code);
+  }, [code, copy]);
   return (
     <CodeBlockContainer ref={codeBlockRef}>
       <CodeBlockHeader>

@@ -130,6 +130,7 @@ const IconWrapper = styled.span`
 import { formatDate as formatDateUtil } from '@/utils';
 
 const NotesPage: React.FC = () => {
+  const { variants } = useAnimationEngine();
   const noteInteractions = useSpringInteractions({ hoverScale: 1.01, hoverY: -1 });
   const [isLoading, setIsLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
@@ -339,7 +340,7 @@ const NotesPage: React.FC = () => {
         keywords={PAGE_SEO_CONFIG.noteList.keywords}
         type="website"
       />
-      <PageContainer>
+      <PageContainer initial="hidden" animate="visible" variants={variants.stagger}>
         <Container>
           {/* 页面头部 */}
           <ListPageHeader

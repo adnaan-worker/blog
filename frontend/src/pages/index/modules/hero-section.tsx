@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { motion, Variants } from 'framer-motion';
-import { FiGithub, FiMail, FiCode } from 'react-icons/fi';
+import { Variants, motion } from 'framer-motion';
+import { FiCode, FiGithub, FiMail, FiMapPin, FiTwitter } from 'react-icons/fi';
+import { useSiteSettings } from '@/layouts';
 import { useAnimationEngine, useSpringInteractions } from '@/utils/ui/animation';
+import { LazyImage } from '@/components/common';
 import { Icon } from '@/components/common/icon';
 import { WaveText } from '@/components/common';
 import { SiteSettings } from '@/types';
@@ -849,7 +851,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
           <ProfileCard className={isFlipped ? 'flipped' : ''} onClick={handleCardFlip}>
             <CardFront className="glass glass-highlight">
               <ProfileImage>
-                <img
+                <LazyImage
                   src={
                     siteSettings?.avatar ||
                     'https://foruda.gitee.com/avatar/1745582574310382271/5352827_adnaan_1745582574.png!avatar100'

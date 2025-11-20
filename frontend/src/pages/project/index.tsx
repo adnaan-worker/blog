@@ -15,7 +15,7 @@ import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import { getLanguageIcon } from '@/utils/ui/language-icons';
 
 // 样式组件
-const PageContainer = styled.div`
+const PageContainer = styled(motion.div)`
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
@@ -437,7 +437,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index, variants }) =
 
 const Projects: React.FC = () => {
   // 使用动画引擎 - 统一的 Spring 动画系统
-  const { variants, springPresets } = useAnimationEngine();
+  const { variants } = useAnimationEngine();
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -569,7 +569,7 @@ const Projects: React.FC = () => {
         keywords={PAGE_SEO_CONFIG.projectList.keywords}
         type="website"
       />
-      <PageContainer>
+      <PageContainer initial="hidden" animate="visible" variants={variants.stagger}>
         {/* 页面头部 - 统一组件 */}
         <ListPageHeader
           title="赴约"

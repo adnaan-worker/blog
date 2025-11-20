@@ -409,7 +409,7 @@ const AppStatus: React.FC = () => {
             onMouseLeave={() => setHoveredIndex(null)}
           >
             {/* 优先显示图片，加载失败则显示备用图标 */}
-            {app.imageUrl && !app.hasImageError ? (
+            {app.imageUrl && app.imageUrl.trim() && !app.hasImageError ? (
               <img src={app.imageUrl} alt={app.appName} onError={() => handleImageError(app.appName)} />
             ) : (
               app.fallbackIcon

@@ -234,11 +234,11 @@ class HttpRequest {
           }
         } else {
           // 网络错误或请求被取消
-          if (config.isDev) {
-            console.error('网络错误或请求被取消');
-          }
           // 只在非取消请求时显示网络错误提示
-          if (!axios.isCancel(error)) {
+          if (!axios.isCancel(error) && error.message !== 'canceled') {
+            if (config.isDev) {
+              console.error('网络错误:', error.message);
+            }
             this.showErrorToast('network', '网络连接失败，请检查网络设置', '网络错误', 5000);
           }
         }

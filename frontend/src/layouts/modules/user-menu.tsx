@@ -8,6 +8,7 @@ import { logoutUser } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
 import { getRoleDisplayName, getRoleColor } from '@/utils/helpers/role';
 import { useAnimationEngine } from '@/utils/ui/animation';
+import { LazyImage } from '@/components/common';
 
 // 用户头像样式
 const Avatar = styled.div<{ hasImage?: boolean }>`
@@ -173,8 +174,8 @@ const UserMenu: React.FC<UserMenuProps> = ({
     <div ref={userDropdownRef} style={{ position: 'relative' }}>
       {isLoggedIn ? (
         <Avatar hasImage={Boolean(avatarSrc)} onClick={(e) => toggleUserDropdown(e)}>
-          {avatarSrc ? (
-            <img key={avatarSrc} src={avatarSrc} alt={user?.username} />
+          {avatarSrc && avatarSrc.trim() ? (
+            <LazyImage key={avatarSrc} src={avatarSrc} alt={user?.username || '用户头像'} />
           ) : (
             <FiUser color="var(--text-secondary)" />
           )}
@@ -192,8 +193,8 @@ const UserMenu: React.FC<UserMenuProps> = ({
               <>
                 <UserDropdownHeader>
                   <Avatar>
-                    {avatarSrc ? (
-                      <img key={`dropdown-${avatarSrc}`} src={avatarSrc} alt={user?.username} />
+                    {avatarSrc && avatarSrc.trim() ? (
+                      <LazyImage key={`dropdown-${avatarSrc}`} src={avatarSrc} alt={user?.username || '用户头像'} />
                     ) : (
                       <FiUser color="var(--text-secondary)" />
                     )}

@@ -414,7 +414,6 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
   // 初始化
   useEffect(() => {
     reloadComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 搜索和筛选变化时重新加载
@@ -422,9 +421,7 @@ const CommentManagement: React.FC<CommentManagementProps> = ({ className, isAdmi
     const timer = setTimeout(() => {
       reloadComments();
     }, 300);
-
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, selectedStatus]);
 
   // 处理删除评论

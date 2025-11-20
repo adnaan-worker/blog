@@ -23,3 +23,12 @@ export {
 
 // 虚化滚动容器
 export { FadeScrollContainer, type FadeScrollContainerProps } from './fade-scroll-container';
+
+// 错误边界
+export { ErrorBoundary } from './error-boundary';
+
+// 懒加载图片
+export { LazyImage } from './lazy-image';
+
+// 全局监控
+export { GlobalMonitors } from './global-monitors';

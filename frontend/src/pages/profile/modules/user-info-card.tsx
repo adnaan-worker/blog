@@ -231,7 +231,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({
         transition={springPresets.bouncy}
       >
         <Avatar>
-          {avatarSrc ? (
+          {avatarSrc && avatarSrc.trim() ? (
             <img key={avatarSrc} src={avatarSrc} alt="用户头像" />
           ) : (
             <AvatarFallback>

@@ -301,7 +301,6 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
   // 初始化
   useEffect(() => {
     reloadBookmarks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 搜索变化时重新加载
@@ -309,9 +308,7 @@ const BookmarkManagement: React.FC<BookmarkManagementProps> = ({ className }) =>
     const timer = setTimeout(() => {
       reloadBookmarks();
     }, 300);
-
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   // 处理取消收藏
