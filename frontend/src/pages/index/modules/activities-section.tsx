@@ -23,7 +23,7 @@ import {
   FiThumbsUp,
 } from 'react-icons/fi';
 import { getTimeAgo, RichTextParser, truncateText } from '@/utils';
-import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
+import { useAnimationEngine, useSmartInView, useSpringInteractions } from '@/utils/ui/animation';
 import { InfiniteScroll } from 'adnaan-ui';
 import { API } from '@/utils/api';
 import { FadeScrollContainer } from '@/components/common';
@@ -783,6 +783,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
   const navigate = useNavigate();
+  const itemInteractions = useSpringInteractions({ hoverScale: 1.002 });
 
   // 使用智能视口检测 - 修复刷新时可见度问题
   const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
@@ -911,8 +912,7 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
                     onClick={() => handleActivityClick(activity.link)}
                     variants={variants.listItem}
                     custom={index}
-                    whileHover={{ scale: 1.002 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    {...itemInteractions}
                   >
                     <ActivityHeader>
                       <ActivityIcon color={formatted.color}>
