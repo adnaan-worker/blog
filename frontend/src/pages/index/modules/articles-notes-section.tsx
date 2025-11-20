@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiArrowRight } from 'react-icons/fi';
 import { formatDate, getTimeAgo } from '@/utils';
-import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
+import { useAnimationEngine, useSmartInView, useSpringInteractions } from '@/utils/ui/animation';
 import { ArticlesSectionProps, NotesSectionProps } from './types';
 
 // Styled Components
@@ -155,6 +155,7 @@ interface ArticleLinkProps {
   initial?: string;
   animate?: string;
   whileHover?: any;
+  whileTap?: any;
   transition?: any;
 }
 
@@ -168,6 +169,7 @@ const ArticleLink: React.FC<ArticleLinkProps> = ({ to, children, ...props }) => 
 export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, loading }) => {
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
+  const itemInteractions = useSpringInteractions({ hoverScale: 1.005 });
 
   // 使用智能视口检测 - 修复刷新时可见度问题
   const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
@@ -222,8 +224,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
             key={article.id}
             variants={variants.listItem}
             custom={index}
-            whileHover={{ scale: 1.005 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            {...itemInteractions}
           >
             <ArticleContent>
               <ArticleTitle>{article.title}</ArticleTitle>
@@ -240,6 +241,7 @@ export const ArticlesSection: React.FC<ArticlesSectionProps> = ({ articles, load
 export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) => {
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
+  const itemInteractions = useSpringInteractions({ hoverScale: 1.005 });
 
   // 使用智能视口检测 - 修复刷新时可见度问题
   const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
@@ -294,8 +296,7 @@ export const NotesSection: React.FC<NotesSectionProps> = ({ notes, loading }) =>
             key={note.id}
             variants={variants.listItem}
             custom={index}
-            whileHover={{ scale: 1.005 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            {...itemInteractions}
           >
             <ArticleContent>
               <ArticleTitle>{note.title || '无标题手记'}</ArticleTitle>

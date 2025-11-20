@@ -16,6 +16,8 @@ export const languageIconMap: Record<string, { icon: string; color: string }> = 
   Rust: { icon: 'code', color: '#000000' },
   HTML: { icon: 'code', color: '#e34c26' },
   CSS: { icon: 'code', color: '#1572b6' },
+  Dart: { icon: 'code', color: '#00b4ab' },
+  Shell: { icon: 'code', color: '#89e051' },
 };
 
 /**
@@ -28,7 +30,14 @@ export const getLanguageIcon = (language?: string): { icon: string; color: strin
     return { icon: 'code', color: 'var(--accent-color)' };
   }
 
-  return languageIconMap[language] || { icon: 'code', color: 'var(--accent-color)' };
+  // 忽略大小写匹配
+  const matchedKey = Object.keys(languageIconMap).find((key) => key.toLowerCase() === language.toLowerCase());
+
+  if (matchedKey) {
+    return languageIconMap[matchedKey];
+  }
+
+  return { icon: 'code', color: 'var(--accent-color)' };
 };
 
 /**

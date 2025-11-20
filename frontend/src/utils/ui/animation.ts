@@ -503,7 +503,63 @@ export class AnimationVariants {
       visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 380, damping: 24, mass: 0.5 } },
     };
   }
+
+  static pulse(level: PerformanceMetrics['level']): Variants {
+    if (level === 'minimal') return {};
+    return {
+      initial: { scale: 1, opacity: 1 },
+      animate: {
+        scale: [1, 1.05, 1],
+        opacity: [1, 0.8, 1],
+        transition: {
+          duration: 2,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        },
+      },
+    };
+  }
 }
+
+// ==================== 交互 Hooks ====================
+
+/**
+ * 统一的悬停和点击交互 Hook
+ * @param config 可选配置，覆盖默认行为
+ */
+export const useSpringInteractions = (config?: {
+  hoverScale?: number;
+  tapScale?: number;
+  hoverY?: number;
+  stiffness?: number;
+  damping?: number;
+}) => {
+  const { metrics } = useAnimationEngine();
+  const shouldReduceMotion = metrics.prefersReducedMotion || metrics.level === 'minimal';
+
+  if (shouldReduceMotion) {
+    return {};
+  }
+
+  const spring = {
+    type: 'spring' as const,
+    stiffness: config?.stiffness ?? 400,
+    damping: config?.damping ?? 25,
+    mass: 0.8,
+  };
+
+  return {
+    whileHover: {
+      scale: config?.hoverScale ?? 1.02,
+      y: config?.hoverY ?? -2,
+      transition: spring,
+    },
+    whileTap: {
+      scale: config?.tapScale ?? 0.96,
+      transition: spring,
+    },
+  };
+};
 
 // ==================== 主Hook ====================
 

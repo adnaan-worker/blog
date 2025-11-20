@@ -4,12 +4,12 @@
  * 支持集成筛选功能
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSearch, FiX, FiFilter, FiChevronDown } from 'react-icons/fi';
+import { FiSearch, FiX, FiFilter, FiChevronDown, FiTrash2 } from 'react-icons/fi';
 import { Input, Button } from 'adnaan-ui';
-import { SPRING_PRESETS } from '@/utils/ui/animation';
+import { useAnimationEngine } from '@/utils/ui/animation';
 import { usePageInfo } from '@/hooks/usePageInfo';
 
 // ============= 筛选相关类型 =============
@@ -81,12 +81,13 @@ export const cleanFilterValues = (values: FilterValues): Record<string, any> => 
 // Header 容器 - 左右两栏布局
 const Header = styled(motion.div)`
   display: grid;
-  grid-template-columns: minmax(0, 600px) 1fr;
-  gap: 3rem;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
   align-items: start;
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.3);
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.4);
+  position: relative;
 
   @media (max-width: 968px) {
     grid-template-columns: 1fr;
@@ -98,41 +99,40 @@ const Header = styled(motion.div)`
 const LeftContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
 `;
 
 // 页面标题
 const Title = styled.h1`
-  font-size: 1.75rem;
-  font-weight: 600;
+  font-size: 2rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
-  letter-spacing: -0.02em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+
+  background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 
   @media (max-width: 768px) {
-    font-size: 1.5rem;
-    white-space: normal;
-    overflow: visible;
+    font-size: 1.75rem;
   }
 `;
 
 // 副标题/描述
 const Subtitle = styled.p`
-  font-size: 0.95rem;
-  color: var(--text-tertiary);
-  margin: 0;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0;
   line-height: 1.6;
-  opacity: 0.9;
+  opacity: 0.85;
+  max-width: 600px;
 
   @media (max-width: 768px) {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -140,13 +140,19 @@ const Subtitle = styled.p`
 const StatsInfo = styled.div`
   font-size: 0.85rem;
   color: var(--text-tertiary);
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 
   .count {
     color: var(--accent-color);
     font-weight: 600;
     font-family: var(--font-code, 'Consolas', 'Monaco', monospace);
-    font-size: 0.9rem;
+    font-size: 1rem;
+    background: rgba(var(--accent-rgb), 0.1);
+    padding: 0 0.4rem;
+    border-radius: 4px;
   }
 
   .text {
@@ -159,37 +165,51 @@ const FilterArea = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  min-width: 0;
-  width: 100%;
+  min-width: 300px;
   max-width: 100%;
 
   @media (max-width: 968px) {
     align-items: stretch;
+    min-width: auto;
+    width: 100%;
   }
 `;
 
-// 筛选折叠按钮
+const AnimationWrapper = styled(motion.div)`
+  width: 100%;
+  overflow: hidden;
+  margin-top: 1rem;
+`;
 
-const FilterContent = styled(motion.div)`
+const FilterContentInner = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
   width: 100%;
-  margin-top: 0.75rem;
+  background: var(--bg-secondary);
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
 `;
 
 const FilterGroup = styled.div`
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  align-items: flex-start;
+  gap: 1rem;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 `;
 
 const FilterLabel = styled.span`
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   font-weight: 500;
-  min-width: 45px;
+  min-width: 60px;
   flex-shrink: 0;
+  padding-top: 0.4rem; // 对齐按钮文字
 `;
 
 const FilterOptions = styled.div`
@@ -202,45 +222,115 @@ const FilterOptions = styled.div`
 const SearchContainer = styled.div`
   position: relative;
   flex: 1;
+  width: 100%;
 `;
 
 const SearchIcon = styled.div`
   position: absolute;
-  right: 0.65rem;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-tertiary);
   pointer-events: none;
   display: flex;
   align-items: center;
+  transition: color 0.2s;
 
   svg {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
 `;
 
 const ClearButton = styled(motion.button)`
   position: absolute;
-  right: 0.65rem;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border: none;
-  background: transparent;
-  color: var(--text-tertiary);
+  background: rgba(var(--text-primary-rgb), 0.1);
+  border-radius: 50%;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
+  padding: 0;
 
   &:hover {
+    background: rgba(var(--text-primary-rgb), 0.2);
     color: var(--text-primary);
   }
 
   svg {
     font-size: 0.75rem;
+  }
+`;
+
+// 激活的筛选标签区域
+const ActiveFiltersSection = styled(motion.div)`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed rgba(var(--border-color-rgb), 0.5);
+  width: 100%;
+`;
+
+const ActiveTag = styled(motion.button)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-color);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.3);
+  }
+
+  span {
+    opacity: 0.7;
+    font-weight: normal;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  .close-icon {
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+    margin-left: 0.1rem;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+`;
+
+const ClearAllButton = styled.button`
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.2rem 0.5rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--text-secondary);
   }
 `;
 
@@ -277,6 +367,7 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
   defaultFilterCollapsed = true,
 }) => {
   const { setPageInfo } = usePageInfo();
+  const { variants, springPresets } = useAnimationEngine();
   const [searchDebounceTimers, setSearchDebounceTimers] = useState<{ [key: string]: NodeJS.Timeout }>({});
   const [isFilterExpanded, setIsFilterExpanded] = useState(!defaultFilterCollapsed);
 
@@ -333,10 +424,16 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
     setSearchDebounceTimers({ ...searchDebounceTimers, [key]: timer });
   };
 
-  // 清除单个搜索框
-  const handleClearSearch = (key: string) => {
+  // 清除单个筛选条件
+  const handleClearFilter = (key: string) => {
     if (!onFilterChange) return;
     onFilterChange({ ...filterValues, [key]: undefined });
+  };
+
+  // 清除所有筛选
+  const handleClearAll = () => {
+    if (!onFilterChange) return;
+    onFilterChange({});
   };
 
   // 渲染筛选组
@@ -347,25 +444,31 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
           <FilterGroup key={group.key}>
             <FilterLabel>{group.label}</FilterLabel>
             <FilterOptions>
-              {group.options?.map((option) => (
-                <Button
-                  key={option.value}
-                  variant="ghost"
-                  size="small"
-                  onClick={() => handleSingleSelect(group.key, option.value)}
-                  style={{
-                    padding: '0.35rem 0.75rem',
-                    fontSize: '0.8rem',
-                    background:
-                      filterValues[group.key] === option.value ? 'rgba(var(--accent-rgb), 0.12)' : 'transparent',
-                    color: filterValues[group.key] === option.value ? 'var(--accent-color)' : 'var(--text-secondary)',
-                    fontWeight: filterValues[group.key] === option.value ? '600' : '400',
-                  }}
-                  leftIcon={option.icon}
-                >
-                  {option.label}
-                </Button>
-              ))}
+              {group.options?.map((option) => {
+                const isActive = filterValues[group.key] === option.value;
+                return (
+                  <Button
+                    key={option.value}
+                    variant="ghost"
+                    size="small"
+                    onClick={() => handleSingleSelect(group.key, option.value)}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      fontSize: '0.8rem',
+                      background: isActive ? 'var(--accent-color)' : 'transparent',
+                      color: isActive ? '#fff' : 'var(--text-secondary)',
+                      fontWeight: isActive ? '600' : '400',
+                      borderRadius: '6px',
+                      border: isActive ? 'none' : '1px solid transparent',
+                      boxShadow: isActive ? '0 2px 8px rgba(var(--accent-rgb), 0.3)' : 'none',
+                    }}
+                    leftIcon={option.icon}
+                    className={isActive ? 'active-filter-btn' : ''}
+                  >
+                    {option.label}
+                  </Button>
+                );
+              })}
             </FilterOptions>
           </FilterGroup>
         );
@@ -379,29 +482,44 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
               <Input
                 type="text"
                 placeholder={group.placeholder || '搜索...'}
-                value={searchValue || ''}
+                defaultValue={searchValue}
                 onChange={(e) => handleSearch(group.key, e.target.value)}
                 variant="filled"
                 size="small"
                 rightElement={
                   searchValue ? (
                     <ClearButton
-                      onClick={() => handleClearSearch(group.key)}
+                      onClick={() => {
+                        const input = document.querySelector(
+                          `input[placeholder="${group.placeholder || '搜索...'}"]`,
+                        ) as HTMLInputElement;
+                        if (input) input.value = '';
+                        handleClearFilter(group.key);
+                      }}
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                     >
-                      <FiX size={16} />
+                      <FiX />
                     </ClearButton>
                   ) : (
                     <SearchIcon>
-                      <FiSearch size={16} />
+                      <FiSearch />
                     </SearchIcon>
                   )
                 }
                 style={{
-                  fontSize: '0.8rem',
-                  background: 'rgba(var(--border-color-rgb, 229, 231, 235), 0.1)',
+                  fontSize: '0.85rem',
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid transparent',
+                  paddingRight: '2rem',
+                }}
+                onFocus={(e) => {
+                  e.target.style.background = 'var(--bg-primary)';
+                  e.target.style.borderColor = 'var(--accent-color)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.background = 'var(--bg-tertiary)';
+                  e.target.style.borderColor = 'transparent';
                 }}
               />
             </SearchContainer>
@@ -415,25 +533,45 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
 
   const hasFilters = filterGroups.length > 0;
 
-  // 计算已激活的筛选数量
-  const activeFilterCount = Object.entries(filterValues).reduce((count, [key, value]) => {
-    const group = filterGroups.find((g) => g.key === key);
-    if (group?.type === 'search') return count; // 不计入搜索
-    if (!value || value === '') return count;
-    if (Array.isArray(value)) return count + value.length;
-    return count + 1;
-  }, 0);
+  // 计算已激活的筛选数量和列表
+  const activeFilters = useMemo(() => {
+    const active: { key: string; label: string; valueLabel: string }[] = [];
+
+    Object.entries(filterValues).forEach(([key, value]) => {
+      if (!value || value === '') return;
+
+      const group = filterGroups.find((g) => g.key === key);
+      if (!group) return;
+
+      let valueLabel = String(value);
+
+      if (group.type === 'single') {
+        const option = group.options?.find((o) => o.value === value);
+        if (option) valueLabel = option.label;
+      } else if (group.type === 'search') {
+        valueLabel = `"${value}"`;
+      }
+
+      active.push({
+        key,
+        label: group.label,
+        valueLabel,
+      });
+    });
+
+    return active;
+  }, [filterValues, filterGroups]);
 
   return (
-    <Header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={SPRING_PRESETS.gentle}>
+    <Header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={springPresets.gentle}>
       {/* 左侧：标题区域 */}
       <LeftContent>
         <Title>{title}</Title>
         {subtitle && <Subtitle>{subtitle}</Subtitle>}
         {showStats && count !== undefined && (
           <StatsInfo>
-            <span className="text">共</span>
-            <span className="count"> {count} </span>
+            <span className="text">共收录</span>
+            <span className="count">{count}</span>
             <span className="text">{countUnit}</span>
           </StatsInfo>
         )}
@@ -444,14 +582,18 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
       {hasFilters && (
         <FilterArea>
           <Button
-            variant="ghost"
+            variant={isFilterExpanded ? 'primary' : 'ghost'}
             size="small"
             onClick={() => setIsFilterExpanded(!isFilterExpanded)}
             style={{
-              padding: '0.5rem 0.85rem',
-              fontSize: '0.8rem',
-              background: 'rgba(var(--border-color-rgb, 229, 231, 235), 0.1)',
-              color: 'var(--text-secondary)',
+              padding: '0.5rem 1rem',
+              fontSize: '0.85rem',
+              background: isFilterExpanded
+                ? 'var(--accent-color)'
+                : 'rgba(var(--border-color-rgb, 229, 231, 235), 0.2)',
+              color: isFilterExpanded ? '#fff' : 'var(--text-secondary)',
+              border: 'none',
+              boxShadow: isFilterExpanded ? '0 4px 12px rgba(var(--accent-rgb), 0.25)' : 'none',
             }}
             leftIcon={<FiFilter />}
             rightIcon={
@@ -464,19 +606,59 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
               </motion.div>
             }
           >
-            筛选{activeFilterCount > 0 && ` (${activeFilterCount})`}
+            筛选检索 {activeFilters.length > 0 && `(${activeFilters.length})`}
           </Button>
 
           <AnimatePresence>
             {isFilterExpanded && (
-              <FilterContent
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              <AnimationWrapper
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
               >
-                {filterGroups.map((group) => renderFilterGroup(group))}
-              </FilterContent>
+                <FilterContentInner>
+                  {filterGroups.map((group) => renderFilterGroup(group))}
+
+                  {/* 已选条件展示区 */}
+                  {activeFilters.length > 0 && (
+                    <ActiveFiltersSection initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <div
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: '0.5rem',
+                        }}
+                      >
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>已选条件：</span>
+                        <ClearAllButton onClick={handleClearAll}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <FiTrash2 size={12} /> 清空筛选
+                          </span>
+                        </ClearAllButton>
+                      </div>
+
+                      {activeFilters.map((filter) => (
+                        <ActiveTag
+                          key={filter.key}
+                          onClick={() => handleClearFilter(filter.key)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          layout
+                        >
+                          <span>{filter.label}:</span>
+                          <strong>{filter.valueLabel}</strong>
+                          <div className="close-icon">
+                            <FiX size={12} />
+                          </div>
+                        </ActiveTag>
+                      ))}
+                    </ActiveFiltersSection>
+                  )}
+                </FilterContentInner>
+              </AnimationWrapper>
             )}
           </AnimatePresence>
         </FilterArea>

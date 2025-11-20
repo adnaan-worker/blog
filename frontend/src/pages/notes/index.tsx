@@ -9,7 +9,7 @@ import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import { API } from '@/utils/api';
 import type { Note, NoteParams } from '@/types';
-import { useAnimationEngine } from '@/utils/ui/animation';
+import { useAnimationEngine, useSpringInteractions } from '@/utils/ui/animation';
 import adnaan from 'adnaan-ui';
 import {
   FiSun,
@@ -49,11 +49,10 @@ const NoteItem = styled(motion.div)`
   cursor: pointer;
   padding: 0.3rem 0;
   border-radius: 4px;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease;
 
   &:hover {
     background: rgba(var(--accent-rgb), 0.05);
-    transform: translateX(2px);
   }
 `;
 
@@ -113,11 +112,26 @@ const EmptyState = styled.div`
   }
 `;
 
+const IconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  opacity: 0.6;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`;
+
 // 导入封装的工具函数
 import { formatDate as formatDateUtil } from '@/utils';
 
 const NotesPage: React.FC = () => {
   const { variants } = useAnimationEngine();
+  const noteInteractions = useSpringInteractions({ hoverScale: 1.01, hoverY: -1 });
   const [isLoading, setIsLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [years, setYears] = useState<Array<{ year: number; count: number }>>([]);
@@ -126,6 +140,41 @@ const NotesPage: React.FC = () => {
   const [filterValues, setFilterValues] = useState<FilterValues>({});
   // 清理后的筛选参数（由 ListPageHeader 自动处理）
   const [cleanedFilters, setCleanedFilters] = useState<Record<string, any>>({});
+
+  // 图标映射辅助函数
+  const getMoodIcon = (mood?: string) => {
+    switch (mood) {
+      case '开心':
+        return <FiSmile />;
+      case '平静':
+        return <FiMeh />;
+      case '思考':
+        return <FiThumbsUp />;
+      case '感慨':
+        return <FiFrown />;
+      case '兴奋':
+        return <FiZap />;
+      default:
+        return null;
+    }
+  };
+
+  const getWeatherIcon = (weather?: string) => {
+    switch (weather) {
+      case '晴天':
+        return <FiSun />;
+      case '多云':
+        return <FiCloud />;
+      case '雨天':
+        return <FiCloudRain />;
+      case '雪天':
+        return <FiCloudSnow />;
+      case '阴天':
+        return <FiWind />;
+      default:
+        return null;
+    }
+  };
 
   // 初始化加载筛选项和年份列表
   useEffect(() => {
@@ -257,9 +306,13 @@ const NotesPage: React.FC = () => {
   // 渲染单个手记项目
   const renderNoteItem = (note: Note, index: number) => (
     <Link to={`/notes/${note.id}`} style={{ textDecoration: 'none' }}>
-      <NoteItem>
+      <NoteItem {...noteInteractions}>
         <NoteDate>{formatDateUtil(note.createdAt, 'MM-DD')}</NoteDate>
-        <NoteTitle>{note.title || '生活随记'}</NoteTitle>
+        <NoteTitle>
+          {note.title || '生活随记'}
+          {note.mood && <IconWrapper title={`心情：${note.mood}`}>{getMoodIcon(note.mood)}</IconWrapper>}
+          {note.weather && <IconWrapper title={`天气：${note.weather}`}>{getWeatherIcon(note.weather)}</IconWrapper>}
+        </NoteTitle>
         {note.tags && note.tags.length > 0 && (
           <TagList>
             {note.tags.slice(0, 2).map((tag) => (

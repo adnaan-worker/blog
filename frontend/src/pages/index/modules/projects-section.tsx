@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { FiArrowRight, FiStar, FiGithub, FiCode, FiCalendar, FiFolderPlus, FiExternalLink } from 'react-icons/fi';
 import { SiGitee } from 'react-icons/si';
 import { formatDate } from '@/utils';
-import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
+import { useAnimationEngine, useSmartInView, useSpringInteractions } from '@/utils/ui/animation';
 import { Icon } from '@/components/common/icon';
 import { RadarChart } from '@/components/charts/radar-chart';
 import { getLanguageIcon, calculateProjectRadarData } from '@/utils/ui/language-icons';
@@ -392,7 +392,7 @@ const ProjectLinks = styled.div`
   }
 `;
 
-const ProjectLink = styled.a`
+const ProjectLink = styled(motion.a)`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -513,7 +513,9 @@ const GeometryBlock = styled(motion.div)<{
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
   /* 扁平化装饰 */
@@ -641,6 +643,8 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
 }) => {
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
+  const linkInteractions = useSpringInteractions({ hoverScale: 1.05, tapScale: 0.95 });
+  const blockInteractions = useSpringInteractions({ hoverScale: 1.02, tapScale: 0.98 });
 
   // 使用智能视口检测 - 优化初始加载和刷新时的动画
   const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
@@ -775,6 +779,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
                         href={projects[selectedProjectIndex].githubUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        {...linkInteractions}
                       >
                         <FiGithub />
                         GitHub
@@ -785,6 +790,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
                         href={projects[selectedProjectIndex].giteeUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        {...linkInteractions}
                       >
                         <SiGitee />
                         Gitee
@@ -795,6 +801,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
                         href={projects[selectedProjectIndex].demoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
+                        {...linkInteractions}
                       >
                         <FiExternalLink />
                         Demo

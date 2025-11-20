@@ -339,6 +339,7 @@ export interface SiteSettings {
   authorName?: string;
   authorTitle?: string;
   authorBio?: string;
+  avatar?: string;
   mbti?: string;
   location?: string;
   occupation?: string;
