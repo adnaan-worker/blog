@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAnimationEngine, SPRING_PRESETS } from '@/utils/ui/animation';
 import { SEO } from '@/components/common';
 import { Button } from 'adnaan-ui';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
+import { useClickOutside } from '@/hooks';
 
 // 抽屉动画变体 - 使用 Spring 系统
 const drawerVariants = {

@@ -340,7 +340,7 @@ const NotesPage: React.FC = () => {
         keywords={PAGE_SEO_CONFIG.noteList.keywords}
         type="website"
       />
-      <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
+      <PageContainer initial="hidden" animate="visible" variants={variants.stagger}>
         <Container>
           {/* 页面头部 */}
           <ListPageHeader

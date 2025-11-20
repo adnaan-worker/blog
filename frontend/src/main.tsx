@@ -10,6 +10,7 @@ import { getRandomPoeticTitle } from './config/seo.config';
 import './styles/index.css';
 import AccentColorStyleInjector from './theme/theme-color';
 import { ToastProvider, ToastListener, initAdnaanUI } from 'adnaan-ui';
+import { ErrorBoundary, GlobalMonitors } from './components/common';
 
 // 初始化UI组件库
 initAdnaanUI();
@@ -29,13 +30,16 @@ const init = async () => {
   // 挂载应用
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-      <Provider store={store}>
-        <AccentColorStyleInjector />
-        <ToastProvider>
-          <ToastListener />
-          <RouterProvider router={router} />
-        </ToastProvider>
-      </Provider>
+      <ErrorBoundary>
+        <Provider store={store}>
+          <AccentColorStyleInjector />
+          <GlobalMonitors />
+          <ToastProvider>
+            <ToastListener />
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </Provider>
+      </ErrorBoundary>
     </React.StrictMode>,
   );
 };

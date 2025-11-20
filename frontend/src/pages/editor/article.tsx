@@ -417,7 +417,7 @@ const ArticleEditorPage: React.FC = () => {
                     value={coverImage}
                     onChange={(e) => setCoverImage(e.target.value)}
                   />
-                  {coverImage && (
+                  {coverImage && coverImage.trim() && (
                     <CoverPreview>
                       <img src={coverImage} alt="封面预览" />
                     </CoverPreview>

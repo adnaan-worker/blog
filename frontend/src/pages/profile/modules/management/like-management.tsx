@@ -299,7 +299,6 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
   // 初始化
   useEffect(() => {
     reloadLikes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 搜索变化时重新加载
@@ -307,9 +306,7 @@ const LikeManagement: React.FC<LikeManagementProps> = ({ className }) => {
     const timer = setTimeout(() => {
       reloadLikes();
     }, 300);
-
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   // 处理刷新

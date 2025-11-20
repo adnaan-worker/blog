@@ -188,7 +188,7 @@ const EmptyState = styled.div`
 `;
 
 const BlogPage: React.FC = () => {
-  const { variants, level } = useAnimationEngine();
+  const { variants } = useAnimationEngine();
   const cardInteractions = useSpringInteractions({ hoverScale: 1.02, hoverY: -4 }); // 增强一点浮动感
   const [years, setYears] = useState<Array<{ year: number; count: number }>>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -388,7 +388,7 @@ const BlogPage: React.FC = () => {
         description="探索代码世界，分享技术思考。包含React、TypeScript、Node.js等前后端开发技术文章。"
         keywords="技术博客, React教程, TypeScript, Node.js, 前端开发, 后端开发"
       />
-      <PageContainer initial="hidden" animate="visible" variants={variants.fadeIn}>
+      <PageContainer initial="hidden" animate="visible" variants={variants.stagger}>
         <Container>
           <ListPageHeader
             title="织星"

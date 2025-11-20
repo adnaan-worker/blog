@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NodeViewWrapper, NodeViewContent } from '@tiptap/react';
 import styled from '@emotion/styled';
-import { FiType } from 'react-icons/fi';
+import { FiType, FiCopy, FiCheck } from 'react-icons/fi';
 import { SUPPORTED_LANGUAGES } from '@/utils/editor/helpers';
+import { useClipboard, useClickOutside } from '@/hooks';
+import adnaan from 'adnaan-ui';
 
 const CodeBlockWrapper = styled(NodeViewWrapper)`
   position: relative;
@@ -32,7 +34,7 @@ const CodeBlockToolbar = styled.div`
   z-index: 10;
 `;
 
-const LanguageButton = styled.button<{ isOpen: boolean }>`
+const ToolbarButton = styled.button<{ isOpen?: boolean; isActive?: boolean }>`
   display: flex;
   align-items: center;
   gap: 4px;
@@ -59,6 +61,14 @@ const LanguageButton = styled.button<{ isOpen: boolean }>`
     `
     background: var(--accent-color);
     border-color: var(--accent-color);
+    color: white;
+  `}
+
+  ${(props) =>
+    props.isActive &&
+    `
+    background: #10b981;
+    border-color: #10b981;
     color: white;
   `}
 
@@ -183,32 +193,50 @@ interface CodeBlockComponentProps {
 export const CodeBlockComponent: React.FC<CodeBlockComponentProps> = ({ node, updateAttributes, extension }) => {
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
   const currentLanguage = node.attrs.language || 'text';
 
+  const { copy, copied } = useClipboard({
+    timeout: 2000,
+    onSuccess: () => {
+      adnaan.toast.success('代码已复制到剪贴板');
+    },
+  });
+
   // 点击外部关闭菜单
-  useEffect(() => {
-    if (!showLanguageMenu) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowLanguageMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showLanguageMenu]);
+  useClickOutside(menuRef, () => setShowLanguageMenu(false), showLanguageMenu);
 
   const handleLanguageChange = (language: string) => {
     updateAttributes({ language });
     setShowLanguageMenu(false);
   };
 
+  const handleCopy = () => {
+    if (preRef.current) {
+      const codeElement = preRef.current.querySelector('code');
+      if (codeElement) {
+        copy(codeElement.textContent || '');
+      }
+    }
+  };
+
   return (
     <CodeBlockWrapper>
       <CodeBlockToolbar className="code-block-toolbar">
+        <ToolbarButton
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCopy();
+          }}
+          isActive={copied}
+          title={copied ? '已复制' : '复制代码'}
+        >
+          {copied ? <FiCheck /> : <FiCopy />}
+          {copied ? '已复制' : '复制'}
+        </ToolbarButton>
+
         <div style={{ position: 'relative' }} ref={menuRef}>
-          <LanguageButton
+          <ToolbarButton
             isOpen={showLanguageMenu}
             onClick={(e) => {
               e.stopPropagation();
@@ -217,7 +245,7 @@ export const CodeBlockComponent: React.FC<CodeBlockComponentProps> = ({ node, up
           >
             <FiType />
             {currentLanguage}
-          </LanguageButton>
+          </ToolbarButton>
           {showLanguageMenu && (
             <LanguageDropdown>
               <LanguageDropdownTitle>选择语言</LanguageDropdownTitle>
@@ -237,7 +265,7 @@ export const CodeBlockComponent: React.FC<CodeBlockComponentProps> = ({ node, up
           )}
         </div>
       </CodeBlockToolbar>
-      <StyledPre>
+      <StyledPre ref={preRef}>
         <NodeViewContent as="code" />
       </StyledPre>
     </CodeBlockWrapper>

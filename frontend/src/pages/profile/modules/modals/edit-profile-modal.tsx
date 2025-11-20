@@ -243,7 +243,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           <SectionTitle>👤 头像</SectionTitle>
           <AvatarSection>
             <AvatarPreview>
-              {avatarPreview ? (
+              {avatarPreview && avatarPreview.trim() ? (
                 <img key={avatarPreview} src={avatarPreview} alt="头像预览" />
               ) : (
                 <AvatarFallback>

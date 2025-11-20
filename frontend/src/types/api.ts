@@ -25,6 +25,7 @@ export interface RequestConfig {
   timeout?: number;
   withCredentials?: boolean;
   responseType?: 'arraybuffer' | 'blob' | 'document' | 'json' | 'text' | 'stream';
+  signal?: AbortSignal; // 请求取消信号
 }
 
 /**

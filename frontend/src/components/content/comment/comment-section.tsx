@@ -613,7 +613,9 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
       >
         <CommentItem>
           <AvatarContainer>
-            <Avatar hasImage={!!avatarUrl}>{avatarUrl ? <img src={avatarUrl} alt={author} /> : authorInitial}</Avatar>
+            <Avatar hasImage={!!avatarUrl}>
+              {avatarUrl && avatarUrl.trim() ? <img src={avatarUrl} alt={author} /> : authorInitial}
+            </Avatar>
           </AvatarContainer>
 
           <CommentContent>

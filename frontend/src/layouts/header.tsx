@@ -16,8 +16,9 @@ import {
 import { logoutUser } from '@/store/modules/userSlice';
 import type { AppDispatch, RootState } from '@/store';
 import { storage } from '@/utils';
-import { useModalScrollLock } from '@/hooks';
+import { useModalScrollLock, useClickOutside } from '@/hooks';
 import { useAnimationEngine } from '@/utils/ui/animation';
+import { LazyImage } from '@/components/common';
 import LoginModal from './modules/login-model';
 import RegisterModal from './modules/register-modal';
 import NavLinks from './modules/nav-links';
@@ -549,7 +550,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
     }, 200);
 
     return () => clearTimeout(timeoutId);
-  }, [location.pathname, isPathInMainNav, resetMainNavMenu, smoothProgress]);
+  }, [location.pathname, isPathInMainNav, resetMainNavMenu]);
 
   // 监听滚动位置 - 优化性能，减少不必要的状态更新
   useEffect(() => {
@@ -573,26 +574,8 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
     return unsubscribe;
   }, [scrollY, scrolled]);
 
-  // 点击外部关闭用户下拉菜单 - 只在菜单打开时监听
-  useEffect(() => {
-    if (!userDropdownOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
-        setUserDropdownOpen(false);
-      }
-    };
-
-    // 延迟添加监听器，避免立即触发
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 0);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [userDropdownOpen]);
+  // 点击外部关闭用户下拉菜单
+  useClickOutside(userDropdownRef, () => setUserDropdownOpen(false), userDropdownOpen);
 
   // 鼠标聚光灯效果 - 使用 RAF 优化性能
   useEffect(() => {
@@ -768,8 +751,8 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
         {/* 移动端按钮 */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <MobileAvatar onClick={toggleUserDropdown} hasImage={!!user?.avatar}>
-            {isLoggedIn && user?.avatar ? (
-              <img src={user.avatar} alt={user.username} />
+            {isLoggedIn && user?.avatar && user.avatar.trim() ? (
+              <LazyImage src={user.avatar} alt={user.username || '用户头像'} />
             ) : (
               <FiUser color="var(--text-secondary)" />
             )}

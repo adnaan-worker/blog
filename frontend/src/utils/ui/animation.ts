@@ -575,12 +575,19 @@ export const useAnimationEngine = () => {
       scheduler.updateConcurrency(newMetrics.level);
     });
 
-    // 每2秒更新一次指标
+    // 🔥 关键优化：只在性能等级变化时更新，避免频繁重渲染
     const interval = setInterval(() => {
       const newMetrics = monitor.getMetrics();
-      setMetrics(newMetrics);
-      scheduler.updateConcurrency(newMetrics.level);
-    }, 2000);
+
+      // 只在性能等级真正变化时才更新状态
+      setMetrics((prev) => {
+        if (prev.level !== newMetrics.level) {
+          scheduler.updateConcurrency(newMetrics.level);
+          return newMetrics;
+        }
+        return prev; // 不变则返回原对象，避免触发重渲染
+      });
+    }, 5000); // 改为5秒检查一次，减少频率
 
     return () => {
       clearInterval(interval);

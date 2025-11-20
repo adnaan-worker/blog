@@ -43,10 +43,15 @@ class SocketManager {
   private isConnecting = false;
   private listeners = new Map<string, Set<Function>>();
   private refCount = 0; // 引用计数
-  private reconnectAttempts = 0; // 重连次数
-  private maxReconnectAttempts = 5; // 最大重连次数
+  private reconnectAttempts = 0; // 当前重连次数
+  private maxReconnectAttempts = 10; // 最大重连次数（增加到10次）
+  private reconnectBackoff = 1; // 重连退避倍数
   private heartbeatTimer: NodeJS.Timeout | null = null; // 心跳定时器
-  private heartbeatInterval = 30000; // 心跳间隔 30秒
+  private heartbeatInterval = 25000; // 心跳间隔 25秒
+  private inactivityTimer: NodeJS.Timeout | null = null; // 不活跃定时器
+  private inactivityTimeout = 300000; // 5分钟无活动后断开
+  private lastActivityTime = Date.now(); // 最后活动时间
+  private visibilityHandler: (() => void) | null = null; // 可见性监听器
 
   private constructor() {}
 
@@ -68,14 +73,13 @@ class SocketManager {
   // 减少引用
   removeRef() {
     this.refCount--;
-    // 当没有任何组件使用时，延迟断开（避免频繁连接）
-    if (this.refCount <= 0) {
+    if (this.refCount < 0) {
       this.refCount = 0;
-      setTimeout(() => {
-        if (this.refCount === 0) {
-          this.disconnect();
-        }
-      }, 60000); // 60秒后断开
+    }
+
+    // 如果没有组件使用，启动不活跃检测
+    if (this.refCount === 0) {
+      this.startInactivityTimer();
     }
   }
 
@@ -92,20 +96,26 @@ class SocketManager {
       auth: {
         token: SOCKET_CONFIG.authKey,
         jwtToken: token || '',
-        device_id: deviceId, // 注意：后端用的是 device_id 而不是 deviceId
+        device_id: deviceId,
       },
       reconnection: true,
       reconnectionDelay: SOCKET_CONFIG.reconnectDelay,
-      reconnectionAttempts: SOCKET_CONFIG.maxReconnectAttempts,
+      reconnectionDelayMax: 10000, // 最大延迟10秒
+      reconnectionAttempts: this.maxReconnectAttempts,
       timeout: SOCKET_CONFIG.timeout,
     });
 
     this.socket.on('connect', () => {
       this.isConnected = true;
       this.isConnecting = false;
-      this.reconnectAttempts = 0; // 连接成功后重置重连次数
-      this.startHeartbeat(); // 启动心跳
+      this.reconnectAttempts = 0;
+      this.reconnectBackoff = 1; // 重置退避倍数
+      this.lastActivityTime = Date.now();
+      this.stopInactivityTimer(); // 停止不活跃定时器
+      this.startHeartbeat();
+      this.setupVisibilityListener();
       this.emit('_internal:connect');
+      console.log('[Socket] 连接成功');
     });
 
     this.socket.on('disconnect', () => {
@@ -119,10 +129,20 @@ class SocketManager {
       this.isConnecting = false;
       this.reconnectAttempts++;
 
-      // 如果超过最大重连次数，停止重连
+      // 指数退避策略
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.warn('[Socket] 达到最大重连次数，停止重连');
+        console.warn('[Socket] 达到最大重连次数，5分钟后重置');
         this.socket?.disconnect();
+
+        // 5分钟后重置重连次数，允许再次尝试
+        setTimeout(() => {
+          this.reconnectAttempts = 0;
+          this.reconnectBackoff = 1;
+          console.log('[Socket] 重连次数已重置，可以再次尝试');
+        }, 300000); // 5分钟
+      } else {
+        // 指数退避
+        this.reconnectBackoff = Math.min(this.reconnectBackoff * 1.5, 10);
       }
     });
 
@@ -139,10 +159,15 @@ class SocketManager {
   // 断开连接
   private disconnect() {
     this.stopHeartbeat();
+    this.stopInactivityTimer();
+    this.removeVisibilityListener();
+
     if (this.socket) {
       this.socket.disconnect();
+      this.socket.removeAllListeners(); // 清理所有监听器
       this.socket = null;
     }
+
     this.isConnected = false;
     this.isConnecting = false;
   }
@@ -153,6 +178,11 @@ class SocketManager {
     this.heartbeatTimer = setInterval(() => {
       if (this.socket?.connected) {
         this.socket.emit('ping');
+        this.updateActivity();
+      } else if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        // 只在未达到最大重连次数时尝试重连
+        console.warn('[Socket] 心跳检测到断开，尝试重连');
+        this.reconnect();
       }
     }, this.heartbeatInterval);
   }
@@ -165,11 +195,74 @@ class SocketManager {
     }
   }
 
+  // 启动不活跃定时器
+  private startInactivityTimer() {
+    this.stopInactivityTimer();
+    this.inactivityTimer = setTimeout(() => {
+      const inactiveTime = Date.now() - this.lastActivityTime;
+      if (inactiveTime >= this.inactivityTimeout && this.refCount === 0) {
+        console.log('[Socket] 5分钟无活动，断开连接以节省资源');
+        this.disconnect();
+      }
+    }, this.inactivityTimeout);
+  }
+
+  // 停止不活跃定时器
+  private stopInactivityTimer() {
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+      this.inactivityTimer = null;
+    }
+  }
+
+  // 更新活动时间
+  private updateActivity() {
+    this.lastActivityTime = Date.now();
+    this.stopInactivityTimer(); // 有活动时停止不活跃定时器
+  }
+
+  // 监听页面可见性变化
+  private setupVisibilityListener() {
+    if (typeof document === 'undefined' || this.visibilityHandler) return;
+
+    this.visibilityHandler = () => {
+      if (document.hidden) {
+        console.log('[Socket] 页面隐藏');
+        // 页面隐藏时启动不活跃检测
+        this.startInactivityTimer();
+      } else {
+        console.log('[Socket] 页面可见');
+        this.updateActivity();
+
+        // 检查连接状态
+        if (!this.socket?.connected && this.reconnectAttempts < this.maxReconnectAttempts) {
+          console.warn('[Socket] 检测到断开，尝试重连');
+          this.reconnect();
+        } else if (this.socket?.connected) {
+          // 立即发送心跳确认连接
+          this.socket.emit('ping');
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', this.visibilityHandler);
+  }
+
+  // 移除可见性监听器
+  private removeVisibilityListener() {
+    if (this.visibilityHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
+  }
+
   // 手动重连（暴露给外部使用）
   reconnect() {
+    console.log('[Socket] 手动重连');
     this.reconnectAttempts = 0;
+    this.reconnectBackoff = 1;
     this.disconnect();
-    this.connect();
+    setTimeout(() => this.connect(), 100); // 延迟100ms再连接
   }
 
   // 监听事件（自动去重）
@@ -218,8 +311,11 @@ class SocketManager {
       if (callbacks) {
         callbacks.forEach((callback) => callback(data));
       }
+    } else if (this.socket?.connected) {
+      this.socket.emit(event, data);
+      this.updateActivity(); // 发送消息时更新活动时间
     } else {
-      this.socket?.emit(event, data);
+      console.warn('[Socket] 未连接，无法发送消息:', event);
     }
   }
 
@@ -255,8 +351,8 @@ export function useSocket() {
   }, []); // 空依赖，只执行一次
 
   // 使用 useCallback 缓存函数，避免子组件重渲染
-  const emit = useCallback((event: string, data?: any) => {
-    socketManager.emit(event, data);
+  const emit = useCallback((event: string, ...args: any[]) => {
+    socketManager.emit(event, ...args);
   }, []);
 
   const on = useCallback((event: string, callback: Function) => {

@@ -398,7 +398,7 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({ scrollPosition }) => 
               $isPlaying={currentTrack?.isPlaying}
               $hasCover={!!(currentTrack?.isPlaying && currentTrack.pic && !coverImageError)}
             >
-              {currentTrack?.isPlaying && currentTrack.pic && !coverImageError ? (
+              {currentTrack?.isPlaying && currentTrack.pic && currentTrack.pic.trim() && !coverImageError ? (
                 <img src={currentTrack.pic} alt="专辑封面" onError={() => setCoverImageError(true)} />
               ) : (
                 <FiMusic />
