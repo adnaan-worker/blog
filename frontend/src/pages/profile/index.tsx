@@ -1,11 +1,47 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAnimationEngine, SPRING_PRESETS } from '@/utils/ui/animation';
 import { SEO } from '@/components/common';
 import { Button } from 'adnaan-ui';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import { useClickOutside } from '@/hooks';
+
+// 动画关键帧
+const gradientFlow = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
+
+// 高级动态背景
+const PremiumBackground = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  background: linear-gradient(
+    -45deg,
+    var(--bg-primary),
+    rgba(var(--bg-secondary-rgb), 0.5),
+    rgba(var(--accent-rgb), 0.03),
+    var(--bg-primary)
+  );
+  background-size: 400% 400%;
+  animation: ${gradientFlow} 20s ease infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(var(--text-primary-rgb), 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+  }
+`;
 
 // 抽屉动画变体 - 使用 Spring 系统
 const drawerVariants = {
@@ -72,6 +108,12 @@ import {
   FiAlertCircle,
   FiMenu,
   FiUser,
+  FiSettings,
+  FiLock,
+  FiFolder,
+  FiTag,
+  FiShield,
+  FiLogOut,
 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { API } from '@/utils/api';
@@ -98,207 +140,295 @@ import {
   CategoryManagement,
   TagManagement,
   ProjectManagement,
+  ProfileHero,
 } from './modules';
 import type { EditProfileForm } from './modules/types';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAppDispatch } from '@/store';
 import { updateUser } from '@/store/modules/userSlice';
 
-const ProfileContainer = styled.div`
+// ==================== 核心布局容器 (Bento Style) ====================
+
+// 1. 全屏沉浸式容器
+const ProfileWrapper = styled.div`
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow-x: hidden;
+`;
+
+// 2. 布局容器 (Spatial HUD Layout) - 两列布局优化
+const LayoutContainer = styled.div`
+  display: grid;
+  grid-template-columns: 400px 1fr; /* 再次加宽左侧 */
+  gap: 2.5rem;
+  max-width: 1800px; /* 增加最大宽度 */
   margin: 0 auto;
-  min-height: calc(100vh - 120px);
+  padding: 2rem;
+  padding-bottom: 8rem;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 340px 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    padding-bottom: 7rem;
+  }
+`;
+
+// 3. 左侧身份塔 (Identity Tower) - 视觉重构
+const IdentityColumn = styled.div`
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+  max-height: calc(100vh - 4rem);
+  z-index: 10;
   width: 100%;
 
-  @media (min-width: 768px) {
-    padding: 2rem 5rem;
+  @media (max-width: 1024px) {
+    position: relative;
+    height: auto;
+    top: 0;
+    max-height: none;
   }
 `;
 
-// 新的现代布局
-const ModernLayout = styled.div`
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: 1fr;
+// 统一身份卡片
+const UnifiedIdentityCard = styled(motion.div)`
   position: relative;
-  isolation: isolate;
-
-  @media (min-width: 768px) {
-    grid-template-columns: 320px 1fr;
-  }
-
-  @media (min-width: 1200px) {
-    grid-template-columns: 320px 1fr 280px;
-  }
-`;
-
-// 左侧用户卡片区域 - 页面滚动时吸顶
-const UserSection = styled.div`
+  background: rgba(var(--bg-primary-rgb), 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 32px;
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  padding: 0; /* 移除 padding，由 ProfileHero 内部控制 */
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  position: -webkit-sticky;
-  position: sticky;
-  top: 90px; /* header高度 + 间距 */
-  align-self: flex-start;
-  max-height: calc(100vh - 110px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  will-change: transform;
-  z-index: 10;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
 
-  /* 自定义滚动条 */
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
-    border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
-  }
-
-  @media (max-width: 767px) {
-    display: none; /* 移动端完全隐藏 */
+  /* 顶部装饰光 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.08) 0%, transparent 100%);
+    z-index: 0;
+    pointer-events: none;
   }
 `;
 
-// 主内容区域 - 正常流动
-const MainContent = styled.div`
+// 4. 中央舞台 (Active Stage)
+const StageArea = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   min-width: 0;
-  min-height: calc(100vh - 200px);
-  width: 100%;
 `;
 
-// 右侧快捷操作区域 - 页面滚动时吸顶
-const QuickActionsSection = styled.div`
+// 6. 底部控制台 Dock (Control Dock) - 纯净版
+const ControlDock = styled(motion.div)`
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) !important; /* 强制居中 */
+  background: rgba(var(--bg-secondary-rgb), 0.4); /* 更通透的背景 */
+  backdrop-filter: blur(24px) saturate(180%); /* 增强毛玻璃效果 */
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.75rem;
+  border-radius: 24px;
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  position: -webkit-sticky;
-  position: sticky;
-  top: 90px; /* header高度 + 间距 */
-  align-self: flex-start;
-  max-height: calc(100vh - 110px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  will-change: transform;
-  z-index: 10;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow:
+    0 20px 40px -10px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  z-index: 1000;
+  width: auto;
+  max-width: 90vw;
 
-  /* 自定义滚动条 */
-  &::-webkit-scrollbar {
-    width: 4px;
+  /* 底部光效增强 */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 15%;
+    width: 70%;
+    height: 15px;
+    background: var(--accent-color);
+    filter: blur(30px);
+    opacity: 0.15;
+    border-radius: 50%;
+    z-index: -1;
   }
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  @media (max-width: 768px) {
+    bottom: 1.5rem;
+    padding: 0.5rem;
+    border-radius: 20px;
+    overflow-x: auto;
+    justify-content: flex-start; /* 移动端允许滚动 */
 
-  &::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
-    border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
-  }
-
-  @media (max-width: 1199px) {
-    display: none; /* 移动端和平板完全隐藏 */
-  }
-`;
-
-// 移动端快捷操作（在主内容顶部显示）
-const MobileQuickActions = styled.div`
-  display: block;
-  margin-bottom: 1.5rem;
-
-  @media (min-width: 1200px) {
-    display: none;
-  }
-`;
-
-// 卡片容器
-const Card = styled.div`
-  background: var(--bg-primary);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  transition: box-shadow 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-
-  [data-theme='dark'] & {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* 隐藏滚动条 */
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
     }
   }
 `;
 
-// 标签页容器
-const TabsContainer = styled(Card)`
-  margin-bottom: 0;
-  min-width: 0; /* 允许容器收缩 */
-  width: 100%; /* 占满父容器宽度 */
+const DockSeparator = styled.div`
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 0.25rem;
 `;
 
-const TabsList = styled.div`
+// 7. Dock 项目 - iOS 风格图标
+const DockItem = styled(motion.button)<{ active?: boolean }>`
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px; /* 更圆润 */
+  border: none;
+  background: ${(props) => (props.active ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(255, 255, 255, 0.03)')};
+  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
   display: flex;
-  background: var(--bg-secondary);
-  padding: 0.5rem;
-  gap: 0.25rem;
-  border-radius: 8px;
-  margin: 1rem;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  flex-shrink: 0;
+
+  /* 悬浮提示 Tooltip */
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    padding: 0.4rem 0.8rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 0.75rem;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(4px);
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    transform: translateY(-8px) scale(1.15); /* 放大更多 */
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+
+    /* 发光文字效果 */
+    text-shadow: 0 0 15px var(--accent-color);
+
+    &::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    svg {
+      transform: scale(1.1);
+    }
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  svg {
+    transition: transform 0.3s ease;
+  }
+`;
+
+// 高级卡片容器
+const Card = styled.div`
+  background: rgba(var(--bg-primary-rgb), 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(var(--border-rgb), 0.5);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.02),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+    border-color: rgba(var(--accent-rgb), 0.3);
+  }
+
+  [data-theme='dark'] & {
+    background: rgba(var(--bg-secondary-rgb), 0.4);
+    box-shadow:
+      0 4px 6px rgba(0, 0, 0, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.05) inset;
+
+    &:hover {
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+    }
+  }
+`;
+
+// 标签页容器 - 透明化
+const TabsContainer = styled.div`
+  margin-bottom: 1.5rem;
+  width: 100%;
+  position: sticky;
+  top: 70px; /* 吸顶位置 */
+  z-index: 20;
+  pointer-events: none; /* 让点击穿透到下方内容，除了TabsList */
+`;
+
+// 悬浮胶囊式 Tab 导航栏
+const TabsList = styled.div`
+  display: inline-flex;
+  align-items: center;
+  background: rgba(var(--bg-primary-rgb), 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 0.4rem;
+  gap: 0.4rem;
+  border-radius: 100px;
+  border: 1px solid rgba(var(--border-rgb), 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  pointer-events: auto; /* 恢复点击 */
+
   overflow-x: auto;
-  overflow-y: hidden;
-  width: calc(100% - 2rem); /* 减去左右margin */
-  min-width: 0; /* 允许收缩 */
-  min-height: 50px; /* 保持最小高度 */
   max-width: 100%;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   @media (max-width: 768px) {
-    margin: 0.75rem;
-    width: calc(100% - 1.5rem);
-    padding: 0.375rem;
-  }
-
-  @media (max-width: 480px) {
-    margin: 0.5rem;
-    width: calc(100% - 1rem);
-  }
-
-  /* 自定义滚动条 */
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
-  }
-
-  /* 滚动条悬浮时显示 */
-  &::-webkit-scrollbar-thumb:hover {
-    background: var(--text-tertiary);
+    width: 100%;
+    border-radius: 16px;
+    padding: 0.5rem;
+    margin: 0;
   }
 `;
 
@@ -364,90 +494,51 @@ const EmptyTabsHint = styled.span`
   }
 `;
 
-const TabButton = styled.button<{ active?: boolean }>`
+// 交互式 Tab 按钮
+const TabButton = styled(motion.button)<{ active?: boolean }>`
+  position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 1rem;
+  padding: 0.6rem 1.2rem;
   border: none;
-  background: ${(props) => (props.active ? 'var(--bg-primary)' : 'transparent')};
-  color: ${(props) => (props.active ? 'var(--text-primary)' : 'var(--text-secondary)')};
-  font-size: 0.875rem;
-  font-weight: ${(props) => (props.active ? '600' : '500')};
+  background: transparent;
+  color: ${(props) => (props.active ? 'var(--bg-primary)' : 'var(--text-secondary)')};
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: ${(props) => (props.active ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none')};
+  border-radius: 100px;
+  transition: color 0.2s ease;
   white-space: nowrap;
-  flex-shrink: 0;
-  min-width: fit-content;
-  max-width: 180px;
-  position: relative;
-  user-select: none;
+  z-index: 1;
+  outline: none;
 
-  @media (max-width: 768px) {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8125rem;
-    max-width: 160px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0.375rem 0.625rem;
-    font-size: 0.75rem;
-    gap: 0.375rem;
-    max-width: 140px;
-  }
-
-  /* 活动tab底部指示条 */
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%) scaleX(${(props) => (props.active ? '1' : '0')});
-    width: calc(100% - 1rem);
-    height: 2px;
-    background: var(--accent-color);
-    border-radius: 2px 2px 0 0;
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
-    @media (max-width: 480px) {
-      width: calc(100% - 0.5rem);
-    }
-  }
-
-  /* Tab标签文本溢出处理 */
-  > span:first-of-type {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 140px;
-
-    @media (max-width: 768px) {
-      max-width: 120px;
-    }
-
-    @media (max-width: 480px) {
-      max-width: 100px;
-    }
+  /* 图标样式 */
+  svg {
+    font-size: 1.1em;
   }
 
   &:hover {
-    background: ${(props) => (props.active ? 'var(--bg-primary)' : 'rgba(var(--accent-rgb), 0.08)')};
-    color: var(--text-primary);
-
-    &::after {
-      transform: translateX(-50%) scaleX(${(props) => (props.active ? '1' : '0.5')});
-    }
+    color: ${(props) => (props.active ? 'var(--bg-primary)' : 'var(--text-primary)')};
+    background: ${(props) => (props.active ? 'transparent' : 'rgba(var(--text-primary-rgb), 0.05)')};
   }
 
-  &:active {
-    transform: scale(0.98);
+  @media (max-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    flex: 1;
   }
+`;
 
-  [data-theme='dark'] & {
-    box-shadow: ${(props) => (props.active ? '0 1px 3px rgba(0, 0, 0, 0.2)' : 'none')};
-  }
+// 选中态背景滑块
+const ActiveTabBackground = styled(motion.div)`
+  position: absolute;
+  inset: 0;
+  background: var(--text-primary);
+  border-radius: 100px;
+  z-index: -1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 `;
 
 const CloseButton = styled.div`
@@ -929,11 +1020,131 @@ const TodoBadge = styled.div<{ variant?: 'primary' | 'warning' | 'error' }>`
   }};
 `;
 
+// ... (Controls Dock)
+
+// ==================== 新版仪表盘样式 ====================
+
+const DashboardGrid = styled(motion.div)`
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+`;
+
+const DashboardCard = styled(motion.div)<{ colSpan?: number; rowSpan?: number }>`
+  grid-column: span ${(props) => props.colSpan || 12};
+  grid-row: span ${(props) => props.rowSpan || 1};
+  background: rgba(var(--bg-secondary-rgb), 0.3);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  /* 悬浮光效 */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.5), transparent);
+    opacity: 0.5;
+  }
+
+  @media (max-width: 1200px) {
+    grid-column: span 12 !important; /* 小屏全宽 */
+  }
+`;
+
+const StatCardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  z-index: 1;
+  color: var(--text-primary); /* 确保文字颜色 */
+`;
+
+const StatHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 左对齐 */
+  gap: 1rem; /* 增加间距 */
+  margin-bottom: 1.5rem;
+
+  .icon-box {
+    width: 48px; /* 加大图标框 */
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(var(--accent-rgb), 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-color);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+`;
+
+const StatValue = styled.div`
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.03em;
+`;
+
+const StatTrend = styled.div<{ isPositive?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: ${(props) => (props.isPositive ? '#4caf50' : '#f44336')};
+  background: ${(props) => (props.isPositive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)')};
+  padding: 0.25rem 0.5rem;
+  border-radius: 100px;
+  width: fit-content;
+`;
+
+// 装饰背景圆
+const DecorCircle = styled.div<{ color?: string; size?: number; top?: string; right?: string }>`
+  position: absolute;
+  width: ${(props) => props.size || 200}px;
+  height: ${(props) => props.size || 200}px;
+  background: ${(props) => props.color || 'var(--accent-color)'};
+  top: ${(props) => props.top || '-50%'};
+  right: ${(props) => props.right || '-20%'};
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+`;
+
 // Tab类型定义
 interface Tab {
   id: string;
   label: string;
   closable: boolean;
+}
+
+interface TodoItemType {
+  id: string;
+  content: string;
+  time: string;
+  priority: 'high' | 'medium' | 'low';
+  link?: string;
 }
 
 const Profile: React.FC = () => {
@@ -979,6 +1190,8 @@ const Profile: React.FC = () => {
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+  const [publishTrend, setPublishTrend] = useState<{ date: string; count: number }[]>([]);
+  const [todoItems, setTodoItems] = useState<TodoItemType[]>([]);
 
   // 权限管理
   const { isAdmin, permissions } = useUserRole(user);
@@ -1098,12 +1311,25 @@ const Profile: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       const trendResponse = await API.user.getPublishTrend();
-      setPublishTrend(trendResponse.data || []);
+      // 转换趋势数据
+      const trendData = (trendResponse.data || []).map((item: any) => ({
+        date: item.month,
+        count: item.value,
+      }));
+      setPublishTrend(trendData);
 
       // 只有管理员才加载待办事项
       if (user && user.role === 'admin') {
         const todoResponse = await API.user.getAdminTodoItems();
-        setTodoItems(todoResponse.data || []);
+        // 转换待办事项数据
+        const todos = (todoResponse.data || []).map((item: any) => ({
+          id: item.id,
+          content: item.title || item.content,
+          time: item.time || item.date,
+          priority: item.priority || 'medium',
+          link: item.link,
+        }));
+        setTodoItems(todos);
       } else {
         setTodoItems([]);
       }
@@ -1440,13 +1666,8 @@ const Profile: React.FC = () => {
       title: '🏆 所有成就',
       content: <AchievementListModal achievements={achievements} />,
       width: 700,
-      size: 'large',
     });
   };
-
-  // 仪表盘数据
-  const [publishTrend, setPublishTrend] = useState<{ month: string; value: number }[]>([]);
-  const [todoItems, setTodoItems] = useState<{ id: string; title: string; count: number; type: string }[]>([]);
 
   // 标签页管理
   const addTab = (id: string, label: string, closable = true) => {
@@ -1542,122 +1763,168 @@ const Profile: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <DashboardContainer initial="hidden" animate="visible" variants={staggerContainerVariants}>
-            {/* 数据统计 */}
-            <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
+          <DashboardGrid initial="hidden" animate="visible" variants={staggerContainerVariants}>
+            {/* 1. 关键指标卡片 */}
+            {userStats.map((stat, index) => (
+              <DashboardCard
+                key={index}
+                colSpan={3}
+                variants={fadeInUpVariants}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                <DecorCircle color={stat.color} size={100} top="-20%" right="-20%" />
+                <StatCardContent>
+                  <StatHeader>
+                    <div className="icon-box">{stat.icon}</div>
+                    <div className="label">{stat.label}</div>
+                  </StatHeader>
+                  <div>
+                    <StatValue>{stat.value}</StatValue>
+                    {stat.trend && (
+                      <StatTrend isPositive={stat.trend.direction === 'up'}>
+                        <FiTrendingUp
+                          style={{ transform: stat.trend.direction === 'down' ? 'rotate(180deg)' : 'none' }}
+                        />
+                        {stat.trend.percentage}% 较上月
+                      </StatTrend>
+                    )}
+                  </div>
+                </StatCardContent>
+              </DashboardCard>
+            ))}
 
-            {/* 待办提醒 - 只对管理员显示 */}
-            {isAdmin && todoItems.length > 0 && (
-              <DashboardSection variants={fadeInUpVariants}>
-                <SectionHeader>
-                  <SectionTitle>
-                    <FiAlertCircle />
-                    待办提醒
-                  </SectionTitle>
-                </SectionHeader>
-                <TodoCard>
-                  <TodoList>
-                    {todoItems.map((item) => {
-                      const action = () => {
-                        if (item.id === 'pending-posts') {
-                          addTab('articles', '📰 文章管理');
-                        } else if (item.id === 'pending-comments') {
-                          addTab('comments', '💬 评论管理');
-                        }
-                      };
-                      return (
-                        <TodoItem key={item.id} onClick={action} variants={cardVariants} whileHover={{ x: 2 }}>
-                          <TodoContent>
-                            <TodoTitle>{item.title}</TodoTitle>
-                            <TodoMeta>需要处理</TodoMeta>
-                          </TodoContent>
-                          <TodoBadge variant={item.type as any}>{item.count} 项</TodoBadge>
-                        </TodoItem>
-                      );
-                    })}
-                  </TodoList>
-                </TodoCard>
-              </DashboardSection>
-            )}
-
-            {/* 数据趋势图表 - 总是显示，即使数据为0 */}
-            <DashboardSection variants={fadeInUpVariants}>
+            {/* 2. 数据趋势图表 */}
+            <DashboardCard colSpan={8} rowSpan={2} variants={fadeInUpVariants}>
               <SectionHeader>
                 <SectionTitle>
-                  <FiBarChart2 />
-                  内容发布趋势（最近6个月）
+                  <FiBarChart2 /> 内容发布趋势
                 </SectionTitle>
               </SectionHeader>
               {publishTrend.length > 0 ? (
-                <ChartCard>
+                <ChartCard style={{ background: 'transparent', border: 'none', padding: 0, boxShadow: 'none' }}>
                   <Chart>
                     {publishTrend.map((item, index) => {
-                      const maxValue = Math.max(...publishTrend.map((d) => d.value), 1);
-                      const heightPercent = item.value > 0 ? Math.max((item.value / maxValue) * 100, 5) : 0; // 至少5%的高度
+                      const maxValue = Math.max(...publishTrend.map((d) => d.count), 1);
+                      const heightPercent = item.count > 0 ? Math.max((item.count / maxValue) * 100, 5) : 0;
                       return (
                         <ChartBar
                           key={index}
                           height={heightPercent}
                           initial={{ scaleY: 0 }}
                           animate={{ scaleY: 1 }}
-                          transition={{
-                            duration: 0.5,
-                            delay: index * 0.05,
-                            ease: [0.25, 1, 0.5, 1],
+                          transition={{ delay: index * 0.05, duration: 0.5 }}
+                          title={`${item.date}: ${item.count}篇`}
+                          style={{
+                            background:
+                              'linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.2) 100%)',
                           }}
-                          title={`${item.month}: ${item.value}篇`}
                         />
                       );
                     })}
                   </Chart>
                   <ChartLabels>
                     {publishTrend.map((item, index) => (
-                      <span key={index}>{item.month}</span>
+                      <span key={index}>{item.date}</span>
                     ))}
                   </ChartLabels>
                 </ChartCard>
               ) : (
-                <ChartCard style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                  加载中...
-                </ChartCard>
+                <div
+                  style={{
+                    height: '200px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  暂无数据
+                </div>
               )}
-            </DashboardSection>
+            </DashboardCard>
 
-            {/* 最近活动 */}
-            <DashboardSection variants={fadeInUpVariants}>
+            {/* 3. 待办事项 */}
+            <DashboardCard colSpan={4} rowSpan={2} variants={fadeInUpVariants}>
               <SectionHeader>
                 <SectionTitle>
-                  <FiClock />
-                  最近动态
+                  <FiAlertCircle /> 待办提醒
                 </SectionTitle>
+                {todoItems.length > 0 && <TodoBadge>{todoItems.length}</TodoBadge>}
               </SectionHeader>
-              <ActivityFeed
-                activities={activities as any}
-                onActivityClick={handleActivityClick}
-                onRefresh={handleRefreshActivities}
-                onLoadMore={handleLoadMoreActivities}
-                hasMore={hasMoreActivities}
-                isLoading={isActivitiesLoading}
-                isRefreshing={isRefreshing}
-              />
-            </DashboardSection>
 
-            {/* 移动端显示成就徽章 */}
-            {isMobile && (
-              <DashboardSection variants={fadeInUpVariants}>
-                <SectionHeader>
-                  <SectionTitle>成就徽章</SectionTitle>
-                </SectionHeader>
-                <Card>
-                  <AchievementBadges
-                    achievements={achievements}
-                    onBadgeClick={handleBadgeClick}
-                    onViewAll={handleViewAllAchievements}
-                  />
-                </Card>
-              </DashboardSection>
-            )}
-          </DashboardContainer>
+              <div style={{ flex: 1, overflowY: 'auto', marginTop: '1rem', paddingRight: '0.5rem' }}>
+                {todoItems.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    {todoItems.map((item) => (
+                      <TodoItem
+                        key={item.id}
+                        onClick={() => item.link && navigate(item.link)}
+                        variants={cardVariants}
+                        whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                        style={{ border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}
+                      >
+                        <TodoContent>
+                          <TodoTitle>{item.content}</TodoTitle>
+                          <TodoMeta>{item.time}</TodoMeta>
+                        </TodoContent>
+                        <TodoBadge variant={item.priority === 'high' ? 'error' : 'primary'}>
+                          {item.priority === 'high' ? '高' : '待办'}
+                        </TodoBadge>
+                      </TodoItem>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <FiZap size={24} style={{ opacity: 0.5 }} />
+                    <span>太棒了，所有事项已完成！</span>
+                  </div>
+                )}
+              </div>
+            </DashboardCard>
+
+            {/* 4. 最近动态 */}
+            <DashboardCard
+              colSpan={12}
+              variants={fadeInUpVariants}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                boxShadow: 'none',
+                backdropFilter: 'none',
+                overflow: 'visible', // 允许内容溢出
+              }}
+            >
+              {/* 尝试通过样式穿透隐藏 ActivityFeed 内部的标题，如果它有特定的类名 */}
+              <div
+                style={{
+                  // 这里可以加一些 CSS 变量或者样式来影响子组件
+                  ['--card-bg' as any]: 'rgba(var(--bg-secondary-rgb), 0.3)',
+                  ['--card-border' as any]: '1px solid rgba(255, 255, 255, 0.05)',
+                }}
+              >
+                <ActivityFeed
+                  activities={activities as any}
+                  onActivityClick={handleActivityClick}
+                  onRefresh={handleRefreshActivities}
+                  onLoadMore={handleLoadMoreActivities}
+                  hasMore={hasMoreActivities}
+                  isLoading={isActivitiesLoading}
+                  isRefreshing={isRefreshing}
+                />
+              </div>
+            </DashboardCard>
+          </DashboardGrid>
         );
 
       case 'notes':
@@ -1712,6 +1979,49 @@ const Profile: React.FC = () => {
     }
   };
 
+  // 获取快捷操作图标 (增强匹配)
+  const getQuickActionIcon = (actionId: string, label: string, defaultIcon: string) => {
+    // 优先匹配 ID
+    switch (actionId) {
+      case 'view-articles':
+        return <FiFileText />;
+      case 'view-notes':
+        return <FiEdit />;
+      case 'view-comments':
+        return <FiMessageSquare />;
+      case 'view-users':
+        return <FiUsers />;
+      case 'view-tags':
+        return <FiTag />;
+      case 'view-categories':
+        return <FiFolder />;
+      case 'view-projects':
+        return <FiLayers />;
+      case 'edit-site-settings':
+        return <FiSettings />;
+      case 'view-security':
+        return <FiShield />;
+      case 'logout':
+        return <FiLogOut />;
+    }
+
+    // 最后的 fallback
+    return <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>{defaultIcon}</span>;
+  };
+
+  // 动作到 Tab ID 的映射，用于 Dock 高亮
+  const ACTION_TO_TAB_MAP: Record<string, string> = {
+    'view-articles': 'articles',
+    'view-notes': 'notes',
+    'view-comments': 'comments',
+    'view-users': 'users',
+    'view-tags': 'tags',
+    'view-categories': 'categories',
+    'view-projects': 'projects',
+    'edit-site-settings': 'site-settings',
+    'view-security': 'security',
+  };
+
   return (
     <>
       <SEO
@@ -1722,106 +2032,111 @@ const Profile: React.FC = () => {
         index={false}
         follow={false}
       />
-      <ProfileContainer>
-        <ModernLayout>
-          {/* 左侧用户信息区域 */}
-          <UserSection>
-            <Card>
-              {user && (
-                <UserInfoCard
+      <ProfileWrapper>
+        <LayoutContainer>
+          {/* 1. 左侧身份塔 (Identity Tower) - 一体化设计 */}
+          <IdentityColumn>
+            {user && (
+              <UnifiedIdentityCard
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                {/* 个人资料区 - 集成了成就展示 */}
+                <ProfileHero
                   user={user}
+                  achievements={achievements}
                   onEditProfile={() => setIsEditModalOpen(true)}
                   onAvatarChange={handleAvatarChange}
                   isLoading={isUserLoading}
                 />
-              )}
-            </Card>
-
-            {/* 成就徽章 */}
-            {!isMobile && (
-              <Card>
-                <AchievementBadges
-                  achievements={achievements}
-                  onBadgeClick={handleBadgeClick}
-                  onViewAll={handleViewAllAchievements}
-                  maxDisplay={6}
-                />
-              </Card>
+              </UnifiedIdentityCard>
             )}
-          </UserSection>
+          </IdentityColumn>
 
-          {/* 主内容区域 */}
-          <MainContent>
-            {/* 标签页容器 - 始终显示，让用户知道当前位置 */}
-            <TabsContainer>
-              <TabsList>
-                {openTabs.length === 0 ? (
-                  /* 空状态提示 */
-                  <EmptyTabsState>
-                    <EmptyTabsIcon>
-                      <FiLayers size={20} />
-                    </EmptyTabsIcon>
-                    <EmptyTabsText>
-                      <EmptyTabsTitle>暂无打开的标签页</EmptyTabsTitle>
-                      <EmptyTabsHint>
-                        <FiChevronRight size={14} />
-                        使用右侧快捷操作打开功能
-                      </EmptyTabsHint>
-                    </EmptyTabsText>
-                  </EmptyTabsState>
-                ) : (
-                  openTabs.map((tab) => (
-                    <TabButton
-                      key={tab.id}
-                      active={activeTab === tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
-                      title={tab.label}
-                    >
-                      <span>{tab.label}</span>
-                      {tab.closable && (
-                        <CloseButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            closeTab(tab.id);
-                          }}
-                        >
-                          <FiX size={12} />
-                        </CloseButton>
-                      )}
-                    </TabButton>
-                  ))
-                )}
-              </TabsList>
-            </TabsContainer>
-
-            {/* 内容区域 */}
+          {/* 2. 中央舞台 (Active Stage) */}
+          <StageArea>
+            {/* 动态内容区 - 完全由 activeTab 控制 */}
             <TabContent>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
                   style={{ width: '100%', minHeight: 'inherit' }}
                 >
-                  {activeTab === 'dashboard' ? renderTabContent() : <Card>{renderTabContent()}</Card>}
+                  {activeTab === 'dashboard' ? (
+                    renderTabContent()
+                  ) : (
+                    <Card style={{ minHeight: '600px' }}>{renderTabContent()}</Card>
+                  )}
                 </motion.div>
               </AnimatePresence>
             </TabContent>
-          </MainContent>
+          </StageArea>
+        </LayoutContainer>
 
-          {/* 右侧快捷操作区域（大屏显示） */}
-          {permissions.quickActions.length > 0 && (
-            <QuickActionsSection>
-              <Card>
-                <QuickActions onAction={handleQuickAction} actions={permissions.quickActions} />
-              </Card>
-            </QuickActionsSection>
-          )}
-        </ModernLayout>
+        {/* 4. 底部控制台 Dock (Control Dock) */}
+        {!isMobile && (
+          <ControlDock
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5, ...SPRING_PRESETS.bouncy }}
+          >
+            {/* 仪表盘 (Home) */}
+            <DockItem
+              onClick={() => setActiveTab('dashboard')}
+              active={activeTab === 'dashboard'}
+              data-tooltip="仪表盘"
+              whileHover={{ scale: 1.1, y: -5 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FiBarChart2 />
+            </DockItem>
 
+            <DockSeparator />
+
+            {/* 快捷操作区 */}
+            {permissions.quickActions.map((action) => {
+              // 判断是否激活：当前 Tab 等于该动作映射的 Tab
+              const isActive = activeTab === ACTION_TO_TAB_MAP[action.action];
+
+              return (
+                <DockItem
+                  key={action.id}
+                  onClick={() => handleQuickAction(action.action)}
+                  active={isActive}
+                  data-tooltip={action.label}
+                  whileHover={{ scale: 1.1, y: -5 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  {getQuickActionIcon(action.action, action.label, action.icon)}
+
+                  {/* 激活指示点 */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="dock-active-dot"
+                      style={{
+                        position: 'absolute',
+                        bottom: -4,
+                        width: 4,
+                        height: 4,
+                        borderRadius: '50%',
+                        background: 'var(--accent-color)',
+                      }}
+                    />
+                  )}
+                </DockItem>
+              );
+            })}
+
+            {/* 退出登录按钮 (如果 quickActions 里没有，可以单独加，但目前看来 permissions 里应该会有) */}
+          </ControlDock>
+        )}
+
+        {/* 弹窗和移动端抽屉保持不变 ... */}
         {user && (
           <EditProfileModal
             isOpen={isEditModalOpen}
@@ -1832,133 +2147,86 @@ const Profile: React.FC = () => {
           />
         )}
 
-        {/* 移动端侧边箭头按钮 */}
+        {/* 移动端适配逻辑... (保持原有逻辑，稍作调整以适应新结构) */}
         {isMobile && (
           <>
-            {/* 左侧箭头按钮 - 个人资料 */}
-            <SideArrowButton
-              position="left"
-              onClick={() => setLeftDrawerOpen(true)}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 0.7, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              whileHover={{ opacity: 1 }}
-              whileTap={{ scale: 0.95 }}
+            {/* 移动端底部导航栏 (替代 Dock) */}
+            <div
+              style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                background: 'var(--bg-primary)',
+                borderTop: '1px solid var(--border-color)',
+                padding: '0.5rem',
+                display: 'flex',
+                justifyContent: 'space-around',
+                zIndex: 100,
+              }}
             >
-              <FiChevronRight />
-            </SideArrowButton>
+              <Button variant="ghost" onClick={() => setLeftDrawerOpen(true)}>
+                <FiUser />
+              </Button>
+              <Button variant="ghost" onClick={() => setActiveTab('dashboard')}>
+                <FiBarChart2 />
+              </Button>
+              {permissions.quickActions.length > 0 && (
+                <Button
+                  variant="primary"
+                  size="small"
+                  style={{ borderRadius: '50%', width: 40, height: 40, padding: 0 }}
+                  onClick={() => setRightDrawerOpen(true)}
+                >
+                  <FiZap />
+                </Button>
+              )}
+            </div>
 
-            {/* 右侧箭头按钮 - 快捷操作 */}
-            {permissions.quickActions.length > 0 && (
-              <SideArrowButton
-                position="right"
-                onClick={() => setRightDrawerOpen(true)}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 0.7, x: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                whileHover={{ opacity: 1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <FiChevronLeft />
-              </SideArrowButton>
-            )}
+            {/* 移动端抽屉... */}
+            <AnimatePresence>
+              {leftDrawerOpen && (
+                <>
+                  <DrawerOverlay onClick={() => setLeftDrawerOpen(false)} />
+                  <Drawer position="left" initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}>
+                    <DrawerHeader>
+                      <DrawerTitle>个人资料</DrawerTitle>
+                      <FiX onClick={() => setLeftDrawerOpen(false)} />
+                    </DrawerHeader>
+                    {user && (
+                      <UserInfoCard
+                        user={user}
+                        onEditProfile={() => setIsEditModalOpen(true)}
+                        onAvatarChange={handleAvatarChange}
+                      />
+                    )}
+                  </Drawer>
+                </>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {rightDrawerOpen && (
+                <>
+                  <DrawerOverlay onClick={() => setRightDrawerOpen(false)} />
+                  <Drawer position="right" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}>
+                    <DrawerHeader>
+                      <DrawerTitle>快捷操作</DrawerTitle>
+                      <FiX onClick={() => setRightDrawerOpen(false)} />
+                    </DrawerHeader>
+                    <QuickActions
+                      onAction={(action) => {
+                        setRightDrawerOpen(false);
+                        handleQuickAction(action);
+                      }}
+                      actions={permissions.quickActions}
+                    />
+                  </Drawer>
+                </>
+              )}
+            </AnimatePresence>
           </>
         )}
-
-        {/* 左侧抽屉 - 个人资料 */}
-        <AnimatePresence>
-          {leftDrawerOpen && isMobile && (
-            <>
-              <DrawerOverlay
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={overlayVariants}
-                onClick={() => setLeftDrawerOpen(false)}
-              />
-              <Drawer
-                position="left"
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={drawerVariants.left}
-                data-modal-body
-              >
-                <DrawerHeader>
-                  <DrawerTitle>
-                    <FiUser />
-                    个人资料
-                  </DrawerTitle>
-                  <DrawerCloseButton onClick={() => setLeftDrawerOpen(false)}>
-                    <FiX />
-                  </DrawerCloseButton>
-                </DrawerHeader>
-
-                {user && (
-                  <UserInfoCard
-                    user={user}
-                    onEditProfile={() => {
-                      setLeftDrawerOpen(false);
-                      setIsEditModalOpen(true);
-                    }}
-                    onAvatarChange={handleAvatarChange}
-                    isLoading={isUserLoading}
-                  />
-                )}
-
-                {/* 成就徽章 */}
-                <div>
-                  <AchievementBadges
-                    achievements={achievements}
-                    onBadgeClick={handleBadgeClick}
-                    onViewAll={handleViewAllAchievements}
-                  />
-                </div>
-              </Drawer>
-            </>
-          )}
-        </AnimatePresence>
-
-        {/* 右侧抽屉 - 快捷操作 */}
-        <AnimatePresence>
-          {rightDrawerOpen && isMobile && permissions.quickActions.length > 0 && (
-            <>
-              <DrawerOverlay
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={overlayVariants}
-                onClick={() => setRightDrawerOpen(false)}
-              />
-              <Drawer
-                position="right"
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={drawerVariants.right}
-                data-modal-body
-              >
-                <DrawerHeader>
-                  <DrawerTitle>
-                    <FiZap />
-                    快捷操作
-                  </DrawerTitle>
-                  <DrawerCloseButton onClick={() => setRightDrawerOpen(false)}>
-                    <FiX />
-                  </DrawerCloseButton>
-                </DrawerHeader>
-
-                <QuickActions
-                  onAction={(action: string) => {
-                    setRightDrawerOpen(false);
-                    handleQuickAction(action);
-                  }}
-                  actions={permissions.quickActions}
-                />
-              </Drawer>
-            </>
-          )}
-        </AnimatePresence>
 
         {/* 右键菜单 */}
         {contextMenu && (
@@ -1973,17 +2241,13 @@ const Profile: React.FC = () => {
               <FiXCircle size={14} />
               关闭其他标签
             </ContextMenuItem>
-            <ContextMenuItem onClick={handleCloseRightTabs}>
-              <FiChevronsRight size={14} />
-              关闭右侧标签
-            </ContextMenuItem>
             <ContextMenuItem danger onClick={handleCloseAllTabs}>
               <FiTrash2 size={14} />
               关闭所有标签
             </ContextMenuItem>
           </ContextMenu>
         )}
-      </ProfileContainer>
+      </ProfileWrapper>
     </>
   );
 };

@@ -39,39 +39,114 @@ interface QuickActionsProps {
   onAction?: (actionId: string) => void;
 }
 
-// 内容容器（不包含边框和背景，因为外层已有Card）
+// 内容容器
 const Container = styled.div`
   padding: 1.5rem;
+  position: relative;
+  z-index: 1;
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  letter-spacing: -0.01em;
 
   &::before {
     content: '⚡';
-    font-size: 1.2rem;
+    font-size: 1.4rem;
+    filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.5));
   }
 `;
 
 const ActionsList = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.875rem;
 `;
 
-const ActionButton = styled(Button)`
-  justify-content: flex-start;
-  text-align: left;
+// 高级操作卡片
+const ActionCard = styled(motion.div)`
+  position: relative;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.05) 0%, rgba(var(--accent-rgb), 0.02) 100%);
+  border: 1px solid rgba(var(--accent-rgb), 0.12);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
 
-  svg {
-    flex-shrink: 0;
+  /* 图标容器 */
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  /* 悬浮光效 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.1), transparent);
+    transition: left 0.5s ease;
   }
+
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.15);
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.08) 0%, rgba(var(--accent-rgb), 0.04) 100%);
+
+    &::before {
+      left: 100%;
+    }
+
+    .action-icon {
+      transform: scale(1.1) rotate(5deg);
+      color: var(--accent-color);
+    }
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  [data-theme='dark'] & {
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.08) 0%, rgba(var(--accent-rgb), 0.03) 100%);
+    border-color: rgba(var(--accent-rgb), 0.2);
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.12) 0%, rgba(var(--accent-rgb), 0.06) 100%);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+  }
+`;
+
+const ActionIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--accent-rgb), 0.1);
+  border-radius: 12px;
+  color: var(--accent-color);
+  font-size: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  flex-shrink: 0;
+`;
+
+const ActionLabel = styled.div`
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
 `;
 
 const Divider = styled.div`
@@ -114,18 +189,19 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ actions, onAction })
       <SectionTitle>快捷操作</SectionTitle>
 
       <ActionsList>
-        {convertedActions.map((action) => (
-          <ActionButton
+        {convertedActions.map((action, index) => (
+          <ActionCard
             key={action.id}
-            variant={action.variant || 'outline'}
-            size="small"
-            fullWidth
-            leftIcon={action.icon}
             onClick={action.onClick}
-            disabled={action.disabled}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.05, type: 'spring', stiffness: 200, damping: 20 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            {action.label}
-          </ActionButton>
+            <ActionIcon className="action-icon">{action.icon}</ActionIcon>
+            <ActionLabel>{action.label}</ActionLabel>
+          </ActionCard>
         ))}
       </ActionsList>
     </Container>
