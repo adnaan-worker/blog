@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { AnimatePresence } from 'framer-motion';
@@ -78,6 +78,29 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
   const navigate = useNavigate();
   const [showFilters, setShowFilters] = useState(false);
 
+  // 使用 useCallback 包装 fetchFunction，避免每次渲染时创建新的函数引用
+  const fetchNotes = useCallback(async (params: NoteParams) => {
+    // 使用个人中心专用接口：管理员看所有，普通用户看自己的
+    const response = await API.note.getMyNotes(params);
+    return {
+      success: response.success,
+      code: response.code,
+      message: response.message,
+      data: response.data,
+      meta: {
+        pagination: response.meta.pagination || {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+        timestamp: response.meta.timestamp,
+      },
+    };
+  }, []);
+
   // 使用通用管理页面Hook
   const {
     items: notes,
@@ -89,27 +112,7 @@ const NoteManagement: React.FC<NoteManagementProps> = ({ className }) => {
     search,
     filter,
   } = useManagementPage<Note>({
-    fetchFunction: async (params: NoteParams) => {
-      // 使用个人中心专用接口：管理员看所有，普通用户看自己的
-      const response = await API.note.getMyNotes(params);
-      return {
-        success: response.success,
-        code: response.code,
-        message: response.message,
-        data: response.data,
-        meta: {
-          pagination: response.meta.pagination || {
-            page: 1,
-            limit: 10,
-            total: 0,
-            totalPages: 1,
-            hasNext: false,
-            hasPrev: false,
-          },
-          timestamp: response.meta.timestamp,
-        },
-      };
-    },
+    fetchFunction: fetchNotes,
     initialParams: {
       keyword: '',
       orderBy: 'createdAt',

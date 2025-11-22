@@ -11,7 +11,6 @@ interface SiteSettingsManagementProps {
 }
 
 const Container = styled.div`
-  padding: 1.5rem;
   max-width: 900px;
   margin: 0 auto;
 `;
@@ -21,8 +20,8 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -35,23 +34,30 @@ const HeaderLeft = styled.div``;
 
 const Title = styled.h2`
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.02em;
 `;
 
 const Subtitle = styled.p`
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
-  margin: 0.25rem 0 0 0;
+  margin: 0.5rem 0 0 0;
 `;
 
 const Section = styled.div`
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: rgba(var(--bg-tertiary-rgb), 0.2);
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  border-radius: 20px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(var(--bg-tertiary-rgb), 0.3);
+    border-color: rgba(var(--border-rgb), 0.2);
+  }
 
   &:last-child {
     margin-bottom: 0;

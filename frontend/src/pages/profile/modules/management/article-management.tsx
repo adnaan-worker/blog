@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -54,6 +54,30 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
   const navigate = useNavigate();
   const [showFilters, setShowFilters] = useState(false);
 
+  // 使用 useCallback 包装 fetchFunction，避免每次渲染时创建新的函数引用
+  const fetchArticles = useCallback(async (params: ArticleParams) => {
+    // 使用个人中心专用接口：管理员看所有，普通用户看自己的
+    const response = await API.article.getMyArticles(params);
+    // 转换 API 响应格式以匹配 hook 期望的格式
+    return {
+      success: response.success,
+      code: response.code,
+      message: response.message,
+      data: response.data,
+      meta: {
+        pagination: response.meta.pagination || {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+        timestamp: response.meta.timestamp,
+      },
+    };
+  }, []);
+
   // 使用通用管理页面Hook
   const {
     items: articles,
@@ -65,28 +89,7 @@ const ArticleManagement: React.FC<ArticleManagementProps> = ({ className }) => {
     search,
     filter,
   } = useManagementPage<Article>({
-    fetchFunction: async (params: ArticleParams) => {
-      // 使用个人中心专用接口：管理员看所有，普通用户看自己的
-      const response = await API.article.getMyArticles(params);
-      // 转换 API 响应格式以匹配 hook 期望的格式
-      return {
-        success: response.success,
-        code: response.code,
-        message: response.message,
-        data: response.data,
-        meta: {
-          pagination: response.meta.pagination || {
-            page: 1,
-            limit: 10,
-            total: 0,
-            totalPages: 1,
-            hasNext: false,
-            hasPrev: false,
-          },
-          timestamp: response.meta.timestamp,
-        },
-      };
-    },
+    fetchFunction: fetchArticles,
     initialParams: {
       keyword: '',
       status: undefined,

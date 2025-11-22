@@ -52,6 +52,28 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({ className }) => {
   // 滚动锁定管理
   useModalScrollLock(showEditModal || showSyncModal);
 
+  // 使用 useCallback 包装 fetchFunction，避免每次渲染时创建新的函数引用
+  const fetchProjects = useCallback(async (params: ProjectParams) => {
+    const response = await API.project.getProjects(params);
+    return {
+      success: response.success,
+      code: response.code,
+      message: response.message,
+      data: response.data,
+      meta: {
+        pagination: response.meta.pagination || {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+        timestamp: response.meta.timestamp,
+      },
+    };
+  }, []);
+
   // 使用通用管理页面Hook
   const {
     items: projects,
@@ -63,26 +85,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({ className }) => {
     search,
     filter,
   } = useManagementPage<Project>({
-    fetchFunction: async (params: ProjectParams) => {
-      const response = await API.project.getProjects(params);
-      return {
-        success: response.success,
-        code: response.code,
-        message: response.message,
-        data: response.data,
-        meta: {
-          pagination: response.meta.pagination || {
-            page: 1,
-            limit: 10,
-            total: 0,
-            totalPages: 1,
-            hasNext: false,
-            hasPrev: false,
-          },
-          timestamp: response.meta.timestamp,
-        },
-      };
-    },
+    fetchFunction: fetchProjects,
     initialParams: {
       keyword: '',
       status: undefined,

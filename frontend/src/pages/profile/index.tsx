@@ -1,90 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAnimationEngine, SPRING_PRESETS } from '@/utils/ui/animation';
 import { SEO } from '@/components/common';
 import { Button } from 'adnaan-ui';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
-import { useClickOutside } from '@/hooks';
-
-// 动画关键帧
-const gradientFlow = keyframes`
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-`;
-
-// 高级动态背景
-const PremiumBackground = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: -1;
-  background: linear-gradient(
-    -45deg,
-    var(--bg-primary),
-    rgba(var(--bg-secondary-rgb), 0.5),
-    rgba(var(--accent-rgb), 0.03),
-    var(--bg-primary)
-  );
-  background-size: 400% 400%;
-  animation: ${gradientFlow} 20s ease infinite;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(rgba(var(--text-primary-rgb), 0.03) 1px, transparent 1px);
-    background-size: 24px 24px;
-    mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
-  }
-`;
-
-// 抽屉动画变体 - 使用 Spring 系统
-const drawerVariants = {
-  left: {
-    hidden: { x: '-100%', opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        ...SPRING_PRESETS.stiff,
-        opacity: { ...SPRING_PRESETS.stiff, damping: 50 },
-      },
-    },
-    exit: {
-      x: '-100%',
-      opacity: 0,
-      transition: SPRING_PRESETS.precise,
-    },
-  },
-  right: {
-    hidden: { x: '100%', opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        ...SPRING_PRESETS.stiff,
-        opacity: { ...SPRING_PRESETS.stiff, damping: 50 },
-      },
-    },
-    exit: {
-      x: '100%',
-      opacity: 0,
-      transition: SPRING_PRESETS.precise,
-    },
-  },
-};
-
-// 遮罩层动画变体 - 使用 Spring
-const overlayVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { ...SPRING_PRESETS.stiff, damping: 60 } },
-  exit: { opacity: 0, transition: { ...SPRING_PRESETS.stiff, damping: 60 } },
-};
 
 import {
   FiFileText,
@@ -98,34 +19,76 @@ import {
   FiX,
   FiXCircle,
   FiChevronsRight,
-  FiChevronRight,
-  FiChevronLeft,
-  FiTrash2,
-  FiLayers,
-  FiZap,
-  FiBarChart2,
-  FiClock,
-  FiAlertCircle,
   FiMenu,
-  FiUser,
-  FiSettings,
-  FiLock,
-  FiFolder,
-  FiTag,
-  FiShield,
   FiLogOut,
+  FiGrid,
+  FiList,
+  FiActivity,
+  FiClock,
+  FiSettings,
+  FiUser,
+  FiBarChart2,
+  FiZap,
+  FiAlertCircle,
+  FiTag,
+  FiFolder,
+  FiLayers,
+  FiShield,
+  FiTrash2,
 } from 'react-icons/fi';
+
 import { useNavigate } from 'react-router-dom';
+
+// 动作到 Tab ID 的映射，用于 Dock 高亮
+const ACTION_TO_TAB_MAP: Record<string, string> = {
+  'view-articles': 'articles',
+  'view-notes': 'notes',
+  'view-comments': 'comments',
+  'view-users': 'users',
+  'view-tags': 'tags',
+  'view-categories': 'categories',
+  'view-projects': 'projects',
+  'edit-site-settings': 'site-settings',
+  'view-security': 'security',
+};
+
+// 获取快捷操作图标 (增强匹配)
+const getQuickActionIcon = (actionId: string, label: string, defaultIcon: string) => {
+  // 优先匹配 ID
+  switch (actionId) {
+    case 'view-articles':
+      return <FiFileText />;
+    case 'view-notes':
+      return <FiEdit />;
+    case 'view-comments':
+      return <FiMessageSquare />;
+    case 'view-users':
+      return <FiUsers />;
+    case 'view-tags':
+      return <FiTag />;
+    case 'view-categories':
+      return <FiFolder />;
+    case 'view-projects':
+      return <FiLayers />;
+    case 'edit-site-settings':
+      return <FiSettings />;
+    case 'view-security':
+      return <FiShield />;
+    case 'logout':
+      return <FiLogOut />;
+  }
+
+  // 最后的 fallback
+  return <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>{defaultIcon}</span>;
+};
 import { API } from '@/utils/api';
 import type { UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings } from '@/types';
 import { storage } from '@/utils';
 import { useModalScrollLock } from '@/hooks';
 import {
   UserInfoCard,
-  DataStatsGrid,
   ActivityFeed,
   QuickActions,
-  AchievementBadges,
   AchievementListModal,
   EditProfileModal,
   NoteManagement,
@@ -390,175 +353,6 @@ const Card = styled.div`
     &:hover {
       box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
     }
-  }
-`;
-
-// 标签页容器 - 透明化
-const TabsContainer = styled.div`
-  margin-bottom: 1.5rem;
-  width: 100%;
-  position: sticky;
-  top: 70px; /* 吸顶位置 */
-  z-index: 20;
-  pointer-events: none; /* 让点击穿透到下方内容，除了TabsList */
-`;
-
-// 悬浮胶囊式 Tab 导航栏
-const TabsList = styled.div`
-  display: inline-flex;
-  align-items: center;
-  background: rgba(var(--bg-primary-rgb), 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 0.4rem;
-  gap: 0.4rem;
-  border-radius: 100px;
-  border: 1px solid rgba(var(--border-rgb), 0.6);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  pointer-events: auto; /* 恢复点击 */
-
-  overflow-x: auto;
-  max-width: 100%;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  @media (max-width: 768px) {
-    width: 100%;
-    border-radius: 16px;
-    padding: 0.5rem;
-    margin: 0;
-  }
-`;
-
-// 空状态容器
-const EmptyTabsState = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 1rem;
-  gap: 0.75rem;
-`;
-
-const EmptyTabsIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1) 0%, rgba(var(--accent-rgb), 0.05) 100%);
-  color: var(--accent-color);
-
-  svg {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
-  }
-`;
-
-const EmptyTabsText = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-`;
-
-const EmptyTabsTitle = styled.span`
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-`;
-
-const EmptyTabsHint = styled.span`
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-
-  svg {
-    flex-shrink: 0;
-  }
-`;
-
-// 交互式 Tab 按钮
-const TabButton = styled(motion.button)<{ active?: boolean }>`
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
-  border: none;
-  background: transparent;
-  color: ${(props) => (props.active ? 'var(--bg-primary)' : 'var(--text-secondary)')};
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 100px;
-  transition: color 0.2s ease;
-  white-space: nowrap;
-  z-index: 1;
-  outline: none;
-
-  /* 图标样式 */
-  svg {
-    font-size: 1.1em;
-  }
-
-  &:hover {
-    color: ${(props) => (props.active ? 'var(--bg-primary)' : 'var(--text-primary)')};
-    background: ${(props) => (props.active ? 'transparent' : 'rgba(var(--text-primary-rgb), 0.05)')};
-  }
-
-  @media (max-width: 768px) {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-    flex: 1;
-  }
-`;
-
-// 选中态背景滑块
-const ActiveTabBackground = styled(motion.div)`
-  position: absolute;
-  inset: 0;
-  background: var(--text-primary);
-  border-radius: 100px;
-  z-index: -1;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-`;
-
-const CloseButton = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  margin-left: 0.5rem;
-  background: transparent;
-  color: var(--text-secondary);
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(var(--error-color-rgb), 0.2);
-    color: var(--error-color);
   }
 `;
 
@@ -1209,26 +1003,6 @@ const Profile: React.FC = () => {
     const savedActiveTab = storage.local.get<string>('profile_active_tab');
     return savedActiveTab || 'dashboard';
   });
-  const [openTabs, setOpenTabs] = useState<Tab[]>(() => {
-    const savedTabs = storage.local.get<Tab[]>('profile_open_tabs');
-    const defaultTab = { id: 'dashboard', label: '🏠 仪表盘', closable: false };
-
-    // 如果有保存的 tabs 且不为空，使用保存的
-    if (savedTabs && savedTabs.length > 0) {
-      return savedTabs;
-    }
-
-    // 否则使用权限中的 tabs，如果也为空，至少返回仪表盘
-    return permissions.visibleTabs.length > 0 ? permissions.visibleTabs : [defaultTab];
-  });
-
-  // 右键菜单状态
-  const [contextMenu, setContextMenu] = useState<{
-    visible: boolean;
-    x: number;
-    y: number;
-    tabId: string;
-  } | null>(null);
 
   // 分页状态
   const [activitiesPage, setActivitiesPage] = useState(1);
@@ -1260,55 +1034,25 @@ const Profile: React.FC = () => {
   // 滚动锁定管理 - 统一管理所有弹窗和抽屉
   useModalScrollLock(isEditModalOpen || leftDrawerOpen || rightDrawerOpen);
 
-  // 确保权限加载后至少有一个仪表盘 tab
-  useEffect(() => {
-    if (permissions.visibleTabs.length > 0 && openTabs.length === 0) {
-      setOpenTabs(permissions.visibleTabs);
-      setActiveTab('dashboard');
-    }
-  }, [permissions.visibleTabs]);
-
   // 保存tab状态到localStorage
   useEffect(() => {
     storage.local.set('profile_active_tab', activeTab);
   }, [activeTab]);
 
-  useEffect(() => {
-    storage.local.set('profile_open_tabs', openTabs);
-  }, [openTabs]);
-
-  // 点击外部关闭右键菜单
-  useEffect(() => {
-    const handleClickOutside = () => {
-      if (contextMenu) {
-        setContextMenu(null);
-      }
-    };
-
-    if (contextMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [contextMenu]);
-
-  // 初始化数据
+  // 初始加载
   useEffect(() => {
     loadUserProfile();
     loadUserStats();
     loadUserActivities();
     loadUserAchievements();
     loadSiteSettings();
+    // loadDashboardData 会在 user 加载完成后自动调用，不需要在这里调用
   }, []);
 
-  // 当用户信息加载完成后，加载仪表盘数据
-  useEffect(() => {
-    if (user) {
-      loadDashboardData();
-    }
-  }, [user]);
-
-  // 加载仪表盘数据
-  const loadDashboardData = async () => {
+  // 加载仪表盘数据 - 使用 useCallback 避免不必要的重新创建
+  const loadDashboardData = useCallback(async () => {
+    if (!user) return; // 确保 user 存在
+    
     try {
       const trendResponse = await API.user.getPublishTrend();
       // 转换趋势数据
@@ -1319,7 +1063,7 @@ const Profile: React.FC = () => {
       setPublishTrend(trendData);
 
       // 只有管理员才加载待办事项
-      if (user && user.role === 'admin') {
+      if (user.role === 'admin') {
         const todoResponse = await API.user.getAdminTodoItems();
         // 转换待办事项数据
         const todos = (todoResponse.data || []).map((item: any) => ({
@@ -1337,7 +1081,14 @@ const Profile: React.FC = () => {
       console.error('加载仪表盘数据失败:', error);
       adnaan.toast.error('加载仪表盘数据失败');
     }
-  };
+  }, [user]);
+
+  // 当用户信息加载完成后，加载仪表盘数据
+  useEffect(() => {
+    if (user) {
+      loadDashboardData();
+    }
+  }, [user, loadDashboardData]);
 
   // 加载用户资料
   const loadUserProfile = async () => {
@@ -1579,48 +1330,48 @@ const Profile: React.FC = () => {
   const handleQuickAction = (actionId: string) => {
     switch (actionId) {
       case 'view-notes':
-        addTab('notes', isAdmin ? '📝 手记管理' : '📝 我的手记');
+        setActiveTab('notes');
         break;
       case 'view-articles':
-        addTab('articles', isAdmin ? '📰 文章管理' : '📰 我的文章');
+        setActiveTab('articles');
         break;
       case 'view-comments':
-        addTab('comments', isAdmin ? '💬 评论管理' : '💬 我的评论');
+        setActiveTab('comments');
         break;
       case 'view-likes':
-        addTab('likes', '❤️ 文章点赞');
+        setActiveTab('likes');
         break;
       case 'view-note-likes':
-        addTab('note-likes', '💝 手记点赞');
+        setActiveTab('note-likes');
         break;
       case 'view-bookmarks':
-        addTab('bookmarks', '🔖 我的收藏');
+        setActiveTab('bookmarks');
         break;
       case 'view-security':
-        addTab('security', '🔒 账户安全');
+        setActiveTab('security');
         break;
       case 'view-users':
         if (isAdmin) {
-          addTab('users', '👥 用户管理');
+          setActiveTab('users');
         }
         break;
       case 'view-categories':
         if (isAdmin) {
-          addTab('categories', '📂 分类管理');
+          setActiveTab('categories');
         }
         break;
       case 'view-tags':
         if (isAdmin) {
-          addTab('tags', '🏷️ 标签管理');
+          setActiveTab('tags');
         }
         break;
       case 'view-projects':
         if (isAdmin) {
-          addTab('projects', '💼 项目管理');
+          setActiveTab('projects');
         }
         break;
       case 'edit-site-settings':
-        addTab('site-settings', '⚙️ 网站设置');
+        setActiveTab('site-settings');
         break;
       case 'logout':
         adnaan.confirm.confirm('退出登录', '确定要退出登录吗？').then((confirmed) => {
@@ -1669,122 +1420,122 @@ const Profile: React.FC = () => {
     });
   };
 
-  // 标签页管理
-  const addTab = (id: string, label: string, closable = true) => {
-    // 检查标签页是否已存在
-    if (openTabs.find((tab) => tab.id === id)) {
-      setActiveTab(id);
-      return;
+  // 通用子页面容器 - 全息舞台风格
+  const ContentGlassCard = styled(motion.div)`
+    background: rgba(var(--bg-secondary-rgb), 0.4);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 24px;
+    border: 1px solid rgba(var(--border-rgb), 0.1);
+    padding: 2rem;
+    min-height: 600px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+    
+    /* 顶部光效条 */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(var(--accent-rgb), 0.5), 
+        var(--accent-color), 
+        rgba(var(--accent-rgb), 0.5), 
+        transparent
+      );
+      opacity: 0.6;
     }
 
-    setOpenTabs((prev) => [...prev, { id, label, closable }]);
-    setActiveTab(id);
-  };
-
-  const closeTab = (tabId: string) => {
-    const filteredTabs = openTabs.filter((tab) => tab.id !== tabId);
-
-    // 确保至少保留仪表盘 tab
-    if (filteredTabs.length === 0) {
-      const dashboardTab = { id: 'dashboard', label: '🏠 仪表盘', closable: false };
-      setOpenTabs([dashboardTab]);
-      setActiveTab('dashboard');
-      return;
+    /* 强制覆盖子组件样式以适应主题 */
+    h1, h2, h3 { color: var(--text-primary); }
+    p, span { color: var(--text-secondary); }
+    
+    /* 滚动条适配 */
+    &::-webkit-scrollbar { width: 6px; }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(var(--accent-rgb), 0.2);
+      border-radius: 3px;
     }
-
-    setOpenTabs(filteredTabs);
-
-    // 如果关闭的是当前活动标签页，切换到第一个标签页
-    if (activeTab === tabId) {
-      setActiveTab(filteredTabs[0].id);
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(var(--accent-rgb), 0.4);
     }
-  };
-
-  // 右键菜单处理
-  const handleTabContextMenu = (e: React.MouseEvent, tabId: string) => {
-    e.preventDefault();
-    setContextMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      tabId,
-    });
-  };
-
-  const handleCloseCurrentTab = () => {
-    if (contextMenu) {
-      closeTab(contextMenu.tabId);
-      setContextMenu(null);
-    }
-  };
-
-  const handleCloseOtherTabs = () => {
-    if (contextMenu) {
-      const targetTab = openTabs.find((tab) => tab.id === contextMenu.tabId);
-      if (targetTab) {
-        // 保留不可关闭的tab和当前右键的tab
-        setOpenTabs(openTabs.filter((tab) => !tab.closable || tab.id === contextMenu.tabId));
-        setActiveTab(contextMenu.tabId);
-      }
-      setContextMenu(null);
-    }
-  };
-
-  const handleCloseRightTabs = () => {
-    if (contextMenu) {
-      const currentIndex = openTabs.findIndex((tab) => tab.id === contextMenu.tabId);
-      if (currentIndex !== -1) {
-        // 保留当前tab及其左侧的所有tab，以及不可关闭的tab
-        setOpenTabs(openTabs.filter((tab, index) => index <= currentIndex || !tab.closable));
-      }
-      setContextMenu(null);
-    }
-  };
-
-  const handleCloseAllTabs = () => {
-    // 只保留不可关闭的tab（仪表盘）
-    const unclosableTabs = openTabs.filter((tab) => !tab.closable);
-
-    // 如果没有不可关闭的 tab，至少保留仪表盘
-    if (unclosableTabs.length === 0) {
-      const dashboardTab = { id: 'dashboard', label: '🏠 仪表盘', closable: false };
-      setOpenTabs([dashboardTab]);
-    } else {
-      setOpenTabs(unclosableTabs);
-    }
-
-    // 切换到仪表盘
-    setActiveTab('dashboard');
-    setContextMenu(null);
-  };
+  `;
 
   // 渲染标签页内容
   const renderTabContent = () => {
+    // 这里的通用动画配置 - 使用 any 绕过 TS 类型检查
+    const pageTransition: any = {
+      initial: { opacity: 0, y: 20, scale: 0.98 },
+      animate: { opacity: 1, y: 0, scale: 1 },
+      exit: { opacity: 0, y: -20, scale: 0.98 },
+      transition: { duration: 0.3, ease: 'easeInOut' }
+    };
+
     switch (activeTab) {
       case 'dashboard':
         return (
-          <DashboardGrid initial="hidden" animate="visible" variants={staggerContainerVariants}>
+          <DashboardGrid
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainerVariants}
+          >
             {/* 1. 关键指标卡片 */}
-            {userStats.map((stat, index) => (
+            {userStats.map((stat: any, index) => (
               <DashboardCard
                 key={index}
                 colSpan={3}
                 variants={fadeInUpVariants}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                whileHover={{ 
+                  y: -5, 
+                  boxShadow: '0 12px 40px -10px rgba(var(--accent-rgb), 0.15)',
+                  borderColor: 'rgba(var(--accent-rgb), 0.3)'
+                }}
               >
-                <DecorCircle color={stat.color} size={100} top="-20%" right="-20%" />
+                {/* 动态背景光晕，随主题色变化 */}
+                <DecorCircle 
+                  color={`rgba(var(--accent-rgb), ${0.1 + (index * 0.05)})`} 
+                  size={120} 
+                  top="-30%" 
+                  right="-30%" 
+                />
+                
                 <StatCardContent>
                   <StatHeader>
-                    <div className="icon-box">{stat.icon}</div>
-                    <div className="label">{stat.label}</div>
+                    <div 
+                      className="icon-box" 
+                      style={{ 
+                        background: 'rgba(var(--accent-rgb), 0.1)', 
+                        color: 'var(--accent-color)' 
+                      }}
+                    >
+                      {stat.icon || <FiZap />}
+                    </div>
+                    <div className="label" style={{ color: 'var(--text-secondary)' }}>
+                      {stat.title || stat.label || '数据'}
+                    </div>
                   </StatHeader>
                   <div>
-                    <StatValue>{stat.value}</StatValue>
+                    <StatValue style={{ 
+                      color: 'var(--text-primary)',
+                      filter: 'drop-shadow(0 0 1px rgba(var(--accent-rgb), 0.2))'
+                    }}>
+                      {(stat.count !== undefined ? stat.count : stat.value) ?? '-'}
+                    </StatValue>
                     {stat.trend && (
-                      <StatTrend isPositive={stat.trend.direction === 'up'}>
-                        <FiTrendingUp
-                          style={{ transform: stat.trend.direction === 'down' ? 'rotate(180deg)' : 'none' }}
-                        />
+                      <StatTrend 
+                        isPositive={stat.trend.direction === 'up'}
+                        style={{
+                          background: stat.trend.direction === 'up' 
+                            ? 'rgba(76, 175, 80, 0.1)' 
+                            : 'rgba(244, 67, 54, 0.1)'
+                        }}
+                      >
+                        <FiTrendingUp style={{ transform: stat.trend.direction === 'down' ? 'rotate(180deg)' : 'none' }} /> 
                         {stat.trend.percentage}% 较上月
                       </StatTrend>
                     )}
@@ -1796,48 +1547,36 @@ const Profile: React.FC = () => {
             {/* 2. 数据趋势图表 */}
             <DashboardCard colSpan={8} rowSpan={2} variants={fadeInUpVariants}>
               <SectionHeader>
-                <SectionTitle>
-                  <FiBarChart2 /> 内容发布趋势
+                <SectionTitle style={{ color: 'var(--text-primary)' }}>
+                  <FiBarChart2 style={{ color: 'var(--accent-color)' }} /> 内容发布趋势
                 </SectionTitle>
               </SectionHeader>
               {publishTrend.length > 0 ? (
                 <ChartCard style={{ background: 'transparent', border: 'none', padding: 0, boxShadow: 'none' }}>
                   <Chart>
-                    {publishTrend.map((item, index) => {
-                      const maxValue = Math.max(...publishTrend.map((d) => d.count), 1);
-                      const heightPercent = item.count > 0 ? Math.max((item.count / maxValue) * 100, 5) : 0;
-                      return (
-                        <ChartBar
-                          key={index}
-                          height={heightPercent}
-                          initial={{ scaleY: 0 }}
-                          animate={{ scaleY: 1 }}
-                          transition={{ delay: index * 0.05, duration: 0.5 }}
-                          title={`${item.date}: ${item.count}篇`}
-                          style={{
-                            background:
-                              'linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.2) 100%)',
-                          }}
-                        />
-                      );
-                    })}
+                    {publishTrend.map((item, index) => (
+                      <ChartBar
+                        key={index}
+                        height={item.count > 0 ? Math.max((item.count / Math.max(...publishTrend.map((d) => d.count), 1)) * 100, 5) : 0}
+                        initial={{ scaleY: 0 }}
+                        animate={{ scaleY: 1 }}
+                        transition={{ delay: index * 0.05, duration: 0.5 }}
+                        title={`${item.date}: ${item.count}篇`}
+                        style={{ 
+                          background: 'linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.2) 100%)',
+                          borderRadius: '4px 4px 0 0'
+                        }}
+                      />
+                    ))}
                   </Chart>
                   <ChartLabels>
                     {publishTrend.map((item, index) => (
-                      <span key={index}>{item.date}</span>
+                      <span key={index} style={{ color: 'var(--text-tertiary)' }}>{item.date}</span>
                     ))}
                   </ChartLabels>
                 </ChartCard>
               ) : (
-                <div
-                  style={{
-                    height: '200px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
+                <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
                   暂无数据
                 </div>
               )}
@@ -1846,12 +1585,16 @@ const Profile: React.FC = () => {
             {/* 3. 待办事项 */}
             <DashboardCard colSpan={4} rowSpan={2} variants={fadeInUpVariants}>
               <SectionHeader>
-                <SectionTitle>
-                  <FiAlertCircle /> 待办提醒
+                <SectionTitle style={{ color: 'var(--text-primary)' }}>
+                  <FiAlertCircle style={{ color: 'var(--accent-color)' }} /> 待办提醒
                 </SectionTitle>
-                {todoItems.length > 0 && <TodoBadge>{todoItems.length}</TodoBadge>}
+                {todoItems.length > 0 && (
+                  <TodoBadge style={{ background: 'var(--accent-color)', color: 'white' }}>
+                    {todoItems.length}
+                  </TodoBadge>
+                )}
               </SectionHeader>
-
+              
               <div style={{ flex: 1, overflowY: 'auto', marginTop: '1rem', paddingRight: '0.5rem' }}>
                 {todoItems.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
@@ -1860,12 +1603,16 @@ const Profile: React.FC = () => {
                         key={item.id}
                         onClick={() => item.link && navigate(item.link)}
                         variants={cardVariants}
-                        whileHover={{ x: 4, backgroundColor: 'rgba(255,255,255,0.05)' }}
-                        style={{ border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}
+                        whileHover={{ x: 4, backgroundColor: 'rgba(var(--text-primary-rgb), 0.05)' }}
+                        style={{ 
+                          border: '1px solid rgba(var(--border-rgb), 0.1)', 
+                          borderRadius: '12px',
+                          background: 'rgba(var(--bg-tertiary-rgb), 0.3)'
+                        }}
                       >
                         <TodoContent>
-                          <TodoTitle>{item.content}</TodoTitle>
-                          <TodoMeta>{item.time}</TodoMeta>
+                          <TodoTitle style={{ color: 'var(--text-primary)' }}>{item.content}</TodoTitle>
+                          <TodoMeta style={{ color: 'var(--text-tertiary)' }}>{item.time}</TodoMeta>
                         </TodoContent>
                         <TodoBadge variant={item.priority === 'high' ? 'error' : 'primary'}>
                           {item.priority === 'high' ? '高' : '待办'}
@@ -1874,45 +1621,32 @@ const Profile: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div
-                    style={{
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      flexDirection: 'column',
-                      gap: '0.5rem',
-                    }}
-                  >
-                    <FiZap size={24} style={{ opacity: 0.5 }} />
-                    <span>太棒了，所有事项已完成！</span>
+                  <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexDirection: 'column', gap: '0.5rem' }}>
+                    <FiZap size={24} style={{ opacity: 0.5, color: 'var(--accent-color)' }} />
+                    <span>所有事项已完成</span>
                   </div>
                 )}
               </div>
             </DashboardCard>
 
             {/* 4. 最近动态 */}
-            <DashboardCard
-              colSpan={12}
-              variants={fadeInUpVariants}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
+            <DashboardCard 
+              colSpan={12} 
+              variants={fadeInUpVariants} 
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                padding: 0, 
                 boxShadow: 'none',
                 backdropFilter: 'none',
-                overflow: 'visible', // 允许内容溢出
+                overflow: 'visible'
               }}
             >
-              {/* 尝试通过样式穿透隐藏 ActivityFeed 内部的标题，如果它有特定的类名 */}
-              <div
-                style={{
-                  // 这里可以加一些 CSS 变量或者样式来影响子组件
-                  ['--card-bg' as any]: 'rgba(var(--bg-secondary-rgb), 0.3)',
-                  ['--card-border' as any]: '1px solid rgba(255, 255, 255, 0.05)',
-                }}
-              >
+              <div style={{ 
+                ['--card-bg' as any]: 'rgba(var(--bg-secondary-rgb), 0.4)',
+                ['--card-border' as any]: '1px solid rgba(var(--border-rgb), 0.1)',
+                ['--accent' as any]: 'var(--accent-color)',
+              }}>
                 <ActivityFeed
                   activities={activities as any}
                   onActivityClick={handleActivityClick}
@@ -1927,99 +1661,106 @@ const Profile: React.FC = () => {
           </DashboardGrid>
         );
 
+      // 所有子页面都包裹在 ContentGlassCard 中以统一风格
       case 'notes':
-        return <NoteManagement />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <NoteManagement />
+          </ContentGlassCard>
+        );
 
       case 'articles':
-        return <ArticleManagement />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <ArticleManagement />
+          </ContentGlassCard>
+        );
 
       case 'comments':
-        return <CommentManagement isAdmin={isAdmin} />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommentManagement isAdmin={isAdmin} />
+          </ContentGlassCard>
+        );
 
       case 'likes':
-        return <LikeManagement />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <LikeManagement />
+          </ContentGlassCard>
+        );
 
       case 'note-likes':
-        return <NoteLikeManagement />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <NoteLikeManagement />
+          </ContentGlassCard>
+        );
 
       case 'bookmarks':
-        return <BookmarkManagement />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <BookmarkManagement />
+          </ContentGlassCard>
+        );
 
       case 'security':
-        return <SecuritySettings />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <SecuritySettings />
+          </ContentGlassCard>
+        );
 
       case 'site-settings':
-        if (!isAdmin) return <div>无权限访问</div>;
         return (
-          <SiteSettingsManagement
-            settings={siteSettings}
-            onSave={handleSaveSiteSettings}
-            isLoading={isSiteSettingsLoading}
-          />
+          <ContentGlassCard {...pageTransition}>
+            <SiteSettingsManagement 
+              settings={siteSettings}
+              onSave={handleSaveSiteSettings}
+              isLoading={isSiteSettingsLoading}
+            />
+          </ContentGlassCard>
         );
 
       case 'users':
         if (!isAdmin) return <div>无权限访问</div>;
-        return <UserManagement />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <UserManagement />
+          </ContentGlassCard>
+        );
 
       case 'categories':
         if (!isAdmin) return <div>无权限访问</div>;
-        return <CategoryManagement />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CategoryManagement />
+          </ContentGlassCard>
+        );
 
       case 'tags':
         if (!isAdmin) return <div>无权限访问</div>;
-        return <TagManagement />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <TagManagement />
+          </ContentGlassCard>
+        );
 
       case 'projects':
         if (!isAdmin) return <div>无权限访问</div>;
-        return <ProjectManagement />;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <ProjectManagement />
+          </ContentGlassCard>
+        );
 
       default:
         return <div>页面未找到</div>;
     }
   };
 
-  // 获取快捷操作图标 (增强匹配)
-  const getQuickActionIcon = (actionId: string, label: string, defaultIcon: string) => {
-    // 优先匹配 ID
-    switch (actionId) {
-      case 'view-articles':
-        return <FiFileText />;
-      case 'view-notes':
-        return <FiEdit />;
-      case 'view-comments':
-        return <FiMessageSquare />;
-      case 'view-users':
-        return <FiUsers />;
-      case 'view-tags':
-        return <FiTag />;
-      case 'view-categories':
-        return <FiFolder />;
-      case 'view-projects':
-        return <FiLayers />;
-      case 'edit-site-settings':
-        return <FiSettings />;
-      case 'view-security':
-        return <FiShield />;
-      case 'logout':
-        return <FiLogOut />;
-    }
-
-    // 最后的 fallback
-    return <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>{defaultIcon}</span>;
-  };
-
-  // 动作到 Tab ID 的映射，用于 Dock 高亮
-  const ACTION_TO_TAB_MAP: Record<string, string> = {
-    'view-articles': 'articles',
-    'view-notes': 'notes',
-    'view-comments': 'comments',
-    'view-users': 'users',
-    'view-tags': 'tags',
-    'view-categories': 'categories',
-    'view-projects': 'projects',
-    'edit-site-settings': 'site-settings',
-    'view-security': 'security',
+  const handleCloseAllTabs = () => {
+    setActiveTab('dashboard');
   };
 
   return (
@@ -2064,14 +1805,10 @@ const Profile: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
                   style={{ width: '100%', minHeight: 'inherit' }}
                 >
-                  {activeTab === 'dashboard' ? (
-                    renderTabContent()
-                  ) : (
-                    <Card style={{ minHeight: '600px' }}>{renderTabContent()}</Card>
-                  )}
+                  {renderTabContent()}
                 </motion.div>
               </AnimatePresence>
             </TabContent>
@@ -2226,26 +1963,6 @@ const Profile: React.FC = () => {
               )}
             </AnimatePresence>
           </>
-        )}
-
-        {/* 右键菜单 */}
-        {contextMenu && (
-          <ContextMenu x={contextMenu.x} y={contextMenu.y}>
-            {openTabs.find((tab) => tab.id === contextMenu.tabId)?.closable && (
-              <ContextMenuItem onClick={handleCloseCurrentTab}>
-                <FiX size={14} />
-                关闭当前标签
-              </ContextMenuItem>
-            )}
-            <ContextMenuItem onClick={handleCloseOtherTabs}>
-              <FiXCircle size={14} />
-              关闭其他标签
-            </ContextMenuItem>
-            <ContextMenuItem danger onClick={handleCloseAllTabs}>
-              <FiTrash2 size={14} />
-              关闭所有标签
-            </ContextMenuItem>
-          </ContextMenu>
         )}
       </ProfileWrapper>
     </>

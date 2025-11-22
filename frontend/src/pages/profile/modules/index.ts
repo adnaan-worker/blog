@@ -2,7 +2,6 @@ export { AchievementBadges } from './achievement-badges';
 export { AchievementListModal } from './achievement-list-modal';
 export { ActivityFeed } from './activity-feed';
 export { QuickActions } from './quick-actions';
-export { DataStatsGrid } from './data-stats-grid';
 export { UserInfoCard } from './user-info-card';
 export { ProfileHero } from './profile-hero';
 export * from './types';
