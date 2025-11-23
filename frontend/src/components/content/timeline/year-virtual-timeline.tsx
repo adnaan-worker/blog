@@ -20,7 +20,6 @@ interface YearTimelineProps<T extends TimelineItem> {
 // 样式组件
 const YearContainer = styled(motion.div)`
   margin-bottom: 2rem;
-  background: var(--bg-primary);
 `;
 
 const YearHeader = styled.div`

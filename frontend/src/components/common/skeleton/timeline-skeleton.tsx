@@ -36,7 +36,6 @@ const Column = styled.div`
 // 年份容器
 const YearContainer = styled(motion.div)`
   margin-bottom: 2rem;
-  background: var(--bg-primary);
 `;
 
 // 年份标题

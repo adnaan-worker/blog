@@ -26,7 +26,6 @@ import {
 
 const PageContainer = styled(motion.div)`
   min-height: 100vh;
-  background: var(--bg-primary);
   padding: 2rem 0;
 `;
 

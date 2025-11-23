@@ -360,6 +360,12 @@ const EditorWrapper = styled.div<{ maxHeight?: string }>`
   background: var(--bg-primary);
   max-height: ${(props) => props.maxHeight || 'none'};
 
+  @media (max-width: 768px) {
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
   .tiptap-editor-container {
     flex: 1;
     overflow-y: auto;
@@ -387,6 +393,10 @@ const EditorWrapper = styled.div<{ maxHeight?: string }>`
 
     &::-webkit-scrollbar-thumb:hover {
       background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
+    }
+
+    @media (max-width: 768px) {
+      padding-bottom: 80px; /* 底部留白，避免被键盘遮挡 */
     }
   }
 
