@@ -240,7 +240,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       <ModalContent>
         {/* 头像部分 */}
         <FormSection>
-          <SectionTitle>👤 头像</SectionTitle>
+          <SectionTitle>头像</SectionTitle>
           <AvatarSection>
             <AvatarPreview>
               {avatarPreview && avatarPreview.trim() ? (
@@ -263,7 +263,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
         {/* 基本信息 */}
         <FormSection>
-          <SectionTitle>📝 基本信息</SectionTitle>
+          <SectionTitle>基本信息</SectionTitle>
 
           <FormRow>
             <FormField>

@@ -274,7 +274,7 @@ export const ProfileHero: React.FC<ProfileHeroProps> = ({
                 transition={{ delay: index * 0.1 }}
                 title={badge.name}
               >
-                <span>{badge.icon || '🏆'}</span>
+                <span>{badge.icon || '成就'}</span>
                 <span>{badge.name}</span>
               </BadgeItem>
             ))}

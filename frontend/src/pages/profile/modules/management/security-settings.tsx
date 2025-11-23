@@ -252,7 +252,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
 
     const confirmed = await adnaan.confirm.delete(
       '确定要永久删除您的账户吗？\n\n此操作不可撤销，您的所有数据将被永久删除！',
-      '⚠️ 危险操作',
+      '危险操作',
     );
 
     if (!confirmed) return;

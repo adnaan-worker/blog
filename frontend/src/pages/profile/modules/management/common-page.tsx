@@ -5,14 +5,15 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { Button, Modal, Input, Select, Textarea, ColorPicker } from 'adnaan-ui';
+import { Button, Modal, Input, Select, Textarea, ColorPicker, Switch } from 'adnaan-ui';
 import { FiEdit3, FiTrash2, FiEye, FiHeart, FiCalendar, FiMessageSquare, FiFolder } from 'react-icons/fi';
 import { API, formatDate } from '@/utils';
 import { RichTextParser } from '@/utils/editor/parser';
 import { FadeScrollContainer } from '@/components/common';
+import { RichTextEditor } from '@/components/rich-text';
 import { useVirtualScroll } from '@/hooks/useVirtualScroll';
 import { useModalScrollLock } from '@/hooks';
-import type { UserProfile, Category, Tag } from '@/types';
+import type { UserProfile, Category, Tag, Project } from '@/types';
 import { ManagementLayout } from '../common/management-layout';
 import {
   ItemCard,
@@ -25,6 +26,7 @@ import {
   MetaItem,
 } from '../common/item-card';
 import { useManagementPage } from '../common/management-hooks';
+import GithubSyncModal from './github-sync-modal';
 
 // 页面类型定义
 type PageType =
@@ -56,7 +58,24 @@ const PAGE_CONFIG: Record<PageType, PageConfig> = {
     title: '手记管理',
     emptyText: '还没有创建任何手记',
     searchPlaceholder: '搜索手记...',
-    fetchFn: (params: any) => API.note.getMyNotes(params),
+    fetchFn: (params: any) => {
+      const { status, keyword, ...rest } = params || {};
+
+      // 将通用的 keyword 映射为后端使用的 search
+      const apiParams: any = {
+        ...rest,
+        search: keyword,
+      };
+
+      // 使用 status 作为私密性筛选键：public/private
+      if (status === 'public') {
+        apiParams.isPrivate = false;
+      } else if (status === 'private') {
+        apiParams.isPrivate = true;
+      }
+
+      return API.note.getMyNotes(apiParams);
+    },
     deleteFn: (id: number) => API.note.deleteNote(id),
     // 编辑器通过查询参数 ?id= 识别当前手记
     getEditUrl: (id: number) => `/editor/note?id=${id}`,
@@ -67,7 +86,25 @@ const PAGE_CONFIG: Record<PageType, PageConfig> = {
     title: '文章管理',
     emptyText: '还没有创建任何文章',
     searchPlaceholder: '搜索文章...',
-    fetchFn: (params: any) => API.article.getMyArticles(params),
+    fetchFn: (params: any) => {
+      const { status, keyword, ...rest } = params || {};
+
+      const apiParams: any = {
+        ...rest,
+        // 将通用的 keyword 映射为后端使用的 search
+        search: keyword,
+      };
+
+      // status 直接映射为后端的数值状态（仅管理员生效）：0=草稿 1=已发布 2=已归档
+      if (status !== undefined && status !== '') {
+        const parsed = parseInt(status, 10);
+        if (!Number.isNaN(parsed)) {
+          apiParams.status = parsed;
+        }
+      }
+
+      return API.article.getMyArticles(apiParams);
+    },
     deleteFn: (id: number) => API.article.deleteArticle(id),
     // 编辑器通过查询参数 ?id= 识别当前文章
     getEditUrl: (id: number) => `/editor/article?id=${id}`,
@@ -211,12 +248,8 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
     async (params: any) => {
       const currentConfig = configRef.current;
 
-      console.log(`[CommonPage ${type}] 🔄 Fetching with params:`, params);
-
       try {
         const response = await currentConfig.fetchFn(params);
-
-        console.log(`[CommonPage ${type}] ✅ API Response:`, response);
 
         // 适配不同的 API 返回格式
         let data = response.data;
@@ -224,17 +257,15 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
 
         // 如果 data 是数组，直接使用
         if (Array.isArray(data)) {
-          console.log(`[CommonPage ${type}] 📦 Data is array, length:`, data.length);
+          // do nothing extra
         }
         // 如果 data 包含 data 属性（嵌套结构）
         else if (data && Array.isArray(data.data)) {
-          console.log(`[CommonPage ${type}] 📦 Data is nested, extracting...`);
           pagination = data.pagination || data.meta?.pagination;
           data = data.data;
         }
         // 如果 data 包含 items 属性
         else if (data && Array.isArray(data.items)) {
-          console.log(`[CommonPage ${type}] 📦 Data has items property, extracting...`);
           pagination = data.pagination || data.meta?.pagination;
           data = data.items;
         }
@@ -247,9 +278,6 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
             limit: params.limit || 10,
             totalPages: Math.ceil(data.length / (params.limit || 10)),
           };
-          console.log(`[CommonPage ${type}] 📄 Generated default pagination:`, pagination);
-        } else {
-          console.log(`[CommonPage ${type}] 📄 Using API pagination:`, pagination);
         }
 
         const result = {
@@ -262,12 +290,6 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
             timestamp: new Date().toISOString(),
           },
         };
-
-        console.log(`[CommonPage ${type}] ✨ Final result:`, {
-          dataLength: data.length,
-          pagination,
-          hasMore: params.page < pagination.totalPages,
-        });
 
         // 标记已经加载过数据
         setHasLoaded(true);
@@ -282,7 +304,7 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
     [type],
   ); // 只依赖 type，不依赖 config
 
-  const { items, isLoading, hasMore, error, loadMore, reload, search, totalItems } = useManagementPage({
+  const { items, isLoading, hasMore, error, loadMore, reload, search, totalItems, filter } = useManagementPage({
     fetchFunction: fetchData,
     initialParams: {},
     limit: 10,
@@ -291,6 +313,53 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
   // 是否支持在当前列表中直接创建新内容
   const supportsCreate =
     type === 'notes' || type === 'articles' || type === 'users' || type === 'categories' || type === 'tags';
+
+  // 是否启用筛选条
+  // 评论：按状态筛选（approved/pending/spam）
+  // 项目：按项目状态筛选（active/developing/paused/archived）
+  // 手记：按公开/私密筛选
+  // 文章：按发布状态筛选（草稿/已发布/已归档，仅管理员生效）
+  const enableFilters = type === 'comments' || type === 'projects' || type === 'notes' || type === 'articles';
+
+  // 筛选条展开状态
+  const [isFilterOpen, setIsFilterOpen] = React.useState(false);
+
+  // 不同类型的筛选选项
+  const filterOptions = React.useMemo(() => {
+    if (type === 'comments') {
+      return [
+        { key: 'approved', label: '已通过' },
+        { key: 'pending', label: '待审核' },
+        { key: 'spam', label: '垃圾/屏蔽' },
+      ];
+    }
+
+    if (type === 'projects') {
+      return [
+        { key: 'active', label: '活跃' },
+        { key: 'developing', label: '开发中' },
+        { key: 'paused', label: '暂停' },
+        { key: 'archived', label: '已归档' },
+      ];
+    }
+
+    if (type === 'notes') {
+      return [
+        { key: 'public', label: '公开' },
+        { key: 'private', label: '私密' },
+      ];
+    }
+
+    if (type === 'articles') {
+      return [
+        { key: '0', label: '草稿' },
+        { key: '1', label: '已发布' },
+        { key: '2', label: '已归档' },
+      ];
+    }
+
+    return [] as Array<{ key: string; label: string }>;
+  }, [type]);
 
   // ========== 用户 / 分类 / 标签 编辑状态管理 ==========
 
@@ -325,8 +394,33 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
     description: '',
   });
 
+  // 项目编辑
+  const [isProjectModalOpen, setIsProjectModalOpen] = React.useState(false);
+  const [editingProject, setEditingProject] = React.useState<Project | null>(null);
+  const [projectForm, setProjectForm] = React.useState({
+    title: '',
+    slug: '',
+    description: '',
+    content: '',
+    status: 'developing' as Project['status'],
+    visibility: 'public' as Project['visibility'],
+    language: '',
+    tags: '',
+    techStack: '',
+    githubUrl: '',
+    giteeUrl: '',
+    demoUrl: '',
+    docsUrl: '',
+    npmPackage: '',
+    isFeatured: false,
+    isOpenSource: true,
+  });
+
+  // Git 项目同步弹窗
+  const [isSyncModalOpen, setIsSyncModalOpen] = React.useState(false);
+
   // 滚动锁定（任意一个 Modal 打开时锁定）
-  useModalScrollLock(isUserModalOpen || isCategoryModalOpen || isTagModalOpen);
+  useModalScrollLock(isUserModalOpen || isCategoryModalOpen || isTagModalOpen || isProjectModalOpen || isSyncModalOpen);
 
   // 虚拟滚动相关
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
@@ -398,6 +492,10 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
       setIsTagModalOpen(true);
       return;
     }
+
+    if (type === 'projects') {
+      setIsSyncModalOpen(true);
+    }
   }, [navigate, type]);
 
   // 列表项编辑行为：notes/articles 走路由，其余使用弹窗
@@ -449,6 +547,31 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
           description: tag.description || '',
         });
         setIsTagModalOpen(true);
+        return;
+      }
+
+      if (type === 'projects') {
+        const project = item as Project;
+        setEditingProject(project);
+        setProjectForm({
+          title: project.title,
+          slug: project.slug,
+          description: project.description || '',
+          content: project.content || '',
+          status: project.status,
+          visibility: project.visibility,
+          language: project.language || '',
+          tags: (project.tags || []).join(', '),
+          techStack: (project.techStack || []).join(', '),
+          githubUrl: project.githubUrl || '',
+          giteeUrl: project.giteeUrl || '',
+          demoUrl: project.demoUrl || '',
+          docsUrl: project.docsUrl || '',
+          npmPackage: project.npmPackage || '',
+          isFeatured: project.isFeatured,
+          isOpenSource: project.isOpenSource,
+        });
+        setIsProjectModalOpen(true);
         return;
       }
     },
@@ -506,6 +629,54 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
     }
   }, [editingTag, tagForm, reload]);
 
+  // 保存项目（新增/编辑）
+  const handleSaveProject = React.useCallback(async () => {
+    try {
+      const payload: Partial<Project> = {
+        title: projectForm.title.trim(),
+        slug: projectForm.slug.trim(),
+        description: projectForm.description?.trim() || undefined,
+        content: projectForm.content?.trim() || undefined,
+        status: projectForm.status,
+        visibility: projectForm.visibility,
+        language: projectForm.language?.trim() || undefined,
+        tags: projectForm.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        techStack: projectForm.techStack
+          .split(',')
+          .map((tech) => tech.trim())
+          .filter(Boolean),
+        githubUrl: projectForm.githubUrl?.trim() || undefined,
+        giteeUrl: projectForm.giteeUrl?.trim() || undefined,
+        demoUrl: projectForm.demoUrl?.trim() || undefined,
+        docsUrl: projectForm.docsUrl?.trim() || undefined,
+        npmPackage: projectForm.npmPackage?.trim() || undefined,
+        isFeatured: projectForm.isFeatured,
+        isOpenSource: projectForm.isOpenSource,
+      };
+
+      if (!payload.title || !payload.slug) {
+        adnaan.toast.error('请填写项目标题和 slug');
+        return;
+      }
+
+      if (editingProject) {
+        await API.project.updateProject(editingProject.id, payload);
+        adnaan.toast.success('项目更新成功');
+      } else {
+        await API.project.createProject(payload);
+        adnaan.toast.success('项目创建成功');
+      }
+
+      setIsProjectModalOpen(false);
+      reload();
+    } catch (error: any) {
+      adnaan.toast.error(error.message || '操作失败');
+    }
+  }, [editingProject, projectForm, reload]);
+
   // 删除操作
   const handleDelete = async (id: number, title: string) => {
     if (!config.deleteFn) return;
@@ -538,7 +709,11 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
                 <FiEye />
               </ActionButton>
             )}
-            {(config.getEditUrl || type === 'users' || type === 'categories' || type === 'tags') && (
+            {(config.getEditUrl ||
+              type === 'users' ||
+              type === 'categories' ||
+              type === 'tags' ||
+              type === 'projects') && (
               <ActionButton onClick={() => handleEditItem(item)} title="编辑">
                 <FiEdit3 />
               </ActionButton>
@@ -591,10 +766,21 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
         onSearchChange={search.setSearchQuery}
         loading={isLoading}
         total={totalItems}
-        showFilters={false}
-        onToggleFilters={() => {}}
+        showFilters={enableFilters && isFilterOpen}
+        onToggleFilters={enableFilters ? () => setIsFilterOpen((prev) => !prev) : undefined}
+        filterOptions={enableFilters ? filterOptions : []}
+        selectedFilter={enableFilters ? filter.selectedFilter : ''}
+        onFilterChange={enableFilters ? filter.handleFilterChange : undefined}
         onAdd={handleAdd}
-        createButton={supportsCreate ? undefined : <></>}
+        createButton={
+          type === 'projects' ? (
+            <Button variant="primary" size="small" onClick={() => setIsSyncModalOpen(true)}>
+              同步 Git 项目
+            </Button>
+          ) : supportsCreate ? undefined : (
+            <></>
+          )
+        }
         onRefresh={reload}
       >
         {error ? (
@@ -733,6 +919,194 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
             </Select>
           </FormGroup>
         </Modal>
+      )}
+
+      {type === 'projects' && (
+        <>
+          <Modal
+            isOpen={isProjectModalOpen}
+            onClose={() => setIsProjectModalOpen(false)}
+            title={editingProject ? '编辑项目' : '添加项目'}
+            size="large"
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setIsProjectModalOpen(false)}>
+                  取消
+                </Button>
+                <Button variant="primary" onClick={handleSaveProject}>
+                  保存
+                </Button>
+              </>
+            }
+          >
+            <FormGroup>
+              <Label>项目名称 *</Label>
+              <Input
+                type="text"
+                placeholder="请输入项目名称"
+                value={projectForm.title}
+                onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Slug *</Label>
+              <Input
+                type="text"
+                placeholder="URL 标识（例如 my-project）"
+                value={projectForm.slug}
+                onChange={(e) => setProjectForm({ ...projectForm, slug: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>简介</Label>
+              <Textarea
+                placeholder="简单介绍这个项目的定位和目标"
+                value={projectForm.description}
+                onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
+                size="small"
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>项目内容</Label>
+              <div style={{ borderRadius: 12, overflow: 'hidden' }}>
+                <RichTextEditor
+                  content={projectForm.content}
+                  onChange={(html) => setProjectForm({ ...projectForm, content: html })}
+                  maxHeight="420px"
+                  placeholder="在这里编写项目的详细介绍、特性说明等富文本内容..."
+                />
+              </div>
+            </FormGroup>
+
+            <FormGroup>
+              <Label>状态 & 可见性</Label>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <Select
+                  value={projectForm.status}
+                  onChange={(e) => setProjectForm({ ...projectForm, status: e.target.value as Project['status'] })}
+                >
+                  <option value="active">活跃</option>
+                  <option value="developing">开发中</option>
+                  <option value="paused">暂停</option>
+                  <option value="archived">已归档</option>
+                </Select>
+
+                <Select
+                  value={projectForm.visibility}
+                  onChange={(e) =>
+                    setProjectForm({
+                      ...projectForm,
+                      visibility: e.target.value as Project['visibility'],
+                    })
+                  }
+                >
+                  <option value="public">公开</option>
+                  <option value="private">私有</option>
+                </Select>
+              </div>
+            </FormGroup>
+
+            <FormGroup>
+              <Label>主要语言</Label>
+              <Input
+                type="text"
+                placeholder="例如：TypeScript"
+                value={projectForm.language}
+                onChange={(e) => setProjectForm({ ...projectForm, language: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>标签（逗号分隔）</Label>
+              <Input
+                type="text"
+                placeholder="例如：blog, personal, open-source"
+                value={projectForm.tags}
+                onChange={(e) => setProjectForm({ ...projectForm, tags: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>技术栈（逗号分隔）</Label>
+              <Input
+                type="text"
+                placeholder="例如：React, Node.js, MySQL"
+                value={projectForm.techStack}
+                onChange={(e) => setProjectForm({ ...projectForm, techStack: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>链接</Label>
+              <Input
+                type="text"
+                placeholder="GitHub 仓库地址"
+                value={projectForm.githubUrl}
+                onChange={(e) => setProjectForm({ ...projectForm, githubUrl: e.target.value })}
+                style={{ marginBottom: '0.5rem' }}
+              />
+              <Input
+                type="text"
+                placeholder="Gitee 仓库地址（可选）"
+                value={projectForm.giteeUrl}
+                onChange={(e) => setProjectForm({ ...projectForm, giteeUrl: e.target.value })}
+                style={{ marginBottom: '0.5rem' }}
+              />
+              <Input
+                type="text"
+                placeholder="在线演示地址（可选）"
+                value={projectForm.demoUrl}
+                onChange={(e) => setProjectForm({ ...projectForm, demoUrl: e.target.value })}
+                style={{ marginBottom: '0.5rem' }}
+              />
+              <Input
+                type="text"
+                placeholder="文档地址（可选）"
+                value={projectForm.docsUrl}
+                onChange={(e) => setProjectForm({ ...projectForm, docsUrl: e.target.value })}
+                style={{ marginBottom: '0.5rem' }}
+              />
+              <Input
+                type="text"
+                placeholder="NPM 包名（可选）"
+                value={projectForm.npmPackage}
+                onChange={(e) => setProjectForm({ ...projectForm, npmPackage: e.target.value })}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>展示设置</Label>
+              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Switch
+                    checked={projectForm.isFeatured}
+                    onChange={(checked) => setProjectForm({ ...projectForm, isFeatured: checked })}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>精选项目</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Switch
+                    checked={projectForm.isOpenSource}
+                    onChange={(checked) => setProjectForm({ ...projectForm, isOpenSource: checked })}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>开源项目</span>
+                </div>
+              </div>
+            </FormGroup>
+          </Modal>
+
+          <GithubSyncModal
+            isOpen={isSyncModalOpen}
+            onClose={() => setIsSyncModalOpen(false)}
+            onSyncSuccess={() => {
+              setIsSyncModalOpen(false);
+              reload();
+            }}
+          />
+        </>
       )}
 
       {type === 'categories' && (

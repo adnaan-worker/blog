@@ -28,12 +28,6 @@ const SectionTitle = styled.h3`
   align-items: center;
   gap: 0.75rem;
   letter-spacing: -0.01em;
-
-  &::before {
-    content: '🏆';
-    font-size: 1.4rem;
-    filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.5));
-  }
 `;
 
 const BadgesGrid = styled(motion.div)`
@@ -246,8 +240,6 @@ export const AchievementBadges: React.FC<AchievementBadgesProps> = ({
   const handleViewAll = () => {
     if (onViewAll) {
       onViewAll();
-    } else {
-      console.log('查看所有成就');
     }
   };
 

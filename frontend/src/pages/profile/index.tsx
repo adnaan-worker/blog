@@ -1111,7 +1111,7 @@ const Profile: React.FC = () => {
       setPublishTrend(trendData);
 
       // 只有管理员才加载待办事项
-      if (user.role === 'admin') {
+      if (isAdmin) {
         const todoResponse = await API.user.getAdminTodoItems();
         // 转换待办事项数据
         const todos = (todoResponse.data || []).map((item: any) => ({
@@ -1221,7 +1221,7 @@ const Profile: React.FC = () => {
       setSiteSettings(response.data);
     } catch (error: any) {
       // 如果没有设置，不显示错误
-      console.log('网站设置未配置');
+      // 静默忽略
     }
   };
 
@@ -1345,7 +1345,7 @@ const Profile: React.FC = () => {
           navigate('/user/followers');
           break;
         default:
-          console.log('查看详细统计:', stat.label);
+          break;
       }
     }
   };
@@ -1462,7 +1462,7 @@ const Profile: React.FC = () => {
 
   const handleViewAllAchievements = () => {
     adnaan.modal.info({
-      title: '🏆 所有成就',
+      title: '所有成就',
       content: <AchievementListModal achievements={achievements} />,
       width: 700,
     });

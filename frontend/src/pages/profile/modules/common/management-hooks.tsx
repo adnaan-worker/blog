@@ -199,10 +199,7 @@ export const useManagementPage = <
   useEffect(() => {
     // 确保挂载时为 true
     isMountedRef.current = true;
-    console.log('[useManagementPage] 🎬 Component mounted');
-
     return () => {
-      console.log('[useManagementPage] 🔚 Component will unmount');
       isMountedRef.current = false;
     };
   }, []);
@@ -231,40 +228,16 @@ export const useManagementPage = <
 
         const response = await fetchFunctionRef.current(params);
 
-        console.log(`[useManagementPage] 📥 Response received:`, {
-          hasData: !!response.data,
-          dataLength: response.data?.length,
-          pagination: response.meta?.pagination,
-          isMounted: isMountedRef.current,
-        });
-
         // 只在组件仍然挂载时更新状态
         if (!isMountedRef.current) {
-          console.log(`[useManagementPage] ⚠️ Component unmounted, skipping state update`);
           return;
         }
 
         const newItems = response.data || [];
         const pagination = response.meta?.pagination || { totalPages: 1, total: 0 };
 
-        console.log(`[useManagementPage] 📊 Processing data:`, {
-          newItemsCount: newItems.length,
-          append,
-          currentPage,
-          totalPages: pagination.totalPages,
-          hasMore: currentPage < pagination.totalPages,
-        });
-
         // 批量更新所有状态
-        setItems((prev) => {
-          const result = append ? [...prev, ...newItems] : newItems;
-          console.log(`[useManagementPage] 💾 Setting items:`, {
-            prevCount: prev.length,
-            newCount: result.length,
-            append,
-          });
-          return result;
-        });
+        setItems((prev) => (append ? [...prev, ...newItems] : newItems));
         setHasMore(currentPage < pagination.totalPages);
         setPage(currentPage);
         setTotalItems(pagination.total);

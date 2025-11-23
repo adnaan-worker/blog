@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiSave, FiRefreshCw } from 'react-icons/fi';
+import { FiSave, FiRefreshCw, FiSettings } from 'react-icons/fi';
 import { Button, Input, Textarea } from 'adnaan-ui';
 import type { SiteSettings } from '@/types';
 
@@ -11,8 +11,10 @@ interface SiteSettingsManagementProps {
 }
 
 const Container = styled.div`
-  max-width: 900px;
-  margin: 0 auto;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 `;
 
 const Header = styled.div`
@@ -236,7 +238,9 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
     <Container>
       <Header>
         <HeaderLeft>
-          <Title>⚙️ 网站设置</Title>
+          <Title>
+            <FiSettings size={20} /> 网站设置
+          </Title>
           <Subtitle>配置个人信息、社交链接和代码贡献统计</Subtitle>
         </HeaderLeft>
         <ButtonGroup>
@@ -253,7 +257,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 个人信息 */}
       <Section>
-        <SectionTitle>👤 个人信息</SectionTitle>
+        <SectionTitle>个人信息</SectionTitle>
         <FormGroup>
           <Input
             label="作者名称"
@@ -307,7 +311,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 代码统计配置 */}
       <Section>
-        <SectionTitle>📊 代码贡献统计</SectionTitle>
+        <SectionTitle>代码贡献统计</SectionTitle>
         <FormGroup>
           <Input
             label="GitHub 用户名"
@@ -330,7 +334,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 技能 */}
       <Section>
-        <SectionTitle>💼 技能</SectionTitle>
+        <SectionTitle>技能</SectionTitle>
         <FormGroup>
           <Label>技能列表</Label>
           <TagsContainer>
@@ -368,7 +372,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 社交链接 */}
       <Section>
-        <SectionTitle>🔗 社交链接</SectionTitle>
+        <SectionTitle>社交链接</SectionTitle>
         <FormGroup>
           <Input
             label="Email"
@@ -413,7 +417,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 座右铭 */}
       <Section>
-        <SectionTitle>💭 座右铭</SectionTitle>
+        <SectionTitle>座右铭</SectionTitle>
         <FormGroup>
           <Label>座右铭内容</Label>
           <Textarea

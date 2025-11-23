@@ -12,6 +12,14 @@ import {
   FiBookOpen,
   FiFileText,
   FiGlobe,
+  FiMessageSquare,
+  FiUsers,
+  FiFolder,
+  FiTag,
+  FiLayers,
+  FiShield,
+  FiBookmark,
+  FiHeart,
 } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
 import { useAnimationEngine } from '@/utils/ui/animation';
@@ -55,12 +63,6 @@ const SectionTitle = styled.h3`
   align-items: center;
   gap: 0.75rem;
   letter-spacing: -0.01em;
-
-  &::before {
-    content: '⚡';
-    font-size: 1.4rem;
-    filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.5));
-  }
 `;
 
 const ActionsList = styled(motion.div)`
@@ -162,12 +164,45 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ actions, onAction })
     }
   };
 
+  const getIconByKey = (key: string): React.ReactNode => {
+    switch (key) {
+      case 'notes':
+      case 'note-likes':
+        return <FiBookOpen />;
+      case 'articles':
+      case 'article-likes':
+        return <FiFileText />;
+      case 'comments':
+        return <FiMessageSquare />;
+      case 'users':
+        return <FiUsers />;
+      case 'categories':
+        return <FiFolder />;
+      case 'tags':
+        return <FiTag />;
+      case 'projects':
+        return <FiLayers />;
+      case 'security':
+        return <FiShield />;
+      case 'site-settings':
+        return <FiSettings />;
+      case 'bookmarks':
+        return <FiBookmark />;
+      case 'logout':
+        return <FiLogOut />;
+      case 'article-likes-alt':
+        return <FiHeart />;
+      default:
+        return <FiBarChart />;
+    }
+  };
+
   // 转换 QuickActionConfig 为 QuickAction
   const convertedActions: QuickAction[] =
     actions?.map((config) => ({
       id: config.id,
       label: config.label,
-      icon: <span style={{ fontSize: '1rem' }}>{config.icon}</span>,
+      icon: getIconByKey(config.icon),
       onClick: () => handleAction(config.action),
       variant: 'outline' as const,
     })) || [];
