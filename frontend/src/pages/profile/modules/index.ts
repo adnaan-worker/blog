@@ -8,5 +8,9 @@ export * from './types';
 
 // 导出子目录组件
 export * from './common';
-export * from './management';
 export * from './modals';
+
+// 导出管理页面组件
+export { CommonPage } from './management/common-page';
+export { default as SecuritySettings } from './management/security-settings';
+export { default as SiteSettingsManagement } from './management/site-settings-management';

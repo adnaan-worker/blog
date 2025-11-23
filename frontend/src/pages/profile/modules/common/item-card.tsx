@@ -46,8 +46,8 @@ export const ItemCard = styled(motion.div)`
       width: 100%;
       height: 100%;
       background: radial-gradient(
-        circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-        rgba(var(--accent-rgb), 0.1) 0%, 
+        circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(var(--accent-rgb), 0.1) 0%,
         transparent 50%
       );
       pointer-events: none;
@@ -143,7 +143,7 @@ export const MetaItem = styled.div`
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  
+
   svg {
     opacity: 0.7;
   }

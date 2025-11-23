@@ -35,6 +35,7 @@ import {
   FiLayers,
   FiShield,
   FiTrash2,
+  FiHome,
 } from 'react-icons/fi';
 
 import { useNavigate } from 'react-router-dom';
@@ -91,19 +92,10 @@ import {
   QuickActions,
   AchievementListModal,
   EditProfileModal,
-  NoteManagement,
-  ArticleManagement,
-  CommentManagement,
-  BookmarkManagement,
-  LikeManagement,
-  NoteLikeManagement,
+  CommonPage,
+  ProfileHero,
   SecuritySettings,
   SiteSettingsManagement,
-  UserManagement,
-  CategoryManagement,
-  TagManagement,
-  ProjectManagement,
-  ProfileHero,
 } from './modules';
 import type { EditProfileForm } from './modules/types';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -941,6 +933,62 @@ interface TodoItemType {
   link?: string;
 }
 
+// 通用子页面容器 - 全息舞台风格
+const ContentGlassCard = styled(motion.div)`
+  background: rgba(var(--bg-secondary-rgb), 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 24px;
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  padding: 2rem;
+  min-height: 600px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+
+  /* 顶部光效条 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(var(--accent-rgb), 0.5),
+      var(--accent-color),
+      rgba(var(--accent-rgb), 0.5),
+      transparent
+    );
+    opacity: 0.6;
+  }
+
+  /* 强制覆盖子组件样式以适应主题 */
+  h1,
+  h2,
+  h3 {
+    color: var(--text-primary);
+  }
+  p,
+  span {
+    color: var(--text-secondary);
+  }
+
+  /* 滚动条适配 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--accent-rgb), 0.2);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--accent-rgb), 0.4);
+  }
+`;
+
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -1052,7 +1100,7 @@ const Profile: React.FC = () => {
   // 加载仪表盘数据 - 使用 useCallback 避免不必要的重新创建
   const loadDashboardData = useCallback(async () => {
     if (!user) return; // 确保 user 存在
-    
+
     try {
       const trendResponse = await API.user.getPublishTrend();
       // 转换趋势数据
@@ -1420,52 +1468,6 @@ const Profile: React.FC = () => {
     });
   };
 
-  // 通用子页面容器 - 全息舞台风格
-  const ContentGlassCard = styled(motion.div)`
-    background: rgba(var(--bg-secondary-rgb), 0.4);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border-radius: 24px;
-    border: 1px solid rgba(var(--border-rgb), 0.1);
-    padding: 2rem;
-    min-height: 600px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
-    position: relative;
-    overflow: hidden;
-    
-    /* 顶部光效条 */
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, 
-        transparent, 
-        rgba(var(--accent-rgb), 0.5), 
-        var(--accent-color), 
-        rgba(var(--accent-rgb), 0.5), 
-        transparent
-      );
-      opacity: 0.6;
-    }
-
-    /* 强制覆盖子组件样式以适应主题 */
-    h1, h2, h3 { color: var(--text-primary); }
-    p, span { color: var(--text-secondary); }
-    
-    /* 滚动条适配 */
-    &::-webkit-scrollbar { width: 6px; }
-    &::-webkit-scrollbar-thumb {
-      background: rgba(var(--accent-rgb), 0.2);
-      border-radius: 3px;
-    }
-    &::-webkit-scrollbar-thumb:hover {
-      background: rgba(var(--accent-rgb), 0.4);
-    }
-  `;
-
   // 渲染标签页内容
   const renderTabContent = () => {
     // 这里的通用动画配置 - 使用 any 绕过 TS 类型检查
@@ -1473,44 +1475,40 @@ const Profile: React.FC = () => {
       initial: { opacity: 0, y: 20, scale: 0.98 },
       animate: { opacity: 1, y: 0, scale: 1 },
       exit: { opacity: 0, y: -20, scale: 0.98 },
-      transition: { duration: 0.3, ease: 'easeInOut' }
+      transition: { duration: 0.3, ease: 'easeInOut' },
     };
 
     switch (activeTab) {
       case 'dashboard':
         return (
-          <DashboardGrid
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainerVariants}
-          >
+          <DashboardGrid initial="hidden" animate="visible" variants={staggerContainerVariants}>
             {/* 1. 关键指标卡片 */}
             {userStats.map((stat: any, index) => (
               <DashboardCard
                 key={index}
                 colSpan={3}
                 variants={fadeInUpVariants}
-                whileHover={{ 
-                  y: -5, 
+                whileHover={{
+                  y: -5,
                   boxShadow: '0 12px 40px -10px rgba(var(--accent-rgb), 0.15)',
-                  borderColor: 'rgba(var(--accent-rgb), 0.3)'
+                  borderColor: 'rgba(var(--accent-rgb), 0.3)',
                 }}
               >
                 {/* 动态背景光晕，随主题色变化 */}
-                <DecorCircle 
-                  color={`rgba(var(--accent-rgb), ${0.1 + (index * 0.05)})`} 
-                  size={120} 
-                  top="-30%" 
-                  right="-30%" 
+                <DecorCircle
+                  color={`rgba(var(--accent-rgb), ${0.1 + index * 0.05})`}
+                  size={120}
+                  top="-30%"
+                  right="-30%"
                 />
-                
+
                 <StatCardContent>
                   <StatHeader>
-                    <div 
-                      className="icon-box" 
-                      style={{ 
-                        background: 'rgba(var(--accent-rgb), 0.1)', 
-                        color: 'var(--accent-color)' 
+                    <div
+                      className="icon-box"
+                      style={{
+                        background: 'rgba(var(--accent-rgb), 0.1)',
+                        color: 'var(--accent-color)',
                       }}
                     >
                       {stat.icon || <FiZap />}
@@ -1520,22 +1518,25 @@ const Profile: React.FC = () => {
                     </div>
                   </StatHeader>
                   <div>
-                    <StatValue style={{ 
-                      color: 'var(--text-primary)',
-                      filter: 'drop-shadow(0 0 1px rgba(var(--accent-rgb), 0.2))'
-                    }}>
+                    <StatValue
+                      style={{
+                        color: 'var(--text-primary)',
+                        filter: 'drop-shadow(0 0 1px rgba(var(--accent-rgb), 0.2))',
+                      }}
+                    >
                       {(stat.count !== undefined ? stat.count : stat.value) ?? '-'}
                     </StatValue>
                     {stat.trend && (
-                      <StatTrend 
+                      <StatTrend
                         isPositive={stat.trend.direction === 'up'}
                         style={{
-                          background: stat.trend.direction === 'up' 
-                            ? 'rgba(76, 175, 80, 0.1)' 
-                            : 'rgba(244, 67, 54, 0.1)'
+                          background:
+                            stat.trend.direction === 'up' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
                         }}
                       >
-                        <FiTrendingUp style={{ transform: stat.trend.direction === 'down' ? 'rotate(180deg)' : 'none' }} /> 
+                        <FiTrendingUp
+                          style={{ transform: stat.trend.direction === 'down' ? 'rotate(180deg)' : 'none' }}
+                        />
                         {stat.trend.percentage}% 较上月
                       </StatTrend>
                     )}
@@ -1557,26 +1558,41 @@ const Profile: React.FC = () => {
                     {publishTrend.map((item, index) => (
                       <ChartBar
                         key={index}
-                        height={item.count > 0 ? Math.max((item.count / Math.max(...publishTrend.map((d) => d.count), 1)) * 100, 5) : 0}
+                        height={
+                          item.count > 0
+                            ? Math.max((item.count / Math.max(...publishTrend.map((d) => d.count), 1)) * 100, 5)
+                            : 0
+                        }
                         initial={{ scaleY: 0 }}
                         animate={{ scaleY: 1 }}
                         transition={{ delay: index * 0.05, duration: 0.5 }}
                         title={`${item.date}: ${item.count}篇`}
-                        style={{ 
-                          background: 'linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.2) 100%)',
-                          borderRadius: '4px 4px 0 0'
+                        style={{
+                          background:
+                            'linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.2) 100%)',
+                          borderRadius: '4px 4px 0 0',
                         }}
                       />
                     ))}
                   </Chart>
                   <ChartLabels>
                     {publishTrend.map((item, index) => (
-                      <span key={index} style={{ color: 'var(--text-tertiary)' }}>{item.date}</span>
+                      <span key={index} style={{ color: 'var(--text-tertiary)' }}>
+                        {item.date}
+                      </span>
                     ))}
                   </ChartLabels>
                 </ChartCard>
               ) : (
-                <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                <div
+                  style={{
+                    height: '200px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
                   暂无数据
                 </div>
               )}
@@ -1594,7 +1610,7 @@ const Profile: React.FC = () => {
                   </TodoBadge>
                 )}
               </SectionHeader>
-              
+
               <div style={{ flex: 1, overflowY: 'auto', marginTop: '1rem', paddingRight: '0.5rem' }}>
                 {todoItems.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
@@ -1604,10 +1620,10 @@ const Profile: React.FC = () => {
                         onClick={() => item.link && navigate(item.link)}
                         variants={cardVariants}
                         whileHover={{ x: 4, backgroundColor: 'rgba(var(--text-primary-rgb), 0.05)' }}
-                        style={{ 
-                          border: '1px solid rgba(var(--border-rgb), 0.1)', 
+                        style={{
+                          border: '1px solid rgba(var(--border-rgb), 0.1)',
                           borderRadius: '12px',
-                          background: 'rgba(var(--bg-tertiary-rgb), 0.3)'
+                          background: 'rgba(var(--bg-tertiary-rgb), 0.3)',
                         }}
                       >
                         <TodoContent>
@@ -1621,7 +1637,17 @@ const Profile: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                    }}
+                  >
                     <FiZap size={24} style={{ opacity: 0.5, color: 'var(--accent-color)' }} />
                     <span>所有事项已完成</span>
                   </div>
@@ -1630,23 +1656,25 @@ const Profile: React.FC = () => {
             </DashboardCard>
 
             {/* 4. 最近动态 */}
-            <DashboardCard 
-              colSpan={12} 
-              variants={fadeInUpVariants} 
-              style={{ 
-                background: 'transparent', 
-                border: 'none', 
-                padding: 0, 
+            <DashboardCard
+              colSpan={12}
+              variants={fadeInUpVariants}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
                 boxShadow: 'none',
                 backdropFilter: 'none',
-                overflow: 'visible'
+                overflow: 'visible',
               }}
             >
-              <div style={{ 
-                ['--card-bg' as any]: 'rgba(var(--bg-secondary-rgb), 0.4)',
-                ['--card-border' as any]: '1px solid rgba(var(--border-rgb), 0.1)',
-                ['--accent' as any]: 'var(--accent-color)',
-              }}>
+              <div
+                style={{
+                  ['--card-bg' as any]: 'rgba(var(--bg-secondary-rgb), 0.4)',
+                  ['--card-border' as any]: '1px solid rgba(var(--border-rgb), 0.1)',
+                  ['--accent' as any]: 'var(--accent-color)',
+                }}
+              >
                 <ActivityFeed
                   activities={activities as any}
                   onActivityClick={handleActivityClick}
@@ -1665,42 +1693,42 @@ const Profile: React.FC = () => {
       case 'notes':
         return (
           <ContentGlassCard {...pageTransition}>
-            <NoteManagement />
+            <CommonPage type="notes" />
           </ContentGlassCard>
         );
 
       case 'articles':
         return (
           <ContentGlassCard {...pageTransition}>
-            <ArticleManagement />
+            <CommonPage type="articles" />
           </ContentGlassCard>
         );
 
       case 'comments':
         return (
           <ContentGlassCard {...pageTransition}>
-            <CommentManagement isAdmin={isAdmin} />
+            <CommonPage type="comments" />
           </ContentGlassCard>
         );
 
       case 'likes':
         return (
           <ContentGlassCard {...pageTransition}>
-            <LikeManagement />
+            <CommonPage type="likes" />
           </ContentGlassCard>
         );
 
       case 'note-likes':
         return (
           <ContentGlassCard {...pageTransition}>
-            <NoteLikeManagement />
+            <CommonPage type="likes" />
           </ContentGlassCard>
         );
 
       case 'bookmarks':
         return (
           <ContentGlassCard {...pageTransition}>
-            <BookmarkManagement />
+            <CommonPage type="bookmarks" />
           </ContentGlassCard>
         );
 
@@ -1714,7 +1742,7 @@ const Profile: React.FC = () => {
       case 'site-settings':
         return (
           <ContentGlassCard {...pageTransition}>
-            <SiteSettingsManagement 
+            <SiteSettingsManagement
               settings={siteSettings}
               onSave={handleSaveSiteSettings}
               isLoading={isSiteSettingsLoading}
@@ -1722,11 +1750,19 @@ const Profile: React.FC = () => {
           </ContentGlassCard>
         );
 
+      case 'projects':
+        if (!isAdmin) return <div>无权限访问</div>;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="projects" />
+          </ContentGlassCard>
+        );
+
       case 'users':
         if (!isAdmin) return <div>无权限访问</div>;
         return (
           <ContentGlassCard {...pageTransition}>
-            <UserManagement />
+            <CommonPage type="users" />
           </ContentGlassCard>
         );
 
@@ -1734,7 +1770,7 @@ const Profile: React.FC = () => {
         if (!isAdmin) return <div>无权限访问</div>;
         return (
           <ContentGlassCard {...pageTransition}>
-            <CategoryManagement />
+            <CommonPage type="categories" />
           </ContentGlassCard>
         );
 
@@ -1742,15 +1778,7 @@ const Profile: React.FC = () => {
         if (!isAdmin) return <div>无权限访问</div>;
         return (
           <ContentGlassCard {...pageTransition}>
-            <TagManagement />
-          </ContentGlassCard>
-        );
-
-      case 'projects':
-        if (!isAdmin) return <div>无权限访问</div>;
-        return (
-          <ContentGlassCard {...pageTransition}>
-            <ProjectManagement />
+            <CommonPage type="tags" />
           </ContentGlassCard>
         );
 
@@ -1822,6 +1850,19 @@ const Profile: React.FC = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5, ...SPRING_PRESETS.bouncy }}
           >
+            {/* 返回前台首页 */}
+            <DockItem
+              onClick={() => navigate('/')}
+              active={false}
+              data-tooltip="返回首页"
+              whileHover={{ scale: 1.1, y: -5 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FiHome />
+            </DockItem>
+
+            <DockSeparator />
+
             {/* 仪表盘 (Home) */}
             <DockItem
               onClick={() => setActiveTab('dashboard')}

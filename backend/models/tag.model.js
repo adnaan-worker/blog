@@ -18,6 +18,16 @@ module.exports = sequelize => {
           len: [2, 50],
         },
       },
+      slug: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+        comment: 'URL 标识（可选）',
+      },
+      color: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+        comment: '标签颜色（如 #3B82F6）',
+      },
       description: {
         type: DataTypes.TEXT,
         allowNull: true,
@@ -32,6 +42,10 @@ module.exports = sequelize => {
         {
           unique: true,
           fields: ['name'],
+        },
+        {
+          unique: false,
+          fields: ['slug'],
         },
       ],
     }

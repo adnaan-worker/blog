@@ -34,14 +34,15 @@ const MainContainer = styled.div`
 `;
 
 // 内容区域样式 - 完全移除动画，确保DOM立即可见
-const Content = styled.main`
+// 对于个人中心及其相关子页面（含编辑器），不再预留 Header 高度
+const Content = styled.main<{ isProfileContext?: boolean }>`
   flex: 1;
   width: 100vw;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   overflow: visible;
-  margin-top: var(--header-height);
-  min-height: calc(100vh - var(--header-height));
+  margin-top: ${(props) => (props.isProfileContext ? '0' : 'var(--header-height)')};
+  min-height: ${(props) => (props.isProfileContext ? '100vh' : 'calc(100vh - var(--header-height))')};
 
   @media (max-width: 768px) {
     padding: 1.5rem 1.25rem;
@@ -226,21 +227,53 @@ const RootLayout = () => {
           {/* 流星背景动效（仅暗黑模式） */}
           <MeteorBackground />
 
-          {/* 头部导航 - 传递页面信息 */}
-          <Header scrolled={isScrolled} pageInfo={pageInfoState.pageInfo || undefined} />
+          {/* 判断当前是否处于个人中心相关页面：不展示全局 Header/Footer，由页面自身负责顶部/底部结构 */}
+          {(() => {
+            const path = location.pathname;
+            const isProfileContext =
+              path === '/profile' ||
+              path.startsWith('/profile/') ||
+              path.startsWith('/editor/article') ||
+              path.startsWith('/editor/note');
 
-          <Suspense
-            fallback={
-              <Content>
-                <PageLoading />
-              </Content>
-            }
-          >
-            <Content key={location.pathname}>{showPageLoading ? <PageLoading /> : <Outlet />}</Content>
-          </Suspense>
+            return !isProfileContext ? (
+              <Header scrolled={isScrolled} pageInfo={pageInfoState.pageInfo || undefined} />
+            ) : null;
+          })()}
 
-          {/* 页脚 */}
-          <Footer />
+          {(() => {
+            const path = location.pathname;
+            const isProfileContext =
+              path === '/profile' ||
+              path.startsWith('/profile/') ||
+              path.startsWith('/editor/article') ||
+              path.startsWith('/editor/note');
+
+            return (
+              <Suspense
+                fallback={
+                  <Content isProfileContext={isProfileContext}>
+                    <PageLoading />
+                  </Content>
+                }
+              >
+                <Content key={location.pathname} isProfileContext={isProfileContext}>
+                  {showPageLoading ? <PageLoading /> : <Outlet />}
+                </Content>
+              </Suspense>
+            );
+          })()}
+
+          {(() => {
+            const path = location.pathname;
+            const isProfileContext =
+              path === '/profile' ||
+              path.startsWith('/profile/') ||
+              path.startsWith('/editor/article') ||
+              path.startsWith('/editor/note');
+
+            return !isProfileContext ? <Footer /> : null;
+          })()}
 
           {/* 悬浮工具栏 */}
           <FloatingToolbar scrollPosition={scrollPosition} />

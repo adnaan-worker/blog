@@ -54,16 +54,16 @@ export const router = createHashRouter([
         path: '/about-me',
         element: elements.aboutMe,
       },
+      // 编辑器页面：现在也继承主布局（RootLayout），以便与个人中心共享整体框架
+      {
+        path: '/editor/article',
+        element: elements.articleEditor,
+      },
+      {
+        path: '/editor/note',
+        element: elements.noteEditor,
+      },
     ],
-  },
-  // 编辑器独立页面路由（不继承主布局）
-  {
-    path: '/editor/article',
-    element: elements.articleEditor,
-  },
-  {
-    path: '/editor/note',
-    element: elements.noteEditor,
   },
   {
     path: '*',
