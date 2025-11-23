@@ -18,6 +18,7 @@ import { API } from '@/utils';
 import type { SiteSettings } from '@/types';
 import { PageInfoContext, usePageInfoState } from '@/hooks/usePageInfo';
 import { SiteSettingsContext } from './contexts';
+import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 import { HydrationDetector } from '@/utils/ui/animation';
 
 // 重新导出 Hook，保持向后兼容
@@ -205,83 +206,85 @@ const RootLayout = () => {
   return (
     <SiteSettingsContext.Provider value={{ siteSettings, loading: siteSettingsLoading }}>
       <PageInfoContext.Provider value={pageInfoState}>
-        <MainContainer>
-          {/* Hydration 检测器 - 用于动画优化 */}
-          <HydrationDetector />
+        <MusicPlayerProvider>
+          <MainContainer>
+            {/* Hydration 检测器 - 用于动画优化 */}
+            <HydrationDetector />
 
-          {/* 简洁的顶部加载进度条 */}
-          <AnimatePresence>
-            {showLoader && (
-              <LoadingIndicator
-                initial={{ width: 0 }}
-                animate={{ width: '100%' }}
-                exit={{ opacity: 0 }}
-                transition={{
-                  duration: 0.25,
-                  ease: 'easeOut',
-                }}
-              />
-            )}
-          </AnimatePresence>
+            {/* 简洁的顶部加载进度条 */}
+            <AnimatePresence>
+              {showLoader && (
+                <LoadingIndicator
+                  initial={{ width: 0 }}
+                  animate={{ width: '100%' }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: 0.25,
+                    ease: 'easeOut',
+                  }}
+                />
+              )}
+            </AnimatePresence>
 
-          {/* 流星背景动效（仅暗黑模式） */}
-          <MeteorBackground />
+            {/* 流星背景动效（仅暗黑模式） */}
+            <MeteorBackground />
 
-          {/* 判断当前是否处于个人中心相关页面：不展示全局 Header/Footer，由页面自身负责顶部/底部结构 */}
-          {(() => {
-            const path = location.pathname;
-            const isProfileContext =
-              path === '/profile' ||
-              path.startsWith('/profile/') ||
-              path.startsWith('/editor/article') ||
-              path.startsWith('/editor/note');
+            {/* 判断当前是否处于个人中心相关页面：不展示全局 Header/Footer，由页面自身负责顶部/底部结构 */}
+            {(() => {
+              const path = location.pathname;
+              const isProfileContext =
+                path === '/profile' ||
+                path.startsWith('/profile/') ||
+                path.startsWith('/editor/article') ||
+                path.startsWith('/editor/note');
 
-            return !isProfileContext ? (
-              <Header scrolled={isScrolled} pageInfo={pageInfoState.pageInfo || undefined} />
-            ) : null;
-          })()}
+              return !isProfileContext ? (
+                <Header scrolled={isScrolled} pageInfo={pageInfoState.pageInfo || undefined} />
+              ) : null;
+            })()}
 
-          {(() => {
-            const path = location.pathname;
-            const isProfileContext =
-              path === '/profile' ||
-              path.startsWith('/profile/') ||
-              path.startsWith('/editor/article') ||
-              path.startsWith('/editor/note');
+            {(() => {
+              const path = location.pathname;
+              const isProfileContext =
+                path === '/profile' ||
+                path.startsWith('/profile/') ||
+                path.startsWith('/editor/article') ||
+                path.startsWith('/editor/note');
 
-            return (
-              <Suspense
-                fallback={
-                  <Content isProfileContext={isProfileContext}>
-                    <PageLoading />
+              return (
+                <Suspense
+                  fallback={
+                    <Content isProfileContext={isProfileContext}>
+                      <PageLoading />
+                    </Content>
+                  }
+                >
+                  <Content key={location.pathname} isProfileContext={isProfileContext}>
+                    {showPageLoading ? <PageLoading /> : <Outlet />}
                   </Content>
-                }
-              >
-                <Content key={location.pathname} isProfileContext={isProfileContext}>
-                  {showPageLoading ? <PageLoading /> : <Outlet />}
-                </Content>
-              </Suspense>
-            );
-          })()}
+                </Suspense>
+              );
+            })()}
 
-          {(() => {
-            const path = location.pathname;
-            const isProfileContext =
-              path === '/profile' ||
-              path.startsWith('/profile/') ||
-              path.startsWith('/editor/article') ||
-              path.startsWith('/editor/note');
+            {(() => {
+              const path = location.pathname;
+              const isProfileContext =
+                path === '/profile' ||
+                path.startsWith('/profile/') ||
+                path.startsWith('/editor/article') ||
+                path.startsWith('/editor/note');
 
-            return !isProfileContext ? <Footer /> : null;
-          })()}
+              return !isProfileContext ? <Footer /> : null;
+            })()}
 
-          {/* 悬浮工具栏 */}
-          <FloatingToolbar scrollPosition={scrollPosition} />
+            {/* 悬浮工具栏 */}
+            <FloatingToolbar scrollPosition={scrollPosition} />
 
-          {/* 陪伴物小部件（智能切换） */}
-          <GhostWidget />
-          <SheepWidget />
-        </MainContainer>
+            {/* 陪伴物小部件（智能切换） */}
+            <GhostWidget />
+            <SheepWidget />
+          </MainContainer>
+        </MusicPlayerProvider>
       </PageInfoContext.Provider>
     </SiteSettingsContext.Provider>
   );

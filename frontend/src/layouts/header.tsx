@@ -17,6 +17,7 @@ import { logoutUser } from '@/store/modules/userSlice';
 import type { AppDispatch, RootState } from '@/store';
 import { storage } from '@/utils';
 import { useModalScrollLock, useClickOutside } from '@/hooks';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import { LazyImage } from '@/components/common';
 import LoginModal from './modules/login-model';
@@ -24,6 +25,7 @@ import RegisterModal from './modules/register-modal';
 import NavLinks from './modules/nav-links';
 import UserMenu, { MobileAvatar } from './modules/user-menu';
 import ThemeToggle from './modules/theme-toggle';
+import NavBarPlayer from './modules/navbar-player';
 import MobileMenu from './modules/mobile-menu';
 import AppStatus from './modules/app-status';
 import AnimatedLogo from './modules/animated-logo';
@@ -151,6 +153,14 @@ const Tag = styled.span`
 
   svg {
     font-size: 0.7rem;
+  }
+`;
+
+const MobilePlayerWrapper = styled.div`
+  display: none;
+  @media (max-width: 768px) {
+    display: block;
+    margin-right: 8px;
   }
 `;
 
@@ -366,6 +376,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const navCardRef = useRef<HTMLDivElement>(null);
   const isRouteChangingRef = useRef(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   // ==================== 滚动锁定管理 ====================
   // 当任意模态框打开时自动锁定滚动
@@ -734,6 +745,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
 
               {/* 主题切换和用户菜单 */}
               <div style={{ display: 'flex', alignItems: 'center' }}>
+                {!isMobile && <NavBarPlayer />}
                 <ThemeToggle />
                 <UserMenu
                   userDropdownOpen={userDropdownOpen}
@@ -750,6 +762,8 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
 
         {/* 移动端按钮 */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
+          {/* 移动端播放器 - 只显示图标 */}
+          <MobilePlayerWrapper>{isMobile && <NavBarPlayer />}</MobilePlayerWrapper>
           <MobileAvatar onClick={toggleUserDropdown} hasImage={!!user?.avatar}>
             {isLoggedIn && user?.avatar && user.avatar.trim() ? (
               <LazyImage src={user.avatar} alt={user.username || '用户头像'} />
