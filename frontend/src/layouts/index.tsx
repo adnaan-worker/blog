@@ -34,8 +34,7 @@ const MainContainer = styled.div`
   position: relative;
 `;
 
-// 内容区域样式 - 完全移除动画，确保DOM立即可见
-// 对于个人中心及其相关子页面（含编辑器），不再预留 Header 高度
+// 内容区域样式 - 个人中心独立，无需预留header
 const Content = styled.main<{ isProfileContext?: boolean }>`
   flex: 1;
   width: 100vw;
@@ -46,7 +45,7 @@ const Content = styled.main<{ isProfileContext?: boolean }>`
   min-height: ${(props) => (props.isProfileContext ? '100vh' : 'calc(100vh - var(--header-height))')};
 
   @media (max-width: 768px) {
-    padding: 1.5rem 1.25rem;
+    padding: ${(props) => (props.isProfileContext ? '0' : '1.5rem 1.25rem')};
   }
 `;
 

@@ -37,10 +37,10 @@ class ProxyController {
     try {
       let city = req.params.city || req.query.city || '北京';
 
-      if(req.params.city === '本地' || req.query.city === '本地') {
-        city = "苏州";
+      if (req.params.city === '本地' || req.query.city === '本地') {
+        city = '苏州';
       }
-      
+
       const format = req.query.format || 'json';
 
       const weather = await proxyService.getWeather(city, format);

@@ -98,7 +98,6 @@ const ProfileWrapper = styled.div`
   min-height: 100vh;
   width: 100%;
   position: relative;
-  overflow-x: hidden;
 `;
 
 const LayoutContainer = styled.div`

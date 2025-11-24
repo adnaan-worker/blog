@@ -228,6 +228,79 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
+// 移动端卡片样式
+const MobileCard = styled.div`
+  background: var(--bg-primary);
+  border-radius: 16px;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  margin-bottom: 0.75rem;
+  position: relative;
+  transition: all 0.2s ease;
+
+  &:active {
+    background: var(--bg-secondary);
+    transform: scale(0.98);
+  }
+`;
+
+const MobileCardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+`;
+
+const MobileCardTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.4;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const MobileCardContent = styled.p`
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const MobileCardFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px dashed var(--border-color);
+  padding-top: 0.75rem;
+`;
+
+const MobileMeta = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+`;
+
+const MobileActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
 export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
   const navigate = useNavigate();
   const config = PAGE_CONFIG[type];
@@ -238,9 +311,14 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
   // 追踪是否已经加载过数据
   const [hasLoaded, setHasLoaded] = React.useState(false);
 
+  const [isMobile, setIsMobile] = React.useState(false);
+
   React.useEffect(() => {
-    configRef.current = config;
-  }, [config]);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // API 响应适配器 - 统一不同 API 的返回格式
   // 关键：不依赖 config，使用 configRef
@@ -694,8 +772,58 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
     }
   };
 
+  // 渲染移动端单个项目
+  const renderMobileItem = (item: any) => {
+    const title = item.title || item.name || item.username || '无标题';
+    const content = item.content ? RichTextParser.extractText(item.content).slice(0, 100) : item.description || '';
+
+    return (
+      <MobileCard onClick={() => (config.getViewUrl ? window.open(config.getViewUrl(item.id), '_blank') : undefined)}>
+        <MobileCardHeader>
+          <MobileCardTitle>{title}</MobileCardTitle>
+          {/* 状态标签可以放在这里 */}
+        </MobileCardHeader>
+
+        {content && <MobileCardContent>{content}</MobileCardContent>}
+
+        <MobileCardFooter>
+          <MobileMeta>
+            <span>{formatDate(item.createdAt).split(' ')[0]}</span>
+            {item.viewCount !== undefined && <span>{item.viewCount} 阅</span>}
+            {item.likeCount !== undefined && <span>{item.likeCount} 赞</span>}
+          </MobileMeta>
+
+          <MobileActions onClick={(e) => e.stopPropagation()}>
+            {(config.getEditUrl ||
+              type === 'users' ||
+              type === 'categories' ||
+              type === 'tags' ||
+              type === 'projects') && (
+              <ActionButton onClick={() => handleEditItem(item)} title="编辑" style={{ width: 32, height: 32 }}>
+                <FiEdit3 size={14} />
+              </ActionButton>
+            )}
+            {config.deleteFn && (
+              <ActionButton
+                onClick={() => handleDelete(item.id, title)}
+                title="删除"
+                style={{ width: 32, height: 32, color: 'var(--error-color)' }}
+              >
+                <FiTrash2 size={14} />
+              </ActionButton>
+            )}
+          </MobileActions>
+        </MobileCardFooter>
+      </MobileCard>
+    );
+  };
+
   // 渲染单个项目（具体内容），外层容器和 key 由虚拟列表容器负责
   const renderItem = (item: any) => {
+    if (isMobile) {
+      return renderMobileItem(item);
+    }
+
     const title = item.title || item.name || item.username || '无标题';
     const content = item.content ? RichTextParser.extractText(item.content).slice(0, 150) : '';
 

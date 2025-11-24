@@ -36,59 +36,57 @@ const ToolbarContainer = styled.div`
 
 // 返回顶部按钮样式
 const ToolbarButton = styled(motion.button)`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.9) 100%);
-  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px; /* 方圆形更现代 */
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  background: rgba(var(--bg-secondary-rgb), 0.6);
+  backdrop-filter: blur(12px);
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 4px 16px rgba(var(--accent-rgb), 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.1);
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   position: relative;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
   /* GPU加速 */
   ${gpuAcceleration as any}
 
-  /* 光晕效果 */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -50%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.25s ease;
+  &:hover {
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent-color);
+    border-color: rgba(var(--accent-rgb), 0.2);
+    box-shadow:
+      0 8px 24px rgba(var(--accent-rgb), 0.15),
+      0 0 0 1px rgba(var(--accent-rgb), 0.1) inset;
+    transform: translateY(-2px);
   }
 
-  &:hover {
-    box-shadow:
-      0 8px 24px rgba(var(--accent-rgb), 0.4),
-      0 4px 12px rgba(0, 0, 0, 0.15);
-
-    &::before {
-      opacity: 1;
-    }
+  &:active {
+    transform: scale(0.95);
   }
 
   svg {
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     position: relative;
     z-index: 1;
+    stroke-width: 2.5;
   }
 
   @media (max-width: 768px) {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
 
     svg {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
     }
   }
 `;
