@@ -102,7 +102,8 @@ const PageInfoContainer = styled(motion.div)`
   padding-left: 2rem;
   border-left: 1px solid rgba(var(--accent-rgb), 0.15);
   /* 宽度由动画控制，防止内容溢出 */
-  flex-shrink: 0;
+  flex-shrink: 1; /* 允许收缩 */
+  min-width: 0; /* 允许内容溢出省略生效 */
   overflow: hidden;
 
   @media (max-width: 1024px) {
@@ -153,14 +154,6 @@ const Tag = styled.span`
 
   svg {
     font-size: 0.7rem;
-  }
-`;
-
-const MobilePlayerWrapper = styled.div`
-  display: none;
-  @media (max-width: 768px) {
-    display: block;
-    margin-right: 8px;
   }
 `;
 
@@ -762,8 +755,6 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
 
         {/* 移动端按钮 */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {/* 移动端播放器 - 只显示图标 */}
-          <MobilePlayerWrapper>{isMobile && <NavBarPlayer />}</MobilePlayerWrapper>
           <MobileAvatar onClick={toggleUserDropdown} hasImage={!!user?.avatar}>
             {isLoggedIn && user?.avatar && user.avatar.trim() ? (
               <LazyImage src={user.avatar} alt={user.username || '用户头像'} />
