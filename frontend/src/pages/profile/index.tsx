@@ -65,8 +65,14 @@ const ACTION_TO_TAB_MAP: Record<string, string> = {
 };
 
 // 获取快捷操作图标
-const getQuickActionIcon = (actionId: string, label: string, defaultIcon: string) => {
+const getQuickActionIcon = (actionId: string, defaultIcon: string) => {
   switch (actionId) {
+    case 'view-likes':
+      return <FiHeart />;
+    case 'view-note-likes':
+      return <FiHeart />;
+    case 'view-bookmarks':
+      return <FiBookmark />;
     case 'view-articles':
       return <FiFileText />;
     case 'view-notes':
@@ -1508,7 +1514,7 @@ const Profile: React.FC = () => {
                   whileHover={{ scale: 1.1, y: -5 }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  {getQuickActionIcon(action.action, action.label, action.icon)}
+                  {getQuickActionIcon(action.action, action.icon)}
                   {isActive && (
                     <motion.div
                       layoutId="dock-active-dot"
@@ -1588,7 +1594,7 @@ const Profile: React.FC = () => {
                         handleQuickAction(action.action);
                       }}
                     >
-                      <div className="icon-wrapper">{getQuickActionIcon(action.action, action.label, action.icon)}</div>
+                      <div className="icon-wrapper">{getQuickActionIcon(action.action, action.icon)}</div>
                       <span>{action.label}</span>
                     </BottomSheetItem>
                   ))}

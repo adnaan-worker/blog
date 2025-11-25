@@ -29,6 +29,18 @@ const MobileBackdrop = styled(motion.div)`
   z-index: 999;
 `;
 
+const DragHandle = styled.div`
+  width: 40px;
+  height: 5px;
+  background: var(--text-secondary); /* 使用更明显的颜色 */
+  opacity: 0.4;
+  border-radius: 3px;
+  margin: 8px auto 20px; /* 增加顶部间距 */
+  cursor: grab;
+  position: relative;
+  z-index: 10; /* 确保在上层 */
+`;
+
 const PlayerDropdown = styled(motion.div)`
   position: absolute;
   top: calc(100% + 12px);
@@ -418,13 +430,25 @@ const ExpandedPlayer: React.FC<ExpandedPlayerProps> = ({ onClose }) => {
     }
   }, [currentLyric, activeTab]);
 
+  const handleDragEnd = (event: any, info: any) => {
+    if (info.offset.y > 100) {
+      onClose();
+    }
+  };
+
   const playerContent = (
     <PlayerDropdown
       initial={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.9, y: -10 }}
       animate={isMobile ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
       exit={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.9, y: -10 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      drag={isMobile ? 'y' : false}
+      dragConstraints={{ top: 0, bottom: 0 }}
+      dragElastic={{ top: 0, bottom: 0.2 }}
+      onDragEnd={handleDragEnd}
+      style={isMobile ? { touchAction: 'none' } : {}}
     >
+      {isMobile && <DragHandle />}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>NOW PLAYING</span>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

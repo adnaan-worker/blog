@@ -4,9 +4,7 @@ import styled from '@emotion/styled';
 import { useDispatch } from 'react-redux';
 import Header from './header';
 import Footer from './footer';
-import FloatingToolbar from './floating-toolbar';
-import GhostWidget from './ghost-widget';
-import SheepWidget from './sheep-widget';
+import SmartDock from './modules/smart-dock';
 import MeteorBackground from '@/components/common/meteor-background';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
@@ -276,12 +274,8 @@ const RootLayout = () => {
               return !isProfileContext ? <Footer /> : null;
             })()}
 
-            {/* 悬浮工具栏 */}
-            <FloatingToolbar scrollPosition={scrollPosition} />
-
-            {/* 陪伴物小部件（智能切换） */}
-            <GhostWidget />
-            <SheepWidget />
+            {/* 智能悬浮坞 (整合播放器、返回顶部、陪伴物) */}
+            <SmartDock />
           </MainContainer>
         </MusicPlayerProvider>
       </PageInfoContext.Provider>

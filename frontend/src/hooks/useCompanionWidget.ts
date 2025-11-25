@@ -218,53 +218,56 @@ export const useCompanionWidget = (config: CompanionConfig) => {
         let newVelocityX = velocityRef.current.x;
         let newVelocityY = velocityRef.current.y;
 
-        // 重力
-        newVelocityY += 0.3;
+        // 重力 - 减小重力，让它更像悬浮物
+        newVelocityY += 0.15;
 
         // 边界碰撞
         let collided = false;
         let stuckToWall = false;
 
+        // 碰撞反弹系数 - 降低反弹力度，避免剧烈弹跳
+        const bounceFactor = 0.4;
+
         if (newX <= MARGIN) {
           newX = MARGIN;
-          newVelocityX = -newVelocityX * 0.6;
+          newVelocityX = -newVelocityX * bounceFactor;
           collided = true;
-          if (Math.abs(newVelocityX) < 3) {
+          if (Math.abs(newVelocityX) < 2) {
             newVelocityX = 0;
             stuckToWall = true;
           }
         }
         if (newX >= window.innerWidth - width - MARGIN) {
           newX = window.innerWidth - width - MARGIN;
-          newVelocityX = -newVelocityX * 0.6;
+          newVelocityX = -newVelocityX * bounceFactor;
           collided = true;
-          if (Math.abs(newVelocityX) < 3) {
+          if (Math.abs(newVelocityX) < 2) {
             newVelocityX = 0;
             stuckToWall = true;
           }
         }
         if (newY <= MARGIN) {
           newY = MARGIN;
-          newVelocityY = -newVelocityY * 0.6;
+          newVelocityY = -newVelocityY * bounceFactor;
           collided = true;
-          if (Math.abs(newVelocityY) < 3) {
+          if (Math.abs(newVelocityY) < 2) {
             newVelocityY = 0;
             stuckToWall = true;
           }
         }
         if (newY >= window.innerHeight - height - MARGIN) {
           newY = window.innerHeight - height - MARGIN;
-          newVelocityY = -newVelocityY * 0.6;
+          newVelocityY = -newVelocityY * bounceFactor;
           collided = true;
-          if (Math.abs(newVelocityY) < 3) {
+          if (Math.abs(newVelocityY) < 2) {
             newVelocityY = 0;
             stuckToWall = true;
           }
         }
 
         // 碰撞时创建粒子
-        if (collided) {
-          createParticles(['⭐', '✨', '💫', '🌟'], 5, true);
+        if (collided && Math.abs(newVelocityX) > 2) {
+          createParticles(['⭐', '✨', '💫', '🌟'], 3, true);
         }
 
         // 粘在墙上
@@ -274,9 +277,9 @@ export const useCompanionWidget = (config: CompanionConfig) => {
           return { x: newX, y: newY };
         }
 
-        // 摩擦力
-        newVelocityX *= 0.97;
-        newVelocityY *= 0.97;
+        // 摩擦力 - 增加阻力，让停止更丝滑
+        newVelocityX *= 0.92;
+        newVelocityY *= 0.92;
 
         // 速度太小时停止
         if (Math.abs(newVelocityX) < 0.2 && Math.abs(newVelocityY) < 0.2) {
@@ -412,34 +415,45 @@ export const useCompanionWidget = (config: CompanionConfig) => {
 
   // 鼠标/触摸移动 - 眼睛跟随和拉线
   useEffect(() => {
+    let rafId: number | null = null;
+
     const handleMove = (clientX: number, clientY: number) => {
-      // 更新拉线位置
-      if (isPulling) {
-        setPullCurrent({ x: clientX, y: clientY });
-      }
+      if (rafId) return; // 如果已经在等待下一帧，则跳过
 
-      // 眼睛跟随
-      if (isFlying) return;
+      rafId = requestAnimationFrame(() => {
+        // 更新拉线位置
+        if (isPulling) {
+          setPullCurrent({ x: clientX, y: clientY });
+        }
 
-      const rect = widgetRef.current?.getBoundingClientRect();
-      if (!rect) return;
+        // 眼睛跟随
+        if (!isFlying) {
+          const rect = widgetRef.current?.getBoundingClientRect();
+          if (rect) {
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
 
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
+            const dx = clientX - centerX;
+            const dy = clientY - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
 
-      const dx = clientX - centerX;
-      const dy = clientY - centerY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxOffset = 1.5;
+            const offsetX = Math.max(-maxOffset, Math.min(maxOffset, (dx / distance) * maxOffset));
+            const offsetY = Math.max(-maxOffset, Math.min(maxOffset, (dy / distance) * maxOffset));
 
-      const maxOffset = 1.5;
-      const offsetX = Math.max(-maxOffset, Math.min(maxOffset, (dx / distance) * maxOffset));
-      const offsetY = Math.max(-maxOffset, Math.min(maxOffset, (dy / distance) * maxOffset));
+            setEyeOffset({ x: offsetX, y: offsetY });
+          }
+        }
 
-      setEyeOffset({ x: offsetX, y: offsetY });
+        rafId = null; // 重置
+      });
     };
 
     const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
     const handleTouchMove = (e: TouchEvent) => {
+      if (isPulling || isDragging) {
+        e.preventDefault();
+      }
       if (e.touches.length > 0) {
         const touch = e.touches[0];
         handleMove(touch.clientX, touch.clientY);
@@ -450,10 +464,11 @@ export const useCompanionWidget = (config: CompanionConfig) => {
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [isPulling, isFlying]);
+  }, [isPulling, isFlying, isDragging]);
 
   // ============================================================================
   // 智能系统
