@@ -1,18 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import {
-  FiArrowUp,
-  FiPause,
-  FiPlay,
-  FiSun,
-  FiCloud,
-  FiCloudRain,
-  FiCloudSnow,
-  FiCloudLightning,
-  FiWind,
-  FiMusic,
-} from 'react-icons/fi';
+import { FiArrowUp, FiPause, FiPlay, FiMusic } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
@@ -50,100 +39,157 @@ const Visualizer = () => (
   </div>
 );
 
-// AI 核心光球
-const GlowingOrb = styled(motion.div)`
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--accent-rgb), 0.8) 0%, rgba(var(--accent-rgb), 0) 70%);
-  filter: blur(20px);
-  margin-bottom: 32px;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: -20px;
-    background: radial-gradient(circle, rgba(var(--text-rgb), 0.2) 0%, transparent 70%);
-    filter: blur(30px);
-    border-radius: 50%;
-    z-index: -1;
-  }
-`;
-
-// AI 对话面板 - 确保层级最高
-const AIOverlayContainer = styled(motion.div)`
+// AI 面板 - 极光风格
+const AIPanel = styled(motion.div)`
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 85vh;
-  background: rgba(var(--bg-secondary-rgb), 0.98);
-  backdrop-filter: blur(24px) saturate(180%);
+  height: 70vh;
+  background: rgba(var(--bg-secondary-rgb), 0.8);
+  backdrop-filter: blur(30px) saturate(180%);
   border-top-left-radius: 32px;
   border-top-right-radius: 32px;
-  z-index: 2000; /* 提高层级，确保不被遮挡 */
-  padding: 32px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -20px 80px rgba(0, 0, 0, 0.2);
+  z-index: 900;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.2);
-  touch-action: none; /* 防止背景滚动 */
-`;
+  padding: 0 20px 20px;
+  overflow: hidden;
 
-const AIResponseArea = styled(motion.div)`
-  width: 100%;
-  padding: 20px;
-  color: var(--text-primary);
-  font-size: 1rem;
-  line-height: 1.6;
-  height: 100%;
-  overflow-y: auto;
-`;
-
-const AIInputArea = styled.div`
-  width: 100%;
-  margin-top: auto;
-  margin-bottom: 32px;
-  position: relative;
-`;
-
-const AIGreeting = styled(motion.h2)`
-  font-size: 2rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 8px;
-  text-align: center;
-`;
-
-const AISuggestionChip = styled(motion.button)`
-  padding: 10px 20px;
-  background: rgba(var(--bg-primary-rgb), 0.5);
-  border-radius: 24px;
-  border: 1px solid rgba(var(--border-rgb), 0.1);
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin: 6px;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-
-  &:active {
-    background: rgba(var(--text-rgb), 0.05);
-    transform: scale(0.98);
+  /* 顶部光晕装饰 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -150px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.3) 0%, transparent 70%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
   }
 `;
 
-const HandleBar = styled.div`
+// 面板头部 - 承载 Pet
+const PanelHeader = styled.div`
+  height: 100px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 10px;
+`;
+
+// Pet 在面板中的容器
+const PanelPetWrapper = styled(motion.div)`
+  width: 80px;
+  height: 90px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  filter: drop-shadow(0 10px 20px rgba(var(--accent-rgb), 0.3));
+`;
+
+const AIChatArea = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 1;
+  padding-top: 10px;
+
+  &::-webkit-scrollbar {
+    width: 0;
+  }
+`;
+
+const MessageBubble = styled(motion.div)<{ isUser?: boolean }>`
+  align-self: ${(props) => (props.isUser ? 'flex-end' : 'flex-start')};
+  background: ${(props) =>
+    props.isUser
+      ? 'linear-gradient(135deg, var(--accent-color), var(--accent-color-hover))'
+      : 'rgba(var(--bg-primary-rgb), 0.6)'};
+  color: ${(props) => (props.isUser ? '#fff' : 'var(--text-primary)')};
+  padding: 14px 18px;
+  border-radius: 24px;
+  border-bottom-right-radius: ${(props) => (props.isUser ? '4px' : '24px')};
+  border-bottom-left-radius: ${(props) => (props.isUser ? '24px' : '4px')};
+  max-width: 85%;
+  font-size: 1rem;
+  line-height: 1.6;
+  box-shadow: ${(props) => (props.isUser ? '0 8px 20px rgba(var(--accent-rgb), 0.25)' : '0 2px 10px rgba(0,0,0,0.03)')};
+  border: 1px solid ${(props) => (props.isUser ? 'transparent' : 'rgba(var(--border-rgb), 0.1)')};
+  backdrop-filter: blur(10px);
+`;
+
+const AIInputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  background: rgba(var(--bg-primary-rgb), 0.7);
+  backdrop-filter: blur(20px);
+  border-radius: 32px;
+  padding: 8px 8px 8px 24px;
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  z-index: 1;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  &:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    background: rgba(var(--bg-primary-rgb), 0.9);
+  }
+`;
+
+const AIInput = styled.input`
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  padding: 10px 0;
+  outline: none;
+  min-width: 0;
+
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+`;
+
+const SendButton = styled(motion.button)`
   width: 48px;
-  height: 5px;
-  background: var(--text-tertiary);
-  border-radius: 3px;
-  opacity: 0.3;
-  margin-bottom: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-hover));
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 12px;
+  box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.4);
+  cursor: pointer;
+`;
+
+// Pet 容器 (右下角常驻)
+const CornerPetWrapper = styled(motion.div)`
+  position: fixed;
+  bottom: 24px;
+  right: 16px;
+  width: 56px;
+  height: 72px;
+  z-index: 910;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 `;
 
 // 音乐胶囊容器 (垫在 Pet 下面)
@@ -204,57 +250,6 @@ const PetVisual = styled(motion.div)`
   justify-content: center;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
   padding-bottom: 4px;
-`;
-
-// AI 思维气泡
-const ThoughtBubble = styled(motion.div)`
-  position: absolute;
-  bottom: 100%;
-  right: 12px;
-  margin-bottom: 16px;
-  padding: 10px 16px;
-  background: rgba(var(--bg-secondary-rgb), 0.9);
-  backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(var(--accent-rgb), 0.2);
-  border-radius: 16px;
-  border-bottom-left-radius: 4px;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  white-space: nowrap;
-  z-index: 920;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transform-origin: bottom right;
-  min-width: max-content;
-
-  /* 流光效果 */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(45deg, transparent, rgba(var(--accent-rgb), 0.1), transparent);
-    background-size: 200% 200%;
-    animation: shine 3s infinite;
-  }
-
-  @keyframes shine {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
 `;
 
 // 封面旋转动画
@@ -401,57 +396,32 @@ const MobileSmartDock: React.FC = () => {
   const scaleX = useTransform(x, [-60, 0, 60], [1.05, 1, 0.95]);
   const scaleY = useTransform(y, [-60, 0], [1.05, 1]);
 
+  // 阈值反馈：当拖动超过阈值时，整体轻微放大，提示可松手
+  const triggerScale = useTransform([x, y], ([currentX, currentY]: number[]) => {
+    if (currentY < -50 || (currentX < -30 && !isMusicExpanded)) return 1.1;
+    return 1;
+  });
+
   const hasTrack = !!currentTrack.id;
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
   const companion = useCompanionWidget({
-    storageKey: 'mobile_dock_companion',
     width: 60,
     height: 70,
-    enablePhysics: false,
-    enableSmartBubble: true,
-    bubbleIdleTime: 8000,
   });
 
-  const getWeatherIcon = () => {
-    const weather = companion.smartContext?.weather;
-    if (!weather) return null;
-
-    switch (weather.condition) {
-      case 'sunny':
-        return <FiSun color="#F59E0B" />;
-      case 'cloudy':
-        return <FiCloud color="#9CA3AF" />;
-      case 'rainy':
-        return <FiCloudRain color="#3B82F6" />;
-      case 'snowy':
-        return <FiCloudSnow color="#E5E7EB" />;
-      case 'stormy':
-        return <FiCloudLightning color="#8B5CF6" />;
-      case 'windy':
-        return <FiWind color="#10B981" />;
-      default:
-        return null;
-    }
-  };
-
-  // 处理滑动手势 - 改为控制展开/收起
   const handleDragEnd = (event: any, info: any) => {
-    // 向右滑动 (offset.x > 0) -> 收起
     if (info.offset.x > 30) {
       setIsMusicExpanded(false);
     }
   };
 
-  // Pet 上的滑动处理
   const handlePetDragEnd = (event: any, info: any) => {
     const { x: dragX, y: dragY } = info.offset;
 
-    // 向上滑动 -> 返回置顶
     if (dragY < -50) {
       scrollToTop();
       setIsScrolling(true);
-      // 延迟恢复悬浮动画，防止滚动时抖动
       setTimeout(() => {
         setIsDragging(false);
         setIsScrolling(false);
@@ -459,14 +429,12 @@ const MobileSmartDock: React.FC = () => {
       return;
     }
 
-    setIsDragging(false); // 非滚动操作立即恢复
+    setIsDragging(false);
 
-    // 向左滑动 -> 展开
     if (dragX < -30 && !isMusicExpanded) {
       setIsMusicExpanded(true);
     }
 
-    // 向右滑动 -> 收起
     if (dragX > 30 && isMusicExpanded) {
       setIsMusicExpanded(false);
     }
@@ -495,16 +463,12 @@ const MobileSmartDock: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Dock 显示逻辑：常驻 (只要不在 AI 模式下，就一直显示陪伴物)
-  // 这样用户随时可以通过左滑陪伴物来打开音乐面板
   const shouldShowDock = !isAIActive;
 
-  // 胶囊是否展开：手动展开，或者正在播放时自动展开
   const showCapsuleContent = isMusicExpanded;
 
   const mainText = hasTrack ? currentTrack.title : "Adnaan's Blog";
 
-  // Subtext logic: Show lyrics if enabled, otherwise show Artist / Paused state
   const subText = hasTrack
     ? showNavbarLyrics && currentLyric
       ? currentLyric.text
@@ -513,141 +477,129 @@ const MobileSmartDock: React.FC = () => {
         : `Paused - ${currentTrack.artist}`
     : '点击播放音乐';
 
+  const petVariants = {
+    idle: {
+      right: 16,
+      bottom: 24,
+      left: 'auto',
+      x: 0,
+      scale: 1,
+    },
+    active: {
+      right: '50%',
+      bottom: 'calc(16px + 65vh - 30px)',
+      left: 'auto',
+      x: '50%',
+      scale: 1.3,
+    },
+  };
+
+  // 核心 Pet 视觉组件 (纯展示)
+  const PetVisualContent = ({ isDark, companion }: { isDark: boolean; companion: any }) => (
+    <>
+      {isDark ? (
+        <GhostVisual
+          clickCount={companion.clickCount}
+          isHovered={companion.isHovered}
+          isBlinking={companion.isBlinking}
+          particles={companion.particles}
+        />
+      ) : (
+        <SheepVisual
+          clickCount={companion.clickCount}
+          isHovered={companion.isHovered}
+          isBlinking={companion.isBlinking}
+          particles={companion.particles}
+        />
+      )}
+    </>
+  );
+
   return (
     <>
       <AnimatePresence>
         {isAIActive && (
-          <motion.div
-            key="ai-mask"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.6)',
-              zIndex: 940,
-              backdropFilter: 'blur(4px)',
-            }}
-            onClick={() => setIsAIActive(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isAIActive && (
-          <AIOverlayContainer
-            key="ai-overlay"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.5 }}
-            onDragEnd={(e, info) => {
-              if (info.offset.y > 150) setIsAIActive(false);
-            }}
-          >
-            <HandleBar />
-
-            <GlowingOrb
-              key="glowing-orb"
-              animate={{
-                scale: ai.aiState === 'thinking' ? [1, 1.2, 1] : [1, 1.1, 1],
-                opacity: [0.8, 1, 0.8],
-                height: ai.aiState === 'idle' ? 120 : 60,
-                width: ai.aiState === 'idle' ? 120 : 60,
-                marginBottom: ai.aiState === 'idle' ? '32px' : '16px',
-              }}
-              transition={{ duration: ai.aiState === 'thinking' ? 1 : 3, repeat: Infinity }}
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 890 }}
+              onClick={() => setIsAIActive(false)}
             />
 
-            {ai.aiState === 'idle' && !ai.reply && (
-              <motion.div
-                key="ai-idle-content"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                style={{ textAlign: 'center', width: '100%' }}
-              >
-                <AIGreeting>Hi, 我在听</AIGreeting>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: 32, fontSize: '0.95rem' }}>
-                  我可以帮你总结文章、播放音乐或回答问题
-                </p>
+            <AIPanel
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+              <PanelHeader>
+                {/* Pet 在这里！使用 layoutId 实现飞跃 */}
+                <PanelPetWrapper layoutId="pet-hero">
+                  <PetVisualContent isDark={isDark} companion={companion} />
+                </PanelPetWrapper>
+              </PanelHeader>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    justifyContent: 'center',
-                    gap: '10px',
-                    marginBottom: '32px',
-                  }}
-                >
-                  <AISuggestionChip onClick={() => ai.send('总结这篇文章')} whileTap={{ scale: 0.95 }}>
-                    ✨ 总结这篇文章
-                  </AISuggestionChip>
-                  <AISuggestionChip onClick={() => ai.send('播放推荐音乐')} whileTap={{ scale: 0.95 }}>
-                    🎵 播放推荐音乐
-                  </AISuggestionChip>
-                  <AISuggestionChip onClick={() => ai.send('今天有什么新闻')} whileTap={{ scale: 0.95 }}>
-                    📰 今天有什么新闻
-                  </AISuggestionChip>
-                </div>
-              </motion.div>
-            )}
-
-            {(ai.aiState === 'thinking' || ai.reply) && (
-              <AIResponseArea key="ai-response" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {ai.aiState === 'thinking' && (
+              <AIChatArea>
+                {/* ... Chat Logic ... */}
+                {ai.reply ? (
+                  <>
+                    {ai.inputValue && <MessageBubble isUser>{ai.inputValue}</MessageBubble>}
+                    <MessageBubble>{ai.reply}</MessageBubble>
+                  </>
+                ) : (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    style={{ textAlign: 'center', color: 'var(--text-tertiary)' }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    style={{ textAlign: 'center', marginTop: 20, color: 'var(--text-secondary)' }}
                   >
-                    正在思考...
+                    <p style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>嗨，我是 Adnaan 的 AI 助手</p>
+                    <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>无论是找文章还是聊代码，我都再行。</p>
                   </motion.div>
                 )}
-                {ai.reply}
-              </AIResponseArea>
-            )}
+              </AIChatArea>
 
-            <AIInputArea>
-              <div
-                style={{
-                  background: 'rgba(var(--text-rgb), 0.05)',
-                  borderRadius: '24px',
-                  padding: '8px 16px',
-                  color: 'var(--text-primary)',
-                  border: '1px solid rgba(var(--border-rgb), 0.15)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
-                }}
-              >
-                <input
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    width: '100%',
-                    fontSize: '1rem',
-                    color: 'var(--text-primary)',
-                    outline: 'none',
-                    padding: '8px 0',
-                  }}
-                  placeholder="输入你想问的内容..."
+              <AIInputWrapper>
+                <AIInput
+                  placeholder="输入你的想法..."
                   value={ai.inputValue}
                   onChange={(e) => ai.setInputValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') ai.send(ai.inputValue);
-                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && ai.send(ai.inputValue)}
                 />
-              </div>
-            </AIInputArea>
-          </AIOverlayContainer>
+                <SendButton onClick={() => ai.send(ai.inputValue)} whileTap={{ scale: 0.9 }}>
+                  <FiArrowUp size={22} />
+                </SendButton>
+              </AIInputWrapper>
+            </AIPanel>
+          </>
         )}
       </AnimatePresence>
+
+      {!isAIActive && (
+        <CornerPetWrapper style={{ zIndex: 920 }}>
+          <BoundaryBreaker
+            layoutId="pet-hero" // 关键：共享 layoutId
+            onClick={handleCompanionClick}
+            drag={true}
+            dragConstraints={{ left: -200, right: 0, top: -300, bottom: 0 }}
+            dragElastic={0.6}
+            dragSnapToOrigin={true}
+            onDragStart={() => setIsDragging(true)}
+            onDrag={(event, info) => {
+              x.set(info.offset.x);
+              y.set(info.offset.y);
+            }}
+            onDragEnd={handlePetDragEnd}
+            whileTap={{ scale: 0.95 }}
+          >
+            <PetVisual style={{ scaleX, scaleY, scale: triggerScale }}>
+              <PetVisualContent isDark={isDark} companion={companion} />
+            </PetVisual>
+          </BoundaryBreaker>
+        </CornerPetWrapper>
+      )}
 
       <AnimatePresence>
         {/* 当 showCapsuleContent 为 true 时展开，为 false 时完全收起（隐藏） */}
@@ -750,74 +702,6 @@ const MobileSmartDock: React.FC = () => {
           </AnimatePresence>
         </MusicCapsule>
       </AnimatePresence>
-
-      {/* 3. 陪伴物 (最右侧) - 始终存在且独立 */}
-      <PetContainer>
-        {/* 陪伴物容器 (负责拖拽和位置) */}
-        <BoundaryBreaker
-          layout
-          onClick={handleCompanionClick}
-          drag={true}
-          dragConstraints={{ left: -200, right: 0, top: -300, bottom: 0 }}
-          dragElastic={0.6} // 增加弹性，手感更轻
-          dragSnapToOrigin={true} // 松手自动回弹
-          dragTransition={{ bounceStiffness: 400, bounceDamping: 25 }} // 回弹有力
-          onDragStart={() => setIsDragging(true)}
-          onDrag={(event, info) => {
-            x.set(info.offset.x);
-            y.set(info.offset.y);
-          }}
-          onDragEnd={handlePetDragEnd}
-          whileTap={{ scale: 0.95 }}
-        >
-          {/* 内部视觉容器 (负责悬浮、旋转、形变) */}
-          <PetVisual
-            style={{ scaleX, scaleY }}
-            animate={{
-              y: isPlaying ? [0, -4, 0] : [0, -2, 0], // 悬浮动画独立运行
-            }}
-            transition={{
-              y: { duration: isPlaying ? 0.6 : 3, repeat: Infinity, ease: 'easeInOut' },
-            }}
-          >
-            {isDark ? (
-              <GhostVisual
-                clickCount={companion.clickCount}
-                isHovered={companion.isHovered}
-                isBlinking={companion.isBlinking}
-                particles={companion.particles}
-              />
-            ) : (
-              <SheepVisual
-                clickCount={companion.clickCount}
-                isHovered={companion.isHovered}
-                isBlinking={companion.isBlinking}
-                particles={companion.particles}
-              />
-            )}
-          </PetVisual>
-        </BoundaryBreaker>
-
-        {/* AI 思维气泡 (Attached to PetContainer) */}
-        <AnimatePresence>
-          {!!companion.careBubble && !isAIActive && (
-            <ThoughtBubble
-              key={companion.careBubble || 'thought-bubble'}
-              initial={{ opacity: 0, scale: 0.8, y: 10, x: 0 }}
-              animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 10 }}
-              style={{ right: 0, left: 'auto', bottom: '100%', transformOrigin: 'bottom right', marginBottom: 8 }}
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                handleCompanionClick();
-              }}
-            >
-              {getWeatherIcon() || <span style={{ fontSize: '1rem' }}>✨</span>}
-              {companion.careBubble}
-            </ThoughtBubble>
-          )}
-        </AnimatePresence>
-      </PetContainer>
 
       <AnimatePresence>
         {showFullPlayer && <ExpandedPlayer key="expanded-player" onClose={() => setShowFullPlayer(false)} />}
