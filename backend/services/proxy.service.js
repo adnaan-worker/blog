@@ -232,7 +232,7 @@ class ProxyService {
       }
 
       // 调用音乐 API
-      const url = `https://meting.qjqq.cn/?server=${server}&type=song&id=${id}`;
+      const url = `https://music.3e0.cn//?server=${server}&type=song&id=${id}`;
 
       const response = await fetch(url, {
         headers: {
@@ -247,7 +247,7 @@ class ProxyService {
       const data = await response.json();
 
       // 存入缓存（redisManager.set 会自动处理 JSON 序列化）
-      await redisManager.set(cacheKey, data, this.CACHE_TTL.MUSIC_URL);
+      // await redisManager.set(cacheKey, data, this.CACHE_TTL.MUSIC_URL);
 
       logger.info(`✅ 获取音乐URL成功: ${server}:${id}`);
       return data;
