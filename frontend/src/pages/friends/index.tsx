@@ -15,7 +15,7 @@ const Container = styled.div`
   background: #050505; /* Deep dark background */
   overflow-x: hidden;
   color: #fff;
-  
+
   [data-theme='light'] & {
     background: #f5f5f7;
     color: #1d1d1f;
@@ -37,7 +37,7 @@ const Content = styled.div`
   padding: 0 2rem;
   position: relative;
   z-index: 1;
-  
+
   @media (max-width: 768px) {
     padding: 0 1rem;
   }
@@ -89,7 +89,7 @@ const Friends = () => {
   // Scroll Parallax Logic
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start start", "end end"]
+    offset: ['start start', 'end end'],
   });
 
   const springConfig = { stiffness: 100, damping: 30, restDelta: 0.001 };
@@ -120,30 +120,30 @@ const Friends = () => {
         animate={{
           x: [0, 100, 0],
           y: [0, -50, 0],
-          scale: [1, 1.2, 1]
+          scale: [1, 1.2, 1],
         }}
-        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
         style={{
           top: '-10%',
           left: '-10%',
           width: '600px',
           height: '600px',
-          background: 'radial-gradient(circle, rgba(var(--primary-rgb), 0.3), transparent 70%)'
+          background: 'radial-gradient(circle, rgba(var(--primary-rgb), 0.3), transparent 70%)',
         }}
       />
       <AmbientOrb
         animate={{
           x: [0, -100, 0],
           y: [0, 50, 0],
-          scale: [1, 1.1, 1]
+          scale: [1, 1.1, 1],
         }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
         style={{
           bottom: '10%',
           right: '-5%',
           width: '500px',
           height: '500px',
-          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.2), transparent 70%)'
+          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.2), transparent 70%)',
         }}
       />
 
@@ -164,7 +164,7 @@ const Friends = () => {
                 borderRadius: '999px',
                 padding: '0.6rem 1.5rem',
                 fontSize: '0.95rem',
-                fontWeight: 600
+                fontWeight: 600,
               }}
             >
               Become a Friend
@@ -203,13 +203,9 @@ const Friends = () => {
             </Column>
           </ParallaxContainer>
         </MobileView>
-
       </Content>
 
-      <ApplyModal
-        isOpen={isApplyModalOpen}
-        onClose={() => setIsApplyModalOpen(false)}
-      />
+      <ApplyModal isOpen={isApplyModalOpen} onClose={() => setIsApplyModalOpen(false)} />
     </Container>
   );
 };

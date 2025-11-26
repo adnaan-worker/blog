@@ -30,7 +30,7 @@ const CardBody = styled(motion.a)`
 
   /* Noise Texture */
   &::before {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
@@ -80,7 +80,9 @@ const BorderHighlight = styled(motion.div)`
     rgba(var(--accent-rgb), 0.4),
     transparent 40%
   );
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
   padding: 1px; /* Border width */
@@ -120,7 +122,7 @@ const AvatarBox = styled(motion.div)`
   border: 2px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.2);
   background: var(--bg-tertiary);
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -197,7 +199,7 @@ const ActionIcon = styled(motion.div)`
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
-  
+
   ${CardWrapper}:hover & {
     background: var(--accent-color);
     color: #fff;
@@ -240,21 +242,19 @@ export const FriendCard: React.FC<FriendCardProps> = ({ friend, index }) => {
   }
 
   return (
-    <CardWrapper
-      style={{ perspective: 1000 }}
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-    >
+    <CardWrapper style={{ perspective: 1000 }} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
       <CardBody
         href={friend.url}
         target="_blank"
         rel="noopener noreferrer"
-        style={{
-          rotateX,
-          rotateY,
-          '--accent-color': friend.color || 'var(--primary-color)',
-          '--accent-rgb': friend.color ? 'var(--accent-rgb)' : 'var(--primary-rgb)',
-        } as any}
+        style={
+          {
+            rotateX,
+            rotateY,
+            '--accent-color': friend.color || 'var(--primary-color)',
+            '--accent-rgb': friend.color ? 'var(--accent-rgb)' : 'var(--primary-rgb)',
+          } as any
+        }
       >
         <GlowGradient />
         <BorderHighlight />
@@ -270,9 +270,7 @@ export const FriendCard: React.FC<FriendCardProps> = ({ friend, index }) => {
             </InfoBox>
           </Header>
 
-          <Desc style={{ translateZ: 10 }}>
-            {friend.desc}
-          </Desc>
+          <Desc style={{ translateZ: 10 }}>{friend.desc}</Desc>
 
           <Footer style={{ translateZ: 10 }}>
             <Tags>

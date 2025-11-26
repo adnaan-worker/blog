@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import {
   FiArrowUp,
   FiPause,
@@ -11,13 +11,13 @@ import {
   FiCloudSnow,
   FiCloudLightning,
   FiWind,
+  FiMusic,
 } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { useCompanionWidget } from '@/hooks/useCompanionWidget';
 import { useSimulatedAI } from './useSimulatedAI';
-import { dockItemHover } from './shared-styles';
 import GhostVisual from './visuals/GhostVisual';
 import SheepVisual from './visuals/SheepVisual';
 import ExpandedPlayer from '../navbar-player/expanded-player';
@@ -146,49 +146,71 @@ const HandleBar = styled.div`
   margin-bottom: 48px;
 `;
 
-// 灵动胶囊容器
-const CapsuleContainer = styled(motion.div)<{ isVisible: boolean }>`
+// 音乐胶囊容器 (垫在 Pet 下面)
+const MusicCapsule = styled(motion.div)<{ isVisible: boolean }>`
   position: fixed;
   bottom: 24px;
-  left: 16px;
   right: 16px;
-  height: 68px;
-  border-radius: 34px;
+  left: auto;
+  height: 56px; /* 高度减小 */
+  border-radius: 28px;
   display: flex;
   align-items: center;
-  padding: 0 8px;
-  z-index: 900;
-  overflow: visible;
+  z-index: 900; /* 比 Pet 低 */
+  overflow: hidden;
 
   background-color: ${(props) => (props.isVisible ? 'rgba(var(--bg-secondary-rgb), 0.85)' : 'transparent')};
   backdrop-filter: ${(props) => (props.isVisible ? 'blur(16px) saturate(180%)' : 'blur(0px)')};
   box-shadow: ${(props) => (props.isVisible ? '0 8px 32px rgba(0, 0, 0, 0.12)' : 'none')};
   border: ${(props) => (props.isVisible ? '1px solid rgba(var(--border-rgb), 0.15)' : '1px solid transparent')};
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  transform-origin: center right;
 `;
 
-// 陪伴物容器
-const BoundaryBreaker = styled(motion.div)`
-  position: absolute;
-  left: -6px;
-  bottom: 12px;
-  width: 64px;
-  height: 72px;
-  z-index: 910;
-  cursor: pointer;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
-  ${dockItemHover}
+// Pet 容器
+const PetContainer = styled(motion.div)`
+  position: fixed;
+  bottom: 24px;
+  right: 16px;
+  width: 56px; /* 与胶囊高度一致，保证中心对齐，或者稍大 */
+  height: 72px; /* 比胶囊高 */
+  z-index: 910; /* 比胶囊高 */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none; /* 让点击穿透到 BoundaryBreaker */
+  overflow: visible; /* 确保轨迹不被遮挡 */
+`;
 
+// 陪伴物容器 (负责拖拽和位置)
+const BoundaryBreaker = styled(motion.div)`
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 915;
   display: flex;
   align-items: flex-end;
   justify-content: center;
 `;
 
-// AI 思维气泡 - 样式优化
+// 内部视觉容器 (负责悬浮、旋转、形变)
+const PetVisual = styled(motion.div)`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+  padding-bottom: 4px;
+`;
+
+// AI 思维气泡
 const ThoughtBubble = styled(motion.div)`
   position: absolute;
   bottom: 100%;
-  left: 12px;
+  right: 12px;
   margin-bottom: 16px;
   padding: 10px 16px;
   background: rgba(var(--bg-secondary-rgb), 0.9);
@@ -208,7 +230,7 @@ const ThoughtBubble = styled(motion.div)`
   display: flex;
   align-items: center;
   gap: 8px;
-  transform-origin: bottom left;
+  transform-origin: bottom right;
   min-width: max-content;
 
   /* 流光效果 */
@@ -235,30 +257,65 @@ const ThoughtBubble = styled(motion.div)`
   }
 `;
 
+// 封面旋转动画
+const CoverSpin = styled(motion.div)<{ isPlaying: boolean }>`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid rgba(var(--text-rgb), 0.1);
+  position: relative;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* 中心圆点，像唱片一样 */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+`;
+
 const ContentArea = styled(motion.div)`
-  flex: 1;
   height: 100%;
-  margin-left: 52px;
+  margin-left: 16px;
   margin-right: 8px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center; /* 改为水平对齐 */
   cursor: pointer;
   overflow: hidden;
   position: relative;
   z-index: 905;
+  min-width: 160px;
+`;
+
+const TextContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
 `;
 
 const MainText = styled(motion.div)`
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 `;
 
 const SubText = styled(motion.div)`
@@ -271,7 +328,7 @@ const SubText = styled(motion.div)`
   margin-top: 2px;
 `;
 
-const ActionArea = styled.div`
+const ActionArea = styled(motion.div)`
   display: flex;
   align-items: center;
   gap: 8px;
@@ -319,9 +376,31 @@ const MobileSmartDock: React.FC = () => {
   const [showBackTop, setShowBackTop] = useState(false);
   const [showFullPlayer, setShowFullPlayer] = useState(false);
   const [isAIActive, setIsAIActive] = useState(false);
+  // 默认收起，只有播放时才自动展开，或者用户手动展开
+  const [isMusicExpanded, setIsMusicExpanded] = useState(false);
   const ai = useSimulatedAI();
 
-  const { isPlaying, currentTrack, togglePlay, currentLyric, duration, currentTime } = useMusicPlayer();
+  const {
+    isPlaying,
+    currentTrack,
+    togglePlay,
+    playNext,
+    playPrev,
+    currentLyric,
+    duration,
+    currentTime,
+    showNavbarLyrics,
+  } = useMusicPlayer();
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  // 弹性形变逻辑：模拟弹簧滑块 (微调：减小拉伸幅度，使其更自然)
+  const scaleX = useTransform(x, [-60, 0, 60], [1.05, 1, 0.95]);
+  const scaleY = useTransform(y, [-60, 0], [1.05, 1]);
+
   const hasTrack = !!currentTrack.id;
   const progress = duration ? (currentTime / duration) * 100 : 0;
 
@@ -356,9 +435,42 @@ const MobileSmartDock: React.FC = () => {
     }
   };
 
-  // --------------------------------------------------------------------------
-  // 事件处理函数
-  // --------------------------------------------------------------------------
+  // 处理滑动手势 - 改为控制展开/收起
+  const handleDragEnd = (event: any, info: any) => {
+    // 向右滑动 (offset.x > 0) -> 收起
+    if (info.offset.x > 30) {
+      setIsMusicExpanded(false);
+    }
+  };
+
+  // Pet 上的滑动处理
+  const handlePetDragEnd = (event: any, info: any) => {
+    const { x: dragX, y: dragY } = info.offset;
+
+    // 向上滑动 -> 返回置顶
+    if (dragY < -50) {
+      scrollToTop();
+      setIsScrolling(true);
+      // 延迟恢复悬浮动画，防止滚动时抖动
+      setTimeout(() => {
+        setIsDragging(false);
+        setIsScrolling(false);
+      }, 1000);
+      return;
+    }
+
+    setIsDragging(false); // 非滚动操作立即恢复
+
+    // 向左滑动 -> 展开
+    if (dragX < -30 && !isMusicExpanded) {
+      setIsMusicExpanded(true);
+    }
+
+    // 向右滑动 -> 收起
+    if (dragX > 30 && isMusicExpanded) {
+      setIsMusicExpanded(false);
+    }
+  };
 
   const handleCompanionClick = () => {
     setIsAIActive(true);
@@ -383,12 +495,23 @@ const MobileSmartDock: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Dock 显示逻辑：常驻 (只要有歌或有 BackTop)
-  const shouldShowDock = !isAIActive && (hasTrack || showBackTop);
+  // Dock 显示逻辑：常驻 (只要不在 AI 模式下，就一直显示陪伴物)
+  // 这样用户随时可以通过左滑陪伴物来打开音乐面板
+  const shouldShowDock = !isAIActive;
 
-  const mainText = hasTrack ? (isPlaying && currentLyric ? currentLyric.text : currentTrack.title) : '';
+  // 胶囊是否展开：手动展开，或者正在播放时自动展开
+  const showCapsuleContent = isMusicExpanded;
 
-  const subText = hasTrack ? `${currentTrack.artist}` : '';
+  const mainText = hasTrack ? currentTrack.title : "Adnaan's Blog";
+
+  // Subtext logic: Show lyrics if enabled, otherwise show Artist / Paused state
+  const subText = hasTrack
+    ? showNavbarLyrics && currentLyric
+      ? currentLyric.text
+      : isPlaying
+        ? currentTrack.artist
+        : `Paused - ${currentTrack.artist}`
+    : '点击播放音乐';
 
   return (
     <>
@@ -526,147 +649,175 @@ const MobileSmartDock: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <CapsuleContainer
-        isVisible={!!shouldShowDock}
-        initial={false}
-        animate={{
-          width: shouldShowDock ? 'auto' : 'fit-content',
-          y: isAIActive ? 100 : 0,
-        }}
-        transition={{ duration: 0.4, ease: 'easeInOut' }}
-        style={{ pointerEvents: 'none' }}
-      >
-        <BoundaryBreaker
-          style={{ pointerEvents: 'auto' }}
-          onClick={handleCompanionClick}
-          whileTap={{ scale: 0.9 }}
+      <AnimatePresence>
+        {/* 当 showCapsuleContent 为 true 时展开，为 false 时完全收起（隐藏） */}
+        <MusicCapsule
+          isVisible={true}
+          layout
+          initial={false}
           animate={{
-            y: isPlaying ? [0, -4, 0] : [0, -2, 0],
-            rotate: isPlaying ? [0, 2, 0, -2, 0] : 0,
+            width: showCapsuleContent ? 'calc(100vw - 100px)' : 0, // 使用计算宽度代替 auto，消除停顿
+            paddingRight: showCapsuleContent ? 56 : 0,
+            opacity: showCapsuleContent ? 1 : 0, // 收起时透明
           }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.1}
+          onDragEnd={handleDragEnd}
           transition={{
-            y: { duration: isPlaying ? 0.6 : 3, repeat: Infinity, ease: 'easeInOut' },
-            rotate: { duration: 2, repeat: Infinity, ease: 'linear' },
+            type: 'spring',
+            damping: 25,
+            stiffness: 300,
+            layout: { duration: 0.3 },
           }}
+          style={{ pointerEvents: showCapsuleContent ? 'auto' : 'none' }} // 收起时禁止交互
         >
-          {isDark ? (
-            <GhostVisual
-              clickCount={companion.clickCount}
-              isHovered={companion.isHovered}
-              isBlinking={companion.isBlinking}
-              particles={companion.particles}
-            />
-          ) : (
-            <SheepVisual
-              clickCount={companion.clickCount}
-              isHovered={companion.isHovered}
-              isBlinking={companion.isBlinking}
-              particles={companion.particles}
-            />
-          )}
+          {/* 1. 内容区域 (左侧) */}
+          <AnimatePresence mode="wait">
+            {showCapsuleContent && (
+              <ContentArea
+                key="dock-content"
+                layout
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={handleContentClick}
+              >
+                <CoverSpin
+                  isPlaying={isPlaying && hasTrack}
+                  animate={{ rotate: isPlaying && hasTrack ? 360 : 0 }}
+                  transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                  style={{ rotate: 0 }}
+                >
+                  {hasTrack && currentTrack.pic ? (
+                    <img src={currentTrack.pic} alt="cover" />
+                  ) : (
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        background: 'var(--bg-primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <FiMusic size={20} style={{ opacity: 0.5 }} />
+                    </div>
+                  )}
+                </CoverSpin>
+                <TextContainer>
+                  <MainText>{mainText}</MainText>
+                  {subText && <SubText>{subText}</SubText>}
+                </TextContainer>
+              </ContentArea>
+            )}
+          </AnimatePresence>
+
+          {/* 2. 播放控制 (中间) */}
+          <AnimatePresence>
+            {showCapsuleContent && (
+              <ActionArea key="action-play" layout style={{ marginRight: 12 }}>
+                <CircleButton
+                  key="play-control"
+                  layout
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    hasTrack ? togglePlay() : playNext();
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <ProgressRing viewBox="0 0 48 48">
+                    <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(var(--text-rgb), 0.05)" strokeWidth="2" />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="22"
+                      fill="none"
+                      stroke="var(--accent-color)"
+                      strokeWidth="2"
+                      strokeDasharray={`${progress}, 100`}
+                      pathLength={100}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.5s linear' }}
+                    />
+                  </ProgressRing>
+                  {isPlaying ? <FiPause size={20} /> : <FiPlay size={20} style={{ marginLeft: 2 }} />}
+                </CircleButton>
+              </ActionArea>
+            )}
+          </AnimatePresence>
+        </MusicCapsule>
+      </AnimatePresence>
+
+      {/* 3. 陪伴物 (最右侧) - 始终存在且独立 */}
+      <PetContainer>
+        {/* 陪伴物容器 (负责拖拽和位置) */}
+        <BoundaryBreaker
+          layout
+          onClick={handleCompanionClick}
+          drag={true}
+          dragConstraints={{ left: -200, right: 0, top: -300, bottom: 0 }}
+          dragElastic={0.6} // 增加弹性，手感更轻
+          dragSnapToOrigin={true} // 松手自动回弹
+          dragTransition={{ bounceStiffness: 400, bounceDamping: 25 }} // 回弹有力
+          onDragStart={() => setIsDragging(true)}
+          onDrag={(event, info) => {
+            x.set(info.offset.x);
+            y.set(info.offset.y);
+          }}
+          onDragEnd={handlePetDragEnd}
+          whileTap={{ scale: 0.95 }}
+        >
+          {/* 内部视觉容器 (负责悬浮、旋转、形变) */}
+          <PetVisual
+            style={{ scaleX, scaleY }}
+            animate={{
+              y: isPlaying ? [0, -4, 0] : [0, -2, 0], // 悬浮动画独立运行
+            }}
+            transition={{
+              y: { duration: isPlaying ? 0.6 : 3, repeat: Infinity, ease: 'easeInOut' },
+            }}
+          >
+            {isDark ? (
+              <GhostVisual
+                clickCount={companion.clickCount}
+                isHovered={companion.isHovered}
+                isBlinking={companion.isBlinking}
+                particles={companion.particles}
+              />
+            ) : (
+              <SheepVisual
+                clickCount={companion.clickCount}
+                isHovered={companion.isHovered}
+                isBlinking={companion.isBlinking}
+                particles={companion.particles}
+              />
+            )}
+          </PetVisual>
         </BoundaryBreaker>
 
-        {/* AI 思维气泡 (Proactive Thought) */}
+        {/* AI 思维气泡 (Attached to PetContainer) */}
         <AnimatePresence>
           {!!companion.careBubble && !isAIActive && (
             <ThoughtBubble
               key={companion.careBubble || 'thought-bubble'}
-              initial={{ opacity: 0, scale: 0.8, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.8, y: 10, x: 0 }}
+              animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 10 }}
-              onClick={(e) => {
+              style={{ right: 0, left: 'auto', bottom: '100%', transformOrigin: 'bottom right', marginBottom: 8 }}
+              onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 handleCompanionClick();
               }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              style={{ pointerEvents: 'auto' }}
             >
               {getWeatherIcon() || <span style={{ fontSize: '1rem' }}>✨</span>}
               {companion.careBubble}
             </ThoughtBubble>
           )}
         </AnimatePresence>
-
-        <AnimatePresence>
-          {shouldShowDock && (
-            <ContentArea
-              key="dock-content"
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              onClick={handleContentClick}
-              style={{ pointerEvents: 'auto' }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={mainText || 'empty-text'}
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -10, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <MainText>
-                    {hasTrack && isPlaying ? <Visualizer /> : null}
-                    {mainText}
-                  </MainText>
-                  {subText && <SubText>{subText}</SubText>}
-                </motion.div>
-              </AnimatePresence>
-            </ContentArea>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence mode="popLayout">
-          {shouldShowDock && hasTrack && (
-            <ActionArea key="action-play" style={{ pointerEvents: 'auto' }}>
-              <CircleButton
-                key="play-control"
-                layout
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePlay();
-                }}
-                initial={{ scale: 0, width: 0, opacity: 0 }}
-                animate={{ scale: 1, width: 48, opacity: 1 }}
-                exit={{ scale: 0, width: 0, opacity: 0 }}
-              >
-                <ProgressRing viewBox="0 0 48 48">
-                  <circle cx="24" cy="24" r="22" fill="none" stroke="rgba(var(--text-rgb), 0.05)" strokeWidth="2" />
-                  <circle
-                    cx="24"
-                    cy="24"
-                    r="22"
-                    fill="none"
-                    stroke="var(--accent-color)"
-                    strokeWidth="2"
-                    strokeDasharray={`${progress}, 100`}
-                    pathLength={100}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.5s linear' }}
-                  />
-                </ProgressRing>
-                {isPlaying ? <FiPause size={20} /> : <FiPlay size={20} style={{ marginLeft: 2 }} />}
-              </CircleButton>
-            </ActionArea>
-          )}
-
-          {shouldShowDock && showBackTop && (
-            <ActionArea key="action-backtop" style={{ pointerEvents: 'auto' }}>
-              <CircleButton
-                key="back-top"
-                layout
-                initial={{ scale: 0, width: 0, opacity: 0, marginLeft: 0 }}
-                animate={{ scale: 1, width: 48, opacity: 1, marginLeft: 8 }}
-                exit={{ scale: 0, width: 0, opacity: 0, marginLeft: 0 }}
-                onClick={scrollToTop}
-              >
-                <FiArrowUp size={22} />
-              </CircleButton>
-            </ActionArea>
-          )}
-        </AnimatePresence>
-      </CapsuleContainer>
+      </PetContainer>
 
       <AnimatePresence>
         {showFullPlayer && <ExpandedPlayer key="expanded-player" onClose={() => setShowFullPlayer(false)} />}

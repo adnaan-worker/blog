@@ -5,7 +5,6 @@ import { FiArrowUp, FiSun, FiCloud, FiCloudRain, FiCloudSnow, FiCloudLightning, 
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useSimulatedAI } from './useSimulatedAI';
-import { dockItemHover } from './shared-styles';
 import GhostVisual from './visuals/GhostVisual';
 import SheepVisual from './visuals/SheepVisual';
 import { useCompanionWidget } from '@/hooks/useCompanionWidget';
@@ -102,7 +101,6 @@ const GlassButton = styled(motion.button)`
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  ${dockItemHover}
 
   &:hover {
     background: rgba(var(--bg-secondary-rgb), 0.9);

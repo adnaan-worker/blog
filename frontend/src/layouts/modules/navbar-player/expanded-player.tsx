@@ -169,10 +169,12 @@ const ControlButton = styled.button<{ size?: 'small' | 'medium' | 'large'; isAct
   width: ${(props) => (props.size === 'large' ? '48px' : props.size === 'medium' ? '36px' : '32px')};
   height: ${(props) => (props.size === 'large' ? '48px' : props.size === 'medium' ? '36px' : '32px')};
 
-  &:hover {
-    background: rgba(var(--accent-rgb), 0.1);
-    color: var(--accent-color);
-    transform: scale(1.05);
+  @media (hover: hover) {
+    &:hover {
+      background: rgba(var(--accent-rgb), 0.1);
+      color: var(--accent-color);
+      transform: scale(1.05);
+    }
   }
 
   &:active {
@@ -191,10 +193,12 @@ const PlayButton = styled(ControlButton)`
   color: white;
   box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.3);
 
-  &:hover {
-    background: var(--accent-color-hover);
-    color: white;
-    box-shadow: 0 6px 16px rgba(var(--accent-rgb), 0.4);
+  @media (hover: hover) {
+    &:hover {
+      background: var(--accent-color-hover);
+      color: white;
+      box-shadow: 0 6px 16px rgba(var(--accent-rgb), 0.4);
+    }
   }
 `;
 
@@ -207,8 +211,10 @@ const ProgressBarContainer = styled.div`
   cursor: pointer;
   position: relative;
 
-  &:hover {
-    height: 6px;
+  @media (hover: hover) {
+    &:hover {
+      height: 6px;
+    }
   }
 `;
 
@@ -297,6 +303,12 @@ const ContentArea = styled.div`
   overflow-y: auto;
   margin-top: 12px;
   padding-right: 4px;
+
+  @media (max-width: 768px) {
+    height: auto;
+    flex: 1; /* 在移动端自动填充剩余空间 */
+    min-height: 0; /* 允许 Flex 子项缩小 */
+  }
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -460,7 +472,15 @@ const ExpandedPlayer: React.FC<ExpandedPlayerProps> = ({ onClose }) => {
           >
             <FiMessageSquare />
           </ControlButton>
-          <FiX style={{ cursor: 'pointer', color: 'var(--text-secondary)' }} onClick={onClose} />
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            style={{ cursor: 'pointer', padding: '8px', margin: '-8px', zIndex: 1002 }}
+          >
+            <FiX style={{ color: 'var(--text-secondary)' }} size={20} />
+          </div>
         </div>
       </div>
 
