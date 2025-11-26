@@ -614,6 +614,20 @@ INSERT INTO `tags` VALUES (1, '技术', '技术相关文章', '2025-04-27 20:45:
 INSERT INTO `tags` VALUES (2, '生活', '生活相关文章', '2025-04-27 20:45:38', '2025-04-27 20:45:38');
 INSERT INTO `tags` VALUES (3, 'JavaScript', 'JavaScript相关文章', '2025-04-27 20:45:38', '2025-04-27 20:45:38');
 
+-- 补充 tags 表字段：slug 与 color，用于后台管理和前端展示
+ALTER TABLE `tags`
+  ADD COLUMN `slug` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '标签 URL 标识' AFTER `name`,
+  ADD COLUMN `color` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '标签颜色（十六进制）' AFTER `slug`;
+
+-- 为 slug 添加索引（允许多个 NULL）
+ALTER TABLE `tags`
+  ADD INDEX `idx_slug`(`slug` ASC);
+
+-- 为现有标签生成一个简单 slug，后续可在后台管理中调整
+UPDATE `tags`
+SET `slug` = LOWER(`name`)
+WHERE `slug` IS NULL OR `slug` = '';
+
 -- ----------------------------
 -- Table structure for user_achievements
 -- ----------------------------

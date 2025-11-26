@@ -7,7 +7,8 @@ class SiteSettingsService {
    */
   async getSiteSettings() {
     const settings = await SiteSettings.findOne({
-      order: [['id', 'DESC']],
+      // 单站长架构：始终使用第一条记录作为全站唯一站点配置
+      order: [['id', 'ASC']],
     });
 
     if (!settings) {
@@ -23,23 +24,22 @@ class SiteSettingsService {
    * @param {Object} settingsData - 设置数据
    */
   async updateSiteSettings(userId, settingsData) {
-    // 检查是否已存在设置
+    // 单站长架构：全站仅保留一条站点设置记录
     let settings = await SiteSettings.findOne({
-      where: { userId },
+      order: [['id', 'ASC']],
     });
 
     if (settings) {
-      // 更新现有设置
+      // 已存在记录时只更新字段，不再按 userId 拆分多条
       await settings.update(settingsData);
     } else {
-      // 创建新设置
+      // 首次创建时，记录当前管理员为站长
       settings = await SiteSettings.create({
         userId,
         ...settingsData,
       });
     }
 
-    // 返回更新后的设置
     return settings;
   }
 }

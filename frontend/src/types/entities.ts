@@ -431,6 +431,7 @@ export interface ProjectParams extends PaginationParams {
   isOpenSource?: boolean;
   language?: string;
   keyword?: string;
+  includePrivate?: boolean;
 }
 
 /**

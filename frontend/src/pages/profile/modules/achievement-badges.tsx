@@ -12,73 +12,134 @@ interface AchievementBadgesProps {
   maxDisplay?: number; // 如果为0或undefined，显示所有成就
 }
 
-// 内容容器（不包含外层卡片样式）
+// 内容容器
 const Container = styled.div`
   padding: 1.5rem;
+  position: relative;
+  z-index: 1;
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.2rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-
-  &::before {
-    content: '🏆';
-    font-size: 1.2rem;
-  }
+  gap: 0.75rem;
+  letter-spacing: -0.01em;
 `;
 
 const BadgesGrid = styled(motion.div)`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 `;
 
 const BadgeCard = styled(motion.div)<{ unlocked: boolean; clickable?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
+  justify-content: center;
+  padding: 1rem 0.75rem;
+  border-radius: 16px;
   text-align: center;
   cursor: ${(props) => (props.clickable ? 'pointer' : 'default')};
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  min-height: 100px;
 
   ${(props) =>
     props.unlocked
       ? `
-    background: var(--accent-color-alpha);
-    border: 1px solid var(--accent-color);
+    background: linear-gradient(135deg,
+      rgba(var(--accent-rgb), 0.12) 0%,
+      rgba(var(--accent-rgb), 0.06) 100%
+    );
+    border: 1.5px solid rgba(var(--accent-rgb), 0.3);
     color: var(--accent-color);
+    box-shadow: 0 4px 16px rgba(var(--accent-rgb), 0.15);
+    
+    /* 3D光效 */
+    &::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(
+        circle at center,
+        rgba(var(--accent-rgb), 0.2) 0%,
+        transparent 60%
+      );
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    
+    &:hover {
+      transform: translateY(-4px) scale(1.05);
+      border-color: rgba(var(--accent-rgb), 0.5);
+      box-shadow: 0 12px 32px rgba(var(--accent-rgb), 0.25);
+      
+      &::before {
+        opacity: 1;
+      }
+    }
   `
       : `
-    background: var(--bg-primary);
-    border: 1px dashed var(--border-color);
+    background: linear-gradient(135deg,
+      rgba(var(--text-tertiary-rgb, 118, 118, 118), 0.03) 0%,
+      rgba(var(--text-tertiary-rgb, 118, 118, 118), 0.01) 100%
+    );
+    border: 1.5px dashed rgba(var(--border-rgb, 0, 0, 0), 0.15);
     color: var(--text-tertiary);
+    
+    &:hover {
+      transform: translateY(-2px);
+      border-color: rgba(var(--border-rgb, 0, 0, 0), 0.25);
+    }
   `}
+
+  &:active {
+    transform: translateY(0) scale(0.98);
+  }
 `;
 
 const BadgeIcon = styled.div<{ unlocked: boolean }>`
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
   position: relative;
+  z-index: 1;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 
   ${(props) =>
-    !props.unlocked &&
-    `
+    props.unlocked
+      ? `
+    filter: drop-shadow(0 4px 12px rgba(var(--accent-rgb), 0.4));
+    
+    ${BadgeCard}:hover & {
+      transform: scale(1.15) rotate(5deg);
+    }
+  `
+      : `
     filter: grayscale(100%);
-    opacity: 0.5;
+    opacity: 0.4;
   `}
 `;
 
 const BadgeName = styled.div`
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
   margin-bottom: 0.25rem;
-  line-height: 1.2;
+  line-height: 1.3;
+  position: relative;
+  z-index: 1;
 `;
 
 const BadgeProgress = styled.div<{ unlocked: boolean }>`
@@ -179,8 +240,6 @@ export const AchievementBadges: React.FC<AchievementBadgesProps> = ({
   const handleViewAll = () => {
     if (onViewAll) {
       onViewAll();
-    } else {
-      console.log('查看所有成就');
     }
   };
 

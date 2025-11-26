@@ -45,30 +45,21 @@ interface ManagementLayoutProps {
 }
 
 const Container = styled.div<{ showCard?: boolean }>`
-  ${(props) =>
-    props.showCard
-      ? `
-    background: var(--bg-primary);
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid var(--border-color);
-    overflow: hidden;
-  `
-      : ''}
   display: flex;
   flex-direction: column;
   width: 100%;
   min-width: 0;
+  background: transparent;
+  /* 移除旧的卡片样式，因为外部已经包裹了 ContentGlassCard */
 `;
 
 const Header = styled.div<{ showCard?: boolean }>`
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  padding: 0 0 1.5rem 0;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  background: ${(props) => (props.showCard ? 'transparent' : 'var(--bg-primary)')};
-  border-radius: ${(props) => (props.showCard ? '0' : '12px 12px 0 0')};
+  background: transparent;
 `;
 
 const HeaderTop = styled.div`
@@ -91,16 +82,18 @@ const HeaderLeft = styled.div`
 `;
 
 const Title = styled.h2`
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin: 0;
+  letter-spacing: -0.02em;
 
   svg {
     color: var(--accent-color);
+    filter: drop-shadow(0 0 5px rgba(var(--accent-rgb), 0.4));
   }
 `;
 
@@ -108,28 +101,32 @@ const StatsContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
+  background: rgba(var(--bg-tertiary-rgb), 0.3);
+  padding: 0.4rem 1rem;
+  border-radius: 100px;
+  border: 1px solid rgba(var(--border-rgb), 0.1);
 
   @media (max-width: 640px) {
-    justify-content: space-between;
+    display: none; /* 移动端为了简洁隐藏统计 */
   }
 `;
 
 const StatItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4rem;
 
   .number {
-    font-weight: 600;
-    color: var(--accent-color);
+    font-weight: 700;
+    color: var(--text-primary);
   }
 `;
 
 const TotalCount = styled.span`
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   font-weight: normal;
   margin-left: 0.5rem;
 `;
@@ -143,54 +140,34 @@ const HeaderRight = styled.div`
   @media (max-width: 768px) {
     justify-content: space-between;
   }
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-`;
-
-const Actions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  width: 100%;
-
-  @media (min-width: 769px) {
-    width: auto;
-    flex-wrap: nowrap;
-  }
 `;
 
 const SearchBox = styled.div`
-  min-width: 150px;
+  min-width: 200px;
   flex: 1;
-  max-width: 100%;
+  max-width: 300px;
 
   @media (max-width: 640px) {
     min-width: 0;
     width: 100%;
+    max-width: 100%;
   }
 `;
 
 const FilterBar = styled.div<{ showCard?: boolean }>`
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 0;
   display: flex;
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-  background: ${(props) => (props.showCard ? 'transparent' : 'var(--bg-primary)')};
+  background: transparent;
 `;
 
 const Content = styled.div<{ showCard?: boolean }>`
   flex: 1;
   min-height: 400px;
-  padding: 1rem 1.5rem;
-  background: ${(props) => (props.showCard ? 'transparent' : 'var(--bg-primary)')};
-  border-radius: ${(props) => (props.showCard ? '0' : '0 0 12px 12px')};
+  padding: 1.5rem 0 0 0;
+  background: transparent;
 `;
 
 export const ManagementLayout: React.FC<ManagementLayoutProps> = ({

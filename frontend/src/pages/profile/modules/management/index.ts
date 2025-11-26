@@ -1,13 +1,4 @@
-export { default as NoteManagement } from './note-management';
-export { default as ArticleManagement } from './article-management';
-export { default as CommentManagement } from './comment-management';
-export { default as BookmarkManagement } from './bookmark-management';
-export { default as LikeManagement } from './like-management';
-export { default as NoteLikeManagement } from './note-like-management';
+// 仅保留仍然存在且可能被直接引用的设置类组件
 export { default as SecuritySettings } from './security-settings';
 export { default as SiteSettingsManagement } from './site-settings-management';
-export { default as UserManagement } from './user-management';
-export { default as CategoryManagement } from './category-management';
-export { default as TagManagement } from './tag-management';
-export { default as ProjectManagement } from './project-management';
 export { default as GithubSyncModal } from './github-sync-modal';

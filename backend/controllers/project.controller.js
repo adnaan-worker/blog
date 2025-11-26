@@ -5,7 +5,23 @@ const { asyncHandler } = require('../utils/response');
  * 获取项目列表
  */
 exports.getProjects = asyncHandler(async (req, res) => {
-  const result = await projectService.getProjects(req.query);
+  const { includePrivate, ...restQuery } = req.query;
+
+  const isAdminUser = req.user && req.user.role === 'admin';
+
+  const options = {
+    ...restQuery,
+  };
+
+  // 仅当为管理员且显式请求 includePrivate 时，才允许查询包含私有项目
+  const wantIncludePrivate =
+    includePrivate === 'true' || includePrivate === '1' || includePrivate === true;
+
+  if (isAdminUser && wantIncludePrivate) {
+    options.includePrivate = true;
+  }
+
+  const result = await projectService.getProjects(options);
   return res.apiPaginated(result.data, result.pagination, '获取项目列表成功');
 });
 

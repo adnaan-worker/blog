@@ -18,14 +18,25 @@ class ProjectService {
       isOpenSource,
       keyword,
       language,
-      visibility = 'public',
+      visibility,
+      includePrivate,
     } = options;
 
     const offset = (page - 1) * limit;
     const limitInt = parseInt(limit);
 
     // 构建查询条件
-    const where = { visibility };
+    const where = {};
+
+    const includePrivateFlag = includePrivate === true || includePrivate === 'true';
+
+    if (!includePrivateFlag) {
+      // 默认仅返回公开项目（前台列表、未登录或非管理员用户）
+      where.visibility = visibility || 'public';
+    } else if (visibility && visibility !== '') {
+      // 管理端可按需筛选可见性
+      where.visibility = visibility;
+    }
 
     if (status && status !== '') {
       where.status = status;

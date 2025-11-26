@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiSave, FiRefreshCw } from 'react-icons/fi';
+import { FiSave, FiRefreshCw, FiSettings } from 'react-icons/fi';
 import { Button, Input, Textarea } from 'adnaan-ui';
 import type { SiteSettings } from '@/types';
 
@@ -11,9 +11,10 @@ interface SiteSettingsManagementProps {
 }
 
 const Container = styled.div`
-  padding: 1.5rem;
-  max-width: 900px;
-  margin: 0 auto;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 `;
 
 const Header = styled.div`
@@ -21,8 +22,8 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -35,23 +36,30 @@ const HeaderLeft = styled.div``;
 
 const Title = styled.h2`
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.02em;
 `;
 
 const Subtitle = styled.p`
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
-  margin: 0.25rem 0 0 0;
+  margin: 0.5rem 0 0 0;
 `;
 
 const Section = styled.div`
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: rgba(var(--bg-tertiary-rgb), 0.2);
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  border-radius: 20px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(var(--bg-tertiary-rgb), 0.3);
+    border-color: rgba(var(--border-rgb), 0.2);
+  }
 
   &:last-child {
     margin-bottom: 0;
@@ -230,7 +238,9 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
     <Container>
       <Header>
         <HeaderLeft>
-          <Title>⚙️ 网站设置</Title>
+          <Title>
+            <FiSettings size={20} /> 网站设置
+          </Title>
           <Subtitle>配置个人信息、社交链接和代码贡献统计</Subtitle>
         </HeaderLeft>
         <ButtonGroup>
@@ -247,7 +257,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 个人信息 */}
       <Section>
-        <SectionTitle>👤 个人信息</SectionTitle>
+        <SectionTitle>个人信息</SectionTitle>
         <FormGroup>
           <Input
             label="作者名称"
@@ -301,7 +311,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 代码统计配置 */}
       <Section>
-        <SectionTitle>📊 代码贡献统计</SectionTitle>
+        <SectionTitle>代码贡献统计</SectionTitle>
         <FormGroup>
           <Input
             label="GitHub 用户名"
@@ -324,7 +334,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 技能 */}
       <Section>
-        <SectionTitle>💼 技能</SectionTitle>
+        <SectionTitle>技能</SectionTitle>
         <FormGroup>
           <Label>技能列表</Label>
           <TagsContainer>
@@ -362,7 +372,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 社交链接 */}
       <Section>
-        <SectionTitle>🔗 社交链接</SectionTitle>
+        <SectionTitle>社交链接</SectionTitle>
         <FormGroup>
           <Input
             label="Email"
@@ -407,7 +417,7 @@ export const SiteSettingsManagement: React.FC<SiteSettingsManagementProps> = ({
 
       {/* 座右铭 */}
       <Section>
-        <SectionTitle>💭 座右铭</SectionTitle>
+        <SectionTitle>座右铭</SectionTitle>
         <FormGroup>
           <Label>座右铭内容</Label>
           <Textarea

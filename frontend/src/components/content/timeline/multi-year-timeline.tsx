@@ -24,6 +24,7 @@ interface MultiYearTimelineProps<T extends TimelineItem> {
   renderItem: (item: T, index: number) => React.ReactNode;
   onLoadYearItems: (year: number, page: number) => Promise<{ items: T[]; total: number }>;
   initialYearsToLoad?: number; // 初始加载几个年份，默认2
+  pageSize?: number; // 每页数量，默认10
   loading?: boolean;
   emptyState?: React.ReactNode;
   maxHeight?: number; // 容器最大高度，默认600px（文章卡片），手记建议300px
@@ -98,6 +99,7 @@ function MultiYearTimeline<T extends TimelineItem>({
   renderItem,
   onLoadYearItems,
   initialYearsToLoad = 2,
+  pageSize = 10,
   loading = false,
   emptyState,
   maxHeight,
@@ -215,6 +217,7 @@ function MultiYearTimeline<T extends TimelineItem>({
               totalCount={yearContent.totalCount}
               renderItem={renderItem}
               onLoadMore={handleLoadMoreInYear}
+              pageSize={pageSize}
               maxHeight={maxHeight}
             />
           ))}
@@ -230,6 +233,7 @@ function MultiYearTimeline<T extends TimelineItem>({
               totalCount={yearContent.totalCount}
               renderItem={renderItem}
               onLoadMore={handleLoadMoreInYear}
+              pageSize={pageSize}
               maxHeight={maxHeight}
             />
           ))}

@@ -396,7 +396,7 @@ const NoteEditorPage: React.FC = () => {
 
 // 样式组件
 const EditorContainer = styled(motion.div)`
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   display: flex;
   flex-direction: column;

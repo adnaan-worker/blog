@@ -4,9 +4,7 @@ import styled from '@emotion/styled';
 import { useDispatch } from 'react-redux';
 import Header from './header';
 import Footer from './footer';
-import FloatingToolbar from './floating-toolbar';
-import GhostWidget from './ghost-widget';
-import SheepWidget from './sheep-widget';
+import SmartDock from './modules/smart-dock';
 import MeteorBackground from '@/components/common/meteor-background';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSystemTheme } from '@/hooks/useSystemTheme';
@@ -18,6 +16,7 @@ import { API } from '@/utils';
 import type { SiteSettings } from '@/types';
 import { PageInfoContext, usePageInfoState } from '@/hooks/usePageInfo';
 import { SiteSettingsContext } from './contexts';
+import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 import { HydrationDetector } from '@/utils/ui/animation';
 
 // 重新导出 Hook，保持向后兼容
@@ -33,18 +32,18 @@ const MainContainer = styled.div`
   position: relative;
 `;
 
-// 内容区域样式 - 完全移除动画，确保DOM立即可见
-const Content = styled.main`
+// 内容区域样式 - 个人中心独立，无需预留header
+const Content = styled.main<{ isProfileContext?: boolean }>`
   flex: 1;
   width: 100vw;
   margin: 0 auto;
   padding: 2rem 1.5rem;
   overflow: visible;
-  margin-top: var(--header-height);
-  min-height: calc(100vh - var(--header-height));
+  margin-top: ${(props) => (props.isProfileContext ? '0' : 'var(--header-height)')};
+  min-height: ${(props) => (props.isProfileContext ? '100vh' : 'calc(100vh - var(--header-height))')};
 
   @media (max-width: 768px) {
-    padding: 1.5rem 1.25rem;
+    padding: ${(props) => (props.isProfileContext ? '0' : '1.5rem 1.25rem')};
   }
 `;
 
@@ -204,51 +203,81 @@ const RootLayout = () => {
   return (
     <SiteSettingsContext.Provider value={{ siteSettings, loading: siteSettingsLoading }}>
       <PageInfoContext.Provider value={pageInfoState}>
-        <MainContainer>
-          {/* Hydration 检测器 - 用于动画优化 */}
-          <HydrationDetector />
+        <MusicPlayerProvider>
+          <MainContainer>
+            {/* Hydration 检测器 - 用于动画优化 */}
+            <HydrationDetector />
 
-          {/* 简洁的顶部加载进度条 */}
-          <AnimatePresence>
-            {showLoader && (
-              <LoadingIndicator
-                initial={{ width: 0 }}
-                animate={{ width: '100%' }}
-                exit={{ opacity: 0 }}
-                transition={{
-                  duration: 0.25,
-                  ease: 'easeOut',
-                }}
-              />
-            )}
-          </AnimatePresence>
+            {/* 简洁的顶部加载进度条 */}
+            <AnimatePresence>
+              {showLoader && (
+                <LoadingIndicator
+                  initial={{ width: 0 }}
+                  animate={{ width: '100%' }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: 0.25,
+                    ease: 'easeOut',
+                  }}
+                />
+              )}
+            </AnimatePresence>
 
-          {/* 流星背景动效（仅暗黑模式） */}
-          <MeteorBackground />
+            {/* 流星背景动效（仅暗黑模式） */}
+            <MeteorBackground />
 
-          {/* 头部导航 - 传递页面信息 */}
-          <Header scrolled={isScrolled} pageInfo={pageInfoState.pageInfo || undefined} />
+            {/* 判断当前是否处于个人中心相关页面：不展示全局 Header/Footer，由页面自身负责顶部/底部结构 */}
+            {(() => {
+              const path = location.pathname;
+              const isProfileContext =
+                path === '/profile' ||
+                path.startsWith('/profile/') ||
+                path.startsWith('/editor/article') ||
+                path.startsWith('/editor/note');
 
-          <Suspense
-            fallback={
-              <Content>
-                <PageLoading />
-              </Content>
-            }
-          >
-            <Content key={location.pathname}>{showPageLoading ? <PageLoading /> : <Outlet />}</Content>
-          </Suspense>
+              return !isProfileContext ? (
+                <Header scrolled={isScrolled} pageInfo={pageInfoState.pageInfo || undefined} />
+              ) : null;
+            })()}
 
-          {/* 页脚 */}
-          <Footer />
+            {(() => {
+              const path = location.pathname;
+              const isProfileContext =
+                path === '/profile' ||
+                path.startsWith('/profile/') ||
+                path.startsWith('/editor/article') ||
+                path.startsWith('/editor/note');
 
-          {/* 悬浮工具栏 */}
-          <FloatingToolbar scrollPosition={scrollPosition} />
+              return (
+                <Suspense
+                  fallback={
+                    <Content isProfileContext={isProfileContext}>
+                      <PageLoading />
+                    </Content>
+                  }
+                >
+                  <Content key={location.pathname} isProfileContext={isProfileContext}>
+                    {showPageLoading ? <PageLoading /> : <Outlet />}
+                  </Content>
+                </Suspense>
+              );
+            })()}
 
-          {/* 陪伴物小部件（智能切换） */}
-          <GhostWidget />
-          <SheepWidget />
-        </MainContainer>
+            {(() => {
+              const path = location.pathname;
+              const isProfileContext =
+                path === '/profile' ||
+                path.startsWith('/profile/') ||
+                path.startsWith('/editor/article') ||
+                path.startsWith('/editor/note');
+
+              return !isProfileContext ? <Footer /> : null;
+            })()}
+
+            {/* 智能悬浮坞 (整合播放器、返回顶部、陪伴物) */}
+            <SmartDock />
+          </MainContainer>
+        </MusicPlayerProvider>
       </PageInfoContext.Provider>
     </SiteSettingsContext.Provider>
   );

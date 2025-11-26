@@ -7,82 +7,89 @@ import { Button, Input } from 'adnaan-ui';
 import { API } from '@/utils/api';
 import { storage } from '@/utils';
 
-// 样式组件
+// 样式组件 - 适配玻璃拟态风格
 const Container = styled.div`
-  background: var(--bg-primary);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  border: 1px solid var(--border-color);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 `;
 
 const Header = styled.div`
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  padding: 0 0 1.5rem 0;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  margin-bottom: 2rem;
 `;
 
 const Title = styled.h2`
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  letter-spacing: -0.02em;
 
   svg {
     color: var(--accent-color);
+    filter: drop-shadow(0 0 5px rgba(var(--accent-rgb), 0.4));
   }
 `;
 
 const Content = styled.div`
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 `;
 
 const Section = styled(motion.div)`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.2rem;
   padding: 1.5rem;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
+  background: rgba(var(--bg-tertiary-rgb), 0.2);
+  border-radius: 20px;
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(var(--bg-tertiary-rgb), 0.3);
+    border-color: rgba(var(--border-rgb), 0.2);
+  }
 `;
 
 const SectionHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  gap: 1rem;
 `;
 
 const SectionIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.15) 0%, rgba(var(--accent-rgb), 0.05) 100%);
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.2) 0%, rgba(var(--accent-rgb), 0.05) 100%);
   color: var(--accent-color);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.15);
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 `;
 
 const SectionDescription = styled.p`
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
   margin: 0;
   line-height: 1.5;
@@ -245,7 +252,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
 
     const confirmed = await adnaan.confirm.delete(
       '确定要永久删除您的账户吗？\n\n此操作不可撤销，您的所有数据将被永久删除！',
-      '⚠️ 危险操作',
+      '危险操作',
     );
 
     if (!confirmed) return;

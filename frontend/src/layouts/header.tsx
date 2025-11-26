@@ -17,6 +17,7 @@ import { logoutUser } from '@/store/modules/userSlice';
 import type { AppDispatch, RootState } from '@/store';
 import { storage } from '@/utils';
 import { useModalScrollLock, useClickOutside } from '@/hooks';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import { LazyImage } from '@/components/common';
 import LoginModal from './modules/login-model';
@@ -24,6 +25,7 @@ import RegisterModal from './modules/register-modal';
 import NavLinks from './modules/nav-links';
 import UserMenu, { MobileAvatar } from './modules/user-menu';
 import ThemeToggle from './modules/theme-toggle';
+import NavBarPlayer from './modules/navbar-player';
 import MobileMenu from './modules/mobile-menu';
 import AppStatus from './modules/app-status';
 import AnimatedLogo from './modules/animated-logo';
@@ -100,7 +102,8 @@ const PageInfoContainer = styled(motion.div)`
   padding-left: 2rem;
   border-left: 1px solid rgba(var(--accent-rgb), 0.15);
   /* 宽度由动画控制，防止内容溢出 */
-  flex-shrink: 0;
+  flex-shrink: 1; /* 允许收缩 */
+  min-width: 0; /* 允许内容溢出省略生效 */
   overflow: hidden;
 
   @media (max-width: 1024px) {
@@ -366,6 +369,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const navCardRef = useRef<HTMLDivElement>(null);
   const isRouteChangingRef = useRef(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   // ==================== 滚动锁定管理 ====================
   // 当任意模态框打开时自动锁定滚动
@@ -734,6 +738,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
 
               {/* 主题切换和用户菜单 */}
               <div style={{ display: 'flex', alignItems: 'center' }}>
+                {!isMobile && <NavBarPlayer />}
                 <ThemeToggle />
                 <UserMenu
                   userDropdownOpen={userDropdownOpen}

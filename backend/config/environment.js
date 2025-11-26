@@ -97,7 +97,7 @@ class EnvironmentManager {
       // AI配置 - 统一配置格式
       ai: {
         // 当前使用的提供商
-        provider: process.env.AI_PROVIDER || 'zhipu',
+        provider: process.env.AI_PROVIDER,
 
         // 当前使用的模型（如果不指定，使用提供商的默认模型）
         model: process.env.AI_MODEL,

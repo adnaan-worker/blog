@@ -19,20 +19,40 @@ import {
   FiSmile,
 } from 'react-icons/fi';
 
-// 通用卡片样式
+// 通用卡片样式 - 适配全息风格
 export const ItemCard = styled(motion.div)`
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 1.25rem;
+  background: rgba(var(--bg-tertiary-rgb), 0.2);
+  border-radius: 20px;
+  padding: 1.5rem;
   margin-bottom: 1rem;
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 
   &:hover {
-    border-color: var(--accent-color);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: rgba(var(--bg-tertiary-rgb), 0.4);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.1);
+
+    /* 悬停时的光效 */
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(
+        circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(var(--accent-rgb), 0.1) 0%,
+        transparent 50%
+      );
+      pointer-events: none;
+      opacity: 0.5;
+    }
   }
 
   &:last-child {
@@ -46,15 +66,18 @@ export const ItemHeader = styled.div`
   justify-content: space-between;
   margin-bottom: 0.75rem;
   gap: 1rem;
+  position: relative;
+  z-index: 1;
 `;
 
 export const ItemTitle = styled.h3`
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
   flex: 1;
   line-height: 1.4;
+  letter-spacing: -0.01em;
 `;
 
 export const ItemActions = styled.div`
@@ -62,10 +85,12 @@ export const ItemActions = styled.div`
   align-items: center;
   gap: 0.5rem;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transform: translateX(10px);
+  transition: all 0.3s ease;
 
   ${ItemCard}:hover & {
     opacity: 1;
+    transform: translateX(0);
   }
 `;
 
@@ -73,11 +98,11 @@ export const ActionButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: none;
-  border-radius: 6px;
-  background: var(--bg-primary);
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(var(--text-primary-rgb), 0.05);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -85,33 +110,43 @@ export const ActionButton = styled.button`
   &:hover {
     background: var(--accent-color);
     color: white;
+    box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.3);
+    transform: translateY(-1px);
   }
 `;
 
 export const ItemContent = styled.div`
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   line-height: 1.6;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 `;
 
 export const ItemMeta = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
-  font-size: 0.8rem;
+  gap: 1.2rem;
+  font-size: 0.85rem;
   color: var(--text-tertiary);
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 `;
 
 export const MetaItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4rem;
+
+  svg {
+    opacity: 0.7;
+  }
 `;
 
 export const StatusBadge = styled.div<{ status?: string }>`

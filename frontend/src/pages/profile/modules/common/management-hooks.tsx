@@ -162,7 +162,7 @@ export const useManagementPage = <
   debounceTime = 300,
 }: UseManagementPageOptions<T, P>) => {
   const [items, setItems] = useState<T[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // 初始设置为 true，表示首次加载中
+  const [isLoading, setIsLoading] = useState(false); // 初始设置为 false，避免不必要的加载指示器
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<Error | null>(null);
@@ -175,7 +175,9 @@ export const useManagementPage = <
   const [selectedFilter, setSelectedFilter] = useState(String(initialParams.status || ''));
 
   // Use refs to store latest values and avoid dependency issues
-  const isLoadingRef = useRef(true); // 初始设置为 true，与 isLoading 保持一致
+  const isLoadingRef = useRef(false);
+  const isMountedRef = useRef(true); // 立即设置为 true
+  const isFirstLoadRef = useRef(true);
   const fetchFunctionRef = useRef(fetchFunction);
   const initialParamsRef = useRef(initialParams);
   const limitRef = useRef(limit);
@@ -193,14 +195,27 @@ export const useManagementPage = <
     limitRef.current = limit;
   }, [limit]);
 
+  // 清理函数：组件卸载时设置标志
+  useEffect(() => {
+    // 确保挂载时为 true
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const fetchItems = useCallback(
     async (currentPage: number, append: boolean, currentSearchQuery: string, currentSelectedFilter: string) => {
       // Prevent multiple loads when appending
       if (isLoadingRef.current && append) return;
 
       isLoadingRef.current = true;
-      setIsLoading(true);
-      setError(null);
+
+      // 批量更新状态，减少重渲染
+      if (!append) {
+        setIsLoading(true);
+        setError(null);
+      }
 
       try {
         const params: P = {
@@ -212,20 +227,33 @@ export const useManagementPage = <
         } as P;
 
         const response = await fetchFunctionRef.current(params);
+
+        // 只在组件仍然挂载时更新状态
+        if (!isMountedRef.current) {
+          return;
+        }
+
         const newItems = response.data || [];
         const pagination = response.meta?.pagination || { totalPages: 1, total: 0 };
 
+        // 批量更新所有状态
         setItems((prev) => (append ? [...prev, ...newItems] : newItems));
         setHasMore(currentPage < pagination.totalPages);
         setPage(currentPage);
         setTotalItems(pagination.total);
       } catch (err: any) {
         console.error('Failed to fetch items:', err);
+
+        // 只在组件仍然挂载时更新状态
+        if (!isMountedRef.current) return;
+
         setError(new Error(err.message || '加载失败，请重试'));
         if (!append) setItems([]); // Clear items on initial load error
       } finally {
         isLoadingRef.current = false;
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     },
     [], // No dependencies - use refs instead
@@ -233,9 +261,15 @@ export const useManagementPage = <
 
   // Initial load and reload on search/filter change
   useEffect(() => {
+    // 首次加载立即执行，不使用防抖
+    if (isFirstLoadRef.current) {
+      isFirstLoadRef.current = false;
+      fetchItems(1, false, searchQuery, selectedFilter);
+      return;
+    }
+
+    // 后续搜索/筛选使用防抖
     const handler = setTimeout(() => {
-      setPage(1); // Reset page for new search/filter
-      setHasMore(true); // Assume has more for new search/filter
       fetchItems(1, false, searchQuery, selectedFilter);
     }, debounceTime);
 

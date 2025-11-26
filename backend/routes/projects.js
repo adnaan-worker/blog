@@ -52,7 +52,7 @@ const authMiddleware = require('../middlewares/auth.middleware');
  *       200:
  *         description: 获取成功
  */
-router.get('/', projectController.getProjects);
+router.get('/', authMiddleware.optionalAuth, projectController.getProjects);
 
 /**
  * @swagger

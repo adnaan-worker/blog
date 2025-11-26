@@ -54,8 +54,21 @@ const ArticleEditorPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(window.innerWidth > 1024);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // 监听窗口大小变化，自动收起侧边栏
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 1024) {
+        setShowSidebar(false);
+      } else {
+        setShowSidebar(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // AI 任务管理
   const { tasks, createTask, deleteTask, clearCompleted } = useAITasks();
@@ -382,90 +395,110 @@ const ArticleEditorPage: React.FC = () => {
 
           {/* 右侧边栏 - 可折叠 */}
           {showSidebar && (
-            <Sidebar>
-              <SidebarSection>
-                <SectionTitle>文章设置</SectionTitle>
-
-                {/* 摘要 */}
-                <Field>
-                  <LabelWithButton>
-                    <Label>
-                      摘要
-                      <OptionalTag>（建议填写）</OptionalTag>
-                    </Label>
-                    <AIGenerateButton onClick={handleGenerateSummary} disabled={!content} title="AI 生成摘要">
-                      <FiZap />
-                    </AIGenerateButton>
-                  </LabelWithButton>
-                  <Textarea
-                    placeholder="请输入文章摘要，帮助读者快速了解文章内容..."
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    size="small"
-                    rows={3}
-                  />
-                </Field>
-
-                {/* 封面图 */}
-                <Field>
-                  <Label>
-                    封面图
-                    <OptionalTag>（选填）</OptionalTag>
-                  </Label>
-                  <Input
-                    placeholder="请输入封面图地址..."
-                    value={coverImage}
-                    onChange={(e) => setCoverImage(e.target.value)}
-                  />
-                  {coverImage && coverImage.trim() && (
-                    <CoverPreview>
-                      <img src={coverImage} alt="封面预览" />
-                    </CoverPreview>
-                  )}
-                </Field>
-
-                {/* 分类 */}
-                <Field>
-                  <Label>
-                    分类
-                    <RequiredTag>*</RequiredTag>
-                  </Label>
-                  <Select
-                    value={categoryId || ''}
-                    onChange={(e) => setCategoryId(Number(e.target.value) || null)}
-                    error={!categoryId}
+            <>
+              <MobileBackdrop
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowSidebar(false)}
+              />
+              <Sidebar>
+                <SidebarSection>
+                  <div
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}
                   >
-                    <option value="">请选择分类</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </Select>
-                  {!categoryId && <FieldHint className="error">必须选择文章分类</FieldHint>}
-                </Field>
+                    <SectionTitle>文章设置</SectionTitle>
+                    <Button
+                      variant="ghost"
+                      size="small"
+                      onClick={() => setShowSidebar(false)}
+                      style={{ display: window.innerWidth <= 1024 ? 'flex' : 'none' }}
+                    >
+                      <FiX />
+                    </Button>
+                  </div>
 
-                {/* 标签 */}
-                <Field>
-                  <Label>
-                    标签
-                    <OptionalTag>（建议至少选择1个）</OptionalTag>
-                  </Label>
-                  <TagsList>
-                    {tags.map((tag) => (
-                      <TagItem
-                        key={tag.id}
-                        selected={selectedTagIds.includes(tag.id)}
-                        onClick={() => toggleTag(tag.id)}
-                      >
-                        {tag.name}
-                      </TagItem>
-                    ))}
-                  </TagsList>
-                  {selectedTagIds.length === 0 && <FieldHint>标签有助于读者找到你的文章</FieldHint>}
-                </Field>
-              </SidebarSection>
-            </Sidebar>
+                  {/* 摘要 */}
+                  <Field>
+                    <LabelWithButton>
+                      <Label>
+                        摘要
+                        <OptionalTag>（建议填写）</OptionalTag>
+                      </Label>
+                      <AIGenerateButton onClick={handleGenerateSummary} disabled={!content} title="AI 生成摘要">
+                        <FiZap />
+                      </AIGenerateButton>
+                    </LabelWithButton>
+                    <Textarea
+                      placeholder="请输入文章摘要，帮助读者快速了解文章内容..."
+                      value={summary}
+                      onChange={(e) => setSummary(e.target.value)}
+                      size="small"
+                      rows={3}
+                    />
+                  </Field>
+
+                  {/* 封面图 */}
+                  <Field>
+                    <Label>
+                      封面图
+                      <OptionalTag>（选填）</OptionalTag>
+                    </Label>
+                    <Input
+                      placeholder="请输入封面图地址..."
+                      value={coverImage}
+                      onChange={(e) => setCoverImage(e.target.value)}
+                    />
+                    {coverImage && coverImage.trim() && (
+                      <CoverPreview>
+                        <img src={coverImage} alt="封面预览" />
+                      </CoverPreview>
+                    )}
+                  </Field>
+
+                  {/* 分类 */}
+                  <Field>
+                    <Label>
+                      分类
+                      <RequiredTag>*</RequiredTag>
+                    </Label>
+                    <Select
+                      value={categoryId || ''}
+                      onChange={(e) => setCategoryId(Number(e.target.value) || null)}
+                      error={!categoryId}
+                    >
+                      <option value="">请选择分类</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </Select>
+                    {!categoryId && <FieldHint className="error">必须选择文章分类</FieldHint>}
+                  </Field>
+
+                  {/* 标签 */}
+                  <Field>
+                    <Label>
+                      标签
+                      <OptionalTag>（建议至少选择1个）</OptionalTag>
+                    </Label>
+                    <TagsList>
+                      {tags.map((tag) => (
+                        <TagItem
+                          key={tag.id}
+                          selected={selectedTagIds.includes(tag.id)}
+                          onClick={() => toggleTag(tag.id)}
+                        >
+                          {tag.name}
+                        </TagItem>
+                      ))}
+                    </TagsList>
+                    {selectedTagIds.length === 0 && <FieldHint>标签有助于读者找到你的文章</FieldHint>}
+                  </Field>
+                </SidebarSection>
+              </Sidebar>
+            </>
           )}
         </MainContent>
 
@@ -478,7 +511,7 @@ const ArticleEditorPage: React.FC = () => {
 
 // 样式组件
 const EditorContainer = styled(motion.div)`
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -494,10 +527,11 @@ const TopBar = styled.div`
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-primary);
   gap: 16px;
+  flex-shrink: 0;
 
   @media (max-width: 768px) {
     padding: 12px 16px;
-    flex-wrap: wrap;
+    gap: 12px;
   }
 `;
 
@@ -507,6 +541,10 @@ const LeftSection = styled.div`
   gap: 16px;
   flex: 1;
   min-width: 0;
+
+  @media (max-width: 768px) {
+    gap: 8px;
+  }
 `;
 
 const Title = styled.div`
@@ -538,7 +576,7 @@ const TitleInput = styled.input`
   font-weight: 600;
   padding: 8px 0;
   color: var(--text-primary);
-  min-width: 0;
+  min-width: 50px; /* 允许在极小屏幕上收缩 */
 
   &::placeholder {
     color: var(--text-tertiary);
@@ -547,6 +585,7 @@ const TitleInput = styled.input`
 
   @media (max-width: 768px) {
     font-size: 16px;
+    padding: 6px 0;
   }
 `;
 
@@ -555,35 +594,41 @@ const AIGenerateButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
   color: var(--text-secondary);
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
   margin-left: 8px;
+  position: relative;
+  overflow: hidden;
 
   &:hover:not(:disabled) {
     background: var(--bg-secondary);
     color: var(--accent-color);
-    transform: scale(1.1);
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.15);
   }
 
   &:active:not(:disabled) {
-    transform: scale(0.95);
+    transform: translateY(0) scale(0.96);
   }
 
   &:disabled {
-    opacity: 0.4;
+    opacity: 0.5;
     cursor: not-allowed;
+    border-color: transparent;
   }
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
+    z-index: 1;
   }
 `;
 
@@ -683,27 +728,37 @@ const Sidebar = styled.div`
   }
 
   @media (max-width: 1024px) {
-    width: 100%;
-    max-height: 40vh;
-    border-left: none;
-    border-top: 1px solid var(--border-color);
-    padding: 16px;
-    animation: slideInBottom 0.2s ease-out;
-
-    @keyframes slideInBottom {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 320px;
+    max-width: 80vw;
+    max-height: none;
+    border-left: 1px solid var(--border-color);
+    border-top: none;
+    padding: 24px;
+    z-index: 1000;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   @media (max-width: 768px) {
-    max-height: 50vh;
+    width: 100%;
+    max-width: 100%;
+  }
+`;
+
+const MobileBackdrop = styled(motion.div)`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+  display: none;
+
+  @media (max-width: 1024px) {
+    display: block;
   }
 `;
 

@@ -544,6 +544,11 @@ class AIProviderService {
     const stream = await chain.stream(variables);
 
     for await (const chunk of stream) {
+      // LangChain 在模板链路下有时会产出空字符串分片，这里直接跳过
+      if (!chunk) {
+        continue;
+      }
+
       fullResponse += chunk;
       if (onChunk) {
         onChunk(chunk);

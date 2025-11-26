@@ -26,7 +26,6 @@ import {
 
 const PageContainer = styled(motion.div)`
   min-height: 100vh;
-  background: var(--bg-primary);
   padding: 2rem 0;
 `;
 
@@ -359,6 +358,7 @@ const NotesPage: React.FC = () => {
             renderItem={(item, index) => renderNoteItem(item as unknown as Note, index)}
             onLoadYearItems={loadYearItems}
             initialYearsToLoad={4}
+            pageSize={10}
             loading={isLoading}
             emptyState={emptyStateComponent}
             maxHeight={300}

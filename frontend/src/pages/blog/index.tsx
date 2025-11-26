@@ -14,7 +14,6 @@ import { useAnimationEngine, useSpringInteractions } from '@/utils/ui/animation'
 
 const PageContainer = styled(motion.div)`
   min-height: 100vh;
-  background: var(--bg-primary);
   padding: 2rem 0;
 `;
 
@@ -406,6 +405,7 @@ const BlogPage: React.FC = () => {
             renderItem={(item, index) => renderArticleItem(item as unknown as Article, index)}
             onLoadYearItems={loadYearItems}
             initialYearsToLoad={4}
+            pageSize={10}
             loading={isLoading}
             emptyState={emptyStateComponent}
           />

@@ -1,144 +1,174 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { useTheme } from '@/hooks/useTheme';
 
-// 流星数据接口
-interface Meteor {
-  id: number;
-  left: number; // 水平起始位置（百分比）
-  top: number; // 垂直起始位置（百分比）
-  delay: number; // 延迟出现时间
-  duration: number; // 持续时间
-}
-
-// 容器
-const MeteorContainer = styled.div`
+const Canvas = styled.canvas`
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
+  z-index: -1;
+  background: transparent;
+  opacity: 0.8;
 `;
 
-// 单个流星
-const MeteorItem = styled.div<{ left: number; top: number; delay: number; duration: number }>`
-  position: absolute;
-  top: ${(props) => props.top}%;
-  left: ${(props) => props.left}%;
-  width: 2px;
-  height: 80px;
-  background: linear-gradient(to bottom, rgba(var(--accent-rgb), 0.9), transparent);
-  opacity: 0;
-  animation: meteorFall ${(props) => props.duration}s ease-out forwards;
-  animation-delay: ${(props) => props.delay}s;
-  will-change: transform, opacity;
+// 天文学恒星光谱颜色 (大致模拟)
+const STAR_COLORS = [
+  '#9bb0ff', // O - 蓝
+  '#aabfff', // B - 蓝白
+  '#cad7ff', // A - 白
+  '#f8f7ff', // F - 黄白
+  '#fff4ea', // G - 黄 (太阳)
+  '#ffd2a1', // K - 橙
+  '#ffcc6f', // M - 红
+];
 
-  /* 流星尾迹 */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 120%;
-    background: linear-gradient(to bottom, rgba(var(--accent-rgb), 0.5), transparent);
-    filter: blur(1px);
-  }
-
-  @keyframes meteorFall {
-    0% {
-      opacity: 0;
-      transform: translateX(0) translateY(0) rotate(-45deg);
-    }
-    10% {
-      opacity: 1;
-    }
-    90% {
-      opacity: 0.8;
-    }
-    100% {
-      opacity: 0;
-      transform: translateX(300px) translateY(300px) rotate(-45deg);
-    }
-  }
-`;
+interface Star {
+  distance: number; // 距离旋转中心的距离
+  angle: number; // 当前角度
+  speed: number; // 角速度
+  radius: number; // 星星半径
+  color: string; // 颜色
+}
 
 const MeteorBackground: React.FC = () => {
   const { theme } = useTheme();
-  const [meteors, setMeteors] = useState<Meteor[]>([]);
-  const [showMeteors, setShowMeteors] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const starsRef = useRef<Star[]>([]);
+  const animationFrameRef = useRef<number>(0);
+
+  // 旋转中心 (北天极)
+  const centerRef = useRef({ x: 0, y: 0 });
+  // 鼠标位置
+  const mouseRef = useRef({ x: -1000, y: -1000 });
 
   useEffect(() => {
-    if (theme !== 'dark') {
-      setShowMeteors(false);
-      setMeteors([]);
-      return;
-    }
+    if (theme !== 'dark') return;
 
-    // 生成一场流星雨
-    const generateMeteorShower = () => {
-      const meteorCount = Math.floor(Math.random() * 3) + 3; // 3-5颗流星
-      const newMeteors: Meteor[] = [];
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-      for (let i = 0; i < meteorCount; i++) {
-        newMeteors.push({
-          id: Date.now() + i,
-          left: Math.random() * 60 + 10, // 10-70% 从左侧开始
-          top: Math.random() * 30 - 10, // -10% 到 20% 高低错落
-          delay: Math.random() * 2.5, // 0-2.5秒的延迟，避免并排
-          duration: Math.random() * 0.8 + 1.2, // 1.2-2秒持续时间
+    const ctx = canvas.getContext('2d', { alpha: false });
+    if (!ctx) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const resizeCanvas = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+
+      ctx.scale(dpr, dpr);
+
+      centerRef.current = {
+        x: window.innerWidth / 2,
+        y: window.innerHeight * 0.3,
+      };
+      initStars();
+    };
+
+    const initStars = () => {
+      const starCount = 600;
+      const stars: Star[] = [];
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      const maxDist = Math.sqrt(width * width + height * height);
+
+      for (let i = 0; i < starCount; i++) {
+        const distance = Math.random() * maxDist;
+        const speed = 0.0002 + Math.random() * 0.0004;
+
+        stars.push({
+          distance,
+          angle: Math.random() * Math.PI * 2,
+          speed: speed * (Math.random() > 0.5 ? 1 : -1),
+          radius: Math.random() * 1.2 + 0.3,
+          color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
         });
       }
-
-      setMeteors(newMeteors);
-      setShowMeteors(true);
-
-      // 流星雨结束后清理
-      setTimeout(() => {
-        setShowMeteors(false);
-        setTimeout(() => setMeteors([]), 1000);
-      }, 5000); // 5秒后结束这场流星雨
+      starsRef.current = stars;
     };
 
-    // 随机间隔触发流星雨（30-90秒）
-    const scheduleNextShower = () => {
-      const interval = Math.random() * 60000 + 30000; // 30-90秒
-      return setTimeout(() => {
-        generateMeteorShower();
-        scheduleNextShower();
-      }, interval);
+    const animate = () => {
+      if (!canvas || !ctx) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const center = centerRef.current;
+      const mouse = mouseRef.current;
+      const threshold = 250;
+      const thresholdSq = threshold * threshold;
+
+      starsRef.current.forEach((star) => {
+        star.angle -= star.speed;
+
+        const orbitX = center.x + Math.cos(star.angle) * star.distance;
+        const orbitY = center.y + Math.sin(star.angle) * star.distance;
+
+        let x = orbitX;
+        let y = orbitY;
+        let isRepelled = false;
+
+        const dx = x - mouse.x;
+        const dy = y - mouse.y;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq < thresholdSq) {
+          const dist = Math.sqrt(distSq);
+          const force = (threshold - dist) / threshold;
+          const power = force * force * 150;
+
+          if (dist > 0) {
+            x += (dx / dist) * power;
+            y += (dy / dist) * power;
+            isRepelled = true;
+          }
+        }
+
+        ctx.beginPath();
+        const trailAngle = star.speed > 0 ? 0.1 : -0.1;
+
+        ctx.arc(center.x, center.y, star.distance, star.angle, star.angle + trailAngle, star.speed < 0);
+
+        ctx.strokeStyle = star.color;
+        ctx.globalAlpha = 0.2;
+        ctx.lineWidth = star.radius * 0.5;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.globalAlpha = isRepelled ? 0.8 : Math.random() * 0.3 + 0.5;
+        ctx.fillStyle = star.color;
+        ctx.arc(x, y, star.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    // 首次延迟10秒后开始
-    const initialTimer = setTimeout(() => {
-      generateMeteorShower();
-      const timer = scheduleNextShower();
-      return () => clearTimeout(timer);
-    }, 10000);
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('mousemove', handleMouseMove);
+    resizeCanvas();
+    animate();
 
     return () => {
-      clearTimeout(initialTimer);
+      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
   }, [theme]);
 
-  if (theme !== 'dark' || !showMeteors) return null;
+  if (theme !== 'dark') return null;
 
-  return (
-    <MeteorContainer>
-      {meteors.map((meteor) => (
-        <MeteorItem
-          key={meteor.id}
-          left={meteor.left}
-          top={meteor.top}
-          delay={meteor.delay}
-          duration={meteor.duration}
-        />
-      ))}
-    </MeteorContainer>
-  );
+  return <Canvas ref={canvasRef} />;
 };
 
 export default React.memo(MeteorBackground);

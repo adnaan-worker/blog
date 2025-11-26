@@ -1,54 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
-import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAnimationEngine, SPRING_PRESETS } from '@/utils/ui/animation';
 import { SEO } from '@/components/common';
 import { Button } from 'adnaan-ui';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
-import { useClickOutside } from '@/hooks';
-
-// 抽屉动画变体 - 使用 Spring 系统
-const drawerVariants = {
-  left: {
-    hidden: { x: '-100%', opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        ...SPRING_PRESETS.stiff,
-        opacity: { ...SPRING_PRESETS.stiff, damping: 50 },
-      },
-    },
-    exit: {
-      x: '-100%',
-      opacity: 0,
-      transition: SPRING_PRESETS.precise,
-    },
-  },
-  right: {
-    hidden: { x: '100%', opacity: 0 },
-    visible: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        ...SPRING_PRESETS.stiff,
-        opacity: { ...SPRING_PRESETS.stiff, damping: 50 },
-      },
-    },
-    exit: {
-      x: '100%',
-      opacity: 0,
-      transition: SPRING_PRESETS.precise,
-    },
-  },
-};
-
-// 遮罩层动画变体 - 使用 Spring
-const overlayVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { ...SPRING_PRESETS.stiff, damping: 60 } },
-  exit: { opacity: 0, transition: { ...SPRING_PRESETS.stiff, damping: 60 } },
-};
 
 import {
   FiFileText,
@@ -60,19 +16,20 @@ import {
   FiEdit,
   FiTrendingUp,
   FiX,
-  FiXCircle,
-  FiChevronsRight,
-  FiChevronRight,
-  FiChevronLeft,
-  FiTrash2,
-  FiLayers,
-  FiZap,
+  FiLogOut,
+  FiGrid,
+  FiActivity,
+  FiSettings,
   FiBarChart2,
-  FiClock,
+  FiZap,
   FiAlertCircle,
-  FiMenu,
-  FiUser,
+  FiTag,
+  FiFolder,
+  FiLayers,
+  FiShield,
+  FiHome,
 } from 'react-icons/fi';
+
 import { useNavigate } from 'react-router-dom';
 import { API } from '@/utils/api';
 import type { UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings } from '@/types';
@@ -80,394 +37,261 @@ import { storage } from '@/utils';
 import { useModalScrollLock } from '@/hooks';
 import {
   UserInfoCard,
-  DataStatsGrid,
   ActivityFeed,
-  QuickActions,
-  AchievementBadges,
   AchievementListModal,
   EditProfileModal,
-  NoteManagement,
-  ArticleManagement,
-  CommentManagement,
-  BookmarkManagement,
-  LikeManagement,
-  NoteLikeManagement,
+  CommonPage,
+  ProfileHero,
   SecuritySettings,
   SiteSettingsManagement,
-  UserManagement,
-  CategoryManagement,
-  TagManagement,
-  ProjectManagement,
+  MobileProfileHeader,
 } from './modules';
 import type { EditProfileForm } from './modules/types';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAppDispatch } from '@/store';
 import { updateUser } from '@/store/modules/userSlice';
 
-const ProfileContainer = styled.div`
-  margin: 0 auto;
-  min-height: calc(100vh - 120px);
-  width: 100%;
+// 动作到 Tab ID 的映射
+const ACTION_TO_TAB_MAP: Record<string, string> = {
+  'view-articles': 'articles',
+  'view-notes': 'notes',
+  'view-comments': 'comments',
+  'view-users': 'users',
+  'view-tags': 'tags',
+  'view-categories': 'categories',
+  'view-projects': 'projects',
+  'edit-site-settings': 'site-settings',
+  'view-security': 'security',
+};
 
-  @media (min-width: 768px) {
-    padding: 2rem 5rem;
+// 获取快捷操作图标
+const getQuickActionIcon = (actionId: string, defaultIcon: string) => {
+  switch (actionId) {
+    case 'view-likes':
+      return <FiHeart />;
+    case 'view-note-likes':
+      return <FiHeart />;
+    case 'view-bookmarks':
+      return <FiBookmark />;
+    case 'view-articles':
+      return <FiFileText />;
+    case 'view-notes':
+      return <FiEdit />;
+    case 'view-comments':
+      return <FiMessageSquare />;
+    case 'view-users':
+      return <FiUsers />;
+    case 'view-tags':
+      return <FiTag />;
+    case 'view-categories':
+      return <FiFolder />;
+    case 'view-projects':
+      return <FiLayers />;
+    case 'edit-site-settings':
+      return <FiSettings />;
+    case 'view-security':
+      return <FiShield />;
+    case 'logout':
+      return <FiLogOut />;
+    default:
+      return <span style={{ fontSize: '1.5rem', lineHeight: 1 }}>{defaultIcon}</span>;
   }
-`;
+};
 
-// 新的现代布局
-const ModernLayout = styled.div`
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: 1fr;
+// ==================== 样式组件 ====================
+
+const ProfileWrapper = styled.div`
+  min-height: 100vh;
+  width: 100%;
   position: relative;
-  isolation: isolate;
+`;
 
-  @media (min-width: 768px) {
-    grid-template-columns: 320px 1fr;
+const LayoutContainer = styled.div`
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2.5rem;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 2rem;
+  padding-bottom: 8rem;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 280px 1fr;
+    gap: 1.5rem;
   }
 
-  @media (min-width: 1200px) {
-    grid-template-columns: 320px 1fr 280px;
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    padding-bottom: 7rem;
   }
 `;
 
-// 左侧用户卡片区域 - 页面滚动时吸顶
-const UserSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  position: -webkit-sticky;
+const IdentityColumn = styled.div`
   position: sticky;
-  top: 90px; /* header高度 + 间距 */
-  align-self: flex-start;
-  max-height: calc(100vh - 110px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  will-change: transform;
+  top: 2rem;
+  height: fit-content;
+  max-height: calc(100vh - 4rem);
   z-index: 10;
-
-  /* 自定义滚动条 */
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
-    border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
-  }
-
-  @media (max-width: 767px) {
-    display: none; /* 移动端完全隐藏 */
-  }
-`;
-
-// 主内容区域 - 正常流动
-const MainContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  min-width: 0;
-  min-height: calc(100vh - 200px);
   width: 100%;
-`;
 
-// 右侧快捷操作区域 - 页面滚动时吸顶
-const QuickActionsSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  position: -webkit-sticky;
-  position: sticky;
-  top: 90px; /* header高度 + 间距 */
-  align-self: flex-start;
-  max-height: calc(100vh - 110px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  will-change: transform;
-  z-index: 10;
-
-  /* 自定义滚动条 */
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
-    border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
-  }
-
-  @media (max-width: 1199px) {
-    display: none; /* 移动端和平板完全隐藏 */
-  }
-`;
-
-// 移动端快捷操作（在主内容顶部显示）
-const MobileQuickActions = styled.div`
-  display: block;
-  margin-bottom: 1.5rem;
-
-  @media (min-width: 1200px) {
+  @media (max-width: 1024px) {
     display: none;
   }
 `;
 
-// 卡片容器
-const Card = styled.div`
-  background: var(--bg-primary);
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  transition: box-shadow 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-
-  [data-theme='dark'] & {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-  }
-`;
-
-// 标签页容器
-const TabsContainer = styled(Card)`
-  margin-bottom: 0;
-  min-width: 0; /* 允许容器收缩 */
-  width: 100%; /* 占满父容器宽度 */
-`;
-
-const TabsList = styled.div`
-  display: flex;
-  background: var(--bg-secondary);
-  padding: 0.5rem;
-  gap: 0.25rem;
-  border-radius: 8px;
-  margin: 1rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  width: calc(100% - 2rem); /* 减去左右margin */
-  min-width: 0; /* 允许收缩 */
-  min-height: 50px; /* 保持最小高度 */
-  max-width: 100%;
-
-  @media (max-width: 768px) {
-    margin: 0.75rem;
-    width: calc(100% - 1.5rem);
-    padding: 0.375rem;
-  }
-
-  @media (max-width: 480px) {
-    margin: 0.5rem;
-    width: calc(100% - 1rem);
-  }
-
-  /* 自定义滚动条 */
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
-  }
-
-  /* 滚动条悬浮时显示 */
-  &::-webkit-scrollbar-thumb:hover {
-    background: var(--text-tertiary);
-  }
-`;
-
-// 空状态容器
-const EmptyTabsState = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 1rem;
-  gap: 0.75rem;
-`;
-
-const EmptyTabsIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1) 0%, rgba(var(--accent-rgb), 0.05) 100%);
-  color: var(--accent-color);
-
-  svg {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
-  }
-`;
-
-const EmptyTabsText = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-`;
-
-const EmptyTabsTitle = styled.span`
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-`;
-
-const EmptyTabsHint = styled.span`
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-
-  svg {
-    flex-shrink: 0;
-  }
-`;
-
-const TabButton = styled.button<{ active?: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border: none;
-  background: ${(props) => (props.active ? 'var(--bg-primary)' : 'transparent')};
-  color: ${(props) => (props.active ? 'var(--text-primary)' : 'var(--text-secondary)')};
-  font-size: 0.875rem;
-  font-weight: ${(props) => (props.active ? '600' : '500')};
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: ${(props) => (props.active ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none')};
-  white-space: nowrap;
-  flex-shrink: 0;
-  min-width: fit-content;
-  max-width: 180px;
+const UnifiedIdentityCard = styled(motion.div)`
   position: relative;
-  user-select: none;
+  background: rgba(var(--bg-primary-rgb), 0.6);
+  backdrop-filter: blur(20px);
+  border-radius: 32px;
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
 
-  @media (max-width: 768px) {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8125rem;
-    max-width: 160px;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.08) 0%, transparent 100%);
+    z-index: 0;
+    pointer-events: none;
   }
+`;
 
-  @media (max-width: 480px) {
-    padding: 0.375rem 0.625rem;
-    font-size: 0.75rem;
-    gap: 0.375rem;
-    max-width: 140px;
-  }
+const StageArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+`;
 
-  /* 活动tab底部指示条 */
+const ControlDock = styled(motion.div)`
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) !important;
+  background: rgba(var(--bg-secondary-rgb), 0.4);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.75rem;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow:
+    0 20px 40px -10px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  z-index: 1000;
+  width: auto;
+  max-width: 90vw;
+
   &::after {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%) scaleX(${(props) => (props.active ? '1' : '0')});
-    width: calc(100% - 1rem);
-    height: 2px;
+    bottom: -15px;
+    left: 15%;
+    width: 70%;
+    height: 15px;
     background: var(--accent-color);
-    border-radius: 2px 2px 0 0;
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
-    @media (max-width: 480px) {
-      width: calc(100% - 0.5rem);
-    }
+    filter: blur(30px);
+    opacity: 0.15;
+    border-radius: 50%;
+    z-index: -1;
   }
 
-  /* Tab标签文本溢出处理 */
-  > span:first-of-type {
-    overflow: hidden;
-    text-overflow: ellipsis;
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const DockSeparator = styled.div`
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 0.25rem;
+`;
+
+const DockItem = styled(motion.button)<{ active?: boolean }>`
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: none;
+  background: ${(props) => (props.active ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(255, 255, 255, 0.03)')};
+  color: ${(props) => (props.active ? 'var(--accent-color)' : 'var(--text-secondary)')};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  flex-shrink: 0;
+
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    padding: 0.4rem 0.8rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 0.75rem;
+    border-radius: 8px;
     white-space: nowrap;
-    max-width: 140px;
-
-    @media (max-width: 768px) {
-      max-width: 120px;
-    }
-
-    @media (max-width: 480px) {
-      max-width: 100px;
-    }
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(4px);
   }
 
   &:hover {
-    background: ${(props) => (props.active ? 'var(--bg-primary)' : 'rgba(var(--accent-rgb), 0.08)')};
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
+    transform: translateY(-8px) scale(1.15);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    text-shadow: 0 0 15px var(--accent-color);
 
     &::after {
-      transform: translateX(-50%) scaleX(${(props) => (props.active ? '1' : '0.5')});
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
   }
 
   &:active {
-    transform: scale(0.98);
-  }
-
-  [data-theme='dark'] & {
-    box-shadow: ${(props) => (props.active ? '0 1px 3px rgba(0, 0, 0, 0.2)' : 'none')};
+    transform: scale(0.95);
   }
 `;
 
-const CloseButton = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  margin-left: 0.5rem;
-  background: transparent;
-  color: var(--text-secondary);
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
+const Card = styled.div`
+  background: rgba(var(--bg-primary-rgb), 0.85);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(var(--border-rgb), 0.5);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.02),
+    0 1px 0 rgba(255, 255, 255, 0.1) inset;
 
   &:hover {
-    background: rgba(var(--error-color-rgb), 0.2);
-    color: var(--error-color);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+    border-color: rgba(var(--accent-rgb), 0.3);
   }
 `;
 
@@ -479,9 +303,77 @@ const TabContent = styled.div`
   flex-direction: column;
 `;
 
-// ==================== 移动端抽屉组件 ====================
+// 底部弹出面板 (Bottom Sheet)
+const BottomSheet = styled(motion.div)`
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bg-primary);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 1.5rem;
+  max-height: 80vh;
+  overflow-y: auto;
 
-// 抽屉遮罩
+  &::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    opacity: 0.5;
+  }
+`;
+
+const BottomSheetGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem 1rem;
+  margin-top: 1.5rem;
+`;
+
+const BottomSheetItem = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  .icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 20px;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  &:active {
+    transform: scale(0.95);
+    .icon-wrapper {
+      background: var(--bg-tertiary);
+    }
+  }
+`;
+
 const DrawerOverlay = styled(motion.div)`
   position: fixed;
   top: 0;
@@ -490,298 +382,115 @@ const DrawerOverlay = styled(motion.div)`
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   z-index: 999;
-  /* 移除 backdrop-filter 提升性能 */
-  /* backdrop-filter: blur(4px); */
-
-  /* GPU加速 */
-  transform: translateZ(0);
-  will-change: opacity;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-
-  @media (min-width: 768px) {
-    display: none;
-  }
 `;
 
-// 抽屉容器
-const Drawer = styled(motion.div)<{ position: 'left' | 'right' }>`
-  position: fixed;
-  top: 0;
-  ${(props) => (props.position === 'left' ? 'left: 0;' : 'right: 0;')}
-  bottom: 0;
-  width: 85%;
-  max-width: 340px;
-  background: var(--bg-primary);
-  box-shadow: ${(props) =>
-    props.position === 'left' ? '4px 0 24px rgba(0, 0, 0, 0.15)' : '-4px 0 24px rgba(0, 0, 0, 0.15)'};
-  z-index: 1000;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 1.5rem 1rem;
+// 仪表盘相关
+const DashboardGrid = styled(motion.div)`
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.5rem;
+  width: 100%;
+`;
+
+const DashboardCard = styled(motion.div)<{ colSpan?: number; rowSpan?: number }>`
+  grid-column: span ${(props) => props.colSpan || 12};
+  grid-row: span ${(props) => props.rowSpan || 1};
+  background: rgba(var(--bg-secondary-rgb), 0.3);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
 
-  /* GPU加速优化 */
-  transform: translateZ(0);
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -webkit-transform-style: preserve-3d;
-  transform-style: preserve-3d;
-
-  /* 优化滚动性能 */
-  -webkit-overflow-scrolling: touch;
-
-  /* 自定义滚动条 */
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
-    border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
-  }
-
-  [data-theme='dark'] & {
-    box-shadow: ${(props) =>
-      props.position === 'left' ? '4px 0 24px rgba(0, 0, 0, 0.4)' : '-4px 0 24px rgba(0, 0, 0, 0.4)'};
-  }
-
-  @media (min-width: 768px) {
-    display: none;
-  }
-`;
-
-// 抽屉头部
-const DrawerHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 0.5rem;
-`;
-
-const DrawerTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  svg {
-    color: var(--accent-color);
-  }
-`;
-
-// 抽屉关闭按钮
-const DrawerCloseButton = styled.button`
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    transform: rotate(90deg);
-  }
-
-  &:active {
-    transform: rotate(90deg) scale(0.95);
-  }
-`;
-
-// 侧边箭头按钮（极简风格，只有箭头和光晕）
-const SideArrowButton = styled(motion.button)<{ position: 'left' | 'right' }>`
-  position: fixed;
-  ${(props) => (props.position === 'left' ? 'left: 0;' : 'right: 0;')}
-  top: 50%;
-  transform: translateY(-50%);
-  height: 4rem;
-  background: transparent;
-  color: var(--text-secondary);
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 998;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  -webkit-tap-highlight-color: transparent; /* 禁用移动端点击高亮 */
-
-  /* 圆弧光晕效果 - 增强版 */
-  &::before {
+  &::after {
     content: '';
     position: absolute;
-    ${(props) => (props.position === 'left' ? 'left: 0;' : 'right: 0;')}
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3rem;
-    height: 4rem;
-    background: radial-gradient(
-      ellipse ${(props) => (props.position === 'left' ? '120% 60% at 10% 50%' : '120% 60% at 90% 50%')},
-      rgba(0, 0, 0, 0.08) 0%,
-      rgba(0, 0, 0, 0.04) 30%,
-      rgba(0, 0, 0, 0.02) 50%,
-      transparent 80%
-    );
-    border-radius: ${(props) => (props.position === 'left' ? '0 60% 60% 0' : '60% 0 0 60%')};
-    opacity: 1;
-    transition: all 0.4s ease;
-    pointer-events: none;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.5), transparent);
+    opacity: 0.5;
   }
 
-  svg {
-    font-size: 1.2rem;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 1;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-  }
-
-  &:hover,
-  &:active {
-    color: var(--accent-color);
-
-    &::before {
-      width: 3.5rem;
-      background: radial-gradient(
-        ellipse ${(props) => (props.position === 'left' ? '120% 60% at 10% 50%' : '120% 60% at 90% 50%')},
-        rgba(var(--accent-rgb), 0.15) 0%,
-        rgba(var(--accent-rgb), 0.08) 30%,
-        rgba(var(--accent-rgb), 0.04) 50%,
-        transparent 80%
-      );
-    }
-
-    svg {
-      transform: ${(props) => (props.position === 'left' ? 'translateX(4px)' : 'translateX(-4px)')};
-      filter: drop-shadow(0 2px 4px rgba(var(--accent-rgb), 0.3));
-    }
-  }
-
-  &:active {
-    transform: translateY(-50%) scale(0.92);
-
-    svg {
-      transform: ${(props) => (props.position === 'left' ? 'translateX(2px)' : 'translateX(-2px)')};
-    }
-  }
-
-  @media (min-width: 768px) {
-    display: none;
+  @media (max-width: 1200px) {
+    grid-column: span 12 !important;
   }
 `;
 
-// 右键菜单
-const ContextMenu = styled.div<{ x: number; y: number }>`
-  position: fixed;
-  left: ${(props) => props.x}px;
-  top: ${(props) => props.y}px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  padding: 0.5rem;
-  min-width: 160px;
-  z-index: 10000;
-
-  [data-theme='dark'] & {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  }
+const StatCardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  z-index: 1;
+  color: var(--text-primary);
 `;
 
-const ContextMenuItem = styled.div<{ danger?: boolean }>`
-  padding: 0.625rem 0.875rem;
-  cursor: pointer;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: ${(props) => (props.danger ? 'var(--error-color)' : 'var(--text-primary)')};
-  transition: all 0.2s ease;
+const StatHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 
-  &:hover {
-    background: ${(props) => (props.danger ? 'rgba(var(--error-color-rgb), 0.1)' : 'var(--bg-secondary)')};
-  }
-
-  svg {
+  .icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(var(--accent-rgb), 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-color);
+    font-size: 1.5rem;
     flex-shrink: 0;
   }
+
+  .label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
 `;
 
-// 仪表盘样式
-const DashboardContainer = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  min-height: calc(100vh - 300px);
-  padding-bottom: 2rem;
-`;
-
-const DashboardSection = styled(motion.section)`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 1.1rem;
-  font-weight: 600;
+const StatValue = styled.div`
+  font-size: 2.5rem;
+  font-weight: 800;
   color: var(--text-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
-  svg {
-    color: var(--accent-color);
-  }
+  line-height: 1;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.03em;
 `;
 
-const SectionLink = styled(motion.a)`
+const StatTrend = styled.div<{ isPositive?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.85rem;
-  color: var(--accent-color);
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  cursor: pointer;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
+  color: ${(props) => (props.isPositive ? '#4caf50' : '#f44336')};
+  background: ${(props) => (props.isPositive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)')};
+  padding: 0.25rem 0.5rem;
+  border-radius: 100px;
+  width: fit-content;
 `;
 
-// 图表相关
+const DecorCircle = styled.div<{ color?: string; size?: number; top?: string; right?: string }>`
+  position: absolute;
+  width: ${(props) => props.size || 200}px;
+  height: ${(props) => props.size || 200}px;
+  background: ${(props) => props.color || 'var(--accent-color)'};
+  top: ${(props) => props.top || '-50%'};
+  right: ${(props) => props.right || '-20%'};
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  pointer-events: none;
+`;
+
 const ChartCard = styled(Card)`
   padding: 1.5rem;
 `;
@@ -808,7 +517,7 @@ const Chart = styled.div`
 
 const ChartBar = styled(motion.div)<{ height: number }>`
   width: 100%;
-  min-height: ${(props) => (props.height > 0 ? '8px' : '0')}; /* 至少8px高度 */
+  min-height: ${(props) => (props.height > 0 ? '8px' : '0')};
   height: ${(props) => Math.max(props.height, props.height > 0 ? 5 : 0)}%;
   background: linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.6) 100%);
   border-radius: 4px 4px 0 0;
@@ -830,17 +539,6 @@ const ChartLabels = styled.div`
   font-size: 0.75rem;
   color: var(--text-secondary);
   opacity: 0.8;
-`;
-
-// 待办提醒
-const TodoCard = styled(Card)`
-  padding: 1.5rem;
-`;
-
-const TodoList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0;
 `;
 
 const TodoItem = styled(motion.div)`
@@ -876,10 +574,6 @@ const TodoItem = styled(motion.div)`
 
   &:last-child {
     border-bottom: none;
-  }
-
-  [data-theme='dark'] & {
-    border-bottom-color: rgba(75, 85, 99, 0.3);
   }
 `;
 
@@ -929,12 +623,94 @@ const TodoBadge = styled.div<{ variant?: 'primary' | 'warning' | 'error' }>`
   }};
 `;
 
-// Tab类型定义
-interface Tab {
+const DashboardSection = styled(motion.section)`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  svg {
+    color: var(--accent-color);
+  }
+`;
+
+const ContentGlassCard = styled(motion.div)`
+  background: rgba(var(--bg-secondary-rgb), 0.4);
+  backdrop-filter: blur(24px);
+  border-radius: 24px;
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  padding: 2rem;
+  min-height: 600px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(var(--accent-rgb), 0.5),
+      var(--accent-color),
+      rgba(var(--accent-rgb), 0.5),
+      transparent
+    );
+    opacity: 0.6;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--text-primary);
+  }
+  p,
+  span {
+    color: var(--text-secondary);
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--accent-rgb), 0.2);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--accent-rgb), 0.4);
+  }
+`;
+
+// 类型定义
+interface TodoItemType {
   id: string;
-  label: string;
-  closable: boolean;
+  content: string;
+  time: string;
+  priority: 'high' | 'medium' | 'low';
+  link?: string;
 }
+
+// ==================== 主组件 ====================
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -967,240 +743,101 @@ const Profile: React.FC = () => {
     return `${url}${separator}_=${Date.now()}`;
   }, []);
 
-  // 动画引擎
   const { variants } = useAnimationEngine();
   const fadeInUpVariants = variants.fadeIn;
   const staggerContainerVariants = variants.stagger;
   const cardVariants = variants.card;
 
-  // 用户数据
+  // State
   const [user, setUser] = useState<UserProfile | null>(null);
   const [userStats, setUserStats] = useState<UserStats[]>([]);
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+  const [publishTrend, setPublishTrend] = useState<{ date: string; count: number }[]>([]);
+  const [todoItems, setTodoItems] = useState<TodoItemType[]>([]);
 
-  // 权限管理
-  const { isAdmin, permissions } = useUserRole(user);
-
-  // 状态管理
+  // UI State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(false);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSiteSettingsLoading, setIsSiteSettingsLoading] = useState(false);
+  const [rightDrawerOpen, setRightDrawerOpen] = useState(false); // Used for BottomSheet on mobile
 
-  // Tab状态管理 - 从localStorage恢复
+  const { isAdmin, permissions } = useUserRole(user);
+
   const [activeTab, setActiveTab] = useState(() => {
     const savedActiveTab = storage.local.get<string>('profile_active_tab');
     return savedActiveTab || 'dashboard';
   });
-  const [openTabs, setOpenTabs] = useState<Tab[]>(() => {
-    const savedTabs = storage.local.get<Tab[]>('profile_open_tabs');
-    const defaultTab = { id: 'dashboard', label: '🏠 仪表盘', closable: false };
 
-    // 如果有保存的 tabs 且不为空，使用保存的
-    if (savedTabs && savedTabs.length > 0) {
-      return savedTabs;
-    }
-
-    // 否则使用权限中的 tabs，如果也为空，至少返回仪表盘
-    return permissions.visibleTabs.length > 0 ? permissions.visibleTabs : [defaultTab];
-  });
-
-  // 右键菜单状态
-  const [contextMenu, setContextMenu] = useState<{
-    visible: boolean;
-    x: number;
-    y: number;
-    tabId: string;
-  } | null>(null);
-
-  // 分页状态
   const [activitiesPage, setActivitiesPage] = useState(1);
   const [hasMoreActivities, setHasMoreActivities] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // 移动端抽屉状态
-  const [leftDrawerOpen, setLeftDrawerOpen] = useState(false);
-  const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
-
-  // 检测屏幕尺寸
+  // 检测移动端
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
-
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // 关闭抽屉当切换tab时
+  // Tab 切换时关闭抽屉
   useEffect(() => {
-    setLeftDrawerOpen(false);
     setRightDrawerOpen(false);
   }, [activeTab]);
 
-  // 滚动锁定管理 - 统一管理所有弹窗和抽屉
-  useModalScrollLock(isEditModalOpen || leftDrawerOpen || rightDrawerOpen);
+  useModalScrollLock(isEditModalOpen || rightDrawerOpen);
 
-  // 确保权限加载后至少有一个仪表盘 tab
-  useEffect(() => {
-    if (permissions.visibleTabs.length > 0 && openTabs.length === 0) {
-      setOpenTabs(permissions.visibleTabs);
-      setActiveTab('dashboard');
-    }
-  }, [permissions.visibleTabs]);
-
-  // 保存tab状态到localStorage
   useEffect(() => {
     storage.local.set('profile_active_tab', activeTab);
   }, [activeTab]);
 
-  useEffect(() => {
-    storage.local.set('profile_open_tabs', openTabs);
-  }, [openTabs]);
-
-  // 点击外部关闭右键菜单
-  useEffect(() => {
-    const handleClickOutside = () => {
-      if (contextMenu) {
-        setContextMenu(null);
-      }
-    };
-
-    if (contextMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [contextMenu]);
-
-  // 初始化数据
-  useEffect(() => {
-    loadUserProfile();
-    loadUserStats();
-    loadUserActivities();
-    loadUserAchievements();
-    loadSiteSettings();
-  }, []);
-
-  // 当用户信息加载完成后，加载仪表盘数据
-  useEffect(() => {
-    if (user) {
-      loadDashboardData();
-    }
-  }, [user]);
-
-  // 加载仪表盘数据
-  const loadDashboardData = async () => {
+  // 数据加载
+  const loadDashboardData = useCallback(async () => {
+    if (!user) return;
     try {
       const trendResponse = await API.user.getPublishTrend();
-      setPublishTrend(trendResponse.data || []);
+      const trendData = (trendResponse.data || []).map((item: any) => ({
+        date: item.month,
+        count: item.value,
+      }));
+      setPublishTrend(trendData);
 
-      // 只有管理员才加载待办事项
-      if (user && user.role === 'admin') {
+      if (isAdmin) {
         const todoResponse = await API.user.getAdminTodoItems();
-        setTodoItems(todoResponse.data || []);
+        const todos = (todoResponse.data || []).map((item: any) => ({
+          id: item.id,
+          content: item.title || item.content,
+          time: item.time || item.date,
+          priority: item.priority || 'medium',
+          link: item.link,
+        }));
+        setTodoItems(todos);
       } else {
         setTodoItems([]);
       }
     } catch (error: any) {
       console.error('加载仪表盘数据失败:', error);
-      adnaan.toast.error('加载仪表盘数据失败');
     }
-  };
+  }, [user, isAdmin]);
 
-  // 加载用户资料
   const loadUserProfile = async () => {
     setIsUserLoading(true);
     try {
       const response = await API.user.getProfile();
       setUser(response.data);
       syncGlobalUser(response.data);
-    } catch (error: any) {
+    } catch (error) {
       console.error('加载用户资料失败:', error);
     } finally {
       setIsUserLoading(false);
     }
   };
 
-  // 加载用户统计
-  const loadUserStats = async () => {
-    setIsStatsLoading(true);
-    try {
-      const response = await API.user.getStats();
-      // 转换统计数据，添加图标
-      const statsWithIcons = response.data.map((stat: UserStats) => ({
-        ...stat,
-        icon: getStatIcon(stat.label),
-      }));
-      setUserStats(statsWithIcons);
-    } catch (error: any) {
-      console.error('加载统计数据失败:', error);
-    } finally {
-      setIsStatsLoading(false);
-    }
-  };
-
-  // 加载用户活动
-  const loadUserActivities = async (page = 1, append = false) => {
-    if (page === 1) {
-      setIsActivitiesLoading(true);
-    }
-
-    try {
-      const response = await API.user.getActivities({
-        page,
-        limit: 10,
-      });
-
-      // 转换活动数据，添加图标
-      const activitiesData = Array.isArray(response.data) ? response.data : (response.data as any)?.data || [];
-      const activitiesWithIcons = activitiesData.map((activity: any) => ({
-        ...activity,
-        icon: getActivityIcon(activity.type),
-      }));
-
-      if (append) {
-        setActivities((prev) => [...prev, ...activitiesWithIcons]);
-      } else {
-        setActivities(activitiesWithIcons);
-      }
-
-      setHasMoreActivities(activitiesData.length === 10);
-      setActivitiesPage(page);
-    } catch (error: any) {
-      console.error('加载活动记录失败:', error);
-    } finally {
-      setIsActivitiesLoading(false);
-    }
-  };
-
-  // 加载用户成就
-  const loadUserAchievements = async () => {
-    try {
-      const response = await API.user.getAchievements();
-      setAchievements(response.data);
-    } catch (error: any) {
-      console.error('加载成就数据失败:', error);
-    }
-  };
-
-  // 加载网站设置
-  const loadSiteSettings = async () => {
-    try {
-      const response = await API.siteSettings.getSiteSettings();
-      setSiteSettings(response.data);
-    } catch (error: any) {
-      // 如果没有设置，不显示错误
-      console.log('网站设置未配置');
-    }
-  };
-
-  // 获取统计图标
   const getStatIcon = (label: string) => {
     switch (label) {
       case '发布文章':
@@ -1220,7 +857,22 @@ const Profile: React.FC = () => {
     }
   };
 
-  // 获取活动图标
+  const loadUserStats = async () => {
+    setIsStatsLoading(true);
+    try {
+      const response = await API.user.getStats();
+      const statsWithIcons = response.data.map((stat: UserStats) => ({
+        ...stat,
+        icon: getStatIcon(stat.label),
+      }));
+      setUserStats(statsWithIcons);
+    } catch (error) {
+      console.error('加载统计数据失败:', error);
+    } finally {
+      setIsStatsLoading(false);
+    }
+  };
+
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'article_published':
@@ -1240,45 +892,77 @@ const Profile: React.FC = () => {
     }
   };
 
-  // 处理函数
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
+  const loadUserActivities = async (page = 1, append = false) => {
+    if (page === 1) setIsActivitiesLoading(true);
+    try {
+      const response = await API.user.getActivities({ page, limit: 10 });
+      const activitiesData = Array.isArray(response.data) ? response.data : (response.data as any)?.data || [];
+      const activitiesWithIcons = activitiesData.map((activity: any) => ({
+        ...activity,
+        icon: getActivityIcon(activity.type),
+      }));
+
+      if (append) {
+        setActivities((prev) => [...prev, ...activitiesWithIcons]);
+      } else {
+        setActivities(activitiesWithIcons);
+      }
+      setHasMoreActivities(activitiesData.length === 10);
+      setActivitiesPage(page);
+    } catch (error) {
+      console.error('加载活动记录失败:', error);
+    } finally {
+      setIsActivitiesLoading(false);
+    }
   };
 
+  const loadUserAchievements = async () => {
+    try {
+      const response = await API.user.getAchievements();
+      setAchievements(response.data);
+    } catch (error) {
+      console.error('加载成就数据失败:', error);
+    }
+  };
+
+  const loadSiteSettings = async () => {
+    try {
+      const response = await API.siteSettings.getSiteSettings();
+      setSiteSettings(response.data);
+    } catch (error) {}
+  };
+
+  useEffect(() => {
+    loadUserProfile();
+    loadUserStats();
+    loadUserActivities();
+    loadUserAchievements();
+    loadSiteSettings();
+  }, []);
+
+  useEffect(() => {
+    if (user) loadDashboardData();
+  }, [user, loadDashboardData]);
+
+  // Actions
   const handleSaveProfile = async (formData: EditProfileForm, avatarFile?: File) => {
     if (!user) return;
-
     setIsUserLoading(true);
     try {
-      // 如果有新头像，先上传
       let avatarUrl = user.avatar;
       if (avatarFile) {
         const avatarResponse = await API.user.uploadAvatar(avatarFile);
         avatarUrl = withCacheBust(avatarResponse.data.data.url);
       }
-
-      // 更新用户资料
-      const updateData = {
-        fullName: formData.fullName,
-        email: formData.email,
-        bio: formData.bio,
-      };
-
+      const updateData = { fullName: formData.fullName, email: formData.email, bio: formData.bio };
       const response = await API.user.updateProfile(updateData);
-
-      // 更新本地状态
-      const updatedUser: UserProfile = {
-        ...user,
-        ...response.data,
-        avatar: avatarUrl,
-      };
+      const updatedUser: UserProfile = { ...user, ...response.data, avatar: avatarUrl };
       setUser(updatedUser);
       syncGlobalUser(updatedUser);
-
-      adnaan.toast.success('个人资料更新成功！');
       setIsEditModalOpen(false);
+      // adnaan.toast.success('个人资料更新成功！');
     } catch (error: any) {
-      adnaan.toast.error(error.message || '更新失败，请重试');
+      // adnaan.toast.error(error.message || '更新失败');
     } finally {
       setIsUserLoading(false);
     }
@@ -1286,58 +970,92 @@ const Profile: React.FC = () => {
 
   const handleAvatarChange = async (file: File) => {
     if (!user) return;
-
     setIsUserLoading(true);
     try {
       const response = await API.user.uploadAvatar(file);
-
-      // 更新头像
-      const updatedUser: UserProfile = {
-        ...user,
-        avatar: withCacheBust(response.data.data.url),
-      };
+      const updatedUser: UserProfile = { ...user, avatar: withCacheBust(response.data.data.url) };
       setUser(updatedUser);
       syncGlobalUser(updatedUser);
-
-      adnaan.toast.success('头像更新成功！');
+      // adnaan.toast.success('头像更新成功！');
     } catch (error: any) {
-      adnaan.toast.error(error.message || '头像上传失败，请重试');
+      // adnaan.toast.error(error.message || '头像上传失败');
     } finally {
       setIsUserLoading(false);
     }
   };
 
-  const handleStatClick = (stat: UserStats) => {
-    if (stat.link) {
-      navigate(stat.link);
-    } else {
-      // 根据统计项跳转到对应页面
-      switch (stat.label) {
-        case '发布文章':
-          navigate('/user/articles');
-          break;
-        case '关注者':
-          navigate('/user/followers');
-          break;
-        default:
-          console.log('查看详细统计:', stat.label);
-      }
+  const handleQuickAction = (actionId: string) => {
+    switch (actionId) {
+      case 'view-notes':
+        setActiveTab('notes');
+        break;
+      case 'view-articles':
+        setActiveTab('articles');
+        break;
+      case 'view-comments':
+        setActiveTab('comments');
+        break;
+      case 'view-likes':
+        setActiveTab('likes');
+        break;
+      case 'view-note-likes':
+        setActiveTab('note-likes');
+        break;
+      case 'view-bookmarks':
+        setActiveTab('bookmarks');
+        break;
+      case 'view-security':
+        setActiveTab('security');
+        break;
+      case 'view-users':
+        if (isAdmin) setActiveTab('users');
+        break;
+      case 'view-categories':
+        if (isAdmin) setActiveTab('categories');
+        break;
+      case 'view-tags':
+        if (isAdmin) setActiveTab('tags');
+        break;
+      case 'view-projects':
+        if (isAdmin) setActiveTab('projects');
+        break;
+      case 'edit-site-settings':
+        setActiveTab('site-settings');
+        break;
+      case 'logout':
+        if (window.confirm('确定要退出登录吗？')) {
+          API.user
+            .logout()
+            .then(() => navigate('/'))
+            .catch(() => navigate('/'));
+        }
+        break;
+      default:
+        console.warn('未知的操作:', actionId);
+    }
+  };
+
+  const handleSaveSiteSettings = async (settings: Partial<SiteSettings>) => {
+    setIsSiteSettingsLoading(true);
+    try {
+      const response = await API.siteSettings.updateSiteSettings(settings);
+      setSiteSettings(response.data);
+      await loadSiteSettings();
+    } catch (error: any) {
+      // adnaan.toast.error(error.message);
+    } finally {
+      setIsSiteSettingsLoading(false);
     }
   };
 
   const handleActivityClick = (activity: UserActivity | any) => {
-    if (activity.link) {
-      navigate(activity.link);
-    }
+    if (activity.link) navigate(activity.link);
   };
 
   const handleRefreshActivities = async () => {
     setIsRefreshing(true);
     try {
       await loadUserActivities(1, false);
-      adnaan.toast.success('活动数据已更新');
-    } catch (error) {
-      adnaan.toast.error('刷新失败');
     } finally {
       setIsRefreshing(false);
     }
@@ -1349,364 +1067,353 @@ const Profile: React.FC = () => {
     }
   };
 
-  // 统一的快捷操作处理
-  const handleQuickAction = (actionId: string) => {
-    switch (actionId) {
-      case 'view-notes':
-        addTab('notes', isAdmin ? '📝 手记管理' : '📝 我的手记');
-        break;
-      case 'view-articles':
-        addTab('articles', isAdmin ? '📰 文章管理' : '📰 我的文章');
-        break;
-      case 'view-comments':
-        addTab('comments', isAdmin ? '💬 评论管理' : '💬 我的评论');
-        break;
-      case 'view-likes':
-        addTab('likes', '❤️ 文章点赞');
-        break;
-      case 'view-note-likes':
-        addTab('note-likes', '💝 手记点赞');
-        break;
-      case 'view-bookmarks':
-        addTab('bookmarks', '🔖 我的收藏');
-        break;
-      case 'view-security':
-        addTab('security', '🔒 账户安全');
-        break;
-      case 'view-users':
-        if (isAdmin) {
-          addTab('users', '👥 用户管理');
-        }
-        break;
-      case 'view-categories':
-        if (isAdmin) {
-          addTab('categories', '📂 分类管理');
-        }
-        break;
-      case 'view-tags':
-        if (isAdmin) {
-          addTab('tags', '🏷️ 标签管理');
-        }
-        break;
-      case 'view-projects':
-        if (isAdmin) {
-          addTab('projects', '💼 项目管理');
-        }
-        break;
-      case 'edit-site-settings':
-        addTab('site-settings', '⚙️ 网站设置');
-        break;
-      case 'logout':
-        adnaan.confirm.confirm('退出登录', '确定要退出登录吗？').then((confirmed) => {
-          if (!confirmed) return;
-          API.user
-            .logout()
-            .then(() => {
-              adnaan.toast.success('已退出登录');
-              navigate('/');
-            })
-            .catch(() => {
-              navigate('/');
-            });
-        });
-        break;
-      default:
-        console.warn('未知的操作:', actionId);
-    }
-  };
-
-  // 保存网站设置
-  const handleSaveSiteSettings = async (settings: Partial<SiteSettings>) => {
-    setIsSiteSettingsLoading(true);
-    try {
-      const response = await API.siteSettings.updateSiteSettings(settings);
-      setSiteSettings(response.data);
-      adnaan.toast.success('网站设置更新成功！');
-      // 重新加载网站设置
-      await loadSiteSettings();
-    } catch (error: any) {
-      adnaan.toast.error(error.message || '更新失败，请重试');
-    } finally {
-      setIsSiteSettingsLoading(false);
-    }
-  };
-
-  const handleBadgeClick = (achievement: UserAchievement | any) => {
-    adnaan.toast.info(`${achievement.name}: ${achievement.description}`);
-  };
-
-  const handleViewAllAchievements = () => {
-    adnaan.modal.info({
-      title: '🏆 所有成就',
-      content: <AchievementListModal achievements={achievements} />,
-      width: 700,
-      size: 'large',
-    });
-  };
-
-  // 仪表盘数据
-  const [publishTrend, setPublishTrend] = useState<{ month: string; value: number }[]>([]);
-  const [todoItems, setTodoItems] = useState<{ id: string; title: string; count: number; type: string }[]>([]);
-
-  // 标签页管理
-  const addTab = (id: string, label: string, closable = true) => {
-    // 检查标签页是否已存在
-    if (openTabs.find((tab) => tab.id === id)) {
-      setActiveTab(id);
-      return;
-    }
-
-    setOpenTabs((prev) => [...prev, { id, label, closable }]);
-    setActiveTab(id);
-  };
-
-  const closeTab = (tabId: string) => {
-    const filteredTabs = openTabs.filter((tab) => tab.id !== tabId);
-
-    // 确保至少保留仪表盘 tab
-    if (filteredTabs.length === 0) {
-      const dashboardTab = { id: 'dashboard', label: '🏠 仪表盘', closable: false };
-      setOpenTabs([dashboardTab]);
-      setActiveTab('dashboard');
-      return;
-    }
-
-    setOpenTabs(filteredTabs);
-
-    // 如果关闭的是当前活动标签页，切换到第一个标签页
-    if (activeTab === tabId) {
-      setActiveTab(filteredTabs[0].id);
-    }
-  };
-
-  // 右键菜单处理
-  const handleTabContextMenu = (e: React.MouseEvent, tabId: string) => {
-    e.preventDefault();
-    setContextMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      tabId,
-    });
-  };
-
-  const handleCloseCurrentTab = () => {
-    if (contextMenu) {
-      closeTab(contextMenu.tabId);
-      setContextMenu(null);
-    }
-  };
-
-  const handleCloseOtherTabs = () => {
-    if (contextMenu) {
-      const targetTab = openTabs.find((tab) => tab.id === contextMenu.tabId);
-      if (targetTab) {
-        // 保留不可关闭的tab和当前右键的tab
-        setOpenTabs(openTabs.filter((tab) => !tab.closable || tab.id === contextMenu.tabId));
-        setActiveTab(contextMenu.tabId);
-      }
-      setContextMenu(null);
-    }
-  };
-
-  const handleCloseRightTabs = () => {
-    if (contextMenu) {
-      const currentIndex = openTabs.findIndex((tab) => tab.id === contextMenu.tabId);
-      if (currentIndex !== -1) {
-        // 保留当前tab及其左侧的所有tab，以及不可关闭的tab
-        setOpenTabs(openTabs.filter((tab, index) => index <= currentIndex || !tab.closable));
-      }
-      setContextMenu(null);
-    }
-  };
-
-  const handleCloseAllTabs = () => {
-    // 只保留不可关闭的tab（仪表盘）
-    const unclosableTabs = openTabs.filter((tab) => !tab.closable);
-
-    // 如果没有不可关闭的 tab，至少保留仪表盘
-    if (unclosableTabs.length === 0) {
-      const dashboardTab = { id: 'dashboard', label: '🏠 仪表盘', closable: false };
-      setOpenTabs([dashboardTab]);
-    } else {
-      setOpenTabs(unclosableTabs);
-    }
-
-    // 切换到仪表盘
-    setActiveTab('dashboard');
-    setContextMenu(null);
-  };
-
-  // 渲染标签页内容
+  // 渲染内容
   const renderTabContent = () => {
+    const pageTransition: any = {
+      initial: { opacity: 0, y: 20, scale: 0.98 },
+      animate: { opacity: 1, y: 0, scale: 1 },
+      exit: { opacity: 0, y: -20, scale: 0.98 },
+      transition: { duration: 0.3, ease: 'easeInOut' },
+    };
+
+    // 移动端 Dashboard 简化视图
+    if (activeTab === 'dashboard' && isMobile) {
+      return (
+        <DashboardSection initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          {todoItems.length > 0 && (
+            <Card style={{ marginBottom: '1.5rem', padding: '1rem' }}>
+              <SectionHeader>
+                <SectionTitle style={{ fontSize: '1rem' }}>
+                  <FiAlertCircle /> 待办提醒
+                </SectionTitle>
+                <TodoBadge style={{ background: 'var(--accent-color)', color: 'white' }}>{todoItems.length}</TodoBadge>
+              </SectionHeader>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {todoItems.slice(0, 3).map((item) => (
+                  <TodoItem
+                    key={item.id}
+                    onClick={() => item.link && navigate(item.link)}
+                    style={{ padding: '0.5rem 0', border: 'none' }}
+                  >
+                    <TodoContent>
+                      <TodoTitle style={{ fontSize: '0.85rem' }}>{item.content}</TodoTitle>
+                    </TodoContent>
+                    <TodoBadge variant={item.priority === 'high' ? 'error' : 'primary'}>
+                      {item.priority === 'high' ? '!' : '•'}
+                    </TodoBadge>
+                  </TodoItem>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          <SectionHeader>
+            <SectionTitle style={{ fontSize: '1rem' }}>
+              <FiActivity /> 最近动态
+            </SectionTitle>
+          </SectionHeader>
+          <div
+            style={{
+              background: 'var(--bg-secondary)',
+              borderRadius: '16px',
+              padding: '0.5rem',
+              minHeight: '200px',
+            }}
+          >
+            <ActivityFeed
+              activities={activities as any}
+              onActivityClick={handleActivityClick}
+              onRefresh={handleRefreshActivities}
+              onLoadMore={handleLoadMoreActivities}
+              hasMore={hasMoreActivities}
+              isLoading={isActivitiesLoading}
+              isRefreshing={isRefreshing}
+            />
+          </div>
+        </DashboardSection>
+      );
+    }
+
     switch (activeTab) {
       case 'dashboard':
         return (
-          <DashboardContainer initial="hidden" animate="visible" variants={staggerContainerVariants}>
-            {/* 数据统计 */}
-            <DataStatsGrid stats={userStats} onStatClick={handleStatClick} isLoading={isStatsLoading} />
+          <DashboardGrid initial="hidden" animate="visible" variants={staggerContainerVariants}>
+            {userStats.map((stat: any, index) => (
+              <DashboardCard
+                key={index}
+                colSpan={3}
+                variants={fadeInUpVariants}
+                whileHover={{
+                  y: -5,
+                  boxShadow: '0 12px 40px -10px rgba(var(--accent-rgb), 0.15)',
+                  borderColor: 'rgba(var(--accent-rgb), 0.3)',
+                }}
+              >
+                <DecorCircle
+                  color={`rgba(var(--accent-rgb), ${0.1 + index * 0.05})`}
+                  size={120}
+                  top="-30%"
+                  right="-30%"
+                />
+                <StatCardContent>
+                  <StatHeader>
+                    <div
+                      className="icon-box"
+                      style={{ background: 'rgba(var(--accent-rgb), 0.1)', color: 'var(--accent-color)' }}
+                    >
+                      {stat.icon || <FiZap />}
+                    </div>
+                    <div className="label" style={{ color: 'var(--text-secondary)' }}>
+                      {stat.title || stat.label || '数据'}
+                    </div>
+                  </StatHeader>
+                  <div>
+                    <StatValue
+                      style={{
+                        color: 'var(--text-primary)',
+                        filter: 'drop-shadow(0 0 1px rgba(var(--accent-rgb), 0.2))',
+                      }}
+                    >
+                      {(stat.count !== undefined ? stat.count : stat.value) ?? '-'}
+                    </StatValue>
+                    {stat.trend && (
+                      <StatTrend
+                        isPositive={stat.trend.direction === 'up'}
+                        style={{
+                          background:
+                            stat.trend.direction === 'up' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+                        }}
+                      >
+                        <FiTrendingUp
+                          style={{ transform: stat.trend.direction === 'down' ? 'rotate(180deg)' : 'none' }}
+                        />
+                        {stat.trend.percentage}% 较上月
+                      </StatTrend>
+                    )}
+                  </div>
+                </StatCardContent>
+              </DashboardCard>
+            ))}
 
-            {/* 待办提醒 - 只对管理员显示 */}
-            {isAdmin && todoItems.length > 0 && (
-              <DashboardSection variants={fadeInUpVariants}>
-                <SectionHeader>
-                  <SectionTitle>
-                    <FiAlertCircle />
-                    待办提醒
-                  </SectionTitle>
-                </SectionHeader>
-                <TodoCard>
-                  <TodoList>
-                    {todoItems.map((item) => {
-                      const action = () => {
-                        if (item.id === 'pending-posts') {
-                          addTab('articles', '📰 文章管理');
-                        } else if (item.id === 'pending-comments') {
-                          addTab('comments', '💬 评论管理');
-                        }
-                      };
-                      return (
-                        <TodoItem key={item.id} onClick={action} variants={cardVariants} whileHover={{ x: 2 }}>
-                          <TodoContent>
-                            <TodoTitle>{item.title}</TodoTitle>
-                            <TodoMeta>需要处理</TodoMeta>
-                          </TodoContent>
-                          <TodoBadge variant={item.type as any}>{item.count} 项</TodoBadge>
-                        </TodoItem>
-                      );
-                    })}
-                  </TodoList>
-                </TodoCard>
-              </DashboardSection>
-            )}
-
-            {/* 数据趋势图表 - 总是显示，即使数据为0 */}
-            <DashboardSection variants={fadeInUpVariants}>
+            <DashboardCard colSpan={8} rowSpan={2} variants={fadeInUpVariants}>
               <SectionHeader>
-                <SectionTitle>
-                  <FiBarChart2 />
-                  内容发布趋势（最近6个月）
+                <SectionTitle style={{ color: 'var(--text-primary)' }}>
+                  <FiBarChart2 style={{ color: 'var(--accent-color)' }} /> 内容发布趋势
                 </SectionTitle>
               </SectionHeader>
               {publishTrend.length > 0 ? (
-                <ChartCard>
+                <ChartCard style={{ background: 'transparent', border: 'none', padding: 0, boxShadow: 'none' }}>
                   <Chart>
-                    {publishTrend.map((item, index) => {
-                      const maxValue = Math.max(...publishTrend.map((d) => d.value), 1);
-                      const heightPercent = item.value > 0 ? Math.max((item.value / maxValue) * 100, 5) : 0; // 至少5%的高度
-                      return (
-                        <ChartBar
-                          key={index}
-                          height={heightPercent}
-                          initial={{ scaleY: 0 }}
-                          animate={{ scaleY: 1 }}
-                          transition={{
-                            duration: 0.5,
-                            delay: index * 0.05,
-                            ease: [0.25, 1, 0.5, 1],
-                          }}
-                          title={`${item.month}: ${item.value}篇`}
-                        />
-                      );
-                    })}
+                    {publishTrend.map((item, index) => (
+                      <ChartBar
+                        key={index}
+                        height={
+                          item.count > 0
+                            ? Math.max((item.count / Math.max(...publishTrend.map((d) => d.count), 1)) * 100, 5)
+                            : 0
+                        }
+                        initial={{ scaleY: 0 }}
+                        animate={{ scaleY: 1 }}
+                        transition={{ delay: index * 0.05, duration: 0.5 }}
+                        title={`${item.date}: ${item.count}篇`}
+                        style={{
+                          background:
+                            'linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.2) 100%)',
+                          borderRadius: '4px 4px 0 0',
+                        }}
+                      />
+                    ))}
                   </Chart>
                   <ChartLabels>
                     {publishTrend.map((item, index) => (
-                      <span key={index}>{item.month}</span>
+                      <span key={index} style={{ color: 'var(--text-tertiary)' }}>
+                        {item.date}
+                      </span>
                     ))}
                   </ChartLabels>
                 </ChartCard>
               ) : (
-                <ChartCard style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                  加载中...
-                </ChartCard>
+                <div
+                  style={{
+                    height: '200px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  暂无数据
+                </div>
               )}
-            </DashboardSection>
+            </DashboardCard>
 
-            {/* 最近活动 */}
-            <DashboardSection variants={fadeInUpVariants}>
+            <DashboardCard colSpan={4} rowSpan={2} variants={fadeInUpVariants}>
               <SectionHeader>
-                <SectionTitle>
-                  <FiClock />
-                  最近动态
+                <SectionTitle style={{ color: 'var(--text-primary)' }}>
+                  <FiAlertCircle style={{ color: 'var(--accent-color)' }} /> 待办提醒
                 </SectionTitle>
+                {todoItems.length > 0 && (
+                  <TodoBadge style={{ background: 'var(--accent-color)', color: 'white' }}>
+                    {todoItems.length}
+                  </TodoBadge>
+                )}
               </SectionHeader>
-              <ActivityFeed
-                activities={activities as any}
-                onActivityClick={handleActivityClick}
-                onRefresh={handleRefreshActivities}
-                onLoadMore={handleLoadMoreActivities}
-                hasMore={hasMoreActivities}
-                isLoading={isActivitiesLoading}
-                isRefreshing={isRefreshing}
-              />
-            </DashboardSection>
+              <div style={{ flex: 1, overflowY: 'auto', marginTop: '1rem', paddingRight: '0.5rem' }}>
+                {todoItems.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    {todoItems.map((item) => (
+                      <TodoItem
+                        key={item.id}
+                        onClick={() => item.link && navigate(item.link)}
+                        variants={cardVariants}
+                        whileHover={{ x: 4, backgroundColor: 'rgba(var(--text-primary-rgb), 0.05)' }}
+                        style={{
+                          border: '1px solid rgba(var(--border-rgb), 0.1)',
+                          borderRadius: '12px',
+                          background: 'rgba(var(--bg-tertiary-rgb), 0.3)',
+                        }}
+                      >
+                        <TodoContent>
+                          <TodoTitle style={{ color: 'var(--text-primary)' }}>{item.content}</TodoTitle>
+                          <TodoMeta style={{ color: 'var(--text-tertiary)' }}>{item.time}</TodoMeta>
+                        </TodoContent>
+                        <TodoBadge variant={item.priority === 'high' ? 'error' : 'primary'}>
+                          {item.priority === 'high' ? '高' : '待办'}
+                        </TodoBadge>
+                      </TodoItem>
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    <FiZap size={24} style={{ opacity: 0.5, color: 'var(--accent-color)' }} />
+                    <span>所有事项已完成</span>
+                  </div>
+                )}
+              </div>
+            </DashboardCard>
 
-            {/* 移动端显示成就徽章 */}
-            {isMobile && (
-              <DashboardSection variants={fadeInUpVariants}>
-                <SectionHeader>
-                  <SectionTitle>成就徽章</SectionTitle>
-                </SectionHeader>
-                <Card>
-                  <AchievementBadges
-                    achievements={achievements}
-                    onBadgeClick={handleBadgeClick}
-                    onViewAll={handleViewAllAchievements}
-                  />
-                </Card>
-              </DashboardSection>
-            )}
-          </DashboardContainer>
+            <DashboardCard
+              colSpan={12}
+              variants={fadeInUpVariants}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                boxShadow: 'none',
+                backdropFilter: 'none',
+                overflow: 'visible',
+              }}
+            >
+              <div
+                style={{
+                  ['--card-bg' as any]: 'rgba(var(--bg-secondary-rgb), 0.4)',
+                  ['--card-border' as any]: '1px solid rgba(var(--border-rgb), 0.1)',
+                  ['--accent' as any]: 'var(--accent-color)',
+                }}
+              >
+                <ActivityFeed
+                  activities={activities as any}
+                  onActivityClick={handleActivityClick}
+                  onRefresh={handleRefreshActivities}
+                  onLoadMore={handleLoadMoreActivities}
+                  hasMore={hasMoreActivities}
+                  isLoading={isActivitiesLoading}
+                  isRefreshing={isRefreshing}
+                />
+              </div>
+            </DashboardCard>
+          </DashboardGrid>
         );
-
       case 'notes':
-        return <NoteManagement />;
-
-      case 'articles':
-        return <ArticleManagement />;
-
-      case 'comments':
-        return <CommentManagement isAdmin={isAdmin} />;
-
-      case 'likes':
-        return <LikeManagement />;
-
-      case 'note-likes':
-        return <NoteLikeManagement />;
-
-      case 'bookmarks':
-        return <BookmarkManagement />;
-
-      case 'security':
-        return <SecuritySettings />;
-
-      case 'site-settings':
-        if (!isAdmin) return <div>无权限访问</div>;
         return (
-          <SiteSettingsManagement
-            settings={siteSettings}
-            onSave={handleSaveSiteSettings}
-            isLoading={isSiteSettingsLoading}
-          />
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="notes" />
+          </ContentGlassCard>
         );
-
-      case 'users':
-        if (!isAdmin) return <div>无权限访问</div>;
-        return <UserManagement />;
-
-      case 'categories':
-        if (!isAdmin) return <div>无权限访问</div>;
-        return <CategoryManagement />;
-
-      case 'tags':
-        if (!isAdmin) return <div>无权限访问</div>;
-        return <TagManagement />;
-
+      case 'articles':
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="articles" />
+          </ContentGlassCard>
+        );
+      case 'comments':
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="comments" />
+          </ContentGlassCard>
+        );
+      case 'likes':
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="likes" />
+          </ContentGlassCard>
+        );
+      case 'note-likes':
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="likes" />
+          </ContentGlassCard>
+        );
+      case 'bookmarks':
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="bookmarks" />
+          </ContentGlassCard>
+        );
+      case 'security':
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <SecuritySettings />
+          </ContentGlassCard>
+        );
+      case 'site-settings':
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <SiteSettingsManagement
+              settings={siteSettings}
+              onSave={handleSaveSiteSettings}
+              isLoading={isSiteSettingsLoading}
+            />
+          </ContentGlassCard>
+        );
       case 'projects':
         if (!isAdmin) return <div>无权限访问</div>;
-        return <ProjectManagement />;
-
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="projects" />
+          </ContentGlassCard>
+        );
+      case 'users':
+        if (!isAdmin) return <div>无权限访问</div>;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="users" />
+          </ContentGlassCard>
+        );
+      case 'categories':
+        if (!isAdmin) return <div>无权限访问</div>;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="categories" />
+          </ContentGlassCard>
+        );
+      case 'tags':
+        if (!isAdmin) return <div>无权限访问</div>;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="tags" />
+          </ContentGlassCard>
+        );
       default:
         return <div>页面未找到</div>;
     }
@@ -1722,268 +1429,181 @@ const Profile: React.FC = () => {
         index={false}
         follow={false}
       />
-      <ProfileContainer>
-        <ModernLayout>
-          {/* 左侧用户信息区域 */}
-          <UserSection>
-            <Card>
-              {user && (
-                <UserInfoCard
+      <ProfileWrapper>
+        <LayoutContainer>
+          <IdentityColumn>
+            {user && (
+              <UnifiedIdentityCard
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <ProfileHero
                   user={user}
+                  achievements={achievements}
                   onEditProfile={() => setIsEditModalOpen(true)}
                   onAvatarChange={handleAvatarChange}
                   isLoading={isUserLoading}
                 />
-              )}
-            </Card>
-
-            {/* 成就徽章 */}
-            {!isMobile && (
-              <Card>
-                <AchievementBadges
-                  achievements={achievements}
-                  onBadgeClick={handleBadgeClick}
-                  onViewAll={handleViewAllAchievements}
-                  maxDisplay={6}
-                />
-              </Card>
+              </UnifiedIdentityCard>
             )}
-          </UserSection>
+          </IdentityColumn>
 
-          {/* 主内容区域 */}
-          <MainContent>
-            {/* 标签页容器 - 始终显示，让用户知道当前位置 */}
-            <TabsContainer>
-              <TabsList>
-                {openTabs.length === 0 ? (
-                  /* 空状态提示 */
-                  <EmptyTabsState>
-                    <EmptyTabsIcon>
-                      <FiLayers size={20} />
-                    </EmptyTabsIcon>
-                    <EmptyTabsText>
-                      <EmptyTabsTitle>暂无打开的标签页</EmptyTabsTitle>
-                      <EmptyTabsHint>
-                        <FiChevronRight size={14} />
-                        使用右侧快捷操作打开功能
-                      </EmptyTabsHint>
-                    </EmptyTabsText>
-                  </EmptyTabsState>
-                ) : (
-                  openTabs.map((tab) => (
-                    <TabButton
-                      key={tab.id}
-                      active={activeTab === tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      onContextMenu={(e) => handleTabContextMenu(e, tab.id)}
-                      title={tab.label}
-                    >
-                      <span>{tab.label}</span>
-                      {tab.closable && (
-                        <CloseButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            closeTab(tab.id);
-                          }}
-                        >
-                          <FiX size={12} />
-                        </CloseButton>
-                      )}
-                    </TabButton>
-                  ))
-                )}
-              </TabsList>
-            </TabsContainer>
+          <StageArea>
+            <MobileProfileHeader
+              user={user}
+              stats={userStats}
+              onEdit={() => setIsEditModalOpen(true)}
+              onSwitchTab={(tab) => setActiveTab(tab)}
+              onOpenQuickActions={() => setRightDrawerOpen(true)}
+              activeTab={activeTab}
+              isAdmin={isAdmin}
+            />
 
-            {/* 内容区域 */}
             <TabContent>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
                   style={{ width: '100%', minHeight: 'inherit' }}
                 >
-                  {activeTab === 'dashboard' ? renderTabContent() : <Card>{renderTabContent()}</Card>}
+                  {renderTabContent()}
                 </motion.div>
               </AnimatePresence>
             </TabContent>
-          </MainContent>
+          </StageArea>
+        </LayoutContainer>
 
-          {/* 右侧快捷操作区域（大屏显示） */}
-          {permissions.quickActions.length > 0 && (
-            <QuickActionsSection>
-              <Card>
-                <QuickActions onAction={handleQuickAction} actions={permissions.quickActions} />
-              </Card>
-            </QuickActionsSection>
-          )}
-        </ModernLayout>
+        {!isMobile && (
+          <ControlDock
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5, ...SPRING_PRESETS.bouncy }}
+          >
+            <DockItem
+              onClick={() => navigate('/')}
+              active={false}
+              data-tooltip="返回首页"
+              whileHover={{ scale: 1.1, y: -5 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FiHome />
+            </DockItem>
+            <DockSeparator />
+            <DockItem
+              onClick={() => setActiveTab('dashboard')}
+              active={activeTab === 'dashboard'}
+              data-tooltip="仪表盘"
+              whileHover={{ scale: 1.1, y: -5 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FiBarChart2 />
+            </DockItem>
+            <DockSeparator />
+            {permissions.quickActions.map((action) => {
+              const isActive = activeTab === ACTION_TO_TAB_MAP[action.action];
+              return (
+                <DockItem
+                  key={action.id}
+                  onClick={() => handleQuickAction(action.action)}
+                  active={isActive}
+                  data-tooltip={action.label}
+                  whileHover={{ scale: 1.1, y: -5 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  {getQuickActionIcon(action.action, action.icon)}
+                  {isActive && (
+                    <motion.div
+                      layoutId="dock-active-dot"
+                      style={{
+                        position: 'absolute',
+                        bottom: -4,
+                        width: 4,
+                        height: 4,
+                        borderRadius: '50%',
+                        background: 'var(--accent-color)',
+                      }}
+                    />
+                  )}
+                </DockItem>
+              );
+            })}
+          </ControlDock>
+        )}
 
         {user && (
           <EditProfileModal
             isOpen={isEditModalOpen}
             user={user}
-            onClose={handleCloseEditModal}
+            onClose={() => setIsEditModalOpen(false)}
             onSave={handleSaveProfile}
             isLoading={isUserLoading}
           />
         )}
 
-        {/* 移动端侧边箭头按钮 */}
-        {isMobile && (
-          <>
-            {/* 左侧箭头按钮 - 个人资料 */}
-            <SideArrowButton
-              position="left"
-              onClick={() => setLeftDrawerOpen(true)}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 0.7, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              whileHover={{ opacity: 1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FiChevronRight />
-            </SideArrowButton>
-
-            {/* 右侧箭头按钮 - 快捷操作 */}
-            {permissions.quickActions.length > 0 && (
-              <SideArrowButton
-                position="right"
-                onClick={() => setRightDrawerOpen(true)}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 0.7, x: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                whileHover={{ opacity: 1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <FiChevronLeft />
-              </SideArrowButton>
-            )}
-          </>
-        )}
-
-        {/* 左侧抽屉 - 个人资料 */}
         <AnimatePresence>
-          {leftDrawerOpen && isMobile && (
+          {rightDrawerOpen && (
             <>
               <DrawerOverlay
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={overlayVariants}
-                onClick={() => setLeftDrawerOpen(false)}
-              />
-              <Drawer
-                position="left"
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={drawerVariants.left}
-                data-modal-body
-              >
-                <DrawerHeader>
-                  <DrawerTitle>
-                    <FiUser />
-                    个人资料
-                  </DrawerTitle>
-                  <DrawerCloseButton onClick={() => setLeftDrawerOpen(false)}>
-                    <FiX />
-                  </DrawerCloseButton>
-                </DrawerHeader>
-
-                {user && (
-                  <UserInfoCard
-                    user={user}
-                    onEditProfile={() => {
-                      setLeftDrawerOpen(false);
-                      setIsEditModalOpen(true);
-                    }}
-                    onAvatarChange={handleAvatarChange}
-                    isLoading={isUserLoading}
-                  />
-                )}
-
-                {/* 成就徽章 */}
-                <div>
-                  <AchievementBadges
-                    achievements={achievements}
-                    onBadgeClick={handleBadgeClick}
-                    onViewAll={handleViewAllAchievements}
-                  />
-                </div>
-              </Drawer>
-            </>
-          )}
-        </AnimatePresence>
-
-        {/* 右侧抽屉 - 快捷操作 */}
-        <AnimatePresence>
-          {rightDrawerOpen && isMobile && permissions.quickActions.length > 0 && (
-            <>
-              <DrawerOverlay
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={overlayVariants}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 onClick={() => setRightDrawerOpen(false)}
               />
-              <Drawer
-                position="right"
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={drawerVariants.right}
-                data-modal-body
+              <BottomSheet
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               >
-                <DrawerHeader>
-                  <DrawerTitle>
-                    <FiZap />
-                    快捷操作
-                  </DrawerTitle>
-                  <DrawerCloseButton onClick={() => setRightDrawerOpen(false)}>
-                    <FiX />
-                  </DrawerCloseButton>
-                </DrawerHeader>
-
-                <QuickActions
-                  onAction={(action: string) => {
-                    setRightDrawerOpen(false);
-                    handleQuickAction(action);
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '0.5rem',
                   }}
-                  actions={permissions.quickActions}
-                />
-              </Drawer>
+                >
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    功能导航
+                  </h3>
+                  <div
+                    onClick={() => setRightDrawerOpen(false)}
+                    style={{
+                      padding: '8px',
+                      borderRadius: '50%',
+                      background: 'var(--bg-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <FiX size={18} color="var(--text-secondary)" />
+                  </div>
+                </div>
+
+                <BottomSheetGrid>
+                  {permissions.quickActions.map((action) => (
+                    <BottomSheetItem
+                      key={action.id}
+                      onClick={() => {
+                        setRightDrawerOpen(false);
+                        handleQuickAction(action.action);
+                      }}
+                    >
+                      <div className="icon-wrapper">{getQuickActionIcon(action.action, action.icon)}</div>
+                      <span>{action.label}</span>
+                    </BottomSheetItem>
+                  ))}
+                </BottomSheetGrid>
+              </BottomSheet>
             </>
           )}
         </AnimatePresence>
-
-        {/* 右键菜单 */}
-        {contextMenu && (
-          <ContextMenu x={contextMenu.x} y={contextMenu.y}>
-            {openTabs.find((tab) => tab.id === contextMenu.tabId)?.closable && (
-              <ContextMenuItem onClick={handleCloseCurrentTab}>
-                <FiX size={14} />
-                关闭当前标签
-              </ContextMenuItem>
-            )}
-            <ContextMenuItem onClick={handleCloseOtherTabs}>
-              <FiXCircle size={14} />
-              关闭其他标签
-            </ContextMenuItem>
-            <ContextMenuItem onClick={handleCloseRightTabs}>
-              <FiChevronsRight size={14} />
-              关闭右侧标签
-            </ContextMenuItem>
-            <ContextMenuItem danger onClick={handleCloseAllTabs}>
-              <FiTrash2 size={14} />
-              关闭所有标签
-            </ContextMenuItem>
-          </ContextMenu>
-        )}
-      </ProfileContainer>
+      </ProfileWrapper>
     </>
   );
 };

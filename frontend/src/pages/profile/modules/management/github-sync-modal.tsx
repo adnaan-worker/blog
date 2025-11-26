@@ -172,7 +172,6 @@ const GitHubSyncModal: React.FC<GitHubSyncModalProps> = ({ isOpen, onClose, onSy
     } catch (error: any) {
       // ✅ 忽略 AbortError
       if (error.name === 'AbortError') {
-        console.log('请求已取消');
         return;
       }
       console.error(`获取 ${platform} 仓库失败:`, error);

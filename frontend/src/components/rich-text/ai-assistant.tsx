@@ -53,11 +53,27 @@ const FloatingToolbar = styled(motion.div)<{ position: { top: number; left: numb
 
   /* 移动端优化 */
   @media (max-width: 768px) {
+    top: auto !important;
+    bottom: 80px; /* 键盘上方/底部导航栏上方 */
     left: 50% !important;
     transform: translateX(-50%);
-    max-width: calc(100vw - 2rem);
-    flex-wrap: wrap;
-    justify-content: center;
+    max-width: calc(100vw - 32px);
+    width: max-content;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 8px 12px;
+    border-radius: 12px;
+
+    /* 隐藏箭头 */
+    &::before {
+      display: none;
+    }
+
+    /* 隐藏滚动条 */
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 `;
 
@@ -125,12 +141,26 @@ const InlinePreviewCard = styled(motion.div)<{ position: { top: number; left: nu
   @media (max-width: 768px) {
     position: fixed;
     top: auto !important;
-    left: 1rem !important;
-    right: 1rem;
-    bottom: 1rem;
-    width: auto;
+    left: 0 !important;
+    right: 0;
+    bottom: 0;
+    width: 100%;
     max-width: none;
-    max-height: 70vh;
+    max-height: 75vh;
+    border-radius: 20px 20px 0 0;
+    border: none;
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
   }
 `;
 
@@ -364,20 +394,23 @@ const EmptyStateTrigger = styled.div`
   }
 
   @media (max-width: 768px) {
-    top: 4rem;
-    left: 1.5rem;
-    right: 1.5rem;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    text-align: center;
     font-size: 0.875rem;
 
     a {
       display: block;
       margin-left: 0;
-      margin-top: 0.75rem;
-      padding: 0.625rem 1rem;
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
-      border-radius: 8px;
+      border-radius: 20px;
       text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
   }
 `;
