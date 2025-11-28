@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { FiArrowUp, FiPause, FiPlay, FiMusic } from 'react-icons/fi';
+import { FiArrowUp, FiPause, FiPlay, FiMusic, FiX } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { useCompanionWidget } from '@/hooks/useCompanionWidget';
-import { useSimulatedAI } from './useSimulatedAI';
 import GhostVisual from './visuals/GhostVisual';
 import SheepVisual from './visuals/SheepVisual';
 import ExpandedPlayer from '../navbar-player/expanded-player';
+import { AIChatWindow } from '@/components/ai/chat-window';
+import { useModalScrollLock } from '@/hooks/useModalScrollLock';
 
 // ============================================================================
 // 样式定义
@@ -45,8 +46,8 @@ const AIPanel = styled(motion.div)`
   bottom: 0;
   left: 0;
   right: 0;
-  height: 70vh;
-  background: rgba(var(--bg-secondary-rgb), 0.8);
+  height: 85vh;
+  background: rgba(var(--bg-secondary-rgb), 0.95);
   backdrop-filter: blur(30px) saturate(180%);
   border-top-left-radius: 32px;
   border-top-right-radius: 32px;
@@ -55,10 +56,8 @@ const AIPanel = styled(motion.div)`
   z-index: 900;
   display: flex;
   flex-direction: column;
-  padding: 0 20px 20px;
-  overflow: hidden;
+  overscroll-behavior: none;
 
-  /* 顶部光晕装饰 */
   &::before {
     content: '';
     position: absolute;
@@ -74,111 +73,6 @@ const AIPanel = styled(motion.div)`
   }
 `;
 
-// 面板头部 - 承载 Pet
-const PanelHeader = styled.div`
-  height: 100px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
-  margin-bottom: 10px;
-`;
-
-// Pet 在面板中的容器
-const PanelPetWrapper = styled(motion.div)`
-  width: 80px;
-  height: 90px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  filter: drop-shadow(0 10px 20px rgba(var(--accent-rgb), 0.3));
-`;
-
-const AIChatArea = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  z-index: 1;
-  padding-top: 10px;
-
-  &::-webkit-scrollbar {
-    width: 0;
-  }
-`;
-
-const MessageBubble = styled(motion.div)<{ isUser?: boolean }>`
-  align-self: ${(props) => (props.isUser ? 'flex-end' : 'flex-start')};
-  background: ${(props) =>
-    props.isUser
-      ? 'linear-gradient(135deg, var(--accent-color), var(--accent-color-hover))'
-      : 'rgba(var(--bg-primary-rgb), 0.6)'};
-  color: ${(props) => (props.isUser ? '#fff' : 'var(--text-primary)')};
-  padding: 14px 18px;
-  border-radius: 24px;
-  border-bottom-right-radius: ${(props) => (props.isUser ? '4px' : '24px')};
-  border-bottom-left-radius: ${(props) => (props.isUser ? '24px' : '4px')};
-  max-width: 85%;
-  font-size: 1rem;
-  line-height: 1.6;
-  box-shadow: ${(props) => (props.isUser ? '0 8px 20px rgba(var(--accent-rgb), 0.25)' : '0 2px 10px rgba(0,0,0,0.03)')};
-  border: 1px solid ${(props) => (props.isUser ? 'transparent' : 'rgba(var(--border-rgb), 0.1)')};
-  backdrop-filter: blur(10px);
-`;
-
-const AIInputWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  background: rgba(var(--bg-primary-rgb), 0.7);
-  backdrop-filter: blur(20px);
-  border-radius: 32px;
-  padding: 8px 8px 8px 24px;
-  border: 1px solid rgba(var(--border-rgb), 0.1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  z-index: 1;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-
-  &:focus-within {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 40px rgba(var(--accent-rgb), 0.15);
-    border-color: rgba(var(--accent-rgb), 0.3);
-    background: rgba(var(--bg-primary-rgb), 0.9);
-  }
-`;
-
-const AIInput = styled.input`
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 1.05rem;
-  color: var(--text-primary);
-  padding: 10px 0;
-  outline: none;
-  min-width: 0;
-
-  &::placeholder {
-    color: var(--text-tertiary);
-  }
-`;
-
-const SendButton = styled(motion.button)`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-color-hover));
-  color: white;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 12px;
-  box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.4);
-  cursor: pointer;
-`;
-
 // Pet 容器 (右下角常驻)
 const CornerPetWrapper = styled(motion.div)`
   position: fixed;
@@ -190,6 +84,16 @@ const CornerPetWrapper = styled(motion.div)`
   display: flex;
   align-items: flex-end;
   justify-content: center;
+`;
+
+// Pet 在面板中的容器
+const PanelPetWrapper = styled(motion.div)`
+  width: 80px;
+  height: 90px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  filter: drop-shadow(0 10px 20px rgba(var(--accent-rgb), 0.3));
 `;
 
 // 音乐胶囊容器 (垫在 Pet 下面)
@@ -373,7 +277,9 @@ const MobileSmartDock: React.FC = () => {
   const [isAIActive, setIsAIActive] = useState(false);
   // 默认收起，只有播放时才自动展开，或者用户手动展开
   const [isMusicExpanded, setIsMusicExpanded] = useState(false);
-  const ai = useSimulatedAI();
+
+  // 移除 useModalScrollLock 以修复滚动问题
+  // useModalScrollLock(isAIActive);
 
   const {
     isPlaying,
@@ -534,44 +440,47 @@ const MobileSmartDock: React.FC = () => {
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             >
-              <PanelHeader>
-                {/* Pet 在这里！使用 layoutId 实现飞跃 */}
+              <div
+                style={{
+                  height: 80,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'center',
+                  paddingBottom: 10,
+                  position: 'relative',
+                  zIndex: 1,
+                }}
+              >
                 <PanelPetWrapper layoutId="pet-hero">
                   <PetVisualContent isDark={isDark} companion={companion} />
                 </PanelPetWrapper>
-              </PanelHeader>
 
-              <AIChatArea>
-                {/* ... Chat Logic ... */}
-                {ai.reply ? (
-                  <>
-                    {ai.inputValue && <MessageBubble isUser>{ai.inputValue}</MessageBubble>}
-                    <MessageBubble>{ai.reply}</MessageBubble>
-                  </>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    style={{ textAlign: 'center', marginTop: 20, color: 'var(--text-secondary)' }}
-                  >
-                    <p style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>嗨，我是 Adnaan 的 AI 助手</p>
-                    <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>无论是找文章还是聊代码，我都再行。</p>
-                  </motion.div>
-                )}
-              </AIChatArea>
+                <button
+                  onClick={() => setIsAIActive(false)}
+                  style={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    background: 'rgba(0,0,0,0.05)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <FiX />
+                </button>
+              </div>
 
-              <AIInputWrapper>
-                <AIInput
-                  placeholder="输入你的想法..."
-                  value={ai.inputValue}
-                  onChange={(e) => ai.setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && ai.send(ai.inputValue)}
-                />
-                <SendButton onClick={() => ai.send(ai.inputValue)} whileTap={{ scale: 0.9 }}>
-                  <FiArrowUp size={22} />
-                </SendButton>
-              </AIInputWrapper>
+              {/* 集成新的 AI 聊天组件 */}
+              <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <AIChatWindow onClose={() => setIsAIActive(false)} headerMode="none" />
+              </div>
             </AIPanel>
           </>
         )}

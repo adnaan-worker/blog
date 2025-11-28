@@ -21,15 +21,15 @@ module.exports = sequelize => {
         field: 'session_id',
         comment: '会话ID',
       },
-      message: {
-        type: DataTypes.TEXT,
+      role: {
+        type: DataTypes.ENUM('user', 'assistant', 'system'),
         allowNull: false,
-        comment: '用户消息',
+        comment: '消息角色',
       },
-      response: {
+      content: {
         type: DataTypes.TEXT,
         allowNull: false,
-        comment: 'AI回复',
+        comment: '消息内容',
       },
       context: {
         type: DataTypes.JSON,

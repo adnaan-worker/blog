@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiSettings, FiZap } from 'react-icons/fi';
 import RichTextEditor from '@/components/rich-text/rich-text-editor';
-import { AIFloatingTask } from '@/components/ai-floating-task';
+import { AIFloatingTask } from '@/components/rich-text/ai-floating-task';
 import { useAITasks } from '@/hooks/useAITasks';
 import { API } from '@/utils/api';
 import { Button, Input, Textarea, Select } from 'adnaan-ui';

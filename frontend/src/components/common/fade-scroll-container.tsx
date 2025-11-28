@@ -74,7 +74,7 @@ const FadeContainer = styled.div<{
 `;
 
 // Props 接口
-export interface FadeScrollContainerProps {
+export interface FadeScrollContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
   fadeHeight?: number; // 遮罩高度，默认 40px
@@ -92,6 +92,7 @@ export const FadeScrollContainer: React.FC<FadeScrollContainerProps> = ({
   fadeHeight = 40,
   scrollThreshold = 10,
   dependencies = [],
+  ...rest
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showTopFade, setShowTopFade] = useState(false);
@@ -207,6 +208,7 @@ export const FadeScrollContainer: React.FC<FadeScrollContainerProps> = ({
       showBottomFade={showBottomFade}
       fadeHeight={fadeHeight}
       className={className}
+      {...rest}
     >
       {children}
     </FadeContainer>
