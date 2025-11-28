@@ -46,10 +46,34 @@ const CodeBlockHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
+  padding-left: 4.5rem; /* 为圆点留出空间 */
   background: linear-gradient(to bottom, var(--bg-primary), rgba(var(--accent-rgb), 0.02));
   border-bottom: 1px solid var(--border-color);
   backdrop-filter: blur(10px);
   transition: all 0.2s ease;
+  position: relative;
+
+  /* Mac 风格圆点 */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff5f56;
+    box-shadow:
+      18px 0 0 #ffbd2e,
+      36px 0 0 #27c93f;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
 
   /* 深色模式优化 */
   [data-theme='dark'] & {
@@ -67,16 +91,14 @@ const CodeBlockHeader = styled.div`
 const LanguageLabel = styled.span`
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.7rem;
-  color: var(--accent-color);
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
   font-family: var(--font-code);
   text-transform: uppercase;
   font-weight: 600;
   letter-spacing: 0.5px;
-  background: rgba(var(--accent-rgb), 0.1);
-  border-radius: 4px;
-  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  opacity: 0.7;
 `;
 
 // 复制按钮
@@ -458,7 +480,7 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')}</code></pre>`;
-      processed = processed.replace(`%%%CODE_BLOCK_${idx}%%%`, codeHtml);
+      processed = processed.replace(`%%%CODE_BLOCK_${idx}%%%`, () => codeHtml);
     });
 
     return processed;

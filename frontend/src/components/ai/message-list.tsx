@@ -198,7 +198,9 @@ export const MessageList: React.FC<MessageListProps> = ({
 
         {isStreaming && !streamingContent && <ThinkingBubble />}
 
-        {isStreaming && streamingContent && <MessageBubble role="assistant" content={streamingContent} />}
+        {isStreaming && streamingContent && (
+          <MessageBubble role="assistant" content={streamingContent + '<span class="rich-text-cursor"></span>'} />
+        )}
 
         <div ref={bottomRef} style={{ height: 0, width: '100%', flexShrink: 0 }} />
       </Container>

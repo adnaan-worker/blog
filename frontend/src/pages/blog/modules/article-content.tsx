@@ -2,7 +2,7 @@ import React, { useEffect, useRef, memo, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiCalendar, FiClock, FiTag, FiUser, FiEye } from 'react-icons/fi';
-import { RiRobot2Line } from 'react-icons/ri';
+import { RiSparkling2Fill } from 'react-icons/ri';
 import LazyRichTextRenderer from '@/components/rich-text/lazy-rich-text-renderer';
 import RichTextContent from '@/components/rich-text/rich-text-content';
 import { ImagePreview } from '@/components/content';
@@ -71,51 +71,105 @@ const ArticleCover = styled.div`
   }
 `;
 
-// AI摘要容器
+// AI摘要容器 - 流光卡片风格
 const AISummaryContainer = styled.div`
-  margin: 1.5rem 0 2rem;
-  padding: 1.25rem;
-  background: rgba(81, 131, 245, 0.05);
-  border-radius: 12px;
-  border: 1px solid rgba(81, 131, 245, 0.1);
+  margin: 2rem 0 2.5rem;
+  padding: 1.5rem 1.75rem;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.05) 0%, rgba(var(--accent-rgb), 0.01) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(var(--accent-rgb), 0.1);
   position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 24px rgba(var(--accent-rgb), 0.06);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 32px rgba(var(--accent-rgb), 0.12);
+    border-color: rgba(var(--accent-rgb), 0.2);
+    transform: translateY(-2px);
+  }
+
+  /* 顶部流光装饰 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.6), transparent);
+    opacity: 0.6;
+  }
+
+  /* 深色模式适配 */
+  [data-theme='dark'] & {
+    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1) 0%, rgba(var(--accent-rgb), 0.02) 100%);
+    border-color: rgba(var(--accent-rgb), 0.2);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  }
 `;
 
 // AI摘要头部
 const AISummaryHeader = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 0.75rem;
-  gap: 0.5rem;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
 `;
 
-// AI图标包装
+// AI图标包装 - 呼吸灯效果
 const AIIconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 25%;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   background: linear-gradient(135deg, var(--accent-color), var(--accent-color-assistant));
   color: white;
-  box-shadow: 0 2px 8px rgba(81, 131, 245, 0.25);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.3);
+  animation: breathe 3s infinite ease-in-out;
+
+  @keyframes breathe {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.3);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.5);
+    }
+  }
 `;
 
 // AI摘要标题
 const AISummaryTitle = styled.h4`
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--accent-color);
+  font-size: 1rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--accent-color), var(--text-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin: 0;
+  letter-spacing: 0.02em;
 `;
 
 // AI摘要内容
-const AISummaryContent = styled.p`
+const AISummaryContent = styled.div`
   font-size: 0.95rem;
-  line-height: 1.6;
+  line-height: 1.7;
   color: var(--text-secondary);
   margin: 0;
+  text-align: justify;
+  letter-spacing: 0.01em;
+
+  /* 增加一点左边距，与标题对齐 */
+  padding-left: 3rem; /* 32px图标 + 0.75rem间距 ≈ 44px，稍微缩进一点视觉更平衡 */
+
+  @media (max-width: 768px) {
+    padding-left: 0; /* 移动端取消缩进 */
+  }
 `;
 
 // 文章内容容器 - 继承统一的 RichTextContent 并添加文章特定样式
@@ -315,7 +369,7 @@ const ArticleContent: React.FC<ArticleContentProps> = memo(({ article, contentRe
       <AISummaryContainer>
         <AISummaryHeader>
           <AIIconWrapper>
-            <RiRobot2Line size={16} />
+            <RiSparkling2Fill size={18} />
           </AIIconWrapper>
           <AISummaryTitle>AI 摘要</AISummaryTitle>
         </AISummaryHeader>
