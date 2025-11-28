@@ -5,13 +5,13 @@ import Color from 'colorjs.io';
 import { createCanvasNoiseBackground } from './noise-bg';
 
 // 类型定义
-interface AccentColorConfig {
+export interface AccentColorConfig {
   light: string[];
   dark: string[];
 }
 
 // 预设颜色方案
-const ACCENT_COLORS: AccentColorConfig = {
+export const ACCENT_COLORS: AccentColorConfig = {
   light: [
     '#5183f5', // 标准蓝 - 默认主题色
     '#26A69A', // 青绿色 - 清新
@@ -102,21 +102,35 @@ const colorUtils = {
 const AccentColorStyleInjector: React.FC = () => {
   // 监听当前主题
   const currentTheme = useSelector((state: RootState) => state.theme.theme);
+  const colorIndex = useSelector((state: RootState) => state.theme.colorIndex); // 获取用户选择的颜色索引
+
   const [noiseBgs, setNoiseBgs] = useState({
     light: '',
     dark: '',
   });
 
-  // 使用useMemo缓存随机选择的颜色，避免重复计算
+  // 使用useMemo计算当前使用的颜色
   const selectedColors = useMemo(() => {
+    // 如果用户选择了固定颜色
+    if (colorIndex !== null && colorIndex >= 0 && colorIndex < ACCENT_COLORS.light.length) {
+      return {
+        light: ACCENT_COLORS.light[colorIndex],
+        dark: ACCENT_COLORS.dark[colorIndex],
+      };
+    }
+
+    // 否则使用随机颜色（每次组件重新挂载时随机，或者 Redux 中 colorIndex 为 null 时）
+    // 注意：为了避免 hydration mismatch 或不必要的跳变，这里应该保持稳定
+    // 但因为 colorIndex 为 null 时表示"随机"，我们可以在这里随机
     const randomLightIndex = Math.floor(Math.random() * ACCENT_COLORS.light.length);
-    const randomDarkIndex = Math.floor(Math.random() * ACCENT_COLORS.dark.length);
+    // 保持 light/dark 索引一致，以获得最佳匹配体验
+    const index = randomLightIndex;
 
     return {
-      light: ACCENT_COLORS.light[randomLightIndex],
-      dark: ACCENT_COLORS.dark[randomDarkIndex],
+      light: ACCENT_COLORS.light[index],
+      dark: ACCENT_COLORS.dark[index],
     };
-  }, []); // 空依赖数组确保只在组件挂载时执行一次
+  }, [colorIndex]); // 当 colorIndex 变化时重新计算
 
   // 预生成噪点图 - 优化性能
   useEffect(() => {

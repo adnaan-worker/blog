@@ -1,48 +1,53 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSun, FiMoon, FiMonitor } from 'react-icons/fi';
+import { FiSun, FiMoon, FiMonitor, FiCheck } from 'react-icons/fi';
+import { IoDiceOutline, IoColorPaletteOutline } from 'react-icons/io5';
 import { useDispatch, useSelector } from 'react-redux';
-import { cycleTheme } from '@/store/modules/themeSlice';
+import { cycleTheme, setMode, setColorIndex, setRandomColor } from '@/store/modules/themeSlice';
+import { ACCENT_COLORS } from '@/theme/theme-color';
 import { getElementCenter } from '@/utils/ui/theme';
 import type { RootState } from '@/store';
 import { useAnimationEngine } from '@/utils/ui/animation';
 
 // 主题切换按钮容器
-const ThemeToggleContainer = styled(motion.div)`
+const ThemeToggleContainer = styled.div<{ $isMobile?: boolean }>`
   position: relative;
-  width: 40px;
-  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 50;
+  ${(props) =>
+    props.$isMobile &&
+    `
+    width: 100%;
+    display: block;
+  `}
 `;
 
 // 主题切换按钮
 const ThemeToggleButton = styled(motion.button)`
-  background: none;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  background: transparent;
   border: none;
   color: var(--text-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0;
   border-radius: 50%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+  transition: background-color 0.2s ease;
   z-index: 2;
 
-  /* 增强的悬停效果 */
+  /* 悬停时显示背景 */
   &:hover {
-    transform: rotate(15deg);
+    background-color: rgba(var(--text-primary-rgb), 0.05);
   }
 
-  &:active {
-    transform: scale(0.9) rotate(15deg);
-  }
-
-  /* 禁用状态下的样式（防止动画期间重复点击） */
+  /* 禁用状态 */
   &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
@@ -57,12 +62,10 @@ const IconContainer = styled(motion.div)`
   justify-content: center;
   width: 100%;
   height: 100%;
+
   svg {
-    color: var(--text-secondary);
-    min-width: 20px;
-    &:hover {
-      color: var(--accent-color);
-    }
+    width: 20px;
+    height: 20px;
   }
 `;
 
@@ -76,110 +79,203 @@ const SunRays = styled(motion.div)`
   opacity: 0;
 `;
 
-// 三态主题切换组件
-const ThemeToggle: React.FC = () => {
+// ===== 高级面板 =====
+
+const Panel = styled(motion.div)<{ $isMobile?: boolean }>`
+  ${(props) =>
+    !props.$isMobile
+      ? `
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 16px;
+    width: 260px;
+    box-shadow: 
+      0 10px 40px -10px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(0,0,0,0.02);
+    overflow: hidden;
+    transform-origin: top right;
+
+    [data-theme='dark'] & {
+      background: rgba(30, 30, 30, 0.8);
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 
+        0 10px 40px -10px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    /* 连接小三角 */
+    &::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      right: 14px;
+      width: 12px;
+      height: 12px;
+      background: inherit;
+      border-left: 1px solid inherit;
+      border-top: 1px solid inherit;
+      transform: rotate(45deg);
+      border-radius: 2px 0 0 0;
+      backdrop-filter: blur(16px);
+    }
+  `
+      : `
+    /* 移动端内联样式 */
+    width: 100%;
+    background: transparent;
+    padding: 0;
+  `}
+`;
+
+const PanelSection = styled.div`
+  margin-bottom: 16px;
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const SectionTitle = styled.div`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+// 模式切换器
+const ModeSwitcher = styled.div`
+  display: flex;
+  background: rgba(var(--text-primary-rgb), 0.05);
+  padding: 4px;
+  border-radius: 12px;
+  position: relative;
+`;
+
+const ModeButton = styled.button<{ isActive: boolean }>`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
+  background: ${(props) => (props.isActive ? 'var(--bg-primary)' : 'transparent')};
+  color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'var(--text-secondary)')};
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: ${(props) => (props.isActive ? '0 2px 8px rgba(0,0,0,0.05)' : 'none')};
+  font-size: 0.85rem;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+// 颜色网格
+const ColorsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+`;
+
+const ColorButton = styled(motion.button)<{ color: string; isSelected: boolean }>`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid ${(props) => (props.isSelected ? 'var(--text-primary)' : 'transparent')};
+  background: ${(props) => props.color};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  transition: border-color 0.2s ease;
+
+  /* 内部光泽 */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), transparent 60%);
+  }
+
+  svg {
+    color: white;
+    font-size: 18px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    z-index: 2;
+  }
+`;
+
+const RandomButton = styled(ColorButton)`
+  background: conic-gradient(from 0deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd, #ff6b6b);
+`;
+
+interface ThemeToggleProps {
+  variant?: 'default' | 'mobile';
+}
+
+// 全能主题控制组件
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'default' }) => {
   const dispatch = useDispatch();
   const mode = useSelector((state: RootState) => state.theme.mode);
-  const theme = useSelector((state: RootState) => state.theme.theme);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [isTransitioning, setIsTransitioning] = React.useState(false);
+  const theme = useSelector((state: RootState) => state.theme.theme); // light | dark
+  const colorIndex = useSelector((state: RootState) => state.theme.colorIndex);
 
-  // 使用动画引擎 - 统一的 Spring 动画系统
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isMobile = variant === 'mobile';
+
   const { springPresets } = useAnimationEngine();
 
-  // 太阳动画变体 - 旋转入场，弹性效果
-  const sunVariants = {
-    initial: {
-      rotate: 0,
-      scale: 0.8,
-      opacity: 0,
-    },
-    animate: {
-      rotate: 360,
-      scale: 1,
-      opacity: 1,
-      transition: springPresets.bouncy,
-    },
-    exit: {
-      rotate: -360,
-      scale: 0.8,
-      opacity: 0,
-      transition: springPresets.snappy,
-    },
+  // 动画变体
+  const iconVariants = {
+    initial: { rotate: -90, scale: 0 },
+    animate: { rotate: 0, scale: 1 },
+    exit: { rotate: 90, scale: 0 },
   };
 
-  // 月亮动画变体 - 反向旋转，弹性效果
-  const moonVariants = {
-    initial: {
-      rotate: 0,
-      scale: 0.8,
-      opacity: 0,
-    },
-    animate: {
-      rotate: -360,
-      scale: 1,
-      opacity: 1,
-      transition: springPresets.bouncy,
-    },
-    exit: {
-      rotate: 360,
-      scale: 0.8,
-      opacity: 0,
-      transition: springPresets.snappy,
-    },
+  // 处理Hover逻辑 - 增加延迟避免闪烁
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setIsHovering(true);
   };
 
-  // 光线动画变体 - 柔和扩散
-  const raysVariants = {
-    initial: {
-      scale: 0.8,
-      opacity: 0,
-    },
-    animate: {
-      scale: 1.2,
-      opacity: 1,
-      transition: springPresets.floaty,
-    },
-    exit: {
-      scale: 0.8,
-      opacity: 0,
-      transition: springPresets.snappy,
-    },
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovering(false);
+    }, 300); // 300ms 延迟关闭
   };
 
-  // 自动模式动画变体 - 旋转入场
-  const autoVariants = {
-    initial: {
-      scale: 0.8,
-      opacity: 0,
-      rotate: -90,
-    },
-    animate: {
-      scale: 1,
-      opacity: 1,
-      rotate: 0,
-      transition: springPresets.bouncy,
-    },
-    exit: {
-      scale: 0.8,
-      opacity: 0,
-      rotate: 90,
-      transition: springPresets.snappy,
-    },
-  };
-
-  // 处理主题切换
+  // 点击切换模式 (Primary Action)
   const handleToggle = async () => {
-    // 防止动画期间重复点击
     if (isTransitioning) return;
-
     setIsTransitioning(true);
 
-    // 获取按钮中心位置作为动画起点
     const center = buttonRef.current ? getElementCenter(buttonRef.current) : undefined;
 
     try {
-      // 使用动画切换主题
       await dispatch(
         cycleTheme({
           x: center?.x,
@@ -188,53 +284,157 @@ const ThemeToggle: React.FC = () => {
         }) as any,
       );
     } finally {
-      // 动画完成后恢复按钮状态
       setTimeout(() => setIsTransitioning(false), 100);
     }
   };
 
-  // 获取提示文本
-  const getAriaLabel = () => {
-    switch (mode) {
-      case 'light':
-        return '当前：浅色模式，点击切换到深色模式';
-      case 'dark':
-        return '当前：深色模式，点击切换到自动模式';
-      case 'auto':
-        return `当前：自动模式（${theme === 'dark' ? '深色' : '浅色'}），点击切换到浅色模式`;
-      default:
-        return '切换主题';
-    }
+  // 模式切换 (Panel Action)
+  const handleModeSelect = (newMode: 'light' | 'dark' | 'auto') => {
+    if (mode === newMode) return;
+
+    // 使用无动画切换或简单的 dispatch
+    dispatch(setMode(newMode) as any);
   };
 
+  // 颜色选择
+  const handleColorSelect = (index: number) => {
+    dispatch(setColorIndex(index));
+  };
+
+  const handleRandomSelect = () => {
+    dispatch(setRandomColor());
+  };
+
+  // 当前展示的颜色集
+  const displayColors = theme === 'dark' ? ACCENT_COLORS.dark : ACCENT_COLORS.light;
+
+  const renderPanelContent = () => (
+    <>
+      {/* 模式切换区 */}
+      <PanelSection>
+        <SectionTitle>模式</SectionTitle>
+        <ModeSwitcher>
+          <ModeButton isActive={mode === 'light'} onClick={() => handleModeSelect('light')}>
+            <FiSun />
+          </ModeButton>
+          <ModeButton isActive={mode === 'dark'} onClick={() => handleModeSelect('dark')}>
+            <FiMoon />
+          </ModeButton>
+          <ModeButton isActive={mode === 'auto'} onClick={() => handleModeSelect('auto')}>
+            <FiMonitor />
+          </ModeButton>
+        </ModeSwitcher>
+      </PanelSection>
+
+      {/* 颜色选择区 */}
+      <PanelSection>
+        <SectionTitle>
+          <IoColorPaletteOutline /> 主题色
+        </SectionTitle>
+        <ColorsGrid>
+          {/* 随机按钮 */}
+          <RandomButton
+            color="transparent"
+            isSelected={colorIndex === null}
+            onClick={handleRandomSelect}
+            whileHover={{ scale: 1.1, rotate: 180 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            {colorIndex === null ? <FiCheck /> : <IoDiceOutline />}
+          </RandomButton>
+
+          {/* 预设颜色 */}
+          {displayColors.map((color, index) => (
+            <ColorButton
+              key={color}
+              color={color}
+              isSelected={colorIndex === index}
+              onClick={() => handleColorSelect(index)}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              {colorIndex === index && <FiCheck />}
+            </ColorButton>
+          ))}
+        </ColorsGrid>
+      </PanelSection>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <ThemeToggleContainer $isMobile>
+        <Panel $isMobile>{renderPanelContent()}</Panel>
+      </ThemeToggleContainer>
+    );
+  }
+
   return (
-    <ThemeToggleContainer>
+    <ThemeToggleContainer ref={containerRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      {/* 主按钮 */}
       <ThemeToggleButton
         ref={buttonRef}
         onClick={handleToggle}
         disabled={isTransitioning}
-        aria-label={getAriaLabel()}
-        title={getAriaLabel()}
-        whileHover={{ scale: isTransitioning ? 1 : 1.1 }}
-        whileTap={{ scale: isTransitioning ? 1 : 0.9 }}
+        aria-label="切换主题"
+        whileTap={{ scale: 0.9 }}
       >
         <AnimatePresence mode="wait">
           {mode === 'light' ? (
-            <IconContainer key="sun" variants={sunVariants} initial="initial" animate="animate" exit="exit">
-              <FiSun size={20} />
-              <SunRays variants={raysVariants} initial="initial" animate="animate" exit="exit" />
+            <IconContainer
+              key="sun"
+              variants={iconVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={springPresets.bouncy}
+            >
+              <FiSun />
+              <SunRays
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1.2, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+              />
             </IconContainer>
           ) : mode === 'dark' ? (
-            <IconContainer key="moon" variants={moonVariants} initial="initial" animate="animate" exit="exit">
-              <FiMoon size={20} />
+            <IconContainer
+              key="moon"
+              variants={iconVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={springPresets.bouncy}
+            >
+              <FiMoon />
             </IconContainer>
           ) : (
-            <IconContainer key="auto" variants={autoVariants} initial="initial" animate="animate" exit="exit">
-              <FiMonitor size={20} />
+            <IconContainer
+              key="auto"
+              variants={iconVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={springPresets.bouncy}
+            >
+              <FiMonitor />
             </IconContainer>
           )}
         </AnimatePresence>
       </ThemeToggleButton>
+
+      {/* 高级面板 - Hover 显示 */}
+      <AnimatePresence>
+        {isHovering && (
+          <Panel
+            initial={{ opacity: 0, y: 10, scale: 0.95, rotateX: -10 }}
+            animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95, rotateX: -10 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          >
+            {renderPanelContent()}
+          </Panel>
+        )}
+      </AnimatePresence>
     </ThemeToggleContainer>
   );
 };

@@ -737,7 +737,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
               )}
 
               {/* 主题切换和用户菜单 */}
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {!isMobile && <NavBarPlayer />}
                 <ThemeToggle />
                 <UserMenu
@@ -815,7 +815,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
         handleLogin={handleLogin}
         handleRegister={handleRegister}
         handleLogout={handleLogout}
-        themeToggle={<ThemeToggle />}
+        themeToggle={<ThemeToggle variant="mobile" />}
       />
 
       {/* 模态框 */}

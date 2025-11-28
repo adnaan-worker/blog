@@ -8,6 +8,7 @@ type Theme = 'light' | 'dark';
 interface ThemeState {
   mode: ThemeMode; // 用户选择的模式
   theme: Theme; // 实际应用的主题
+  colorIndex: number | null; // 主题色索引，null 表示随机
 }
 
 interface TransitionOptions {
@@ -19,6 +20,7 @@ interface TransitionOptions {
 const initialState: ThemeState = {
   mode: 'auto', // 默认自动模式
   theme: 'light',
+  colorIndex: null, // 默认随机
 };
 
 // 获取系统主题偏好
@@ -32,6 +34,13 @@ const getSavedMode = (): ThemeMode | null => {
   if (typeof window === 'undefined') return null;
   const savedMode = storage.local.get('themeMode') as ThemeMode;
   return savedMode === 'dark' || savedMode === 'light' || savedMode === 'auto' ? savedMode : null;
+};
+
+// 获取保存的主题色索引
+const getSavedColorIndex = (): number | null => {
+  if (typeof window === 'undefined') return null;
+  const saved = storage.local.get('themeColorIndex');
+  return typeof saved === 'number' ? saved : null;
 };
 
 // 应用主题到 DOM
@@ -80,10 +89,22 @@ const themeSlice = createSlice({
       state.theme = action.payload;
       applyTheme(action.payload);
     },
+
+    // 设置固定主题色
+    setColorIndex: (state, action: PayloadAction<number>) => {
+      state.colorIndex = action.payload;
+      storage.local.set('themeColorIndex', action.payload);
+    },
+
+    // 设置为随机主题色
+    setRandomColor: (state) => {
+      state.colorIndex = null;
+      storage.local.remove('themeColorIndex');
+    },
   },
 });
 
-export const { _setModeInternal, _cycleThemeInternal, updateTheme } = themeSlice.actions;
+export const { _setModeInternal, _cycleThemeInternal, updateTheme, setColorIndex, setRandomColor } = themeSlice.actions;
 
 /**
  * 带动画的设置主题模式
@@ -119,19 +140,23 @@ export const cycleTheme = (options: TransitionOptions = {}) => {
  */
 export const initializeTheme = () => (dispatch: any) => {
   try {
-    // 1. 首先尝试获取保存的主题模式
+    // 1. 主题模式初始化
     const savedMode = getSavedMode();
     if (savedMode) {
       dispatch(_setModeInternal(savedMode));
-      return savedMode;
+    } else {
+      dispatch(_setModeInternal('auto'));
     }
 
-    // 2. 如果没有保存，默认使用 auto
-    dispatch(_setModeInternal('auto'));
-    return 'auto';
+    // 2. 主题色初始化
+    const savedColorIndex = getSavedColorIndex();
+    if (savedColorIndex !== null) {
+      dispatch(setColorIndex(savedColorIndex));
+    }
+
+    return savedMode || 'auto';
   } catch (error) {
     console.error('Failed to initialize theme:', error);
-    // 如果出错，使用默认 auto 模式
     dispatch(_setModeInternal('auto'));
     return 'auto';
   }
