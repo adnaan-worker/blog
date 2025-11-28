@@ -124,8 +124,15 @@ class StreamController extends EventEmitter {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        // 提取内容
-        const content = chunk.content || chunk;
+        // 提取内容 - LangChain 返回的是 AIMessageChunk 对象
+        // chunk.content 就是字符串内容
+        let content = '';
+        if (typeof chunk === 'string') {
+          content = chunk;
+        } else if (chunk && chunk.content !== undefined) {
+          // AIMessageChunk 的 content 属性就是字符串
+          content = String(chunk.content);
+        }
 
         if (content) {
           this.chunks.push(content);

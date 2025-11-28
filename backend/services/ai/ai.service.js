@@ -86,7 +86,11 @@ class AIService {
   async streamChat(message, onChunk, options = {}) {
     this._ensureInitialized();
 
-    const { systemPrompt = null, taskId = `chat_${Date.now()}` } = options;
+    const {
+      systemPrompt = null,
+      taskId = `chat_${Date.now()}`,
+      messages: customMessages,
+    } = options;
     const modelInfo = aiModel.getCurrentModel();
 
     logger.info('🤖 调用 LLM (流式)', {
@@ -95,15 +99,21 @@ class AIService {
       type: 'stream_chat',
       taskId,
       messageLength: message.length,
+      hasHistory: !!customMessages,
     });
 
-    const messages = [];
-
-    if (systemPrompt) {
-      messages.push({ role: 'system', content: systemPrompt });
+    // 如果提供了完整的 messages（包含历史），直接使用
+    // 否则构建简单的单轮对话
+    let messages;
+    if (customMessages && Array.isArray(customMessages)) {
+      messages = customMessages;
+    } else {
+      messages = [];
+      if (systemPrompt) {
+        messages.push({ role: 'system', content: systemPrompt });
+      }
+      messages.push({ role: 'user', content: message });
     }
-
-    messages.push({ role: 'user', content: message });
 
     const streamingModel = aiModel.getStreamingModel(); // 使用流式模型
     const stream = await streamingModel.stream(messages);
@@ -117,6 +127,7 @@ class AIService {
       model: modelInfo.model,
       taskId,
       contentLength: result.length,
+      messageCount: messages.length,
     });
 
     return result;

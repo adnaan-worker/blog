@@ -2,6 +2,7 @@ const BaseSocketHandler = require('../base-handler');
 const aiService = require('@/services/ai/ai.service');
 const writingService = require('@/services/ai/writing.service');
 const { aiQuotaService } = require('@/services/ai-quota.service');
+const chatHistoryService = require('@/services/ai/chat-history.service');
 const { AI_EVENTS } = require('@/utils/socket-events');
 const { SocketValidationError, SocketAuthenticationError } = require('@/utils/socket-response');
 const promptManager = require('@/services/ai/prompts');
@@ -61,7 +62,7 @@ class AINewHandler extends BaseSocketHandler {
   }
 
   /**
-   * 流式聊天
+   * 流式聊天（支持历史记录和多轮对话）
    */
   async handleStreamChat(socket, io, data) {
     // 验证数据
@@ -72,35 +73,79 @@ class AINewHandler extends BaseSocketHandler {
       });
     }
 
-    this._checkAuth(socket);
-
     const { message, sessionId } = data;
-    const userId = socket.userId;
+    const userId = socket.userId || socket.id; // 未登录用户使用 socket.id
+    const isGuest = !socket.userId;
 
     try {
-      // 检查配额
-      await this._checkQuota(userId, 'chat');
+      // 登录用户检查配额
+      if (socket.userId) {
+        await this._checkQuota(userId, 'chat');
+      }
 
-      this.log('info', '开始流式聊天', { userId, sessionId });
+      this.log('info', '开始流式聊天', { userId, sessionId, isGuest });
 
-      // 始终使用博客助手身份
+      // 1. 保存用户消息（仅登录用户）
+      if (!isGuest) {
+        await chatHistoryService.saveMessage(userId, sessionId, 'user', message, 'blog_assistant');
+      }
+
+      // 2. 加载历史记录（仅登录用户，最近10轮对话）
+      let history = [];
+      if (!isGuest) {
+        history = await chatHistoryService.getSessionHistory(userId, sessionId, 20);
+      }
+
+      // 3. 构建消息上下文
       const systemPrompt = promptManager.getSystemPrompt('blog');
+      const messages = [{ role: 'system', content: systemPrompt }];
 
-      // 流式生成
+      // 添加历史消息（如果有）
+      if (history.length > 0) {
+        messages.push(...history);
+      }
+
+      // 添加当前消息
+      messages.push({ role: 'user', content: message });
+
+      // 4. 流式生成
+      let assistantReply = '';
       await aiService.streamChat(
         message,
         chunk => {
+          assistantReply += chunk;
           this.emit(socket, AI_EVENTS.CHUNK, {
             sessionId,
             chunk,
             type: 'chat',
           });
         },
-        { taskId: sessionId, systemPrompt }
+        {
+          taskId: sessionId,
+          systemPrompt,
+          // 如果有历史，传递完整上下文
+          messages: history.length > 0 ? messages : undefined,
+        }
       );
 
-      // 更新配额
-      await this._updateQuota(userId, 'chat');
+      // 5. 保存 AI 回复（仅登录用户）
+      if (!isGuest && assistantReply) {
+        await chatHistoryService.saveMessage(
+          userId,
+          sessionId,
+          'assistant',
+          assistantReply,
+          'blog_assistant'
+        );
+
+        // 清理旧消息（保留最近50条）
+        await chatHistoryService.cleanOldMessages(userId, sessionId, 50);
+      }
+
+      // 6. 登录用户更新配额
+      if (socket.userId) {
+        await this._updateQuota(userId, 'chat');
+      }
 
       this.emit(socket, AI_EVENTS.DONE, { sessionId });
     } catch (error) {

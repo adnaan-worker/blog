@@ -1,4 +1,5 @@
 const { aiService } = require('@/services/ai');
+const chatHistoryService = require('@/services/ai/chat-history.service');
 const { logger } = require('@/utils/logger');
 
 /**
@@ -48,7 +49,7 @@ class AIConversationController {
 
   /**
    * 获取会话历史
-   * GET /api/ai/conversation/history/:sessionId
+   * GET /api/ai/sessions/:sessionId/history
    */
   getHistory = async (req, res) => {
     try {
@@ -56,21 +57,17 @@ class AIConversationController {
       const userId = req.user.id;
       const { limit = 50 } = req.query;
 
-      // TODO: 需要实现历史记录功能
-      const messages = [];
-
-      // 转换为前端友好的格式
-      const formattedMessages = messages.slice(-limit).map(msg => ({
-        role: msg._getType(),
-        content: msg.content,
-        timestamp: msg.timestamp || null,
-      }));
+      const messages = await chatHistoryService.getSessionMessages(
+        userId,
+        sessionId,
+        parseInt(limit)
+      );
 
       return res.apiSuccess(
         {
           sessionId,
-          messages: formattedMessages,
-          total: formattedMessages.length,
+          messages,
+          total: messages.length,
         },
         '获取历史成功'
       );
@@ -82,15 +79,14 @@ class AIConversationController {
 
   /**
    * 获取会话统计
-   * GET /api/ai/conversation/stats/:sessionId
+   * GET /api/ai/sessions/:sessionId/stats
    */
   getStats = async (req, res) => {
     try {
       const { sessionId } = req.params;
       const userId = req.user.id;
 
-      // TODO: 需要实现统计功能
-      const stats = { messageCount: 0, sessionCount: 0 };
+      const stats = await chatHistoryService.getSessionStats(userId, sessionId);
 
       return res.apiSuccess(stats, '获取统计成功');
     } catch (err) {
@@ -101,20 +97,20 @@ class AIConversationController {
 
   /**
    * 清除会话历史
-   * DELETE /api/ai/conversation/:sessionId
+   * DELETE /api/ai/sessions/:sessionId
    */
   clearSession = async (req, res) => {
     try {
       const { sessionId } = req.params;
       const userId = req.user.id;
 
-      // TODO: 需要实现清除会话功能
-      // await aiService.clearMemory(userId, sessionId);
+      const count = await chatHistoryService.clearSession(userId, sessionId);
 
       return res.apiSuccess(
         {
           message: '会话历史已清除',
           sessionId,
+          deletedCount: count,
         },
         '清除成功'
       );
@@ -126,18 +122,18 @@ class AIConversationController {
 
   /**
    * 清除用户所有会话
-   * DELETE /api/ai/conversation
+   * DELETE /api/ai/sessions
    */
   clearAllSessions = async (req, res) => {
     try {
       const userId = req.user.id;
 
-      // TODO: 需要实现清除所有会话功能
-      // await aiService.clearMemory(userId);
+      const count = await chatHistoryService.clearAllSessions(userId);
 
       return res.apiSuccess(
         {
           message: '所有会话历史已清除',
+          deletedCount: count,
         },
         '清除成功'
       );
@@ -149,32 +145,13 @@ class AIConversationController {
 
   /**
    * 获取用户所有会话列表
-   * GET /api/ai/conversation/sessions
+   * GET /api/ai/sessions
    */
   getSessions = async (req, res) => {
     try {
       const userId = req.user.id;
-      const db = require('../models');
 
-      // 查询用户所有会话
-      const sessions = await db.sequelize.query(
-        `
-        SELECT 
-          session_id,
-          type,
-          COUNT(*) as message_count,
-          MAX(created_at) as last_message_at,
-          MIN(created_at) as first_message_at
-        FROM ai_chats
-        WHERE user_id = :userId
-        GROUP BY session_id, type
-        ORDER BY last_message_at DESC
-        `,
-        {
-          replacements: { userId },
-          type: db.sequelize.QueryTypes.SELECT,
-        }
-      );
+      const sessions = await chatHistoryService.getUserSessions(userId);
 
       return res.apiSuccess(
         {
