@@ -1,5 +1,5 @@
-const siteSettingsService = require('../services/site-settings.service');
-const { asyncHandler } = require('../utils/response');
+const siteSettingsService = require('@/services/site-settings.service');
+const { asyncHandler } = require('@/utils/response');
 
 /**
  * 获取网站设置（公开）

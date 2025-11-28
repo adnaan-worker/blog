@@ -3,9 +3,9 @@ const Post = db.Post;
 const Tag = db.Tag;
 const User = db.User;
 const { Op } = require('sequelize');
-const achievementHelper = require('../utils/achievement');
-const activityHelper = require('../utils/activity');
-const { logger } = require('../utils/logger');
+const achievementHelper = require('@/utils/achievement');
+const activityHelper = require('@/utils/activity');
+const { logger } = require('@/utils/logger');
 
 /**
  * 文章服务层

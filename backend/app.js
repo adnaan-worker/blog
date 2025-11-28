@@ -1,3 +1,6 @@
+// 注册路径别名（必须在最前面）
+require('module-alias/register');
+
 // 优先加载环境变量
 require('dotenv').config();
 
@@ -15,7 +18,7 @@ const environment = require('./config/environment');
 const { requestLogger, errorLogger, logger } = require('./utils/logger');
 const { monitorMiddleware } = require('./utils/monitor');
 const { responseMiddleware } = require('./utils/response');
-const aiProvider = require('./services/langchain/ai-provider.service');
+const { aiService } = require('./services/ai');
 const { initializeQueues, shutdownQueues } = require('./queues');
 const specs = require('./config/swagger.config');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
@@ -176,14 +179,13 @@ const startServer = async () => {
   console.log('========================================\n');
 
   try {
-    // 1. 初始化 LangChain AI 服务
-    await aiProvider.initialize();
-    console.log('✅ LangChain AI 服务初始化成功');
+    await aiService.initialize();
+    console.log('✅ AI 服务初始化成功');
   } catch (error) {
-    console.log('⚠️  AI服务初始化失败:', error.message);
+    console.log('❌ AI 服务初始化失败:', error.message);
   }
 
-  // 2. 初始化 Socket.IO（模块化处理器自动注册）
+  // 2. 初始化 Socket.IO
   socketManager.initialize(server);
   console.log('✅ Socket.IO 服务已启动');
 
@@ -194,12 +196,12 @@ const startServer = async () => {
 
   // 4. 启动HTTP服务器
   server.listen(PORT, async () => {
-    // 5. HTTP服务器启动后，再启动队列系统（避免阻塞）
+    // 5. 启动队列系统
     try {
       await initializeQueues();
       console.log('✅ 队列系统启动成功');
     } catch (error) {
-      console.log('⚠️  队列系统启动失败:', error.message);
+      console.log('❌ 队列系统启动失败:', error.message);
     }
     console.log('\n========================================');
     console.log('✅ 服务器启动完成');
@@ -209,17 +211,9 @@ const startServer = async () => {
     console.log(`💚 健康检查: http://localhost:${PORT}/api/system/health`);
     console.log(`📊 系统监控: http://localhost:${PORT}/status`);
     console.log(`🔌 WebSocket: ws://localhost:${PORT}`);
-    console.log(`🤖 AI服务: ${aiProvider.isAvailable() ? '✅ 可用' : '❌ 不可用'}`);
+    console.log(`🤖 AI服务: ${aiService.isAvailable() ? '✅ 可用' : '❌ 不可用'}`);
     console.log(`🔄 队列系统: ✅ 运行中`);
     console.log('\n========================================\n');
-
-    // 记录到日志文件
-    logger.info('🚀 服务器启动成功', {
-      port: PORT,
-      environment: config.nodeEnv,
-      aiService: aiProvider.isAvailable() ? '可用' : '不可用',
-      queueSystem: '运行中',
-    });
   });
 };
 

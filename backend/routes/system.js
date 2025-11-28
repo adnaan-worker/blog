@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { healthCheckMiddleware, metricsMiddleware } = require('../utils/monitor');
-const { monitorService } = require('../utils/monitor');
-const { logger } = require('../utils/logger');
-const authMiddleware = require('../middlewares/auth.middleware');
+const { healthCheckMiddleware, metricsMiddleware } = require('@/utils/monitor');
+const { monitorService } = require('@/utils/monitor');
+const { logger } = require('@/utils/logger');
+const authMiddleware = require('@/middlewares/auth.middleware');
 
 /**
  * @swagger

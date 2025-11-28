@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middlewares/auth.middleware');
-const { uploadUtil, UploadPresets } = require('../utils/upload');
-const UploadMiddleware = require('../middlewares/upload.middleware');
-const userController = require('../controllers/user.controller');
+const authMiddleware = require('@/middlewares/auth.middleware');
+const { uploadUtil, UploadPresets } = require('@/utils/upload');
+const UploadMiddleware = require('@/middlewares/upload.middleware');
+const userController = require('@/controllers/user.controller');
 
 /**
  * @swagger

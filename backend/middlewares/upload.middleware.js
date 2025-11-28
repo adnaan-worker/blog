@@ -1,5 +1,5 @@
 const multer = require('multer');
-const { uploadUtil } = require('../utils/upload');
+const { uploadUtil } = require('@/utils/upload');
 
 /**
  * 文件上传错误处理中间件

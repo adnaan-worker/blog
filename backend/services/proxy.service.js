@@ -3,8 +3,8 @@
  * 统一处理对外部 API 的调用，解决跨域问题并提供缓存
  */
 
-const { logger } = require('../utils/logger');
-const redisManager = require('../utils/redis');
+const { logger } = require('@/utils/logger');
+const redisManager = require('@/utils/redis');
 
 class ProxyService {
   constructor() {

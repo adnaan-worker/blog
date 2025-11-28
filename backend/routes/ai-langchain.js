@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const aiController = require('../controllers/ai-langchain.controller');
-const authMiddleware = require('../middlewares/auth.middleware');
+const aiController = require('@/controllers/ai-langchain.controller');
+const authMiddleware = require('@/middlewares/auth.middleware');
 
 /**
  * @swagger
@@ -14,8 +14,8 @@ const authMiddleware = require('../middlewares/auth.middleware');
  * @swagger
  * /api/ai/chat:
  *   post:
- *     summary: 简单聊天（无记忆）
- *     description: 单次问答，不保存对话历史，适合快速问答场景
+ *     summary: 聊天接口
+ *     description: 与博客智能机器人 Wayne (#89757) 对话。传入 sessionId 则使用记忆，否则为无记忆聊天
  *     tags: [AI基础]
  *     security:
  *       - bearerAuth: []
@@ -31,7 +31,11 @@ const authMiddleware = require('../middlewares/auth.middleware');
  *               message:
  *                 type: string
  *                 description: 用户消息
- *                 example: "什么是React？"
+ *                 example: "你是谁？"
+ *               sessionId:
+ *                 type: string
+ *                 description: 会话ID（可选，传入则使用记忆）
+ *                 example: "session_123"
  *     responses:
  *       200:
  *         description: 聊天成功
@@ -49,6 +53,10 @@ const authMiddleware = require('../middlewares/auth.middleware');
  *                     message:
  *                       type: string
  *                       description: AI回复内容
+ *                     sessionId:
+ *                       type: string
+ *                       nullable: true
+ *                       description: 会话ID
  *                     timestamp:
  *                       type: string
  *                       format: date-time

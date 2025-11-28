@@ -1,4 +1,4 @@
-const authService = require('../services/auth.service');
+const authService = require('@/services/auth.service');
 
 /**
  * 验证令牌中间件

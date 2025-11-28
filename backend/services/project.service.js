@@ -1,5 +1,5 @@
 const { Project, User } = require('../models');
-const { AppError } = require('../utils/response');
+const { AppError } = require('@/utils/response');
 const { Op } = require('sequelize');
 
 /**

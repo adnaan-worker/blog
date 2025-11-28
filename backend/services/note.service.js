@@ -1,9 +1,9 @@
 const db = require('../models');
 const { Note, NoteLike, User } = db;
 const { Op } = require('sequelize');
-const RichTextParser = require('../utils/rich-text-parser');
-const activityHelper = require('../utils/activity');
-const achievementHelper = require('../utils/achievement');
+const RichTextParser = require('@/utils/rich-text-parser');
+const activityHelper = require('@/utils/activity');
+const achievementHelper = require('@/utils/achievement');
 
 /**
  * 手记服务层

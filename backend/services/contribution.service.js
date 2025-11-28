@@ -4,8 +4,8 @@
  */
 
 const axios = require('axios');
-const { logger } = require('../utils/logger');
-const redisManager = require('../utils/redis');
+const { logger } = require('@/utils/logger');
+const redisManager = require('@/utils/redis');
 
 class ContributionService {
   /**

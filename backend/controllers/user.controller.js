@@ -1,7 +1,7 @@
-const userService = require('../services/user.service');
-const { uploadService } = require('../services/upload.service');
-const { asyncHandler } = require('../utils/response');
-const { logger } = require('../utils/logger');
+const userService = require('@/services/user.service');
+const { uploadService } = require('@/services/upload.service');
+const { asyncHandler } = require('@/utils/response');
+const { logger } = require('@/utils/logger');
 
 /**
  * 获取用户资料

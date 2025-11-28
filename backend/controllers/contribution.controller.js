@@ -2,8 +2,8 @@
  * 贡献统计控制器
  */
 
-const contributionService = require('../services/contribution.service');
-const { asyncHandler } = require('../utils/response');
+const contributionService = require('@/services/contribution.service');
+const { asyncHandler } = require('@/utils/response');
 
 /**
  * 获取贡献统计数据

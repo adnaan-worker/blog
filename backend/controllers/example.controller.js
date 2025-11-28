@@ -3,7 +3,7 @@
  * 展示如何使用统一的响应格式
  */
 
-const { asyncHandler, createPagination } = require('../utils/response');
+const { asyncHandler, createPagination } = require('@/utils/response');
 
 /**
  * 获取单个数据示例

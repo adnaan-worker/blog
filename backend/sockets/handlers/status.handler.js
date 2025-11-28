@@ -1,7 +1,7 @@
 const BaseSocketHandler = require('../base-handler');
-const statusService = require('../../services/status.service');
-const { STATUS_EVENTS } = require('../../utils/socket-events');
-const { socketSuccess, SocketValidationError } = require('../../utils/socket-response');
+const statusService = require('@/services/status.service');
+const { STATUS_EVENTS } = require('@/utils/socket-events');
+const { socketSuccess, SocketValidationError } = require('@/utils/socket-response');
 
 /**
  * 状态更新 Socket 处理器

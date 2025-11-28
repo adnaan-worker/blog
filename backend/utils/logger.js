@@ -1,7 +1,7 @@
 const winston = require('winston');
 const path = require('path');
 const fs = require('fs');
-const environment = require('../config/environment');
+const environment = require('@/config/environment');
 
 // 确保日志目录存在
 const config = environment.get();

@@ -2,8 +2,8 @@ const db = require('../models');
 const Comment = db.Comment;
 const User = db.User;
 const Post = db.Post;
-const achievementHelper = require('../utils/achievement');
-const activityHelper = require('../utils/activity');
+const achievementHelper = require('@/utils/achievement');
+const activityHelper = require('@/utils/activity');
 
 /**
  * 评论服务层

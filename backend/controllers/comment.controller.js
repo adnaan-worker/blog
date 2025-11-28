@@ -1,7 +1,7 @@
-const commentService = require('../services/comment.service');
-const cacheService = require('../services/cache.service');
-const { asyncHandler } = require('../utils/response');
-const { collectVisitorInfo, getLocationFromIP } = require('../utils/visitor-info');
+const commentService = require('@/services/comment.service');
+const cacheService = require('@/services/cache.service');
+const { asyncHandler } = require('@/utils/response');
+const { collectVisitorInfo, getLocationFromIP } = require('@/utils/visitor-info');
 const { Comment, User, Post } = require('../models');
 
 /**

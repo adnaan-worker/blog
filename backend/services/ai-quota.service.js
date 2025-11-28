@@ -1,5 +1,5 @@
 const { AIQuota } = require('../models');
-const { logger } = require('../utils/logger');
+const { logger } = require('@/utils/logger');
 
 /**
  * AI配额管理服务

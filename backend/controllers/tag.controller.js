@@ -1,6 +1,6 @@
-const tagService = require('../services/tag.service');
-const cacheService = require('../services/cache.service');
-const { asyncHandler } = require('../utils/response');
+const tagService = require('@/services/tag.service');
+const cacheService = require('@/services/cache.service');
+const { asyncHandler } = require('@/utils/response');
 
 /**
  * 获取标签列表

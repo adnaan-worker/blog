@@ -1,6 +1,6 @@
 const { Server } = require('socket.io');
 const { logger } = require('./logger');
-const visitorStatsService = require('../services/visitor-stats.service');
+const visitorStatsService = require('@/services/visitor-stats.service');
 
 class SocketManager {
   constructor() {

@@ -4,7 +4,7 @@
  */
 
 const UAParser = require('ua-parser-js');
-const proxyService = require('../services/proxy.service');
+const proxyService = require('@/services/proxy.service');
 const { logger } = require('./logger');
 
 /**

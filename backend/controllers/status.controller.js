@@ -1,6 +1,6 @@
-const statusService = require('../services/status.service');
-const { logger } = require('../utils/logger');
-const socketManager = require('../utils/socket');
+const statusService = require('@/services/status.service');
+const { logger } = require('@/utils/logger');
+const socketManager = require('@/utils/socket');
 
 class StatusController {
   /**

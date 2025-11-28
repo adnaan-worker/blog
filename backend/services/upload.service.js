@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
-const { uploadUtil, UploadPresets } = require('../utils/upload');
-const { success, error } = require('../utils/response');
+const { uploadUtil, UploadPresets } = require('@/utils/upload');
+const { success, error } = require('@/utils/response');
 
 /**
  * 文件上传服务类

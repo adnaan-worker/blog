@@ -1,6 +1,6 @@
 const visitorHandler = require('./handlers/visitor.handler');
 const statusHandler = require('./handlers/status.handler');
-const aiHandler = require('./handlers/ai.handler');
+const aiHandler = require('./handlers/ai.handler'); // 使用新版 AI 处理器
 
 /**
  * 注册所有 Socket 处理器

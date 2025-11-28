@@ -6,12 +6,12 @@ const Categroup = db.Categroup;
 const PostLike = db.PostLike;
 const PostBookmark = db.PostBookmark;
 const { Op } = require('sequelize');
-const { asyncHandler, createPagination } = require('../utils/response');
-const postService = require('../services/post.service');
-const ReadingTracker = require('../utils/reading-tracker');
-const activityHelper = require('../utils/activity');
-const achievementHelper = require('../utils/achievement');
-const { logger } = require('../utils/logger');
+const { asyncHandler, createPagination } = require('@/utils/response');
+const postService = require('@/services/post.service');
+const ReadingTracker = require('@/utils/reading-tracker');
+const activityHelper = require('@/utils/activity');
+const achievementHelper = require('@/utils/achievement');
+const { logger } = require('@/utils/logger');
 
 /**
  * 获取公开文章列表（前台展示）

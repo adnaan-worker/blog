@@ -1,10 +1,10 @@
-const noteService = require('../services/note.service');
-const { asyncHandler } = require('../utils/response');
-const ReadingTracker = require('../utils/reading-tracker');
+const noteService = require('@/services/note.service');
+const { asyncHandler } = require('@/utils/response');
+const ReadingTracker = require('@/utils/reading-tracker');
 const { Note } = require('../models');
 const { Op } = require('sequelize');
-const { logger } = require('../utils/logger');
-const RichTextParser = require('../utils/rich-text-parser');
+const { logger } = require('@/utils/logger');
+const RichTextParser = require('@/utils/rich-text-parser');
 
 /**
  * 创建手记

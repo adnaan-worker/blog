@@ -1,4 +1,4 @@
-const { logger } = require('../utils/logger');
+const { logger } = require('@/utils/logger');
 
 /**
  * 访客统计服务

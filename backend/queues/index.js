@@ -1,11 +1,10 @@
 const { aiQueue, aiWorker } = require('./ai-queue');
-const { logger } = require('../utils/logger');
+const { logger } = require('@/utils/logger');
 
 /**
  * 初始化所有队列 (BullMQ)
  */
 async function initializeQueues() {
-  logger.info('✅ BullMQ 队列系统已启动', { concurrency: 3 });
   // BullMQ Worker 会自动启动，无需手动操作
 }
 

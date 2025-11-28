@@ -34,6 +34,7 @@ class QueueConfig {
     // Worker 配置
     this.workerOptions = {
       concurrency: 3, // 并发数
+      lockDuration: 300000, // 任务锁定时间 5 分钟（300秒），防止长时间运行的 AI 任务被标记为停滞
       limiter: {
         max: 10, // 每个时间窗口最多处理10个任务
         duration: 1000, // 时间窗口1秒

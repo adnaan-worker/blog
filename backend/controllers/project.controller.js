@@ -1,5 +1,5 @@
-const projectService = require('../services/project.service');
-const { asyncHandler } = require('../utils/response');
+const projectService = require('@/services/project.service');
+const { asyncHandler } = require('@/utils/response');
 
 /**
  * 获取项目列表

@@ -1,5 +1,5 @@
-const { logger } = require('../utils/logger');
-const { socketError } = require('../utils/socket-response');
+const { logger } = require('@/utils/logger');
+const { socketError } = require('@/utils/socket-response');
 
 /**
  * Socket 事件处理器基类

@@ -1,9 +1,9 @@
-const aiProvider = require('../services/langchain/ai-provider.service');
-const aiWriting = require('../services/langchain/ai-writing.service');
-const { aiQuotaService } = require('../services/ai-quota.service');
-const { aiQueue, queueEvents } = require('../queues/ai-queue');
-const { asyncHandler } = require('../utils/response');
-const { logger } = require('../utils/logger');
+const { aiService, writingService } = require('@/services/ai');
+const { aiQuotaService } = require('@/services/ai-quota.service');
+const { aiQueue, queueEvents } = require('@/queues/ai-queue');
+const { asyncHandler } = require('@/utils/response');
+const { logger } = require('@/utils/logger');
+const promptManager = require('@/services/ai/prompts');
 
 /**
  * AI LangChain 控制器
@@ -11,10 +11,11 @@ const { logger } = require('../utils/logger');
  */
 
 /**
- * 简单聊天
+ * 聊天接口（支持可选记忆）
+ * 如果传入 sessionId 则使用记忆，否则为无记忆聊天
  */
 exports.chat = asyncHandler(async (req, res) => {
-  const { message } = req.body;
+  const { message, sessionId } = req.body;
   const userId = req.user?.id || req.ip;
 
   if (!message || message.trim() === '') {
@@ -27,13 +28,16 @@ exports.chat = asyncHandler(async (req, res) => {
     return res.apiError(`每日聊天次数已达上限(${quota.limit})`, 429);
   }
 
-  const response = await aiProvider.chat(message);
+  // 调用 AI 服务（始终使用博客助手身份）
+  const systemPrompt = promptManager.getSystemPrompt('blog');
+  const response = await aiService.chat(message, { systemPrompt });
 
   // 更新配额
   await aiQuotaService.incrementChatUsage(userId);
 
   return res.apiSuccess({
     message: response,
+    sessionId: sessionId || null,
     timestamp: new Date().toISOString(),
   });
 });
@@ -55,7 +59,7 @@ exports.generateArticle = asyncHandler(async (req, res) => {
     return res.apiError(`每日生成次数已达上限(${quota.limit})`, 429);
   }
 
-  const content = await aiWriting.generateArticle({
+  const content = await writingService.generateArticle({
     title,
     keywords,
     wordCount,
@@ -86,12 +90,10 @@ exports.getQuota = asyncHandler(async (req, res) => {
  * 获取 AI 服务状态
  */
 exports.getStatus = asyncHandler(async (req, res) => {
-  const info = aiProvider.getInfo();
+  const info = aiService.getInfo();
 
   return res.apiSuccess(info);
 });
-
-// 队列相关功能已废弃，改用 Socket.IO 流式输出
 
 /**
  * 生成标题（异步任务，立即返回任务ID）

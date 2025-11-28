@@ -39,8 +39,8 @@ const projectRoutes = require('./projects');
 // 🤖 AI基础功能
 const aiRoutes = require('./ai-langchain');
 
-// 💭 AI对话管理
-const aiConversationRoutes = require('./ai-conversation');
+// 💭 AI会话管理
+const aiSessionRoutes = require('./ai-conversation');
 
 // ==================== 系统模块 ====================
 
@@ -83,7 +83,7 @@ router.use('/projects', projectRoutes);
 
 // AI模块
 router.use('/ai', aiRoutes);
-router.use('/ai/conversation', aiConversationRoutes);
+router.use('/ai/sessions', aiSessionRoutes);
 
 // 系统模块
 router.use('/system', systemRoutes);

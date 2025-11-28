@@ -1,5 +1,5 @@
 const { SiteSettings } = require('../models');
-const { AppError } = require('../utils/response');
+const { AppError } = require('@/utils/response');
 
 class SiteSettingsService {
   /**

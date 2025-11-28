@@ -1,8 +1,8 @@
 const { Queue, Worker, QueueEvents } = require('bullmq');
-const aiWriting = require('../services/langchain/ai-writing.service');
-const { aiQuotaService } = require('../services/ai-quota.service');
-const { logger } = require('../utils/logger');
-const queueConfig = require('../config/queue.config');
+const { writingService } = require('@/services/ai');
+const { aiQuotaService } = require('@/services/ai-quota.service');
+const { logger } = require('@/utils/logger');
+const queueConfig = require('@/config/queue.config');
 
 /**
  * AI 任务队列 (BullMQ)
@@ -25,37 +25,27 @@ async function processAITask(job) {
 
   logger.info('处理 AI 任务', { jobId: job.id, action, userId });
 
-  // 更新进度：开始处理
-  await job.updateProgress(10);
-
   // 检查配额
   const quota = await aiQuotaService.checkGenerateQuota(userId);
   if (!quota.available) {
     throw new Error(`每日生成次数已达上限(${quota.limit})`);
   }
 
-  // 更新进度：配额检查完成
-  await job.updateProgress(20);
-
   let result;
 
   switch (action) {
     case 'generate_article':
       await job.updateProgress(30);
-      result = await aiWriting.generateArticle(params);
+      result = await writingService.generateArticle(params);
       await job.updateProgress(90);
       break;
 
     case 'generate_title':
-      await job.updateProgress(30);
-      result = await aiWriting.generateTitle(params.content, params.keywords);
-      await job.updateProgress(90);
+      result = await writingService.generateTitle(params.content, params.keywords || []);
       break;
 
     case 'generate_summary':
-      await job.updateProgress(30);
-      result = await aiWriting.generateSummary(params.content);
-      await job.updateProgress(90);
+      result = await writingService.generateSummary(params.content);
       break;
 
     default:
@@ -65,10 +55,7 @@ async function processAITask(job) {
   // 更新配额
   await aiQuotaService.incrementGenerateUsage(userId);
 
-  // 更新进度：完成
-  await job.updateProgress(100);
-
-  logger.info('AI 任务完成', { jobId: job.id, action });
+  logger.info('✅ AI 任务完成', { jobId: job.id, action });
 
   return result;
 }
@@ -80,16 +67,12 @@ const aiWorker = new Worker('ai-tasks', processAITask, {
 });
 
 // Worker 事件监听
-aiWorker.on('completed', job => {
-  logger.info('任务完成', { jobId: job.id });
-});
-
 aiWorker.on('failed', (job, err) => {
-  logger.error('任务失败', { jobId: job?.id, error: err.message });
+  logger.error('❌ AI 任务失败', { jobId: job?.id, error: err.message });
 });
 
 aiWorker.on('error', err => {
-  logger.error('Worker 错误', { error: err.message });
+  logger.error('❌ AI Worker 错误', { error: err.message });
 });
 
 module.exports = {

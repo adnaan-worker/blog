@@ -1,5 +1,5 @@
-const aiProvider = require('../services/langchain/ai-provider.service');
-const { logger } = require('../utils/logger');
+const { aiService } = require('@/services/ai');
+const { logger } = require('@/utils/logger');
 
 /**
  * AI对话控制器
@@ -20,7 +20,8 @@ class AIConversationController {
       }
 
       logger.debug('开始AI对话', { userId, message, sessionId });
-      const response = await aiProvider.conversationChat(userId, message, sessionId, chatType);
+      // TODO: 需要实现带记忆的对话功能
+      const response = await aiService.chat(message, { systemPrompt: null });
       logger.debug('AI对话完成', {
         responseLength: response?.length,
         responseType: typeof response,
@@ -55,9 +56,8 @@ class AIConversationController {
       const userId = req.user.id;
       const { limit = 50 } = req.query;
 
-      const history = aiProvider.getMessageHistory(sessionId, userId);
-      await history.loadMessages();
-      const messages = await history.getMessages();
+      // TODO: 需要实现历史记录功能
+      const messages = [];
 
       // 转换为前端友好的格式
       const formattedMessages = messages.slice(-limit).map(msg => ({
@@ -89,8 +89,8 @@ class AIConversationController {
       const { sessionId } = req.params;
       const userId = req.user.id;
 
-      const history = aiProvider.getMessageHistory(sessionId, userId);
-      const stats = await history.getStats();
+      // TODO: 需要实现统计功能
+      const stats = { messageCount: 0, sessionCount: 0 };
 
       return res.apiSuccess(stats, '获取统计成功');
     } catch (err) {
@@ -108,7 +108,8 @@ class AIConversationController {
       const { sessionId } = req.params;
       const userId = req.user.id;
 
-      await aiProvider.clearMemory(userId, sessionId);
+      // TODO: 需要实现清除会话功能
+      // await aiService.clearMemory(userId, sessionId);
 
       return res.apiSuccess(
         {
@@ -131,7 +132,8 @@ class AIConversationController {
     try {
       const userId = req.user.id;
 
-      await aiProvider.clearMemory(userId);
+      // TODO: 需要实现清除所有会话功能
+      // await aiService.clearMemory(userId);
 
       return res.apiSuccess(
         {

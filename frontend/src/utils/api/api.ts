@@ -599,21 +599,16 @@ export const API = {
   // AI写作助手相关 (基于 LangChain)
   ai: {
     /**
-     * 简单聊天
+     * 聊天接口（与博客智能机器人 Wayne 对话）
      * @param message 消息内容
-     * @returns Promise<ApiResponse<{ message: string; timestamp: string }>>
+     * @param sessionId 会话ID（可选，传入则使用记忆）
+     * @returns Promise<ApiResponse<{ message: string; sessionId: string | null; timestamp: string }>>
      */
-    chat: (message: string): Promise<ApiResponse<{ message: string; timestamp: string }>> => {
-      return http.post('/ai/chat', { message });
-    },
-
-    /**
-     * 对话聊天（带记忆）
-     * @param message 消息内容
-     * @returns Promise<ApiResponse<{ message: string; timestamp: string }>>
-     */
-    conversation: (message: string): Promise<ApiResponse<{ message: string; timestamp: string }>> => {
-      return http.post('/ai/conversation', { message });
+    chat: (params: {
+      message: string;
+      sessionId?: string;
+    }): Promise<ApiResponse<{ message: string; sessionId: string | null; timestamp: string }>> => {
+      return http.post('/ai/chat', params);
     },
 
     /**
@@ -669,11 +664,47 @@ export const API = {
     },
 
     /**
-     * 清除对话记忆
+     * 获取会话列表
+     * @returns Promise<ApiResponse<any[]>>
+     */
+    getSessions: (): Promise<ApiResponse<any[]>> => {
+      return http.get('/ai/sessions');
+    },
+
+    /**
+     * 获取会话历史
+     * @param sessionId 会话ID
+     * @param limit 消息数量
+     * @returns Promise<ApiResponse<any>>
+     */
+    getSessionHistory: (sessionId: string, limit?: number): Promise<ApiResponse<any>> => {
+      return http.get(`/ai/sessions/${sessionId}/history`, { limit });
+    },
+
+    /**
+     * 获取会话统计
+     * @param sessionId 会话ID
+     * @returns Promise<ApiResponse<any>>
+     */
+    getSessionStats: (sessionId: string): Promise<ApiResponse<any>> => {
+      return http.get(`/ai/sessions/${sessionId}/stats`);
+    },
+
+    /**
+     * 清除指定会话
+     * @param sessionId 会话ID
      * @returns Promise<ApiResponse<null>>
      */
-    clearMemory: (): Promise<ApiResponse<null>> => {
-      return http.delete('/ai/memory');
+    clearSession: (sessionId: string): Promise<ApiResponse<null>> => {
+      return http.delete(`/ai/sessions/${sessionId}`);
+    },
+
+    /**
+     * 清除所有会话
+     * @returns Promise<ApiResponse<null>>
+     */
+    clearAllSessions: (): Promise<ApiResponse<null>> => {
+      return http.delete('/ai/sessions');
     },
 
     /**

@@ -332,11 +332,11 @@ const options = {
       },
       {
         name: 'AI基础',
-        description: '🤖 AI聊天、文章生成、配额管理（无记忆）',
+        description: '🤖 AI聊天（支持可选记忆）、文章生成、配额管理',
       },
       {
-        name: 'AI对话',
-        description: '💭 多轮对话、会话管理、历史记录（带记忆）',
+        name: 'AI会话管理',
+        description: '💭 会话列表、历史记录、统计分析',
       },
       {
         name: '系统',

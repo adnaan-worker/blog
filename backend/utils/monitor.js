@@ -1,6 +1,6 @@
 const os = require('os');
 const { logger } = require('./logger');
-const environment = require('../config/environment');
+const environment = require('@/config/environment');
 
 const config = environment.get();
 

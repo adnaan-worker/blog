@@ -1,8 +1,8 @@
-const activityService = require('../services/activity.service');
-const { asyncHandler } = require('../utils/response');
-const socketManager = require('../utils/socket');
+const activityService = require('@/services/activity.service');
+const { asyncHandler } = require('@/utils/response');
+const socketManager = require('@/utils/socket');
 const { Post, Note } = require('../models');
-const { logger } = require('../utils/logger');
+const { logger } = require('@/utils/logger');
 
 /**
  * 获取全站最新活动（公开接口）

@@ -12,8 +12,8 @@ const {
   sequelize,
 } = db;
 const { Op } = require('sequelize');
-const { error } = require('../utils/response');
-const achievementHelper = require('../utils/achievement');
+const { error } = require('@/utils/response');
+const achievementHelper = require('@/utils/achievement');
 
 /**
  * 用户服务层

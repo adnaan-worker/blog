@@ -1,4 +1,4 @@
-const redisManager = require('../utils/redis');
+const redisManager = require('@/utils/redis');
 
 /**
  * 缓存服务

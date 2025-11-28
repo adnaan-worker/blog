@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const userService = require('./user.service');
-const redisManager = require('../utils/redis');
+const redisManager = require('@/utils/redis');
 
 // Redis 管理已统一到 utils/redis.js
 

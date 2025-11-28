@@ -1,5 +1,5 @@
 const Redis = require('ioredis');
-const redisConfig = require('../config/redis.config');
+const redisConfig = require('@/config/redis.config');
 const { logger } = require('./logger');
 
 class RedisManager {

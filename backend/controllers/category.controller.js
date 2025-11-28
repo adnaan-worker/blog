@@ -1,6 +1,6 @@
-const categoryService = require('../services/category.service');
-const cacheService = require('../services/cache.service');
-const { asyncHandler, createPagination } = require('../utils/response');
+const categoryService = require('@/services/category.service');
+const cacheService = require('@/services/cache.service');
+const { asyncHandler, createPagination } = require('@/utils/response');
 
 /**
  * 分类控制器

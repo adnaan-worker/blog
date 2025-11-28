@@ -3,10 +3,10 @@
  * 处理外部 API 代理请求
  */
 
-const proxyService = require('../services/proxy.service');
-const { asyncHandler } = require('../utils/response');
-const { logger } = require('../utils/logger');
-const { getClientIP } = require('../utils/visitor-info');
+const proxyService = require('@/services/proxy.service');
+const { asyncHandler } = require('@/utils/response');
+const { logger } = require('@/utils/logger');
+const { getClientIP } = require('@/utils/visitor-info');
 
 class ProxyController {
   /**
