@@ -523,16 +523,17 @@ export const API = {
     },
 
     /**
-     * 获取文章的所有评论
-     * @param postId 文章ID
-     * @param params 查询参数
-     * @returns Promise<ApiResponse<PaginationResult<Comment>>>
+     * 获取指定目标的所有评论（文章 / 手记 / 项目）
+     * @param targetType 目标类型：post/note/project
+     * @param targetId 目标ID
+     * @param params 查询参数（分页、状态等）
      */
-    getCommentsByPost: (
-      postId: string | number,
+    getCommentsByTarget: (
+      targetType: 'post' | 'note' | 'project',
+      targetId: string | number,
       params?: CommentParams,
     ): Promise<ApiResponse<PaginationResult<Comment>>> => {
-      return http.get(`/comments/${postId}`, params);
+      return http.get(`/comments/${targetId}`, { ...params, targetType });
     },
 
     /**

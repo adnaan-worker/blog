@@ -708,6 +708,7 @@ interface TodoItemType {
   time: string;
   priority: 'high' | 'medium' | 'low';
   link?: string;
+  action?: string;
 }
 
 // ==================== 主组件 ====================
@@ -756,6 +757,7 @@ const Profile: React.FC = () => {
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [publishTrend, setPublishTrend] = useState<{ date: string; count: number }[]>([]);
   const [todoItems, setTodoItems] = useState<TodoItemType[]>([]);
+  const [commentStatusFilter, setCommentStatusFilter] = useState<string | undefined>(undefined);
 
   // UI State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -812,9 +814,10 @@ const Profile: React.FC = () => {
         const todos = (todoResponse.data || []).map((item: any) => ({
           id: item.id,
           content: item.title || item.content,
-          time: item.time || item.date,
-          priority: item.priority || 'medium',
+          time: item.time || item.date || '',
+          priority: item.priority || (item.type === 'warning' ? 'high' : 'medium'),
           link: item.link,
+          action: item.action,
         }));
         setTodoItems(todos);
       } else {
@@ -835,6 +838,25 @@ const Profile: React.FC = () => {
       console.error('加载用户资料失败:', error);
     } finally {
       setIsUserLoading(false);
+    }
+  };
+
+  const handleTodoClick = (item: TodoItemType) => {
+    // 待处理评论：跳转到评论管理，并默认筛选“待审核”
+    if (item.action === 'view-pending-comments') {
+      setCommentStatusFilter('pending');
+      setActiveTab('comments');
+      return;
+    }
+
+    // 待审核文章：跳转到文章管理（后续可按需补充状态筛选）
+    if (item.action === 'view-draft-posts') {
+      setActiveTab('articles');
+      return;
+    }
+
+    if (item.link) {
+      navigate(item.link);
     }
   };
 
@@ -1092,7 +1114,7 @@ const Profile: React.FC = () => {
                 {todoItems.slice(0, 3).map((item) => (
                   <TodoItem
                     key={item.id}
-                    onClick={() => item.link && navigate(item.link)}
+                    onClick={() => handleTodoClick(item)}
                     style={{ padding: '0.5rem 0', border: 'none' }}
                   >
                     <TodoContent>
@@ -1264,7 +1286,7 @@ const Profile: React.FC = () => {
                     {todoItems.map((item) => (
                       <TodoItem
                         key={item.id}
-                        onClick={() => item.link && navigate(item.link)}
+                        onClick={() => handleTodoClick(item)}
                         variants={cardVariants}
                         whileHover={{ x: 4, backgroundColor: 'rgba(var(--text-primary-rgb), 0.05)' }}
                         style={{
@@ -1349,7 +1371,7 @@ const Profile: React.FC = () => {
       case 'comments':
         return (
           <ContentGlassCard {...pageTransition}>
-            <CommonPage type="comments" />
+            <CommonPage type="comments" initialStatusFilter={commentStatusFilter} />
           </ContentGlassCard>
         );
       case 'likes':

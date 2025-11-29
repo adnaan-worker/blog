@@ -14,6 +14,7 @@ import {
   DetailSidebar,
   DetailBackLink,
   DetailNoiseBackground,
+  CommentSection,
 } from '@/components/content';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { getTimeAgo } from '@/utils';
@@ -832,6 +833,9 @@ const NoteDetail: React.FC = () => {
                       </RelatedList>
                     </RelatedNotes>
                   )}
+
+                  {/* 评论区 */}
+                  <CommentSection targetId={Number(note.id)} targetType="note" />
                 </NoteMain>
               </MainContentFlex>
 

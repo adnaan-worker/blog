@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('@/middlewares/auth.middleware');
 const commentController = require('@/controllers/comment.controller');
+const {
+  withPagination,
+  withUserContext,
+  withEnumFilter,
+  withScope,
+} = require('@/middlewares/request-context.middleware');
 
 /**
  * @swagger
@@ -38,21 +44,37 @@ const commentController = require('@/controllers/comment.controller');
  *       200:
  *         description: 获取成功
  */
-router.get('/', authMiddleware.verifyToken, commentController.getUserComments);
+router.get(
+  '/',
+  authMiddleware.verifyToken,
+  withUserContext,
+  withPagination({ defaultLimit: 10, maxLimit: 50 }),
+  withEnumFilter('status', ['approved', 'pending', 'spam'], 'status'),
+  withScope({ adminScope: 'all-comments', userScope: 'own-comments' }),
+  commentController.getUserComments
+);
 
 /**
  * @swagger
- * /api/comments/{postId}:
+ * /api/comments/{targetId}:
  *   get:
- *     summary: 获取文章的所有评论
+ *     summary: 获取指定目标的所有评论
+ *     description: 通过 targetType + targetId 获取文章、手记、项目等目标下的评论列表
  *     tags: [评论]
  *     parameters:
  *       - in: path
- *         name: postId
+ *         name: targetId
  *         required: true
  *         schema:
  *           type: integer
- *         description: 文章ID
+ *         description: 目标ID（文章ID/手记ID/项目ID等）
+ *       - in: query
+ *         name: targetType
+ *         schema:
+ *           type: string
+ *           enum: [post, note, project]
+ *           default: post
+ *         description: 目标类型（post-文章/note-手记/project-项目）
  *       - in: query
  *         name: page
  *         schema:
@@ -72,14 +94,14 @@ router.get('/', authMiddleware.verifyToken, commentController.getUserComments);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/PaginationResponse'
- *       404:
- *         description: 文章不存在
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:postId', commentController.getCommentsByPost);
+router.get(
+  '/:targetId',
+  authMiddleware.optionalAuth,
+  withUserContext,
+  withPagination({ defaultLimit: 10, maxLimit: 50 }),
+  commentController.getCommentsByPost
+);
 
 /**
  * @swagger
@@ -108,7 +130,12 @@ router.get('/:postId', commentController.getCommentsByPost);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:id/detail', commentController.getCommentById);
+router.get(
+  '/:id/detail',
+  authMiddleware.optionalAuth,
+  withUserContext,
+  commentController.getCommentById
+);
 
 /**
  * @swagger
@@ -126,14 +153,19 @@ router.get('/:id/detail', commentController.getCommentById);
  *             type: object
  *             required:
  *               - content
- *               - postId
+ *               - targetType
+ *               - targetId
  *             properties:
  *               content:
  *                 type: string
  *                 description: 评论内容
- *               postId:
+ *               targetType:
+ *                 type: string
+ *                 enum: [post, note, project]
+ *                 description: 评论目标类型（post-文章/note-手记/project-项目）
+ *               targetId:
  *                 type: integer
- *                 description: 文章ID
+ *                 description: 评论目标ID
  *               parentId:
  *                 type: integer
  *                 description: 父评论ID (用于回复功能)
@@ -268,6 +300,6 @@ router.patch(
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete('/:id', authMiddleware.verifyToken, commentController.deleteComment);
+router.delete('/:id', authMiddleware.verifyToken, withUserContext, commentController.deleteComment);
 
 module.exports = router;

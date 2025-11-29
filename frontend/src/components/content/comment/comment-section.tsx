@@ -331,8 +331,11 @@ const LoadingSpinner = styled.div`
   }
 `;
 
+type CommentTargetType = 'post' | 'note' | 'project';
+
 interface CommentSectionProps {
-  postId: number;
+  targetId: number;
+  targetType: CommentTargetType;
 }
 
 // 扁平化评论树的辅助函数
@@ -349,7 +352,7 @@ const flattenComments = (comments: CommentType[], depth = 0): Array<CommentType 
   return result;
 };
 
-const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
+const CommentSection: React.FC<CommentSectionProps> = ({ targetId, targetType }) => {
   const { variants } = useAnimationEngine();
   const [comments, setComments] = useState<CommentType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -385,7 +388,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   const fetchComments = async () => {
     try {
       setLoading(true);
-      const response = await API.comment.getCommentsByPost(postId, { page: 1, limit: 20 });
+      const response = await API.comment.getCommentsByTarget(targetType, targetId, { page: 1, limit: 20 });
       if (response.code === 200 && response.data) {
         setComments(response.data || []);
         setTotal(response.meta?.pagination?.total ?? 0);
@@ -407,7 +410,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     try {
       setIsLoadingMore(true);
       const nextPage = page + 1;
-      const response = await API.comment.getCommentsByPost(postId, { page: nextPage, limit: 20 });
+      const response = await API.comment.getCommentsByTarget(targetType, targetId, {
+        page: nextPage,
+        limit: 20,
+      });
 
       if (response.code === 200 && response.data) {
         const newComments = response.data || [];
@@ -423,10 +429,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
   };
 
   useEffect(() => {
-    if (postId) {
+    if (targetId && targetType) {
       fetchComments();
     }
-  }, [postId]);
+  }, [targetId, targetType]);
 
   // 使用 ref 存储主表单的访客信息，避免在 useEffect 依赖中触发
   const guestInfoRef = useRef({ guestName, guestEmail, guestWebsite });
@@ -481,7 +487,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
 
       const commentData: any = {
         content: commentText,
-        postId,
+        targetType,
+        targetId,
       };
 
       // 如果是访客，添加访客信息
@@ -533,7 +540,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId }) => {
     try {
       const replyData: any = {
         content: replyText,
-        postId,
+        targetType,
+        targetId,
         parentId,
       };
 

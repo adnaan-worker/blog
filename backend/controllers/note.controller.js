@@ -105,8 +105,6 @@ exports.getNotesList = asyncHandler(async (req, res) => {
  */
 exports.getMyNotes = asyncHandler(async (req, res) => {
   const {
-    page = 1,
-    limit = 10,
     mood,
     weather,
     tags,
@@ -115,6 +113,8 @@ exports.getMyNotes = asyncHandler(async (req, res) => {
     orderBy = 'createdAt',
     orderDirection = 'DESC',
   } = req.query;
+
+  const { page = 1, limit = 10 } = req.pagination || {};
 
   // 解析标签参数
   let parsedTags = [];
@@ -138,13 +138,11 @@ exports.getMyNotes = asyncHandler(async (req, res) => {
     orderDirection,
   };
 
-  // 管理员可以查看所有手记，普通用户只能看自己的
-  if (req.user.role === 'admin' || req.user.role === 'moderator') {
-    // 管理员：查看所有手记
+  const { isPrivileged = false, userId } = req.context || {};
+  if (isPrivileged) {
     options.isAdmin = true;
   } else {
-    // 普通用户：只查看自己的手记
-    options.userId = req.user.id;
+    options.userId = userId;
   }
 
   const result = await noteService.getNotesList(options);

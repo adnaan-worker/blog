@@ -6,18 +6,25 @@ const { asyncHandler } = require('@/utils/response');
  */
 exports.getProjects = asyncHandler(async (req, res) => {
   const { includePrivate, ...restQuery } = req.query;
-
-  const isAdminUser = req.user && req.user.role === 'admin';
+  const { isAdmin = false } = req.context || {};
+  const pagination = req.pagination || {};
 
   const options = {
     ...restQuery,
   };
 
+  if (pagination.page) {
+    options.page = pagination.page;
+  }
+  if (pagination.limit) {
+    options.limit = pagination.limit;
+  }
+
   // 仅当为管理员且显式请求 includePrivate 时，才允许查询包含私有项目
   const wantIncludePrivate =
     includePrivate === 'true' || includePrivate === '1' || includePrivate === true;
 
-  if (isAdminUser && wantIncludePrivate) {
+  if (isAdmin && wantIncludePrivate) {
     options.includePrivate = true;
   }
 

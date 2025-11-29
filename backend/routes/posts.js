@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('@/middlewares/auth.middleware');
 const postController = require('@/controllers/post.controller');
+const { withPagination, withUserContext } = require('@/middlewares/request-context.middleware');
 
 /**
  * @swagger
@@ -135,7 +136,13 @@ router.get('/years', postController.getYears);
  *       401:
  *         description: 未授权
  */
-router.get('/my', authMiddleware.verifyToken, postController.getMyPosts);
+router.get(
+  '/my',
+  authMiddleware.verifyToken,
+  withUserContext,
+  withPagination({ defaultLimit: 10, maxLimit: 50 }),
+  postController.getMyPosts
+);
 
 /**
  * @swagger

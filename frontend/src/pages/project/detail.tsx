@@ -30,6 +30,7 @@ import {
   DetailSidebar,
   DetailBackLink,
   DetailNoiseBackground,
+  CommentSection,
 } from '@/components/content';
 import { usePageInfo } from '@/hooks/usePageInfo';
 import { SEO, ProjectDetailSkeleton } from '@/components/common';
@@ -791,6 +792,9 @@ const ProjectDetail: React.FC = () => {
                       <p>暂无详细介绍</p>
                     </RichTextContent>
                   )}
+
+                  {/* 评论区 */}
+                  <CommentSection targetId={Number(project.id)} targetType="project" />
                 </ProjectMain>
               </DetailMainContent>
 

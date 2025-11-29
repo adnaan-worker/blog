@@ -664,7 +664,7 @@ const BlogDetail: React.FC = () => {
                   )}
 
                   {/* 评论区 */}
-                  <CommentSection postId={Number(article.id)} />
+                  <CommentSection targetId={Number(article.id)} targetType="post" />
                 </ArticleMain>
               </DetailMainContent>
 

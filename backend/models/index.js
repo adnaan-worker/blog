@@ -41,9 +41,19 @@ db.Project = require('./project.model.js')(sequelize, Sequelize);
 db.User.hasMany(db.Post, { as: 'posts', foreignKey: 'userId' });
 db.Post.belongsTo(db.User, { as: 'author', foreignKey: 'userId' });
 
-// 文章与评论的关系：一对多
-db.Post.hasMany(db.Comment, { as: 'comments', foreignKey: 'postId' });
-db.Comment.belongsTo(db.Post, { as: 'post', foreignKey: 'postId' });
+// 文章与评论的关系：一对多（基于通用 targetType/targetId）
+// 仅当 targetType = 'post' 时建立关联
+db.Post.hasMany(db.Comment, {
+  as: 'comments',
+  foreignKey: 'targetId',
+  scope: { targetType: 'post' },
+  constraints: false,
+});
+db.Comment.belongsTo(db.Post, {
+  as: 'post',
+  foreignKey: 'targetId',
+  constraints: false,
+});
 
 // 用户与评论的关系：一对多
 db.User.hasMany(db.Comment, { as: 'comments', foreignKey: 'userId' });

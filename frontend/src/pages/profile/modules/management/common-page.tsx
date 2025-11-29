@@ -6,7 +6,17 @@ import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Button, Modal, Input, Select, Textarea, ColorPicker, Switch } from 'adnaan-ui';
-import { FiEdit3, FiTrash2, FiEye, FiHeart, FiCalendar, FiMessageSquare, FiFolder } from 'react-icons/fi';
+import {
+  FiEdit3,
+  FiTrash2,
+  FiEye,
+  FiHeart,
+  FiCalendar,
+  FiMessageSquare,
+  FiFolder,
+  FiCheck,
+  FiAlertTriangle,
+} from 'react-icons/fi';
 import { API, formatDate } from '@/utils';
 import { RichTextParser } from '@/utils/editor/parser';
 import { FadeScrollContainer } from '@/components/common';
@@ -185,6 +195,8 @@ const PAGE_CONFIG: Record<PageType, PageConfig> = {
 
 interface CommonPageProps {
   type: PageType;
+  // 初始状态筛选（例如从仪表盘待办跳转到“待审核评论”）
+  initialStatusFilter?: string;
 }
 
 const EmptyContainer = styled.div`
@@ -301,7 +313,7 @@ const MobileActions = styled.div`
   gap: 0.5rem;
 `;
 
-export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
+export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilter }) => {
   const navigate = useNavigate();
   const config = PAGE_CONFIG[type];
 
@@ -382,9 +394,17 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
     [type],
   ); // 只依赖 type，不依赖 config
 
+  const initialParams = React.useMemo(
+    () =>
+      type === 'comments' && initialStatusFilter
+        ? ({ status: initialStatusFilter } as { status: string })
+        : ({} as { status?: string }),
+    [type, initialStatusFilter],
+  );
+
   const { items, isLoading, hasMore, error, loadMore, reload, search, totalItems, filter } = useManagementPage({
     fetchFunction: fetchData,
-    initialParams: {},
+    initialParams,
     limit: 10,
   });
 
@@ -399,8 +419,8 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
   // 文章：按发布状态筛选（草稿/已发布/已归档，仅管理员生效）
   const enableFilters = type === 'comments' || type === 'projects' || type === 'notes' || type === 'articles';
 
-  // 筛选条展开状态
-  const [isFilterOpen, setIsFilterOpen] = React.useState(false);
+  // 筛选条展开状态：如果带初始筛选（如待审核评论），默认展开
+  const [isFilterOpen, setIsFilterOpen] = React.useState(type === 'comments' && !!initialStatusFilter);
 
   // 不同类型的筛选选项
   const filterOptions = React.useMemo(() => {
@@ -822,6 +842,77 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type }) => {
   const renderItem = (item: any) => {
     if (isMobile) {
       return renderMobileItem(item);
+    }
+
+    // 评论管理：支持审核操作（通过 / 标记垃圾）
+    if (type === 'comments') {
+      const status: 'approved' | 'pending' | 'spam' = item.status || 'pending';
+      const statusText = status === 'approved' ? '已通过' : status === 'spam' ? '垃圾/屏蔽' : '待审核';
+      const targetLabel = item.targetType === 'note' ? '手记' : item.targetType === 'project' ? '项目' : '文章';
+      const targetTitle = item.targetTitle;
+
+      const handleOpenTarget = () => {
+        if (item.targetType === 'post') {
+          navigate(`/blog/${item.targetId}`);
+        } else if (item.targetType === 'note') {
+          navigate(`/notes/${item.targetId}`);
+        } else if (item.targetType === 'project') {
+          navigate(`/projects/${item.targetId}`);
+        }
+      };
+
+      const handleChangeStatus = async (newStatus: 'approved' | 'pending' | 'spam') => {
+        try {
+          await API.comment.updateCommentStatus(item.id, newStatus);
+          adnaan.toast.success('评论状态更新成功');
+          reload();
+        } catch (error: any) {
+          adnaan.toast.error(error.message || '更新评论状态失败');
+        }
+      };
+
+      const content = item.content ? RichTextParser.extractText(item.content).slice(0, 150) : '';
+      const authorName = item.author?.username || item.guestName || '访客';
+
+      return (
+        <ItemCard>
+          <ItemHeader>
+            <ItemTitle onClick={handleOpenTarget}>
+              {authorName} 在{targetLabel}《{targetTitle}》的评论
+            </ItemTitle>
+            <ItemActions>
+              {status === 'pending' && (
+                <ActionButton onClick={() => handleChangeStatus('approved')} title="通过">
+                  <FiCheck />
+                </ActionButton>
+              )}
+              {status !== 'spam' && (
+                <ActionButton onClick={() => handleChangeStatus('spam')} title="标记垃圾">
+                  <FiAlertTriangle />
+                </ActionButton>
+              )}
+              {config.deleteFn && (
+                <ActionButton onClick={() => handleDelete(item.id, '评论')} title="删除">
+                  <FiTrash2 />
+                </ActionButton>
+              )}
+            </ItemActions>
+          </ItemHeader>
+
+          {content && <ItemContent>{content}</ItemContent>}
+
+          <ItemMeta>
+            <MetaItem>
+              <FiCalendar />
+              <span>{formatDate(item.createdAt)}</span>
+            </MetaItem>
+            <MetaItem>
+              <FiMessageSquare />
+              <span>状态：{statusText}</span>
+            </MetaItem>
+          </ItemMeta>
+        </ItemCard>
+      );
     }
 
     const title = item.title || item.name || item.username || '无标题';

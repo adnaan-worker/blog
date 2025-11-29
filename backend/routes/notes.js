@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('@/middlewares/auth.middleware');
 const noteController = require('@/controllers/note.controller');
+const { withPagination, withUserContext } = require('@/middlewares/request-context.middleware');
 
 /**
  * @swagger
@@ -178,7 +179,13 @@ router.get('/', noteController.getNotesList);
  *       401:
  *         description: 未授权
  */
-router.get('/my', authMiddleware.verifyToken, noteController.getMyNotes);
+router.get(
+  '/my',
+  authMiddleware.verifyToken,
+  withUserContext,
+  withPagination({ defaultLimit: 10, maxLimit: 50 }),
+  noteController.getMyNotes
+);
 
 /**
  * @swagger

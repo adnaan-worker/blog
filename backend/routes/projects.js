@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const projectController = require('@/controllers/project.controller');
 const authMiddleware = require('@/middlewares/auth.middleware');
+const { withPagination, withUserContext } = require('@/middlewares/request-context.middleware');
 
 /**
  * @swagger
@@ -52,7 +53,13 @@ const authMiddleware = require('@/middlewares/auth.middleware');
  *       200:
  *         description: 获取成功
  */
-router.get('/', authMiddleware.optionalAuth, projectController.getProjects);
+router.get(
+  '/',
+  authMiddleware.optionalAuth,
+  withUserContext,
+  withPagination({ defaultLimit: 12, maxLimit: 50 }),
+  projectController.getProjects
+);
 
 /**
  * @swagger

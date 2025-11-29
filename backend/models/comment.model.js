@@ -53,14 +53,19 @@ module.exports = sequelize => {
         field: 'is_guest', // 数据库字段名为下划线
         comment: '是否为访客评论',
       },
-      postId: {
+      // 通用评论目标：支持文章、手记、项目等
+      targetType: {
+        type: DataTypes.ENUM('post', 'note', 'project'),
+        allowNull: false,
+        defaultValue: 'post',
+        field: 'target_type',
+        comment: '评论目标类型（post-文章/note-手记/project-项目）',
+      },
+      targetId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        field: 'post_id', // 数据库字段名为下划线
-        references: {
-          model: 'posts',
-          key: 'id',
-        },
+        field: 'target_id',
+        comment: '评论目标ID（与 target_type 联合使用）',
       },
       parentId: {
         type: DataTypes.INTEGER,
@@ -122,7 +127,7 @@ module.exports = sequelize => {
           fields: ['userId'],
         },
         {
-          fields: ['postId'],
+          fields: ['targetType', 'targetId'],
         },
         {
           fields: ['parentId'],

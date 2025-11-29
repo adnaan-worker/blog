@@ -137,22 +137,24 @@ exports.getYears = asyncHandler(async (req, res) => {
  * 管理员/协管：返回所有文章（支持状态筛选）
  */
 exports.getMyPosts = asyncHandler(async (req, res) => {
-  let { page = 1, limit = 10, status, search, tagId, categoryId, tag } = req.query;
-  page = parseInt(page);
-  limit = parseInt(limit);
+  let { status, search, tagId, categoryId, tag } = req.query;
+
+  const pageInfo = req.pagination || {};
+  let page = parseInt(pageInfo.page || req.query.page || 1);
+  let limit = parseInt(pageInfo.limit || req.query.limit || 10);
 
   const where = {};
-  const isAdmin = req.user.role === 'admin' || req.user.role === 'moderator';
+  const { isPrivileged = false, userId } = req.context || {};
 
   // 权限控制
-  if (isAdmin) {
+  if (isPrivileged) {
     // 管理员：可以查看所有文章，支持状态筛选
     if (status !== undefined) {
       where.status = parseInt(status);
     }
   } else {
     // 普通用户：只能查看自己的文章
-    where.userId = req.user.id;
+    where.userId = userId;
   }
 
   // 搜索功能

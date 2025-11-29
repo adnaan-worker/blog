@@ -754,6 +754,10 @@ class UserService {
         title: '待审核文章',
         count: pendingPosts,
         type: 'warning',
+        // 提示级别高，用于前端样式和排序
+        priority: 'high',
+        // 前端根据 action 决定跳转到哪个管理页
+        action: 'view-draft-posts',
       });
     }
 
@@ -763,6 +767,8 @@ class UserService {
         title: '待处理评论',
         count: pendingComments,
         type: 'primary',
+        priority: 'high',
+        action: 'view-pending-comments',
       });
     }
 

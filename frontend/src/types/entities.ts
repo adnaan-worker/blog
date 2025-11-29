@@ -213,11 +213,11 @@ export interface Tag {
 export interface Comment {
   id: string | number;
   content: string;
-  postId: string | number;
+  targetType: 'post' | 'note' | 'project';
+  targetId: string | number;
   parentId?: string | number;
   userId?: string | number;
   author?: UserInfo; // 用户信息对象（包含username, avatar, role等）
-  post?: { id: string | number; title: string }; // 关联的文章信息
   status?: 'approved' | 'pending' | 'spam';
   createdAt?: string; // 数据库时间戳
   updatedAt?: string; // 数据库时间戳
@@ -239,13 +239,15 @@ export interface Comment {
 }
 
 export interface CommentParams extends PaginationParams {
-  postId?: string | number;
+  targetType?: 'post' | 'note' | 'project';
+  targetId?: string | number;
   status?: 'approved' | 'pending' | 'spam';
 }
 
 export interface CreateCommentData {
   content: string;
-  postId: string | number;
+  targetType: 'post' | 'note' | 'project';
+  targetId: string | number;
   parentId?: string | number;
   // 访客评论字段（未登录时必填）
   guestName?: string;

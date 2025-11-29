@@ -2,7 +2,7 @@ const commentService = require('@/services/comment.service');
 const cacheService = require('@/services/cache.service');
 const { asyncHandler } = require('@/utils/response');
 const { collectVisitorInfo, getLocationFromIP } = require('@/utils/visitor-info');
-const { Comment, User, Post } = require('../models');
+const { Comment, User } = require('../models');
 
 /**
  * 转换评论数据为前端期望的格式
@@ -31,11 +31,12 @@ const transformCommentForFrontend = comment => {
  * @param {Function} next - 下一个中间件
  */
 exports.getCommentsByPost = asyncHandler(async (req, res) => {
-  const { postId } = req.params;
-  const { page = 1, limit = 10, status } = req.query;
+  const { targetId } = req.params;
+  const { status, targetType = 'post' } = req.query;
+  const { page = 1, limit = 10 } = req.pagination || {};
 
-  // 构建缓存键
-  const cacheKey = `comments:post:${postId}:${page}:${limit}:${status || 'all'}`;
+  // 构建缓存键（按目标类型 + 目标ID 维度缓存）
+  const cacheKey = `comments:${targetType}:${targetId}:${page}:${limit}:${status || 'all'}`;
 
   // 尝试从缓存获取，如果没有则从数据库获取并缓存
   const result = await cacheService.getOrSet(
@@ -43,15 +44,13 @@ exports.getCommentsByPost = asyncHandler(async (req, res) => {
     async () => {
       const options = { page, limit };
 
-      // 如果是管理员请求，可以根据状态筛选
-      if (req.user && req.user.role === 'admin' && status) {
+      // 仅管理员可根据状态自定义筛选
+      const { isAdmin = false } = req.context || {};
+      if (isAdmin && status) {
         options.status = status;
-      } else {
-        // 非管理员只能看到已批准的评论
-        options.status = 'approved';
       }
 
-      return await commentService.findByPostId(postId, options);
+      return await commentService.findByTarget(targetType, targetId, options);
     },
     300
   ); // 缓存5分钟
@@ -62,86 +61,23 @@ exports.getCommentsByPost = asyncHandler(async (req, res) => {
   return res.apiPaginated(transformedData, result.pagination, '获取评论列表成功');
 });
 
-/**
- * 获取评论列表（统一接口）
- * 管理员：返回所有评论
- * 普通用户：返回自己的评论
- * @param {Object} req - 请求对象
- * @param {Object} res - 响应对象
- */
 exports.getUserComments = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, status } = req.query;
-  const isAdmin = req.user.role === 'admin';
+  const pagination = req.pagination || {};
+  const page = pagination.page || parseInt(req.query.page || '1', 10);
+  const limit = pagination.limit || parseInt(req.query.limit || '10', 10);
 
-  const options = {
-    page: parseInt(page),
-    limit: parseInt(limit),
-  };
+  const status = req.filters?.status;
+  const { isAdmin = false, userId } = req.context || {};
+  const scope = req.scope || (isAdmin ? 'all-comments' : 'own-comments');
 
-  // 如果指定了状态，添加状态过滤
-  if (status) {
-    options.status = status;
-  }
-
-  let result;
-
-  if (isAdmin) {
-    // 管理员：查询所有评论（包含回复树）
-
-    const where = { parentId: null }; // 只查询顶级评论
-    if (status) {
-      where.status = status;
-    }
-
-    const { count, rows } = await Comment.findAndCountAll({
-      where,
-      include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'username', 'avatar', 'role'],
-        },
-        {
-          model: Post,
-          as: 'post',
-          attributes: ['id', 'title'],
-        },
-        {
-          model: Comment,
-          as: 'replies',
-          where: status ? { status } : undefined,
-          required: false,
-          include: [
-            {
-              model: User,
-              as: 'author',
-              attributes: ['id', 'username', 'avatar', 'role'],
-            },
-          ],
-        },
-      ],
-      order: [['createdAt', 'DESC']],
-      offset: (page - 1) * limit,
-      limit: parseInt(limit),
-    });
-
-    const totalPages = Math.ceil(count / limit);
-
-    result = {
-      data: rows,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: count,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
-      },
-    };
-  } else {
-    // 普通用户：只查询自己的评论
-    result = await commentService.findByUserId(req.user.id, options);
-  }
+  const result = await commentService.listForProfile({
+    page,
+    limit,
+    status,
+    isAdmin,
+    userId,
+    scope,
+  });
 
   return res.apiPaginated(result.data, result.pagination, '获取评论列表成功');
 });
@@ -172,7 +108,8 @@ exports.getCommentById = asyncHandler(async (req, res) => {
   }
 
   // 非管理员只能看到已批准的评论
-  if (comment.status !== 'approved' && (!req.user || req.user.role !== 'admin')) {
+  const { isAdmin = false } = req.context || {};
+  if (comment.status !== 'approved' && !isAdmin) {
     return res.apiForbidden('无权访问此评论');
   }
 
@@ -244,11 +181,32 @@ exports.createComment = asyncHandler(async (req, res) => {
     console.error('收集访客信息失败:', error);
   }
 
+  // 规范目标类型和ID
+  const validTargetTypes = ['post', 'note', 'project'];
+  const rawTargetType = commentData.targetType || 'post';
+  const rawTargetId = commentData.targetId;
+
+  if (!validTargetTypes.includes(rawTargetType)) {
+    return res.apiBadRequest('不支持的评论目标类型');
+  }
+
+  if (!rawTargetId || Number.isNaN(Number(rawTargetId))) {
+    return res.apiBadRequest('评论目标ID无效');
+  }
+
+  commentData.targetType = rawTargetType;
+  commentData.targetId = Number(rawTargetId);
+
+  // 删除旧字段（如果前端误传 postId）
+  if ('postId' in commentData) {
+    delete commentData.postId;
+  }
+
   // 创建评论
   const comment = await commentService.create(commentData);
 
   // 清除相关缓存
-  await cacheService.deletePattern(`comments:post:${commentData.postId}:*`);
+  await cacheService.deletePattern(`comments:${commentData.targetType}:${commentData.targetId}:*`);
 
   return res.apiCreated(comment, '评论创建成功');
 });
@@ -275,7 +233,11 @@ exports.updateCommentStatus = asyncHandler(async (req, res) => {
 
   // 清除相关缓存
   await cacheService.del(`comments:${id}`);
-  await cacheService.deletePattern(`comments:post:${existingComment.postId}:*`);
+  if (existingComment.targetType && existingComment.targetId) {
+    await cacheService.deletePattern(
+      `comments:${existingComment.targetType}:${existingComment.targetId}:*`
+    );
+  }
 
   // 获取更新后的评论
   const updatedComment = await commentService.findById(id);
@@ -300,7 +262,8 @@ exports.deleteComment = asyncHandler(async (req, res) => {
   }
 
   // 检查权限：只有评论作者或管理员可以删除评论
-  if (existingComment.userId !== req.user.id && req.user.role !== 'admin') {
+  const { userId, isAdmin = false } = req.context || {};
+  if (existingComment.userId !== userId && !isAdmin) {
     return res.apiForbidden('无权删除此评论');
   }
 
@@ -309,7 +272,11 @@ exports.deleteComment = asyncHandler(async (req, res) => {
 
   // 清除相关缓存
   await cacheService.del(`comments:${id}`);
-  await cacheService.deletePattern(`comments:post:${existingComment.postId}:*`);
+  if (existingComment.targetType && existingComment.targetId) {
+    await cacheService.deletePattern(
+      `comments:${existingComment.targetType}:${existingComment.targetId}:*`
+    );
+  }
 
   return res.apiDeleted('评论删除成功', { deletedId: id });
 });

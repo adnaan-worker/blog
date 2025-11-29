@@ -7,6 +7,8 @@ const achievementHelper = require('@/utils/achievement');
 const activityHelper = require('@/utils/activity');
 const { logger } = require('@/utils/logger');
 
+const isAdminUser = user => !!user && user.role === 'admin';
+
 /**
  * 文章服务层
  * 处理与文章相关的业务逻辑
@@ -24,7 +26,7 @@ class PostService {
 
     try {
       // 设置审核状态：管理员直接通过，普通用户需要审核
-      const auditStatus = user && user.role === 'admin' ? 1 : 0;
+      const auditStatus = isAdminUser(user) ? 1 : 0;
 
       // 创建文章
       const post = await Post.create(
@@ -230,7 +232,7 @@ class PostService {
 
       // 如果普通用户修改已发布且审核通过的文章，重新进入待审核
       let updateData = { ...postData };
-      if (user && user.role !== 'admin' && postData.status === 1 && post.auditStatus === 1) {
+      if (user && !isAdminUser(user) && postData.status === 1 && post.auditStatus === 1) {
         updateData.auditStatus = 0; // 重新审核
       }
 
