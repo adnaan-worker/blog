@@ -1,8 +1,17 @@
 const aiModel = require('./core/ai-model.service');
 const streamManager = require('./core/stream-manager');
 const promptManager = require('./prompts');
-const { StringOutputParser } = require('@langchain/core/output_parsers');
 const { logger } = require('@/utils/logger');
+
+let StringOutputParser;
+
+const getStringOutputParser = async () => {
+  if (!StringOutputParser) {
+    const mod = await import('@langchain/core/output_parsers');
+    StringOutputParser = mod.StringOutputParser;
+  }
+  return StringOutputParser;
+};
 
 /**
  * AI 服务 - 统一的 AI 调用接口
@@ -144,7 +153,8 @@ class AIService {
     const modelInfo = aiModel.getCurrentModel();
     const template = promptManager.getTemplate(templateName);
     const model = aiModel.getModel();
-    const chain = template.pipe(model).pipe(new StringOutputParser());
+    const Parser = await getStringOutputParser();
+    const chain = template.pipe(model).pipe(new Parser());
 
     logger.info('🤖 调用 LLM', {
       provider: modelInfo.provider,
@@ -201,7 +211,8 @@ class AIService {
 
     const template = promptManager.getTemplate(templateName);
     const streamingModel = aiModel.getStreamingModel(); // 使用流式模型
-    const chain = template.pipe(streamingModel).pipe(new StringOutputParser());
+    const Parser = await getStringOutputParser();
+    const chain = template.pipe(streamingModel).pipe(new Parser());
 
     const stream = await chain.stream(variables);
 

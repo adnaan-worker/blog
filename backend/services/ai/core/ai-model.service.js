@@ -1,7 +1,3 @@
-const { ChatOpenAI } = require('@langchain/openai');
-const { ChatAnthropic } = require('@langchain/anthropic');
-const { ChatGoogleGenerativeAI } = require('@langchain/google-genai');
-const { ChatZhipuAI } = require('@langchain/community/chat_models/zhipuai');
 const { logger } = require('@/utils/logger');
 const environment = require('@/config/environment');
 
@@ -21,25 +17,37 @@ class AIModelService {
     // 支持的提供商配置
     this.providers = {
       openai: {
-        class: ChatOpenAI,
+        import: async () => {
+          const mod = await import('@langchain/openai');
+          return mod.ChatOpenAI;
+        },
         package: '@langchain/openai',
         configKey: 'openAIApiKey',
         defaultModel: 'gpt-4o-mini',
       },
       anthropic: {
-        class: ChatAnthropic,
+        import: async () => {
+          const mod = await import('@langchain/anthropic');
+          return mod.ChatAnthropic;
+        },
         package: '@langchain/anthropic',
         configKey: 'anthropicApiKey',
         defaultModel: 'claude-3-5-sonnet-20241022',
       },
       google: {
-        class: ChatGoogleGenerativeAI,
+        import: async () => {
+          const mod = await import('@langchain/google-genai');
+          return mod.ChatGoogleGenerativeAI;
+        },
         package: '@langchain/google-genai',
         configKey: 'apiKey',
         defaultModel: 'gemini-2.0-flash-exp',
       },
       zhipu: {
-        class: ChatZhipuAI,
+        import: async () => {
+          const mod = await import('@langchain/community/chat_models/zhipuai');
+          return mod.ChatZhipuAI;
+        },
         package: '@langchain/community',
         configKey: 'zhipuAIApiKey',
         defaultModel: 'glm-4',
@@ -88,14 +96,17 @@ class AIModelService {
         };
       }
 
+      // 动态加载对应提供商的模型类（使用 ESM 入口）
+      const ModelClass = await providerConfig.import();
+
       // 创建非流式模型实例
-      this.model = new providerConfig.class({
+      this.model = new ModelClass({
         ...baseConfig,
         streaming: false,
       });
 
       // 创建流式模型实例
-      this.streamingModel = new providerConfig.class({
+      this.streamingModel = new ModelClass({
         ...baseConfig,
         streaming: true,
       });
