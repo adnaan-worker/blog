@@ -12,23 +12,23 @@ import { MOCK_FRIENDS, Friend } from './data';
 const Container = styled.div`
   min-height: 100vh;
   position: relative;
-  background: #050505; /* Deep dark background */
+  background: var(--bg-primary);
   overflow-x: hidden;
-  color: #fff;
 
-  [data-theme='light'] & {
-    background: #f5f5f7;
-    color: #1d1d1f;
+  /* Deep space gradient overlay for dark mode */
+  [data-theme='dark'] & {
+    background: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #050505 100%);
   }
 `;
 
 const AmbientOrb = styled(motion.div)`
   position: fixed;
   border-radius: 50%;
-  filter: blur(100px);
+  filter: blur(120px);
   z-index: 0;
-  opacity: 0.4;
+  opacity: 0.3;
   pointer-events: none;
+  mix-blend-mode: screen;
 `;
 
 const Content = styled.div`
@@ -47,23 +47,24 @@ const Content = styled.div`
 
 const ParallaxContainer = styled.div`
   display: flex;
-  gap: 2rem;
-  padding-bottom: 6rem;
+  gap: 4rem; /* Increased gap for spacious cosmic feel */
+  padding-bottom: 8rem;
   align-items: flex-start;
   justify-content: center;
 
   @media (max-width: 1024px) {
     flex-direction: column;
     align-items: stretch;
+    gap: 2rem;
   }
 `;
 
 const Column = styled(motion.div)`
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 4rem; /* Increased vertical gap */
   flex: 1;
-  min-width: 0; /* Prevent flex overflow */
+  min-width: 0;
 `;
 
 // ==================== Responsive Visibility ====================
@@ -94,11 +95,10 @@ const Friends = () => {
 
   const springConfig = { stiffness: 100, damping: 30, restDelta: 0.001 };
 
-  // Column Transforms
-  // Middle column moves faster (or in reverse direction relative to scroll)
-  const y1 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -50]), springConfig);
-  const y2 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -150]), springConfig); // Moves faster
-  const y3 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -50]), springConfig);
+  // Column Transforms - More subtle movement for "floating" effect
+  const y1 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -100]), springConfig);
+  const y2 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -200]), springConfig);
+  const y3 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -100]), springConfig);
 
   // Split friends into 3 columns
   const [columns, setColumns] = useState<Friend[][]>([[], [], []]);
@@ -115,20 +115,21 @@ const Friends = () => {
     <Container ref={containerRef}>
       <MeteorBackground />
 
-      {/* Ambient Orbs */}
+      {/* Ambient Orbs - Cosmic Colors */}
       <AmbientOrb
         animate={{
           x: [0, 100, 0],
           y: [0, -50, 0],
           scale: [1, 1.2, 1],
+          opacity: [0.3, 0.5, 0.3],
         }}
         transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
         style={{
           top: '-10%',
           left: '-10%',
-          width: '600px',
-          height: '600px',
-          background: 'radial-gradient(circle, rgba(var(--primary-rgb), 0.3), transparent 70%)',
+          width: '800px',
+          height: '800px',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 70%)', // Violet
         }}
       />
       <AmbientOrb
@@ -136,25 +137,26 @@ const Friends = () => {
           x: [0, -100, 0],
           y: [0, 50, 0],
           scale: [1, 1.1, 1],
+          opacity: [0.2, 0.4, 0.2],
         }}
         transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
         style={{
           bottom: '10%',
           right: '-5%',
-          width: '500px',
-          height: '500px',
-          background: 'radial-gradient(circle, rgba(59, 130, 246, 0.2), transparent 70%)',
+          width: '600px',
+          height: '600px',
+          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.2), transparent 70%)', // Cyan
         }}
       />
 
       <Content>
         <ListPageHeader
-          title="Friends"
+          title="Stellar Nodes"
           subtitle="Explore the digital cosmos. Connect with like-minded creators."
           count={MOCK_FRIENDS.length}
-          countUnit="Connections"
+          countUnit="Nodes"
         >
-          <div style={{ marginTop: '1.5rem' }}>
+          <div style={{ marginTop: '2rem' }}>
             <Button
               variant="primary"
               size="medium"
@@ -162,12 +164,16 @@ const Friends = () => {
               onClick={() => setIsApplyModalOpen(true)}
               style={{
                 borderRadius: '999px',
-                padding: '0.6rem 1.5rem',
+                padding: '0.8rem 2rem',
                 fontSize: '0.95rem',
-                fontWeight: 600,
+                fontWeight: 500,
+                letterSpacing: '0.02em',
+                background: 'var(--text-primary)',
+                color: 'var(--bg-primary)',
+                border: 'none',
               }}
             >
-              Become a Friend
+              Establish Connection
             </Button>
           </div>
         </ListPageHeader>
@@ -180,12 +186,12 @@ const Friends = () => {
                 <FriendCard key={friend.id} friend={friend} index={i} />
               ))}
             </Column>
-            <Column style={{ y: y2, paddingTop: '4rem' }}>
+            <Column style={{ y: y2, paddingTop: '8rem' }}>
               {columns[1].map((friend, i) => (
                 <FriendCard key={friend.id} friend={friend} index={i} />
               ))}
             </Column>
-            <Column style={{ y: y3 }}>
+            <Column style={{ y: y3, paddingTop: '4rem' }}>
               {columns[2].map((friend, i) => (
                 <FriendCard key={friend.id} friend={friend} index={i} />
               ))}
@@ -193,7 +199,7 @@ const Friends = () => {
           </ParallaxContainer>
         </DesktopView>
 
-        {/* Mobile/Tablet Simple Grid (No Parallax to avoid UX issues) */}
+        {/* Mobile/Tablet Simple Grid */}
         <MobileView>
           <ParallaxContainer>
             <Column>

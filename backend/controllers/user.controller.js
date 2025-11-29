@@ -146,41 +146,15 @@ exports.uploadAvatar = asyncHandler(async (req, res) => {
 });
 
 /**
- * 获取用户活动记录
+ * 获取用户仪表盘数据
  * @param {Object} req - 请求对象
  * @param {Object} res - 响应对象
  * @param {Function} next - 下一个中间件
  */
-exports.getActivities = asyncHandler(async (req, res) => {
+exports.getDashboard = asyncHandler(async (req, res) => {
   const userId = req.user.id;
-  const { page = 1, limit = 10 } = req.query;
-
-  const result = await userService.getActivities(userId, { page, limit });
-  return res.apiSuccess(result, '获取用户活动成功');
-});
-
-/**
- * 获取用户成就
- * @param {Object} req - 请求对象
- * @param {Object} res - 响应对象
- * @param {Function} next - 下一个中间件
- */
-exports.getAchievements = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const result = await userService.getAchievements(userId);
-  return res.apiSuccess(result, '获取用户成就成功');
-});
-
-/**
- * 获取用户统计数据
- * @param {Object} req - 请求对象
- * @param {Object} res - 响应对象
- * @param {Function} next - 下一个中间件
- */
-exports.getStats = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const result = await userService.getUserStats(userId);
-  return res.apiSuccess(result, '获取用户统计成功');
+  const result = await userService.getDashboardData(userId);
+  return res.apiSuccess(result, '获取仪表盘数据成功');
 });
 
 /**
@@ -395,26 +369,4 @@ exports.getCurrentUser = asyncHandler(async (req, res) => {
   const { password, ...userInfo } = user;
 
   return res.apiItem(userInfo, '获取当前用户信息成功');
-});
-
-/**
- * 获取用户发布趋势
- * @param {Object} req - 请求对象
- * @param {Object} res - 响应对象
- */
-exports.getPublishTrend = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const trend = await userService.getPublishTrend(userId);
-  return res.apiSuccess(trend, '获取发布趋势成功');
-});
-
-/**
- * 获取管理员待办事项
- * @param {Object} req - 请求对象
- * @param {Object} res - 响应对象
- */
-exports.getAdminTodoItems = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const todoItems = await userService.getAdminTodoItems(userId);
-  return res.apiSuccess(todoItems, '获取待办事项成功');
 });

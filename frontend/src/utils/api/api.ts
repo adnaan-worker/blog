@@ -36,6 +36,7 @@ import type {
   AITaskStatus,
   AIQuota,
   AIChatMessage,
+  DashboardData,
 } from '@/types/entities';
 
 /**
@@ -152,20 +153,14 @@ export const API = {
       return http.upload('/users/avatar', formData);
     },
 
-    // 用户活动、成就、统计
-    getActivities: (params?: { page?: number; limit?: number }) =>
-      http.get<UserActivity[]>('/users/activities', params),
-    getAchievements: () => http.get<UserAchievement[]>('/users/achievements'),
-    getStats: () => http.get<UserStats>('/users/stats'),
+    // 统一仪表盘数据
+    getDashboard: () => http.get<DashboardData>('/users/dashboard'),
 
     // 数据管理
     exportData: () => http.post('/users/export'),
     deleteAccount: (data: { password: string }) => http.delete('/users/account', { data }),
 
-    // 仪表盘数据
-    getPublishTrend: () => http.get<{ month: string; value: number }[]>('/users/publish-trend'),
-    getAdminTodoItems: () =>
-      http.get<{ id: string; title: string; count: number; type: string }[]>('/users/todo-items'),
+    // （旧）仪表盘相关接口已由 getDashboard 替代
 
     // 文件上传
     batchUpload: (files: File[], type?: string, maxCount?: number) => {
@@ -767,4 +762,5 @@ export type {
   AITaskStatus,
   AIQuota,
   AIChatMessage,
+  DashboardData,
 } from '@/types';

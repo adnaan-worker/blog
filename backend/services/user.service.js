@@ -14,6 +14,7 @@ const {
 const { Op } = require('sequelize');
 const { error } = require('@/utils/response');
 const achievementHelper = require('@/utils/achievement');
+const projectService = require('@/services/project.service');
 
 /**
  * 用户服务层
@@ -773,6 +774,104 @@ class UserService {
     }
 
     return todoItems;
+  }
+
+  /**
+   * 获取仪表盘分类统计（按文章分类分布）
+   * @param {number} userId - 用户ID
+   * @param {boolean} isAdmin - 是否管理员
+   * @param {number} limit - 最大统计文章数量
+   * @returns {Promise<Array<{name: string, value: number}>>}
+   */
+  async getCategoryStatsForDashboard(userId, isAdmin = false, limit = 50) {
+    const where = {};
+    if (!isAdmin) {
+      where.userId = userId;
+    }
+
+    const { rows } = await Post.findAndCountAll({
+      where,
+      include: [
+        {
+          model: db.Categroup,
+          as: 'category',
+          attributes: ['id', 'name'],
+        },
+      ],
+      order: [
+        ['publishedAt', 'DESC'],
+        ['createdAt', 'DESC'],
+      ],
+      limit,
+    });
+
+    const categoryMap = {};
+    rows.forEach(post => {
+      const categoryName = (post.category && post.category.name) || '未分类';
+      categoryMap[categoryName] = (categoryMap[categoryName] || 0) + 1;
+    });
+
+    return Object.entries(categoryMap).map(([name, value]) => ({
+      name,
+      value,
+    }));
+  }
+
+  /**
+   * 获取用户仪表盘汇总数据
+   * @param {number} userId - 用户ID
+   * @returns {Promise<Object>} 仪表盘数据
+   */
+  async getDashboardData(userId) {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+
+    const isAdmin = user.role === 'admin';
+
+    const [
+      stats,
+      publishTrend,
+      activitiesResult,
+      achievements,
+      todoItems,
+      categoryStats,
+      projectsResult,
+    ] = await Promise.all([
+      this.getUserStats(userId),
+      this.getPublishTrend(userId),
+      this.getActivities(userId, { page: 1, limit: 10 }),
+      this.getAchievements(userId),
+      isAdmin ? this.getAdminTodoItems(userId) : Promise.resolve([]),
+      this.getCategoryStatsForDashboard(userId, isAdmin),
+      projectService.getProjects({ page: 1, limit: 5, includePrivate: true }),
+    ]);
+
+    const activities = (activitiesResult && activitiesResult.data) || [];
+    const recentProjects = (projectsResult && projectsResult.data) || [];
+
+    return {
+      user: {
+        id: user.id,
+        username: user.username,
+        fullName: user.fullName,
+        email: user.email,
+        avatar: user.avatar,
+        bio: user.bio || '',
+        role: user.role,
+        status: user.status,
+        joinDate: user.createdAt,
+        lastLoginTime: user.lastLogin,
+      },
+      stats,
+      publishTrend,
+      activities,
+      achievements,
+      categoryStats,
+      recentProjects,
+      todoItems,
+    };
   }
 }
 

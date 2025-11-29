@@ -3,42 +3,50 @@ import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAnimationEngine, SPRING_PRESETS } from '@/utils/ui/animation';
 import { SEO } from '@/components/common';
-import { Button } from 'adnaan-ui';
+import { Button, Input } from 'adnaan-ui';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 
 import {
-  FiFileText,
+  FiEdit,
   FiHeart,
-  FiEye,
   FiMessageSquare,
+  FiTrendingUp,
   FiUsers,
   FiBookmark,
-  FiEdit,
-  FiTrendingUp,
-  FiX,
-  FiLogOut,
-  FiGrid,
   FiActivity,
-  FiSettings,
-  FiBarChart2,
-  FiZap,
+  FiCheckCircle,
+  FiClock,
   FiAlertCircle,
-  FiTag,
+  FiFileText,
   FiFolder,
+  FiGithub,
+  FiExternalLink,
+  FiCalendar,
+  FiStar,
+  FiEye,
+  FiThumbsUp,
+  FiMessageCircle,
+  FiBarChart2,
+  FiTrendingDown,
+  FiCode,
+  FiTag,
+  FiEdit3,
+  FiTrash2,
   FiLayers,
+  FiSettings,
   FiShield,
+  FiLogOut,
+  FiCheck,
   FiHome,
+  FiX,
 } from 'react-icons/fi';
 
 import { useNavigate } from 'react-router-dom';
 import { API } from '@/utils/api';
-import type { UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings } from '@/types';
+import type { UserProfile, UserStats, UserActivity, UserAchievement, SiteSettings, Project } from '@/types';
 import { storage } from '@/utils';
 import { useModalScrollLock } from '@/hooks';
 import {
-  UserInfoCard,
-  ActivityFeed,
-  AchievementListModal,
   EditProfileModal,
   CommonPage,
   ProfileHero,
@@ -277,24 +285,6 @@ const DockItem = styled(motion.button)<{ active?: boolean }>`
   }
 `;
 
-const Card = styled.div`
-  background: rgba(var(--bg-primary-rgb), 0.85);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  border: 1px solid rgba(var(--border-rgb), 0.5);
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  box-shadow:
-    0 4px 6px rgba(0, 0, 0, 0.02),
-    0 1px 0 rgba(255, 255, 255, 0.1) inset;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
-    border-color: rgba(var(--accent-rgb), 0.3);
-  }
-`;
-
 const TabContent = styled.div`
   width: 100%;
   min-width: 0;
@@ -384,28 +374,46 @@ const DrawerOverlay = styled(motion.div)`
   z-index: 999;
 `;
 
-// 仪表盘相关
-const DashboardGrid = styled(motion.div)`
+// ==================== 仪表盘新布局 (Enterprise Glass) ====================
+
+const DashboardLayout = styled(motion.div)`
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: 1fr 340px;
   gap: 1.5rem;
   width: 100%;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
-const DashboardCard = styled(motion.div)<{ colSpan?: number; rowSpan?: number }>`
-  grid-column: span ${(props) => props.colSpan || 12};
-  grid-row: span ${(props) => props.rowSpan || 1};
-  background: rgba(var(--bg-secondary-rgb), 0.3);
-  backdrop-filter: blur(20px);
+const MainColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+`;
+
+const SideColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+`;
+
+// 分组卡片 (Grouped Card) - 对应 "业务核心数据"
+const GroupedCard = styled(motion.div)`
+  background: rgba(var(--bg-secondary-rgb), 0.4);
+  backdrop-filter: blur(24px);
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(var(--border-rgb), 0.1);
   padding: 1.5rem;
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 
-  &::after {
+  /* 顶部光效 */
+  &::before {
     content: '';
     position: absolute;
     top: 0;
@@ -413,232 +421,20 @@ const DashboardCard = styled(motion.div)<{ colSpan?: number; rowSpan?: number }>
     right: 0;
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.5), transparent);
-    opacity: 0.5;
-  }
-
-  @media (max-width: 1200px) {
-    grid-column: span 12 !important;
-  }
-`;
-
-const StatCardContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-  z-index: 1;
-  color: var(--text-primary);
-`;
-
-const StatHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-
-  .icon-box {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: rgba(var(--accent-rgb), 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent-color);
-    font-size: 1.5rem;
-    flex-shrink: 0;
-  }
-
-  .label {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    font-weight: 600;
-  }
-`;
-
-const StatValue = styled.div`
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1;
-  margin-bottom: 0.75rem;
-  letter-spacing: -0.03em;
-`;
-
-const StatTrend = styled.div<{ isPositive?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.85rem;
-  color: ${(props) => (props.isPositive ? '#4caf50' : '#f44336')};
-  background: ${(props) => (props.isPositive ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)')};
-  padding: 0.25rem 0.5rem;
-  border-radius: 100px;
-  width: fit-content;
-`;
-
-const DecorCircle = styled.div<{ color?: string; size?: number; top?: string; right?: string }>`
-  position: absolute;
-  width: ${(props) => props.size || 200}px;
-  height: ${(props) => props.size || 200}px;
-  background: ${(props) => props.color || 'var(--accent-color)'};
-  top: ${(props) => props.top || '-50%'};
-  right: ${(props) => props.right || '-20%'};
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.15;
-  pointer-events: none;
-`;
-
-const ChartCard = styled(Card)`
-  padding: 1.5rem;
-`;
-
-const Chart = styled.div`
-  height: 120px;
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  margin-top: 1rem;
-  position: relative;
-
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background-color: var(--border-color);
     opacity: 0.6;
   }
 `;
 
-const ChartBar = styled(motion.div)<{ height: number }>`
-  width: 100%;
-  min-height: ${(props) => (props.height > 0 ? '8px' : '0')};
-  height: ${(props) => Math.max(props.height, props.height > 0 ? 5 : 0)}%;
-  background: linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.6) 100%);
-  border-radius: 4px 4px 0 0;
-  opacity: 0.8;
-  transition: all 0.3s ease;
-  position: relative;
-  cursor: pointer;
-
-  &:hover {
-    opacity: 1;
-    transform: scaleY(1.05);
-  }
-`;
-
-const ChartLabels = styled.div`
+const GroupHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-top: 0.75rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  opacity: 0.8;
-`;
-
-const TodoItem = styled(motion.div)`
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.875rem 0;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.3);
-  position: relative;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    background: var(--accent-color);
-    border-radius: 50%;
-    opacity: 0.7;
-    transition: all 0.2s ease;
-  }
-
-  &:hover {
-    &::before {
-      opacity: 1;
-      transform: translateY(-50%) scale(1.2);
-    }
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
+  margin-bottom: 1.5rem;
 `;
 
-const TodoContent = styled.div`
-  flex: 1;
-  min-width: 0;
-  padding-left: 1.2rem;
-`;
-
-const TodoTitle = styled.div`
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
-`;
-
-const TodoMeta = styled.div`
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  opacity: 0.7;
-`;
-
-const TodoBadge = styled.div<{ variant?: 'primary' | 'warning' | 'error' }>`
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: ${(props) => {
-    switch (props.variant) {
-      case 'warning':
-        return 'rgba(255, 193, 7, 0.1)';
-      case 'error':
-        return 'rgba(244, 67, 54, 0.1)';
-      default:
-        return 'rgba(var(--accent-rgb), 0.1)';
-    }
-  }};
-  color: ${(props) => {
-    switch (props.variant) {
-      case 'warning':
-        return '#ff9800';
-      case 'error':
-        return 'var(--error-color)';
-      default:
-        return 'var(--accent-color)';
-    }
-  }};
-`;
-
-const DashboardSection = styled(motion.section)`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const SectionHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-`;
-
-const SectionTitle = styled.h2`
+const GroupTitle = styled.h3`
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
   display: flex;
@@ -648,6 +444,313 @@ const SectionTitle = styled.h2`
   svg {
     color: var(--accent-color);
   }
+`;
+
+// 核心数据三列布局
+const DataOverviewGrid = styled.div`
+  display: grid;
+  grid-template-columns: 280px 1fr 300px;
+  gap: 2rem;
+  align-items: stretch;
+
+  @media (max-width: 1400px) {
+    grid-template-columns: 1fr 1fr;
+    /* 环形图在窄屏下可能需要单独一行或隐藏 */
+  }
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+// 左侧：关键指标 (Key Metrics)
+const MetricBox = styled.div`
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.05) 0%, rgba(var(--accent-rgb), 0.01) 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(var(--accent-rgb), 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  position: relative;
+
+  /* 装饰图标背景 */
+  &::after {
+    content: '';
+    position: absolute;
+    right: -10px;
+    bottom: -10px;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+`;
+
+const MetricLabel = styled.div`
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+`;
+
+const MetricValue = styled.div`
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+  font-family: var(--font-code); /* 使用数字字体 */
+`;
+
+const MetricTrend = styled.div<{ isPositive: boolean }>`
+  font-size: 0.8rem;
+  color: ${(props) => (props.isPositive ? '#10b981' : '#ef4444')};
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+`;
+
+// 中间：简单柱状图 (Simple Bar Chart)
+const BarChartContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 180px;
+  padding-top: 1rem;
+`;
+
+const BarChartTitle = styled.div`
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+`;
+
+const BarsRow = styled.div`
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 100%;
+  gap: 12px;
+`;
+
+const BarColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  height: 100%;
+  justify-content: flex-end;
+`;
+
+const Bar = styled(motion.div)<{ height: number; color?: string }>`
+  width: 100%;
+  max-width: 24px;
+  height: ${(props) => props.height}%;
+  background: ${(props) => props.color || 'var(--accent-color)'};
+  border-radius: 6px 6px 0 0;
+  opacity: 0.8;
+  position: relative;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+
+const BarLabel = styled.span`
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+`;
+
+// 右侧：环形图 (Donut Chart)
+const DonutChartContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 180px;
+`;
+
+const DonutLegend = styled.div`
+  margin-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const LegendItem = styled.div<{ color: string }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: ${(props) => props.color};
+  }
+`;
+
+// 侧边栏列表 (Side List) - 对应 "审批"
+const SideListCard = styled(GroupedCard)`
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+`;
+
+const SideListHeader = styled.div`
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const SideListItem = styled(motion.div)`
+  padding: 1rem 1.5rem;
+  padding-left: 2.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.05);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+
+  /* 时间轴连接线 */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 2.25rem;
+    top: 3.5rem;
+    bottom: -1rem;
+    width: 2px;
+    background: rgba(var(--border-rgb), 0.15);
+  }
+
+  &:last-child {
+    border-bottom: none;
+    &::before {
+      display: none;
+    }
+  }
+
+  &:hover {
+    background: rgba(var(--bg-secondary-rgb), 0.5);
+    transform: translateX(4px);
+  }
+`;
+
+const ItemAvatar = styled.div<{ src?: string; iconColor?: string; iconBg?: string }>`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: ${(props) =>
+    props.src ? `url(${props.src}) center/cover` : props.iconBg || 'rgba(var(--accent-rgb), 0.1)'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${(props) => props.iconColor || 'var(--accent-color)'};
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 2;
+  position: relative;
+`;
+
+const ItemInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const ItemTitleText = styled.div`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+`;
+
+const ItemDesc = styled.div`
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  .highlight {
+    color: var(--accent-color);
+    font-weight: 600;
+  }
+
+  .action {
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+`;
+
+const ItemTime = styled.span`
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+`;
+
+// 项目表格行 (Project Row)
+const ProjectRow = styled(motion.div)`
+  display: grid;
+  grid-template-columns: 2fr 100px 120px 100px 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.05);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+`;
+
+const ProjectName = styled.div`
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const StatusTag = styled.span<{ status: string }>`
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+
+  ${(props) => {
+    switch (props.status) {
+      case 'active':
+        return 'background: rgba(16, 185, 129, 0.1); color: #10b981;';
+      case 'pending':
+        return 'background: rgba(245, 158, 11, 0.1); color: #f59e0b;';
+      default:
+        return 'background: rgba(107, 114, 128, 0.1); color: #6b7280;';
+    }
+  }}
 `;
 
 const ContentGlassCard = styled(motion.div)`
@@ -709,6 +812,8 @@ interface TodoItemType {
   priority: 'high' | 'medium' | 'low';
   link?: string;
   action?: string;
+  count?: number;
+  type?: string;
 }
 
 // ==================== 主组件 ====================
@@ -758,13 +863,12 @@ const Profile: React.FC = () => {
   const [publishTrend, setPublishTrend] = useState<{ date: string; count: number }[]>([]);
   const [todoItems, setTodoItems] = useState<TodoItemType[]>([]);
   const [commentStatusFilter, setCommentStatusFilter] = useState<string | undefined>(undefined);
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [categoryStats, setCategoryStats] = useState<{ name: string; value: number; color: string }[]>([]);
 
   // UI State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(false);
-  const [isStatsLoading, setIsStatsLoading] = useState(false);
-  const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSiteSettingsLoading, setIsSiteSettingsLoading] = useState(false);
   const [rightDrawerOpen, setRightDrawerOpen] = useState(false); // Used for BottomSheet on mobile
 
@@ -775,8 +879,6 @@ const Profile: React.FC = () => {
     return savedActiveTab || 'dashboard';
   });
 
-  const [activitiesPage, setActivitiesPage] = useState(1);
-  const [hasMoreActivities, setHasMoreActivities] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   // 检测移动端
@@ -798,58 +900,108 @@ const Profile: React.FC = () => {
     storage.local.set('profile_active_tab', activeTab);
   }, [activeTab]);
 
-  // 数据加载
-  const loadDashboardData = useCallback(async () => {
-    if (!user) return;
+  // 统一 Dashboard 数据加载
+  const loadDashboard = useCallback(async () => {
+    setIsUserLoading(true);
+
     try {
-      const trendResponse = await API.user.getPublishTrend();
-      const trendData = (trendResponse.data || []).map((item: any) => ({
+      const response = await API.user.getDashboard();
+      const data: any = response.data;
+
+      // 用户基础信息
+      if (data.user) {
+        setUser(data.user);
+        syncGlobalUser(data.user);
+      }
+
+      // 核心统计卡片
+      const statsArray = (data.stats || []) as UserStats[];
+      const statsWithIcons = statsArray.map((stat: UserStats) => ({
+        ...stat,
+        icon: getStatIcon(stat.label),
+      }));
+      setUserStats(statsWithIcons);
+
+      // 发布趋势 -> 柱状图
+      const trendData = (data.publishTrend || []).map((item: any) => ({
         date: item.month,
         count: item.value,
       }));
       setPublishTrend(trendData);
 
-      if (isAdmin) {
-        const todoResponse = await API.user.getAdminTodoItems();
-        const todos = (todoResponse.data || []).map((item: any) => ({
-          id: item.id,
-          content: item.title || item.content,
-          time: item.time || item.date || '',
-          priority: item.priority || (item.type === 'warning' ? 'high' : 'medium'),
-          link: item.link,
-          action: item.action,
-        }));
-        setTodoItems(todos);
-      } else {
-        setTodoItems([]);
+      // 最近活动（仅用于右侧列表，取前若干条）
+      const activitiesData = (data.activities || []) as any[];
+      const activitiesWithConfig = activitiesData.map((activity: any) => {
+        const config = getActivityConfig(activity.type);
+        return {
+          ...activity,
+          content: stripHtml(activity.description) || activity.title,
+          createdAt: activity.timestamp,
+          icon: config.icon,
+          iconColor: config.color,
+          iconBg: config.bg,
+        };
+      });
+      setActivities(activitiesWithConfig);
+
+      // 成就列表（用于头像卡片徽章）
+      setAchievements((data.achievements || []) as any);
+
+      // 分类占比 -> 环形图
+      const rawCategoryStats = (data.categoryStats || []) as Array<{ name: string; value: number }>;
+      const sorted = [...rawCategoryStats].sort((a, b) => b.value - a.value);
+      const top = sorted.slice(0, 4);
+      const colors = ['var(--accent-color)', '#10b981', '#f59e0b', '#6366f1', 'rgba(var(--border-rgb), 0.3)'];
+
+      const coloredTop = top.map((item, index) => ({
+        name: item.name,
+        value: item.value,
+        color: colors[index % colors.length],
+      }));
+
+      const totalCount = rawCategoryStats.reduce((sum, item) => sum + item.value, 0);
+      const topCount = top.reduce((sum, item) => sum + item.value, 0);
+      if (totalCount > topCount) {
+        coloredTop.push({ name: '其他', value: totalCount - topCount, color: colors[4] });
       }
+      setCategoryStats(coloredTop);
+
+      // 最近项目
+      setRecentProjects((data.recentProjects || []) as Project[]);
+
+      // 待办事项 / 审批
+      const todoSource = (data.todoItems || []) as Array<{
+        id: string;
+        title: string;
+        count: number;
+        type?: string;
+        priority?: 'high' | 'medium' | 'low';
+        action?: string;
+      }>;
+      const todos: TodoItemType[] = todoSource.map((item) => ({
+        id: item.id,
+        content: item.title,
+        count: item.count,
+        type: item.type,
+        priority: item.priority || 'medium',
+        action: item.action,
+        time: '',
+      }));
+      setTodoItems(todos);
     } catch (error: any) {
       console.error('加载仪表盘数据失败:', error);
-    }
-  }, [user, isAdmin]);
-
-  const loadUserProfile = async () => {
-    setIsUserLoading(true);
-    try {
-      const response = await API.user.getProfile();
-      setUser(response.data);
-      syncGlobalUser(response.data);
-    } catch (error) {
-      console.error('加载用户资料失败:', error);
     } finally {
       setIsUserLoading(false);
     }
-  };
+  }, [syncGlobalUser]);
 
   const handleTodoClick = (item: TodoItemType) => {
-    // 待处理评论：跳转到评论管理，并默认筛选“待审核”
     if (item.action === 'view-pending-comments') {
       setCommentStatusFilter('pending');
       setActiveTab('comments');
       return;
     }
 
-    // 待审核文章：跳转到文章管理（后续可按需补充状态筛选）
     if (item.action === 'view-draft-posts') {
       setActiveTab('articles');
       return;
@@ -879,71 +1031,141 @@ const Profile: React.FC = () => {
     }
   };
 
-  const loadUserStats = async () => {
-    setIsStatsLoading(true);
-    try {
-      const response = await API.user.getStats();
-      const statsWithIcons = response.data.map((stat: UserStats) => ({
-        ...stat,
-        icon: getStatIcon(stat.label),
-      }));
-      setUserStats(statsWithIcons);
-    } catch (error) {
-      console.error('加载统计数据失败:', error);
-    } finally {
-      setIsStatsLoading(false);
-    }
-  };
-
-  const getActivityIcon = (type: string) => {
+  const getActivityConfig = (type: string) => {
     switch (type) {
+      case 'comment_created':
+        return {
+          icon: <FiMessageSquare />,
+          color: '#3b82f6',
+          bg: 'rgba(59, 130, 246, 0.1)',
+        };
+      case 'note_created':
+        return {
+          icon: <FiEdit3 />,
+          color: '#10b981',
+          bg: 'rgba(16, 185, 129, 0.1)',
+        };
+      case 'note_updated':
+        return {
+          icon: <FiEdit3 />,
+          color: '#f59e0b',
+          bg: 'rgba(245, 158, 11, 0.1)',
+        };
+      case 'post_created':
+        return {
+          icon: <FiFileText />,
+          color: '#8b5cf6',
+          bg: 'rgba(139, 92, 246, 0.1)',
+        };
+      case 'post_updated':
+        return {
+          icon: <FiFileText />,
+          color: '#f59e0b',
+          bg: 'rgba(245, 158, 11, 0.1)',
+        };
+      case 'post_deleted':
+        return {
+          icon: <FiTrash2 />,
+          color: '#ef4444',
+          bg: 'rgba(239, 68, 68, 0.1)',
+        };
       case 'article_published':
-        return <FiEdit />;
+        return {
+          icon: <FiFileText />,
+          color: '#8b5cf6',
+          bg: 'rgba(139, 92, 246, 0.1)',
+        };
       case 'like_received':
-        return <FiHeart />;
+        return {
+          icon: <FiHeart />,
+          color: '#ec4899',
+          bg: 'rgba(236, 72, 153, 0.1)',
+        };
       case 'comment_received':
-        return <FiMessageSquare />;
+        return {
+          icon: <FiMessageSquare />,
+          color: '#3b82f6',
+          bg: 'rgba(59, 130, 246, 0.1)',
+        };
       case 'article_trending':
-        return <FiTrendingUp />;
+        return {
+          icon: <FiTrendingUp />,
+          color: '#10b981',
+          bg: 'rgba(16, 185, 129, 0.1)',
+        };
       case 'follow_received':
-        return <FiUsers />;
+        return {
+          icon: <FiUsers />,
+          color: '#6366f1',
+          bg: 'rgba(99, 102, 241, 0.1)',
+        };
       case 'achievement_unlocked':
-        return <FiBookmark />;
+        return {
+          icon: <FiBookmark />,
+          color: '#f59e0b',
+          bg: 'rgba(245, 158, 11, 0.1)',
+        };
       default:
-        return <FiEdit />;
+        return {
+          icon: <FiActivity />,
+          color: 'var(--accent-color)',
+          bg: 'var(--accent-color-alpha)',
+        };
     }
   };
 
-  const loadUserActivities = async (page = 1, append = false) => {
-    if (page === 1) setIsActivitiesLoading(true);
-    try {
-      const response = await API.user.getActivities({ page, limit: 10 });
-      const activitiesData = Array.isArray(response.data) ? response.data : (response.data as any)?.data || [];
-      const activitiesWithIcons = activitiesData.map((activity: any) => ({
-        ...activity,
-        icon: getActivityIcon(activity.type),
-      }));
-
-      if (append) {
-        setActivities((prev) => [...prev, ...activitiesWithIcons]);
-      } else {
-        setActivities(activitiesWithIcons);
-      }
-      setHasMoreActivities(activitiesData.length === 10);
-      setActivitiesPage(page);
-    } catch (error) {
-      console.error('加载活动记录失败:', error);
-    } finally {
-      setIsActivitiesLoading(false);
-    }
+  // 去除HTML标签
+  const stripHtml = (html?: string) => {
+    if (!html) return '';
+    const tmp = document.createElement('DIV');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
   };
 
-  const loadUserAchievements = async () => {
-    try {
-      const response = await API.user.getAchievements();
-      setAchievements(response.data);
-    } catch (error) {
-      console.error('加载成就数据失败:', error);
+  // 格式化活动标题
+  const formatActivityTitle = (activity: any) => {
+    const { type, title, metadata } = activity;
+
+    switch (type) {
+      case 'comment_created':
+        return (
+          <>
+            在文章 <span className="highlight">《{metadata?.postTitle || title}》</span>{' '}
+            <span className="action">发表了评论</span>
+          </>
+        );
+      case 'note_created':
+        return (
+          <>
+            发布了手记 <span className="highlight">《{title}》</span>
+          </>
+        );
+      case 'note_updated':
+        return (
+          <>
+            更新了手记 <span className="highlight">《{title}》</span>
+          </>
+        );
+      case 'post_created':
+        return (
+          <>
+            发布了文章 <span className="highlight">《{title}》</span>
+          </>
+        );
+      case 'post_updated':
+        return (
+          <>
+            更新了文章 <span className="highlight">《{title}》</span>
+          </>
+        );
+      case 'post_deleted':
+        return (
+          <>
+            删除了文章 <span className="highlight">《{metadata?.postTitle || title}》</span>
+          </>
+        );
+      default:
+        return activity.content || title;
     }
   };
 
@@ -955,16 +1177,9 @@ const Profile: React.FC = () => {
   };
 
   useEffect(() => {
-    loadUserProfile();
-    loadUserStats();
-    loadUserActivities();
-    loadUserAchievements();
+    loadDashboard();
     loadSiteSettings();
-  }, []);
-
-  useEffect(() => {
-    if (user) loadDashboardData();
-  }, [user, loadDashboardData]);
+  }, [loadDashboard]);
 
   // Actions
   const handleSaveProfile = async (formData: EditProfileForm, avatarFile?: File) => {
@@ -982,9 +1197,8 @@ const Profile: React.FC = () => {
       setUser(updatedUser);
       syncGlobalUser(updatedUser);
       setIsEditModalOpen(false);
-      // adnaan.toast.success('个人资料更新成功！');
     } catch (error: any) {
-      // adnaan.toast.error(error.message || '更新失败');
+      // Error handling
     } finally {
       setIsUserLoading(false);
     }
@@ -998,9 +1212,8 @@ const Profile: React.FC = () => {
       const updatedUser: UserProfile = { ...user, avatar: withCacheBust(response.data.data.url) };
       setUser(updatedUser);
       syncGlobalUser(updatedUser);
-      // adnaan.toast.success('头像更新成功！');
     } catch (error: any) {
-      // adnaan.toast.error(error.message || '头像上传失败');
+      // Error handling
     } finally {
       setIsUserLoading(false);
     }
@@ -1064,7 +1277,7 @@ const Profile: React.FC = () => {
       setSiteSettings(response.data);
       await loadSiteSettings();
     } catch (error: any) {
-      // adnaan.toast.error(error.message);
+      // Error handling
     } finally {
       setIsSiteSettingsLoading(false);
     }
@@ -1074,19 +1287,16 @@ const Profile: React.FC = () => {
     if (activity.link) navigate(activity.link);
   };
 
-  const handleRefreshActivities = async () => {
-    setIsRefreshing(true);
-    try {
-      await loadUserActivities(1, false);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  const formatTime = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
 
-  const handleLoadMoreActivities = async () => {
-    if (hasMoreActivities && !isActivitiesLoading) {
-      await loadUserActivities(activitiesPage + 1, true);
-    }
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
   };
 
   // 渲染内容
@@ -1098,264 +1308,355 @@ const Profile: React.FC = () => {
       transition: { duration: 0.3, ease: 'easeInOut' },
     };
 
-    // 移动端 Dashboard 简化视图
-    if (activeTab === 'dashboard' && isMobile) {
+    // 仪表盘视图 (Enterprise Glass)
+    if (activeTab === 'dashboard') {
       return (
-        <DashboardSection initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          {todoItems.length > 0 && (
-            <Card style={{ marginBottom: '1.5rem', padding: '1rem' }}>
-              <SectionHeader>
-                <SectionTitle style={{ fontSize: '1rem' }}>
-                  <FiAlertCircle /> 待办提醒
-                </SectionTitle>
-                <TodoBadge style={{ background: 'var(--accent-color)', color: 'white' }}>{todoItems.length}</TodoBadge>
-              </SectionHeader>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {todoItems.slice(0, 3).map((item) => (
-                  <TodoItem
-                    key={item.id}
-                    onClick={() => handleTodoClick(item)}
-                    style={{ padding: '0.5rem 0', border: 'none' }}
-                  >
-                    <TodoContent>
-                      <TodoTitle style={{ fontSize: '0.85rem' }}>{item.content}</TodoTitle>
-                    </TodoContent>
-                    <TodoBadge variant={item.priority === 'high' ? 'error' : 'primary'}>
-                      {item.priority === 'high' ? '!' : '•'}
-                    </TodoBadge>
-                  </TodoItem>
-                ))}
-              </div>
-            </Card>
-          )}
+        <DashboardLayout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <MainColumn>
+            {/* 核心数据概览 */}
+            <GroupedCard>
+              <GroupHeader>
+                <GroupTitle>
+                  <FiBarChart2 /> 业务核心数据
+                </GroupTitle>
+                <Button variant="secondary" size="small" style={{ fontSize: '0.8rem' }}>
+                  查看详情
+                </Button>
+              </GroupHeader>
 
-          <SectionHeader>
-            <SectionTitle style={{ fontSize: '1rem' }}>
-              <FiActivity /> 最近动态
-            </SectionTitle>
-          </SectionHeader>
-          <div
-            style={{
-              background: 'var(--bg-secondary)',
-              borderRadius: '16px',
-              padding: '0.5rem',
-              minHeight: '200px',
-            }}
-          >
-            <ActivityFeed
-              activities={activities as any}
-              onActivityClick={handleActivityClick}
-              onRefresh={handleRefreshActivities}
-              onLoadMore={handleLoadMoreActivities}
-              hasMore={hasMoreActivities}
-              isLoading={isActivitiesLoading}
-              isRefreshing={isRefreshing}
-            />
-          </div>
-        </DashboardSection>
+              <DataOverviewGrid>
+                {/* 1. 关键指标 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <MetricBox>
+                    <MetricLabel>总阅读量</MetricLabel>
+                    <MetricValue>{userStats.find((s) => s.label === '总阅读量')?.value || 0}</MetricValue>
+                    {/* 后端仅提供了文章和评论的趋势，阅读量暂无趋势数据 */}
+                    <div style={{ height: '1.2em' }}></div>
+                  </MetricBox>
+                  <MetricBox>
+                    <MetricLabel>总互动数</MetricLabel>
+                    <MetricValue>
+                      {parseInt(String(userStats.find((s) => s.label === '获得点赞')?.value || 0)) +
+                        parseInt(String(userStats.find((s) => s.label === '评论回复')?.value || 0))}
+                    </MetricValue>
+                    {/* 尝试显示评论的趋势作为参考 */}
+                    {userStats.find((s) => s.label === '评论回复')?.trend ? (
+                      <MetricTrend
+                        isPositive={userStats.find((s) => s.label === '评论回复')?.trend?.direction === 'up'}
+                      >
+                        <FiTrendingUp /> 评论环比 {userStats.find((s) => s.label === '评论回复')?.trend?.percentage}%
+                      </MetricTrend>
+                    ) : (
+                      <div style={{ height: '1.2em' }}></div>
+                    )}
+                  </MetricBox>
+                </div>
+
+                {/* 2. 发布趋势 (柱状图) */}
+                <BarChartContainer>
+                  <BarChartTitle>近6个月发布趋势</BarChartTitle>
+                  <BarsRow>
+                    {publishTrend.length > 0 ? (
+                      publishTrend.slice(-6).map((item, i) => {
+                        const maxVal = Math.max(...publishTrend.map((d) => d.count), 1); // 避免除以0
+                        const height = (item.count / maxVal) * 100;
+                        return (
+                          <BarColumn key={i}>
+                            <Bar
+                              height={height}
+                              initial={{ height: 0 }}
+                              animate={{ height: height + '%' }}
+                              transition={{ delay: i * 0.1, duration: 0.5 }}
+                              data-tooltip={`${item.count} 篇`}
+                            />
+                            <BarLabel>{item.date}</BarLabel>
+                          </BarColumn>
+                        );
+                      })
+                    ) : (
+                      <div
+                        style={{
+                          width: '100%',
+                          textAlign: 'center',
+                          color: 'var(--text-tertiary)',
+                          alignSelf: 'center',
+                        }}
+                      >
+                        暂无数据
+                      </div>
+                    )}
+                  </BarsRow>
+                </BarChartContainer>
+
+                {/* 3. 内容分布 (环形图) */}
+                <DonutChartContainer>
+                  <svg width="160" height="160" viewBox="0 0 160 160">
+                    <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(var(--border-rgb), 0.1)" strokeWidth="12" />
+                    {/* 模拟数据段 */}
+                    {categoryStats.length > 0 ? (
+                      categoryStats.map((item, i) => {
+                        const total = categoryStats.reduce((acc, cur) => acc + cur.value, 0);
+                        const percentage = (item.value / total) * 100;
+                        const dashArray = 2 * Math.PI * 70; // 周长
+                        const strokeDasharray = `${(percentage / 100) * dashArray} ${dashArray}`;
+
+                        // 计算偏移量: 前面所有项的百分比之和
+                        const prevPercentage =
+                          categoryStats.slice(0, i).reduce((acc, cur) => acc + cur.value, 0) / total;
+                        const strokeDashoffset = -prevPercentage * dashArray;
+
+                        return (
+                          <motion.circle
+                            key={item.name}
+                            cx="80"
+                            cy="80"
+                            r="70"
+                            fill="none"
+                            stroke={item.color}
+                            strokeWidth="12"
+                            strokeDasharray={strokeDasharray}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="butt"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: i * 0.2, duration: 0.5 }}
+                            transform="rotate(-90 80 80)"
+                          />
+                        );
+                      })
+                    ) : (
+                      <circle
+                        cx="80"
+                        cy="80"
+                        r="70"
+                        fill="none"
+                        stroke="rgba(var(--border-rgb), 0.05)"
+                        strokeWidth="12"
+                      />
+                    )}
+                    <text x="80" y="75" textAnchor="middle" fill="var(--text-secondary)" fontSize="12">
+                      总文章
+                    </text>
+                    <text x="80" y="100" textAnchor="middle" fill="var(--text-primary)" fontSize="24" fontWeight="bold">
+                      {userStats.find((s) => s.label === '发布文章')?.value || 0}
+                    </text>
+                  </svg>
+                  <DonutLegend>
+                    {categoryStats.map((item, i) => (
+                      <LegendItem key={i} color={item.color}>
+                        {item.name} (
+                        {Math.round((item.value / (categoryStats.reduce((a, b) => a + b.value, 0) || 1)) * 100)}%)
+                      </LegendItem>
+                    ))}
+                    {categoryStats.length === 0 && (
+                      <div style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>暂无分类数据</div>
+                    )}
+                  </DonutLegend>
+                </DonutChartContainer>
+              </DataOverviewGrid>
+            </GroupedCard>
+
+            {/* 项目/任务管理 */}
+            <GroupedCard>
+              <GroupHeader>
+                <GroupTitle>
+                  <FiLayers /> 重点项目
+                </GroupTitle>
+                <Button variant="secondary" size="small" onClick={() => setActiveTab('projects')}>
+                  管理项目
+                </Button>
+              </GroupHeader>
+
+              <div style={{ padding: '0.5rem 0' }}>
+                <ProjectRow
+                  style={{
+                    fontSize: '0.85rem',
+                    color: 'var(--text-tertiary)',
+                    borderBottom: 'none',
+                    paddingBottom: '0.5rem',
+                  }}
+                >
+                  <div>项目名称</div>
+                  <div>可见性</div>
+                  <div>创建时间</div>
+                  <div>状态</div>
+                  <div>操作</div>
+                </ProjectRow>
+
+                {recentProjects.length > 0 ? (
+                  recentProjects.map((project) => (
+                    <ProjectRow key={project.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                      <ProjectName>
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 8,
+                            background: 'rgba(var(--accent-rgb), 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'var(--accent-color)',
+                          }}
+                        >
+                          <FiFolder size={16} />
+                        </div>
+                        {project.title}
+                      </ProjectName>
+                      <span
+                        style={{
+                          background: project.visibility === 'public' ? '#eff6ff' : '#fff7ed',
+                          color: project.visibility === 'public' ? '#1d4ed8' : '#c2410c',
+                          padding: '2px 8px',
+                          borderRadius: 4,
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {project.visibility === 'public' ? '公开' : '私密'}
+                      </span>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        {formatTime(project.createdAt)}
+                      </span>
+                      <StatusTag status={project.status}>
+                        {project.status === 'active'
+                          ? '进行中'
+                          : project.status === 'developing'
+                            ? '开发中'
+                            : project.status === 'paused'
+                              ? '暂停'
+                              : '已归档'}
+                      </StatusTag>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => window.open(project.demoUrl || project.githubUrl, '_blank')}
+                        >
+                          查看
+                        </Button>
+                      </div>
+                    </ProjectRow>
+                  ))
+                ) : (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+                    暂无项目，快去创建一个吧！
+                  </div>
+                )}
+              </div>
+            </GroupedCard>
+          </MainColumn>
+
+          <SideColumn>
+            {/* 待办事项 / 审批 */}
+            <SideListCard>
+              <SideListHeader>
+                <GroupTitle style={{ fontSize: '1rem' }}>
+                  <FiCheck /> 待办事项
+                </GroupTitle>
+                <Button variant="ghost" size="small" style={{ color: 'var(--accent-color)' }}>
+                  查看全部
+                </Button>
+              </SideListHeader>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                  padding: '1rem 1.5rem',
+                  borderBottom: '1px solid rgba(var(--border-rgb), 0.05)',
+                }}
+              >
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', flex: 1 }}
+                >
+                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {todoItems.reduce((acc, item) => acc + (item.count || 0), 0)}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>待处理</span>
+                </div>
+                <div style={{ width: 1, height: 30, background: 'rgba(var(--border-rgb), 0.1)' }}></div>
+                <div
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', flex: 1 }}
+                >
+                  <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>0</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>已完成</span>
+                </div>
+              </div>
+
+              {todoItems.length > 0 ? (
+                todoItems.map((item) => (
+                  <SideListItem key={item.id} onClick={() => handleTodoClick(item)}>
+                    <ItemAvatar
+                      style={{
+                        background:
+                          item.priority === 'high' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(var(--accent-rgb), 0.1)',
+                        color: item.priority === 'high' ? '#ef4444' : 'var(--accent-color)',
+                      }}
+                    >
+                      {item.id === 'pending-posts' ? <FiFileText /> : <FiMessageSquare />}
+                    </ItemAvatar>
+                    <ItemInfo style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {item.content}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                          {item.priority === 'high' ? '需立即处理' : '待处理'}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          color: 'white',
+                          background: item.priority === 'high' ? '#ef4444' : 'var(--accent-color)',
+                          padding: '2px 8px',
+                          borderRadius: 12,
+                          minWidth: '24px',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {item.count}
+                      </div>
+                    </ItemInfo>
+                  </SideListItem>
+                ))
+              ) : (
+                <div
+                  style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.9rem' }}
+                >
+                  暂无待办事项
+                </div>
+              )}
+            </SideListCard>
+
+            {/* 最近动态 */}
+            <SideListCard>
+              <SideListHeader>
+                <GroupTitle style={{ fontSize: '1rem' }}>
+                  <FiActivity /> 最近动态
+                </GroupTitle>
+              </SideListHeader>
+              {activities.slice(0, 6).map((activity: any, i) => (
+                <SideListItem key={i} onClick={() => handleActivityClick(activity)}>
+                  <ItemAvatar iconColor={activity.iconColor} iconBg={activity.iconBg}>
+                    {activity.icon || <FiActivity />}
+                  </ItemAvatar>
+                  <ItemInfo>
+                    <ItemDesc>{formatActivityTitle(activity)}</ItemDesc>
+                    <ItemTime>{formatTime(activity.createdAt)}</ItemTime>
+                  </ItemInfo>
+                </SideListItem>
+              ))}
+            </SideListCard>
+          </SideColumn>
+        </DashboardLayout>
       );
     }
 
     switch (activeTab) {
-      case 'dashboard':
-        return (
-          <DashboardGrid initial="hidden" animate="visible" variants={staggerContainerVariants}>
-            {userStats.map((stat: any, index) => (
-              <DashboardCard
-                key={index}
-                colSpan={3}
-                variants={fadeInUpVariants}
-                whileHover={{
-                  y: -5,
-                  boxShadow: '0 12px 40px -10px rgba(var(--accent-rgb), 0.15)',
-                  borderColor: 'rgba(var(--accent-rgb), 0.3)',
-                }}
-              >
-                <DecorCircle
-                  color={`rgba(var(--accent-rgb), ${0.1 + index * 0.05})`}
-                  size={120}
-                  top="-30%"
-                  right="-30%"
-                />
-                <StatCardContent>
-                  <StatHeader>
-                    <div
-                      className="icon-box"
-                      style={{ background: 'rgba(var(--accent-rgb), 0.1)', color: 'var(--accent-color)' }}
-                    >
-                      {stat.icon || <FiZap />}
-                    </div>
-                    <div className="label" style={{ color: 'var(--text-secondary)' }}>
-                      {stat.title || stat.label || '数据'}
-                    </div>
-                  </StatHeader>
-                  <div>
-                    <StatValue
-                      style={{
-                        color: 'var(--text-primary)',
-                        filter: 'drop-shadow(0 0 1px rgba(var(--accent-rgb), 0.2))',
-                      }}
-                    >
-                      {(stat.count !== undefined ? stat.count : stat.value) ?? '-'}
-                    </StatValue>
-                    {stat.trend && (
-                      <StatTrend
-                        isPositive={stat.trend.direction === 'up'}
-                        style={{
-                          background:
-                            stat.trend.direction === 'up' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
-                        }}
-                      >
-                        <FiTrendingUp
-                          style={{ transform: stat.trend.direction === 'down' ? 'rotate(180deg)' : 'none' }}
-                        />
-                        {stat.trend.percentage}% 较上月
-                      </StatTrend>
-                    )}
-                  </div>
-                </StatCardContent>
-              </DashboardCard>
-            ))}
-
-            <DashboardCard colSpan={8} rowSpan={2} variants={fadeInUpVariants}>
-              <SectionHeader>
-                <SectionTitle style={{ color: 'var(--text-primary)' }}>
-                  <FiBarChart2 style={{ color: 'var(--accent-color)' }} /> 内容发布趋势
-                </SectionTitle>
-              </SectionHeader>
-              {publishTrend.length > 0 ? (
-                <ChartCard style={{ background: 'transparent', border: 'none', padding: 0, boxShadow: 'none' }}>
-                  <Chart>
-                    {publishTrend.map((item, index) => (
-                      <ChartBar
-                        key={index}
-                        height={
-                          item.count > 0
-                            ? Math.max((item.count / Math.max(...publishTrend.map((d) => d.count), 1)) * 100, 5)
-                            : 0
-                        }
-                        initial={{ scaleY: 0 }}
-                        animate={{ scaleY: 1 }}
-                        transition={{ delay: index * 0.05, duration: 0.5 }}
-                        title={`${item.date}: ${item.count}篇`}
-                        style={{
-                          background:
-                            'linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.2) 100%)',
-                          borderRadius: '4px 4px 0 0',
-                        }}
-                      />
-                    ))}
-                  </Chart>
-                  <ChartLabels>
-                    {publishTrend.map((item, index) => (
-                      <span key={index} style={{ color: 'var(--text-tertiary)' }}>
-                        {item.date}
-                      </span>
-                    ))}
-                  </ChartLabels>
-                </ChartCard>
-              ) : (
-                <div
-                  style={{
-                    height: '200px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  暂无数据
-                </div>
-              )}
-            </DashboardCard>
-
-            <DashboardCard colSpan={4} rowSpan={2} variants={fadeInUpVariants}>
-              <SectionHeader>
-                <SectionTitle style={{ color: 'var(--text-primary)' }}>
-                  <FiAlertCircle style={{ color: 'var(--accent-color)' }} /> 待办提醒
-                </SectionTitle>
-                {todoItems.length > 0 && (
-                  <TodoBadge style={{ background: 'var(--accent-color)', color: 'white' }}>
-                    {todoItems.length}
-                  </TodoBadge>
-                )}
-              </SectionHeader>
-              <div style={{ flex: 1, overflowY: 'auto', marginTop: '1rem', paddingRight: '0.5rem' }}>
-                {todoItems.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                    {todoItems.map((item) => (
-                      <TodoItem
-                        key={item.id}
-                        onClick={() => handleTodoClick(item)}
-                        variants={cardVariants}
-                        whileHover={{ x: 4, backgroundColor: 'rgba(var(--text-primary-rgb), 0.05)' }}
-                        style={{
-                          border: '1px solid rgba(var(--border-rgb), 0.1)',
-                          borderRadius: '12px',
-                          background: 'rgba(var(--bg-tertiary-rgb), 0.3)',
-                        }}
-                      >
-                        <TodoContent>
-                          <TodoTitle style={{ color: 'var(--text-primary)' }}>{item.content}</TodoTitle>
-                          <TodoMeta style={{ color: 'var(--text-tertiary)' }}>{item.time}</TodoMeta>
-                        </TodoContent>
-                        <TodoBadge variant={item.priority === 'high' ? 'error' : 'primary'}>
-                          {item.priority === 'high' ? '高' : '待办'}
-                        </TodoBadge>
-                      </TodoItem>
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      flexDirection: 'column',
-                      gap: '0.5rem',
-                    }}
-                  >
-                    <FiZap size={24} style={{ opacity: 0.5, color: 'var(--accent-color)' }} />
-                    <span>所有事项已完成</span>
-                  </div>
-                )}
-              </div>
-            </DashboardCard>
-
-            <DashboardCard
-              colSpan={12}
-              variants={fadeInUpVariants}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                boxShadow: 'none',
-                backdropFilter: 'none',
-                overflow: 'visible',
-              }}
-            >
-              <div
-                style={{
-                  ['--card-bg' as any]: 'rgba(var(--bg-secondary-rgb), 0.4)',
-                  ['--card-border' as any]: '1px solid rgba(var(--border-rgb), 0.1)',
-                  ['--accent' as any]: 'var(--accent-color)',
-                }}
-              >
-                <ActivityFeed
-                  activities={activities as any}
-                  onActivityClick={handleActivityClick}
-                  onRefresh={handleRefreshActivities}
-                  onLoadMore={handleLoadMoreActivities}
-                  hasMore={hasMoreActivities}
-                  isLoading={isActivitiesLoading}
-                  isRefreshing={isRefreshing}
-                />
-              </div>
-            </DashboardCard>
-          </DashboardGrid>
-        );
       case 'notes':
         return (
           <ContentGlassCard {...pageTransition}>
@@ -1476,7 +1777,7 @@ const Profile: React.FC = () => {
               user={user}
               stats={userStats}
               onEdit={() => setIsEditModalOpen(true)}
-              onSwitchTab={(tab) => setActiveTab(tab)}
+              onSwitchTab={(tab: React.SetStateAction<string>) => setActiveTab(tab)}
               onOpenQuickActions={() => setRightDrawerOpen(true)}
               activeTab={activeTab}
               isAdmin={isAdmin}

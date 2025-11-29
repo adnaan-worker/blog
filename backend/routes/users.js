@@ -220,88 +220,17 @@ router.post(
 
 /**
  * @swagger
- * /api/users/activities:
+ * /api/users/dashboard:
  *   get:
- *     summary: 获取用户活动记录
- *     tags: [用户]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: 页码
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: 每页数量
- *     responses:
- *       200:
- *         description: 获取成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       401:
- *         description: 未授权
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/activities', authMiddleware.verifyToken, userController.getActivities);
-
-/**
- * @swagger
- * /api/users/achievements:
- *   get:
- *     summary: 获取用户成就
+ *     summary: 获取当前用户仪表盘数据
  *     tags: [用户]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: 获取成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       401:
- *         description: 未授权
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/achievements', authMiddleware.verifyToken, userController.getAchievements);
-
-/**
- * @swagger
- * /api/users/stats:
- *   get:
- *     summary: 获取用户统计数据
- *     tags: [用户]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: 获取成功
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SuccessResponse'
- *       401:
- *         description: 未授权
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
-router.get('/stats', authMiddleware.verifyToken, userController.getStats);
+router.get('/dashboard', authMiddleware.verifyToken, userController.getDashboard);
 
 /**
  * @swagger
@@ -491,38 +420,8 @@ router.delete('/file', authMiddleware.verifyToken, userController.deleteFile);
  */
 router.get('/upload-stats', authMiddleware.verifyToken, userController.getUploadStats);
 
-/**
- * @swagger
- * /api/users/publish-trend:
- *   get:
- *     summary: 获取用户发布趋势（最近6个月）
- *     tags: [用户]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: 获取成功
- */
-router.get('/publish-trend', authMiddleware.verifyToken, userController.getPublishTrend);
-
-/**
- * @swagger
- * /api/users/todo-items:
- *   get:
- *     summary: 获取管理员待办事项
- *     tags: [用户]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: 获取成功
- */
-router.get(
-  '/todo-items',
-  authMiddleware.verifyToken,
-  authMiddleware.isAdmin,
-  userController.getAdminTodoItems
-);
+// 旧的 Dashboard 相关接口（activities、achievements、stats、publish-trend、todo-items）
+// 已由统一的 /api/users/dashboard 接口替代，这里不再对外暴露
 
 /**
  * @swagger

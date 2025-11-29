@@ -2,7 +2,7 @@
  * 通用管理页面组件
  * 统一处理：手记、文章、评论、收藏、点赞、用户、分类、标签等
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Button, Modal, Input, Select, Textarea, ColorPicker, Switch } from 'adnaan-ui';
@@ -16,10 +16,13 @@ import {
   FiFolder,
   FiCheck,
   FiAlertTriangle,
+  FiGithub,
+  FiTag,
+  FiUser,
+  FiFileText,
 } from 'react-icons/fi';
 import { API, formatDate } from '@/utils';
 import { RichTextParser } from '@/utils/editor/parser';
-import { FadeScrollContainer } from '@/components/common';
 import { RichTextEditor } from '@/components/rich-text';
 import { useVirtualScroll } from '@/hooks/useVirtualScroll';
 import { useModalScrollLock } from '@/hooks';
@@ -27,6 +30,8 @@ import type { UserProfile, Category, Tag, Project } from '@/types';
 import { ManagementLayout } from '../common/management-layout';
 import {
   ItemCard,
+  ItemCover,
+  ItemBody,
   ItemHeader,
   ItemTitle,
   ItemActions,
@@ -34,6 +39,9 @@ import {
   ItemContent,
   ItemMeta,
   MetaItem,
+  StatusBadge,
+  TagsContainer,
+  Tag as TagComponent,
 } from '../common/item-card';
 import { useManagementPage } from '../common/management-hooks';
 import GithubSyncModal from './github-sync-modal';
@@ -70,26 +78,13 @@ const PAGE_CONFIG: Record<PageType, PageConfig> = {
     searchPlaceholder: '搜索手记...',
     fetchFn: (params: any) => {
       const { status, keyword, ...rest } = params || {};
-
-      // 将通用的 keyword 映射为后端使用的 search
-      const apiParams: any = {
-        ...rest,
-        search: keyword,
-      };
-
-      // 使用 status 作为私密性筛选键：public/private
-      if (status === 'public') {
-        apiParams.isPrivate = false;
-      } else if (status === 'private') {
-        apiParams.isPrivate = true;
-      }
-
+      const apiParams: any = { ...rest, search: keyword };
+      if (status === 'public') apiParams.isPrivate = false;
+      else if (status === 'private') apiParams.isPrivate = true;
       return API.note.getMyNotes(apiParams);
     },
     deleteFn: (id: number) => API.note.deleteNote(id),
-    // 编辑器通过查询参数 ?id= 识别当前手记
     getEditUrl: (id: number) => `/editor/note?id=${id}`,
-    // 详情页路由：/notes/:id
     getViewUrl: (id: number) => `/notes/${id}`,
   },
   articles: {
@@ -98,27 +93,15 @@ const PAGE_CONFIG: Record<PageType, PageConfig> = {
     searchPlaceholder: '搜索文章...',
     fetchFn: (params: any) => {
       const { status, keyword, ...rest } = params || {};
-
-      const apiParams: any = {
-        ...rest,
-        // 将通用的 keyword 映射为后端使用的 search
-        search: keyword,
-      };
-
-      // status 直接映射为后端的数值状态（仅管理员生效）：0=草稿 1=已发布 2=已归档
+      const apiParams: any = { ...rest, search: keyword };
       if (status !== undefined && status !== '') {
         const parsed = parseInt(status, 10);
-        if (!Number.isNaN(parsed)) {
-          apiParams.status = parsed;
-        }
+        if (!Number.isNaN(parsed)) apiParams.status = parsed;
       }
-
       return API.article.getMyArticles(apiParams);
     },
     deleteFn: (id: number) => API.article.deleteArticle(id),
-    // 编辑器通过查询参数 ?id= 识别当前文章
     getEditUrl: (id: number) => `/editor/article?id=${id}`,
-    // 详情页路由：/blog/:id
     getViewUrl: (id: number) => `/blog/${id}`,
   },
   comments: {
@@ -133,7 +116,6 @@ const PAGE_CONFIG: Record<PageType, PageConfig> = {
     emptyText: '还没有收藏任何内容',
     searchPlaceholder: '搜索收藏...',
     fetchFn: (params: any) => API.article.getMyArticles({ ...params, bookmarked: true }),
-    // 收藏的数据本质是文章列表，这里提供查看文章详情的入口
     getViewUrl: (id: number) => `/blog/${id}`,
   },
   likes: {
@@ -141,53 +123,34 @@ const PAGE_CONFIG: Record<PageType, PageConfig> = {
     emptyText: '还没有点赞任何内容',
     searchPlaceholder: '搜索点赞...',
     fetchFn: (params: any) => API.article.getMyArticles({ ...params, liked: true }),
-    // 点赞列表同样对应文章，提供查看详情
     getViewUrl: (id: number) => `/blog/${id}`,
   },
-  // 用户、分类、标签管理 - 使用真实后端接口
   users: {
     title: '用户管理',
     emptyText: '暂无用户',
     searchPlaceholder: '搜索用户名、邮箱...',
-    fetchFn: (params: any) =>
-      API.user.getAllUsers({
-        ...params,
-        search: params.keyword,
-      }),
+    fetchFn: (params: any) => API.user.getAllUsers({ ...params, search: params.keyword }),
     deleteFn: (id: number) => API.user.deleteUser(id),
   },
   categories: {
     title: '分类管理',
     emptyText: '暂无分类',
     searchPlaceholder: '搜索分类...',
-    fetchFn: (params: any) =>
-      API.category.getCategories({
-        ...params,
-        search: params.keyword,
-      }),
+    fetchFn: (params: any) => API.category.getCategories({ ...params, search: params.keyword }),
     deleteFn: (id: number) => API.category.deleteCategory(id),
   },
   tags: {
     title: '标签管理',
     emptyText: '暂无标签',
     searchPlaceholder: '搜索标签...',
-    fetchFn: (params: any) =>
-      API.tag.getTags({
-        ...params,
-        search: params.keyword,
-      }),
+    fetchFn: (params: any) => API.tag.getTags({ ...params, search: params.keyword }),
     deleteFn: (id: number) => API.tag.deleteTag(id),
   },
   projects: {
     title: '项目管理',
     emptyText: '暂无项目',
     searchPlaceholder: '搜索项目名称、描述...',
-    fetchFn: (params: any) =>
-      API.project.getProjects({
-        ...params,
-        keyword: params.keyword,
-        includePrivate: true,
-      }),
+    fetchFn: (params: any) => API.project.getProjects({ ...params, keyword: params.keyword, includePrivate: true }),
     deleteFn: (id: number) => API.project.deleteProject(id),
     getViewUrl: (id: number) => `/projects/${id}`,
   },
@@ -195,7 +158,6 @@ const PAGE_CONFIG: Record<PageType, PageConfig> = {
 
 interface CommonPageProps {
   type: PageType;
-  // 初始状态筛选（例如从仪表盘待办跳转到“待审核评论”）
   initialStatusFilter?: string;
 }
 
@@ -209,14 +171,12 @@ const EmptyContainer = styled.div`
   gap: 1rem;
 `;
 
-// 列表滚动容器，配合虚拟滚动使用
 const ScrollWrapper = styled.div`
   max-height: 640px;
   overflow-y: auto;
   overflow-x: hidden;
   -ms-overflow-style: none;
   scrollbar-width: none;
-
   &::-webkit-scrollbar {
     display: none;
   }
@@ -226,6 +186,7 @@ const ListContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding-bottom: 2rem;
 `;
 
 const FormGroup = styled.div`
@@ -240,127 +201,30 @@ const Label = styled.label`
   margin-bottom: 0.5rem;
 `;
 
-// 移动端卡片样式
-const MobileCard = styled.div`
-  background: var(--bg-primary);
-  border-radius: 16px;
-  padding: 1rem;
-  border: 1px solid var(--border-color);
-  margin-bottom: 0.75rem;
-  position: relative;
-  transition: all 0.2s ease;
-
-  &:active {
-    background: var(--bg-secondary);
-    transform: scale(0.98);
-  }
-`;
-
-const MobileCardHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 0.5rem;
-`;
-
-const MobileCardTitle = styled.h3`
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  line-height: 1.4;
-  flex: 1;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
-const MobileCardContent = styled.p`
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin: 0 0 0.75rem 0;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
-const MobileCardFooter = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px dashed var(--border-color);
-  padding-top: 0.75rem;
-`;
-
-const MobileMeta = styled.div`
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-
-  span {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-`;
-
-const MobileActions = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
 export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilter }) => {
   const navigate = useNavigate();
   const config = PAGE_CONFIG[type];
-
-  // 使用 useRef 来稳定 config 引用，避免不必要的重新创建
   const configRef = React.useRef(config);
-
-  // 追踪是否已经加载过数据
   const [hasLoaded, setHasLoaded] = React.useState(false);
 
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // API 响应适配器 - 统一不同 API 的返回格式
-  // 关键：不依赖 config，使用 configRef
   const fetchData = useCallback(
     async (params: any) => {
       const currentConfig = configRef.current;
-
       try {
         const response = await currentConfig.fetchFn(params);
-
-        // 适配不同的 API 返回格式
         let data = response.data;
         let pagination = response.meta?.pagination;
 
-        // 如果 data 是数组，直接使用
         if (Array.isArray(data)) {
-          // do nothing extra
-        }
-        // 如果 data 包含 data 属性（嵌套结构）
-        else if (data && Array.isArray(data.data)) {
+          // do nothing
+        } else if (data && Array.isArray(data.data)) {
           pagination = data.pagination || data.meta?.pagination;
           data = data.data;
-        }
-        // 如果 data 包含 items 属性
-        else if (data && Array.isArray(data.items)) {
+        } else if (data && Array.isArray(data.items)) {
           pagination = data.pagination || data.meta?.pagination;
           data = data.items;
         }
 
-        // 确保 pagination 有默认值
         if (!pagination) {
           pagination = {
             total: data.length,
@@ -370,35 +234,25 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
           };
         }
 
-        const result = {
+        setHasLoaded(true);
+        return {
           success: true,
           code: 200,
           message: 'success',
           data,
-          meta: {
-            pagination,
-            timestamp: new Date().toISOString(),
-          },
+          meta: { pagination, timestamp: new Date().toISOString() },
         };
-
-        // 标记已经加载过数据
-        setHasLoaded(true);
-
-        return result;
       } catch (error) {
         console.error(`[CommonPage ${type}] ❌ Error:`, error);
-        setHasLoaded(true); // 即使失败也标记为已加载
+        setHasLoaded(true);
         throw error;
       }
     },
     [type],
-  ); // 只依赖 type，不依赖 config
+  );
 
-  const initialParams = React.useMemo(
-    () =>
-      type === 'comments' && initialStatusFilter
-        ? ({ status: initialStatusFilter } as { status: string })
-        : ({} as { status?: string }),
+  const initialParams = useMemo(
+    () => (type === 'comments' && initialStatusFilter ? { status: initialStatusFilter } : {}),
     [type, initialStatusFilter],
   );
 
@@ -408,60 +262,40 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     limit: 10,
   });
 
-  // 是否支持在当前列表中直接创建新内容
   const supportsCreate =
     type === 'notes' || type === 'articles' || type === 'users' || type === 'categories' || type === 'tags';
-
-  // 是否启用筛选条
-  // 评论：按状态筛选（approved/pending/spam）
-  // 项目：按项目状态筛选（active/developing/paused/archived）
-  // 手记：按公开/私密筛选
-  // 文章：按发布状态筛选（草稿/已发布/已归档，仅管理员生效）
   const enableFilters = type === 'comments' || type === 'projects' || type === 'notes' || type === 'articles';
-
-  // 筛选条展开状态：如果带初始筛选（如待审核评论），默认展开
   const [isFilterOpen, setIsFilterOpen] = React.useState(type === 'comments' && !!initialStatusFilter);
 
-  // 不同类型的筛选选项
-  const filterOptions = React.useMemo(() => {
-    if (type === 'comments') {
+  const filterOptions = useMemo(() => {
+    if (type === 'comments')
       return [
         { key: 'approved', label: '已通过' },
         { key: 'pending', label: '待审核' },
         { key: 'spam', label: '垃圾/屏蔽' },
       ];
-    }
-
-    if (type === 'projects') {
+    if (type === 'projects')
       return [
         { key: 'active', label: '活跃' },
         { key: 'developing', label: '开发中' },
         { key: 'paused', label: '暂停' },
         { key: 'archived', label: '已归档' },
       ];
-    }
-
-    if (type === 'notes') {
+    if (type === 'notes')
       return [
         { key: 'public', label: '公开' },
         { key: 'private', label: '私密' },
       ];
-    }
-
-    if (type === 'articles') {
+    if (type === 'articles')
       return [
         { key: '0', label: '草稿' },
         { key: '1', label: '已发布' },
         { key: '2', label: '已归档' },
       ];
-    }
-
-    return [] as Array<{ key: string; label: string }>;
+    return [];
   }, [type]);
 
-  // ========== 用户 / 分类 / 标签 编辑状态管理 ==========
-
-  // 用户
+  // Modals state
   const [isUserModalOpen, setIsUserModalOpen] = React.useState(false);
   const [editingUser, setEditingUser] = React.useState<UserProfile | null>(null);
   const [userForm, setUserForm] = React.useState({
@@ -473,16 +307,10 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     status: 'active' as 'active' | 'inactive' | 'banned',
   });
 
-  // 分类
   const [isCategoryModalOpen, setIsCategoryModalOpen] = React.useState(false);
   const [editingCategory, setEditingCategory] = React.useState<Category | null>(null);
-  const [categoryForm, setCategoryForm] = React.useState({
-    name: '',
-    slug: '',
-    description: '',
-  });
+  const [categoryForm, setCategoryForm] = React.useState({ name: '', slug: '', description: '' });
 
-  // 标签
   const [isTagModalOpen, setIsTagModalOpen] = React.useState(false);
   const [editingTag, setEditingTag] = React.useState<Tag | null>(null);
   const [tagForm, setTagForm] = React.useState({
@@ -492,7 +320,6 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     description: '',
   });
 
-  // 项目编辑
   const [isProjectModalOpen, setIsProjectModalOpen] = React.useState(false);
   const [editingProject, setEditingProject] = React.useState<Project | null>(null);
   const [projectForm, setProjectForm] = React.useState({
@@ -514,15 +341,11 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     isOpenSource: true,
   });
 
-  // Git 项目同步弹窗
   const [isSyncModalOpen, setIsSyncModalOpen] = React.useState(false);
 
-  // 滚动锁定（任意一个 Modal 打开时锁定）
   useModalScrollLock(isUserModalOpen || isCategoryModalOpen || isTagModalOpen || isProjectModalOpen || isSyncModalOpen);
 
-  // 虚拟滚动相关
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
-
   const {
     visibleItems,
     visibleRange,
@@ -530,39 +353,21 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     bottomSpacer,
     handleScroll: handleVirtualScroll,
     recordItemHeight,
-  } = useVirtualScroll<any>({
-    items,
-    threshold: 30,
-    estimatedHeight: 120,
-    overscan: 8,
-  });
+  } = useVirtualScroll<any>({ items, threshold: 30, estimatedHeight: 120, overscan: 8 });
 
-  const handleScroll = React.useCallback(() => {
+  const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-
     const { scrollTop, scrollHeight, clientHeight } = el;
-
-    // 虚拟滚动计算
     handleVirtualScroll(scrollTop, clientHeight);
-
-    // 距离底部 200px 时触发加载更多
     if (!isLoading && hasMore && scrollTop + clientHeight >= scrollHeight - 200) {
       loadMore();
     }
   }, [handleVirtualScroll, isLoading, hasMore, loadMore]);
 
-  // 顶部「添加」按钮行为
-  const handleAdd = React.useCallback(() => {
-    if (type === 'notes') {
-      navigate('/editor/note');
-      return;
-    }
-    if (type === 'articles') {
-      navigate('/editor/article');
-      return;
-    }
-
+  const handleAdd = useCallback(() => {
+    if (type === 'notes') return navigate('/editor/note');
+    if (type === 'articles') return navigate('/editor/article');
     if (type === 'users') {
       setEditingUser(null);
       setUserForm({
@@ -576,98 +381,78 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
       setIsUserModalOpen(true);
       return;
     }
-
     if (type === 'categories') {
       setEditingCategory(null);
       setCategoryForm({ name: '', slug: '', description: '' });
       setIsCategoryModalOpen(true);
       return;
     }
-
     if (type === 'tags') {
       setEditingTag(null);
       setTagForm({ name: '', slug: '', color: '#3B82F6', description: '' });
       setIsTagModalOpen(true);
       return;
     }
-
-    if (type === 'projects') {
-      setIsSyncModalOpen(true);
-    }
+    if (type === 'projects') setIsSyncModalOpen(true);
   }, [navigate, type]);
 
-  // 列表项编辑行为：notes/articles 走路由，其余使用弹窗
-  const handleEditItem = React.useCallback(
+  const handleEditItem = useCallback(
     (item: any) => {
-      if (type === 'notes') {
-        navigate(`/editor/note?id=${item.id}`);
-        return;
-      }
-      if (type === 'articles') {
-        navigate(`/editor/article?id=${item.id}`);
-        return;
-      }
-
+      if (type === 'notes') return navigate(`/editor/note?id=${item.id}`);
+      if (type === 'articles') return navigate(`/editor/article?id=${item.id}`);
       if (type === 'users') {
-        const user = item as UserProfile;
-        setEditingUser(user);
+        const u = item as UserProfile;
+        setEditingUser(u);
         setUserForm({
-          username: user.username,
-          email: user.email,
-          fullName: user.fullName || '',
+          username: u.username,
+          email: u.email,
+          fullName: u.fullName || '',
           password: '',
-          role: (user.role as 'user' | 'admin') || 'user',
-          status: (user.status as 'active' | 'inactive' | 'banned') || 'active',
+          role: (u.role as 'user' | 'admin') || 'user',
+          status: (u.status as 'active' | 'inactive' | 'banned') || 'active',
         });
         setIsUserModalOpen(true);
         return;
       }
-
       if (type === 'categories') {
-        const category = item as Category;
-        setEditingCategory(category);
-        setCategoryForm({
-          name: category.name,
-          slug: category.slug,
-          description: category.description || '',
-        });
+        const c = item as Category;
+        setEditingCategory(c);
+        setCategoryForm({ name: c.name, slug: c.slug, description: c.description || '' });
         setIsCategoryModalOpen(true);
         return;
       }
-
       if (type === 'tags') {
-        const tag = item as Tag;
-        setEditingTag(tag);
+        const t = item as Tag;
+        setEditingTag(t);
         setTagForm({
-          name: tag.name,
-          slug: tag.slug,
-          color: tag.color || '#3B82F6',
-          description: tag.description || '',
+          name: t.name,
+          slug: t.slug,
+          color: t.color || '#3B82F6',
+          description: t.description || '',
         });
         setIsTagModalOpen(true);
         return;
       }
-
       if (type === 'projects') {
-        const project = item as Project;
-        setEditingProject(project);
+        const p = item as Project;
+        setEditingProject(p);
         setProjectForm({
-          title: project.title,
-          slug: project.slug,
-          description: project.description || '',
-          content: project.content || '',
-          status: project.status,
-          visibility: project.visibility,
-          language: project.language || '',
-          tags: (project.tags || []).join(', '),
-          techStack: (project.techStack || []).join(', '),
-          githubUrl: project.githubUrl || '',
-          giteeUrl: project.giteeUrl || '',
-          demoUrl: project.demoUrl || '',
-          docsUrl: project.docsUrl || '',
-          npmPackage: project.npmPackage || '',
-          isFeatured: project.isFeatured,
-          isOpenSource: project.isOpenSource,
+          title: p.title,
+          slug: p.slug,
+          description: p.description || '',
+          content: p.content || '',
+          status: p.status,
+          visibility: p.visibility,
+          language: p.language || '',
+          tags: (p.tags || []).join(', '),
+          techStack: (p.techStack || []).join(', '),
+          githubUrl: p.githubUrl || '',
+          giteeUrl: p.giteeUrl || '',
+          demoUrl: p.demoUrl || '',
+          docsUrl: p.docsUrl || '',
+          npmPackage: p.npmPackage || '',
+          isFeatured: p.isFeatured,
+          isOpenSource: p.isOpenSource,
         });
         setIsProjectModalOpen(true);
         return;
@@ -676,8 +461,7 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     [navigate, type],
   );
 
-  // 保存用户
-  const handleSaveUser = React.useCallback(async () => {
+  const handleSaveUser = useCallback(async () => {
     try {
       if (editingUser) {
         await API.user.updateUser(editingUser.id, userForm);
@@ -693,8 +477,7 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     }
   }, [editingUser, userForm, reload]);
 
-  // 保存分类
-  const handleSaveCategory = React.useCallback(async () => {
+  const handleSaveCategory = useCallback(async () => {
     try {
       if (editingCategory) {
         await API.category.updateCategory(editingCategory.id, categoryForm);
@@ -710,8 +493,7 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     }
   }, [editingCategory, categoryForm, reload]);
 
-  // 保存标签
-  const handleSaveTag = React.useCallback(async () => {
+  const handleSaveTag = useCallback(async () => {
     try {
       if (editingTag) {
         await API.tag.updateTag(editingTag.id, tagForm);
@@ -727,8 +509,7 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     }
   }, [editingTag, tagForm, reload]);
 
-  // 保存项目（新增/编辑）
-  const handleSaveProject = React.useCallback(async () => {
+  const handleSaveProject = useCallback(async () => {
     try {
       const payload: Partial<Project> = {
         title: projectForm.title.trim(),
@@ -775,14 +556,10 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     }
   }, [editingProject, projectForm, reload]);
 
-  // 删除操作
   const handleDelete = async (id: number, title: string) => {
     if (!config.deleteFn) return;
-
     const confirmed = await adnaan.confirm.delete(`确定要删除"${title}"吗？`, '删除确认');
-
     if (!confirmed) return;
-
     try {
       await config.deleteFn(id);
       adnaan.toast.success('删除成功');
@@ -792,73 +569,56 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     }
   };
 
-  // 渲染移动端单个项目
-  const renderMobileItem = (item: any) => {
-    const title = item.title || item.name || item.username || '无标题';
-    const content = item.content ? RichTextParser.extractText(item.content).slice(0, 100) : item.description || '';
-
-    return (
-      <MobileCard onClick={() => (config.getViewUrl ? window.open(config.getViewUrl(item.id), '_blank') : undefined)}>
-        <MobileCardHeader>
-          <MobileCardTitle>{title}</MobileCardTitle>
-          {/* 状态标签可以放在这里 */}
-        </MobileCardHeader>
-
-        {content && <MobileCardContent>{content}</MobileCardContent>}
-
-        <MobileCardFooter>
-          <MobileMeta>
-            <span>{formatDate(item.createdAt).split(' ')[0]}</span>
-            {item.viewCount !== undefined && <span>{item.viewCount} 阅</span>}
-            {item.likeCount !== undefined && <span>{item.likeCount} 赞</span>}
-          </MobileMeta>
-
-          <MobileActions onClick={(e) => e.stopPropagation()}>
-            {(config.getEditUrl ||
-              type === 'users' ||
-              type === 'categories' ||
-              type === 'tags' ||
-              type === 'projects') && (
-              <ActionButton onClick={() => handleEditItem(item)} title="编辑" style={{ width: 32, height: 32 }}>
-                <FiEdit3 size={14} />
-              </ActionButton>
-            )}
-            {config.deleteFn && (
-              <ActionButton
-                onClick={() => handleDelete(item.id, title)}
-                title="删除"
-                style={{ width: 32, height: 32, color: 'var(--error-color)' }}
-              >
-                <FiTrash2 size={14} />
-              </ActionButton>
-            )}
-          </MobileActions>
-        </MobileCardFooter>
-      </MobileCard>
-    );
-  };
-
-  // 渲染单个项目（具体内容），外层容器和 key 由虚拟列表容器负责
   const renderItem = (item: any) => {
-    if (isMobile) {
-      return renderMobileItem(item);
+    const title = item.title || item.name || item.username || '无标题';
+    const content =
+      item.content || item.description
+        ? RichTextParser.extractText(item.content || item.description).slice(0, 150)
+        : '';
+    const cover = item.cover || item.avatar;
+
+    let statusBadge = null;
+    if (type === 'articles' && item.status !== undefined) {
+      const statusMap: any = { 0: 'draft', 1: 'published', 2: 'archived' };
+      const statusLabel: any = { 0: '草稿', 1: '已发布', 2: '已归档' };
+      statusBadge = <StatusBadge status={statusMap[item.status]}>{statusLabel[item.status]}</StatusBadge>;
+    } else if (type === 'comments' && item.status) {
+      const statusLabel: any = { approved: '已通过', pending: '待审核', spam: '垃圾' };
+      statusBadge = <StatusBadge status={item.status}>{statusLabel[item.status]}</StatusBadge>;
     }
 
-    // 评论管理：支持审核操作（通过 / 标记垃圾）
+    const tags = item.tags || [];
+
+    // 获取默认封面图标
+    const getDefaultIcon = () => {
+      switch (type) {
+        case 'users':
+          return <FiUser />;
+        case 'tags':
+          return <FiTag />;
+        case 'categories':
+          return <FiFolder />;
+        case 'projects':
+          return <FiGithub />;
+        case 'articles':
+          return <FiFileText />;
+        case 'notes':
+          return <FiEdit3 />;
+        default:
+          return <FiFolder />;
+      }
+    };
+
     if (type === 'comments') {
-      const status: 'approved' | 'pending' | 'spam' = item.status || 'pending';
-      const statusText = status === 'approved' ? '已通过' : status === 'spam' ? '垃圾/屏蔽' : '待审核';
       const targetLabel = item.targetType === 'note' ? '手记' : item.targetType === 'project' ? '项目' : '文章';
       const targetTitle = item.targetTitle;
+      const authorName = item.author?.username || item.guestName || '访客';
+      const commentTitle = `${authorName} 在${targetLabel}《${targetTitle}》的评论`;
 
       const handleOpenTarget = () => {
-        if (item.targetType === 'post') {
-          navigate(`/blog/${item.targetId}`);
-        } else if (item.targetType === 'note') {
-          navigate(`/notes/${item.targetId}`);
-        } else if (item.targetType === 'project') {
-          navigate(`/projects/${item.targetId}`);
-        }
+        if (item.targetType === 'post') navigate(`/blog/${item.targetId}`);
+        else if (item.targetType === 'note') navigate(`/notes/${item.targetId}`);
+        else if (item.targetType === 'project') navigate(`/projects/${item.targetId}`);
       };
 
       const handleChangeStatus = async (newStatus: 'approved' | 'pending' | 'spam') => {
@@ -871,106 +631,108 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
         }
       };
 
-      const content = item.content ? RichTextParser.extractText(item.content).slice(0, 150) : '';
-      const authorName = item.author?.username || item.guestName || '访客';
-
       return (
         <ItemCard>
+          <ItemCover src={item.author?.avatar}>{!item.author?.avatar && <FiMessageSquare />}</ItemCover>
+          <ItemBody>
+            <ItemHeader>
+              <ItemTitle onClick={handleOpenTarget}>{commentTitle}</ItemTitle>
+              {statusBadge}
+            </ItemHeader>
+            <ItemContent>{content}</ItemContent>
+            <ItemMeta>
+              <MetaItem>
+                <FiCalendar />
+                <span>{formatDate(item.createdAt)}</span>
+              </MetaItem>
+            </ItemMeta>
+          </ItemBody>
+          <ItemActions>
+            {item.status === 'pending' && (
+              <ActionButton onClick={() => handleChangeStatus('approved')} title="通过" style={{ color: '#22c55e' }}>
+                <FiCheck />
+              </ActionButton>
+            )}
+            {item.status !== 'spam' && (
+              <ActionButton onClick={() => handleChangeStatus('spam')} title="标记垃圾" style={{ color: '#ef4444' }}>
+                <FiAlertTriangle />
+              </ActionButton>
+            )}
+            {config.deleteFn && (
+              <ActionButton data-variant="delete" onClick={() => handleDelete(item.id, '评论')} title="删除">
+                <FiTrash2 />
+              </ActionButton>
+            )}
+          </ItemActions>
+        </ItemCard>
+      );
+    }
+
+    return (
+      <ItemCard>
+        <ItemCover src={cover}>{!cover && getDefaultIcon()}</ItemCover>
+
+        <ItemBody>
           <ItemHeader>
-            <ItemTitle onClick={handleOpenTarget}>
-              {authorName} 在{targetLabel}《{targetTitle}》的评论
+            <ItemTitle onClick={() => (config.getEditUrl ? navigate(config.getEditUrl(item.id)) : undefined)}>
+              {title}
             </ItemTitle>
-            <ItemActions>
-              {status === 'pending' && (
-                <ActionButton onClick={() => handleChangeStatus('approved')} title="通过">
-                  <FiCheck />
-                </ActionButton>
-              )}
-              {status !== 'spam' && (
-                <ActionButton onClick={() => handleChangeStatus('spam')} title="标记垃圾">
-                  <FiAlertTriangle />
-                </ActionButton>
-              )}
-              {config.deleteFn && (
-                <ActionButton onClick={() => handleDelete(item.id, '评论')} title="删除">
-                  <FiTrash2 />
-                </ActionButton>
-              )}
-            </ItemActions>
+            {statusBadge}
           </ItemHeader>
 
           {content && <ItemContent>{content}</ItemContent>}
+
+          {tags.length > 0 && (
+            <TagsContainer>
+              {tags.map((t: any, i: number) => (
+                <TagComponent key={i}>{typeof t === 'string' ? t : t.name}</TagComponent>
+              ))}
+            </TagsContainer>
+          )}
 
           <ItemMeta>
             <MetaItem>
               <FiCalendar />
               <span>{formatDate(item.createdAt)}</span>
             </MetaItem>
-            <MetaItem>
-              <FiMessageSquare />
-              <span>状态：{statusText}</span>
-            </MetaItem>
-          </ItemMeta>
-        </ItemCard>
-      );
-    }
-
-    const title = item.title || item.name || item.username || '无标题';
-    const content = item.content ? RichTextParser.extractText(item.content).slice(0, 150) : '';
-
-    return (
-      <ItemCard>
-        <ItemHeader>
-          <ItemTitle>{title}</ItemTitle>
-          <ItemActions>
-            {config.getViewUrl && (
-              <ActionButton onClick={() => window.open(config.getViewUrl!(item.id), '_blank')} title="查看">
+            {item.viewCount !== undefined && (
+              <MetaItem>
                 <FiEye />
-              </ActionButton>
+                <span>{item.viewCount}</span>
+              </MetaItem>
             )}
-            {(config.getEditUrl ||
-              type === 'users' ||
-              type === 'categories' ||
-              type === 'tags' ||
-              type === 'projects') && (
-              <ActionButton onClick={() => handleEditItem(item)} title="编辑">
-                <FiEdit3 />
-              </ActionButton>
+            {item.likeCount !== undefined && (
+              <MetaItem>
+                <FiHeart />
+                <span>{item.likeCount}</span>
+              </MetaItem>
             )}
-            {config.deleteFn && (
-              <ActionButton onClick={() => handleDelete(item.id, title)} title="删除">
-                <FiTrash2 />
-              </ActionButton>
+            {item.commentCount !== undefined && (
+              <MetaItem>
+                <FiMessageSquare />
+                <span>{item.commentCount}</span>
+              </MetaItem>
             )}
-          </ItemActions>
-        </ItemHeader>
+          </ItemMeta>
+        </ItemBody>
 
-        {content && <ItemContent>{content}</ItemContent>}
-
-        <ItemMeta>
-          <MetaItem>
-            <FiCalendar />
-            <span>{formatDate(item.createdAt)}</span>
-          </MetaItem>
-          {item.viewCount !== undefined && (
-            <MetaItem>
+        <ItemActions>
+          {config.getViewUrl && (
+            <ActionButton onClick={() => window.open(config.getViewUrl!(item.id), '_blank')} title="查看">
               <FiEye />
-              <span>{item.viewCount} 次浏览</span>
-            </MetaItem>
+            </ActionButton>
           )}
-          {item.likeCount !== undefined && (
-            <MetaItem>
-              <FiHeart />
-              <span>{item.likeCount} 次点赞</span>
-            </MetaItem>
+          {(config.getEditUrl || ['users', 'categories', 'tags', 'projects'].includes(type)) && (
+            <ActionButton data-variant="edit" onClick={() => handleEditItem(item)} title="编辑">
+              <FiEdit3 />
+            </ActionButton>
           )}
-          {item.commentCount !== undefined && (
-            <MetaItem>
-              <FiMessageSquare />
-              <span>{item.commentCount} 条评论</span>
-            </MetaItem>
+          {config.deleteFn && (
+            <ActionButton data-variant="delete" onClick={() => handleDelete(item.id, title)} title="删除">
+              <FiTrash2 />
+            </ActionButton>
           )}
-        </ItemMeta>
+        </ItemActions>
       </ItemCard>
     );
   };
@@ -991,10 +753,12 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
         selectedFilter={enableFilters ? filter.selectedFilter : ''}
         onFilterChange={enableFilters ? filter.handleFilterChange : undefined}
         onAdd={handleAdd}
+        // 移除 showCard 属性，使用 ManagementLayout 的默认透明样式
+        showCard={false}
         createButton={
           type === 'projects' ? (
-            <Button variant="primary" size="small" onClick={() => setIsSyncModalOpen(true)}>
-              同步 Git 项目
+            <Button variant="primary" size="small" onClick={() => setIsSyncModalOpen(true)} leftIcon={<FiGithub />}>
+              同步项目
             </Button>
           ) : supportsCreate ? undefined : (
             <></>
@@ -1016,420 +780,371 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
         ) : items.length === 0 ? (
           <EmptyContainer>
             <div>{config.emptyText}</div>
+            {supportsCreate && (
+              <Button variant="primary" size="small" onClick={handleAdd} style={{ marginTop: '1rem' }}>
+                立即创建
+              </Button>
+            )}
           </EmptyContainer>
         ) : (
-          <FadeScrollContainer dependencies={[items.length, isLoading]}>
-            <ScrollWrapper ref={scrollRef} onScroll={handleScroll}>
-              <ListContainer>
-                {topSpacer > 0 && <div style={{ height: topSpacer }} />}
-
-                {visibleItems.map((item, index) => {
-                  const actualIndex = visibleRange.start + index;
-                  const key = item.id ?? actualIndex;
-
-                  return (
-                    <div
-                      key={key}
-                      ref={(el) => {
-                        if (el) {
-                          recordItemHeight(key, el.getBoundingClientRect().height);
-                        }
-                      }}
-                    >
-                      {renderItem(item)}
-                    </div>
-                  );
-                })}
-
-                {bottomSpacer > 0 && <div style={{ height: bottomSpacer }} />}
-
-                {hasMore && (
-                  <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-                    <Button variant="secondary" onClick={loadMore} disabled={isLoading}>
-                      {isLoading ? '加载中...' : '加载更多'}
-                    </Button>
+          <ScrollWrapper ref={scrollRef} onScroll={handleScroll} style={{ height: '640px' }}>
+            <ListContainer style={{ position: 'relative', height: totalItems * 120 + 'px' }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${topSpacer}px)`,
+                }}
+              >
+                {visibleItems.map((item) => (
+                  <div
+                    key={item.id}
+                    ref={(el) => {
+                      if (el)
+                        recordItemHeight(
+                          visibleRange.start + visibleItems.indexOf(item),
+                          el.getBoundingClientRect().height,
+                        );
+                    }}
+                  >
+                    {renderItem(item)}
                   </div>
-                )}
-              </ListContainer>
-            </ScrollWrapper>
-          </FadeScrollContainer>
+                ))}
+              </div>
+            </ListContainer>
+            {isLoading && (
+              <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>加载中...</div>
+            )}
+          </ScrollWrapper>
         )}
       </ManagementLayout>
 
+      {/* Modals - Users */}
       {type === 'users' && (
         <Modal
           isOpen={isUserModalOpen}
           onClose={() => setIsUserModalOpen(false)}
           title={editingUser ? '编辑用户' : '添加用户'}
-          size="medium"
-          footer={
-            <>
+          width={500}
+        >
+          <div style={{ padding: '1.5rem' }}>
+            <FormGroup>
+              <Label>用户名 *</Label>
+              <Input
+                value={userForm.username}
+                onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                placeholder="请输入用户名"
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>邮箱 *</Label>
+              <Input
+                value={userForm.email}
+                onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                placeholder="请输入邮箱"
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>全名</Label>
+              <Input
+                value={userForm.fullName}
+                onChange={(e) => setUserForm({ ...userForm, fullName: e.target.value })}
+                placeholder="请输入全名"
+              />
+            </FormGroup>
+            {!editingUser && (
+              <FormGroup>
+                <Label>密码 *</Label>
+                <Input
+                  type="password"
+                  value={userForm.password}
+                  onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                  placeholder="请输入密码（至少6位）"
+                />
+              </FormGroup>
+            )}
+            <FormGroup>
+              <Label>角色</Label>
+              <Select value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value as any })}>
+                <option value="user">普通用户</option>
+                <option value="admin">管理员</option>
+              </Select>
+            </FormGroup>
+            <FormGroup>
+              <Label>状态</Label>
+              <Select
+                value={userForm.status}
+                onChange={(e) => setUserForm({ ...userForm, status: e.target.value as any })}
+              >
+                <option value="active">正常</option>
+                <option value="inactive">禁用</option>
+                <option value="banned">封禁</option>
+              </Select>
+            </FormGroup>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
               <Button variant="secondary" onClick={() => setIsUserModalOpen(false)}>
                 取消
               </Button>
               <Button variant="primary" onClick={handleSaveUser}>
                 保存
               </Button>
-            </>
-          }
-        >
-          <FormGroup>
-            <Label>用户名 *</Label>
-            <Input
-              type="text"
-              placeholder="请输入用户名"
-              value={userForm.username}
-              onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>邮箱 *</Label>
-            <Input
-              type="email"
-              placeholder="请输入邮箱"
-              value={userForm.email}
-              onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>全名</Label>
-            <Input
-              type="text"
-              placeholder="请输入全名"
-              value={userForm.fullName}
-              onChange={(e) => setUserForm({ ...userForm, fullName: e.target.value })}
-            />
-          </FormGroup>
-
-          {!editingUser && (
-            <FormGroup>
-              <Label>密码 *</Label>
-              <Input
-                type="password"
-                placeholder="请输入密码（至少6位）"
-                value={userForm.password}
-                onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-              />
-            </FormGroup>
-          )}
-
-          <FormGroup>
-            <Label>角色</Label>
-            <Select
-              value={userForm.role}
-              onChange={(e) => setUserForm({ ...userForm, role: e.target.value as 'user' | 'admin' })}
-            >
-              <option value="user">普通用户</option>
-              <option value="admin">管理员</option>
-            </Select>
-          </FormGroup>
-
-          <FormGroup>
-            <Label>状态</Label>
-            <Select
-              value={userForm.status}
-              onChange={(e) => setUserForm({ ...userForm, status: e.target.value as 'active' | 'inactive' | 'banned' })}
-            >
-              <option value="active">正常</option>
-              <option value="inactive">禁用</option>
-              <option value="banned">封禁</option>
-            </Select>
-          </FormGroup>
+            </div>
+          </div>
         </Modal>
       )}
 
-      {type === 'projects' && (
-        <>
-          <Modal
-            isOpen={isProjectModalOpen}
-            onClose={() => setIsProjectModalOpen(false)}
-            title={editingProject ? '编辑项目' : '添加项目'}
-            size="large"
-            footer={
-              <>
-                <Button variant="secondary" onClick={() => setIsProjectModalOpen(false)}>
-                  取消
-                </Button>
-                <Button variant="primary" onClick={handleSaveProject}>
-                  保存
-                </Button>
-              </>
-            }
-          >
-            <FormGroup>
-              <Label>项目名称 *</Label>
-              <Input
-                type="text"
-                placeholder="请输入项目名称"
-                value={projectForm.title}
-                onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Slug *</Label>
-              <Input
-                type="text"
-                placeholder="URL 标识（例如 my-project）"
-                value={projectForm.slug}
-                onChange={(e) => setProjectForm({ ...projectForm, slug: e.target.value })}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>简介</Label>
-              <Textarea
-                placeholder="简单介绍这个项目的定位和目标"
-                value={projectForm.description}
-                onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
-                size="small"
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>项目内容</Label>
-              <div style={{ borderRadius: 12, overflow: 'hidden' }}>
-                <RichTextEditor
-                  content={projectForm.content}
-                  onChange={(html) => setProjectForm({ ...projectForm, content: html })}
-                  maxHeight="420px"
-                  placeholder="在这里编写项目的详细介绍、特性说明等富文本内容..."
-                />
-              </div>
-            </FormGroup>
-
-            <FormGroup>
-              <Label>状态 & 可见性</Label>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <Select
-                  value={projectForm.status}
-                  onChange={(e) => setProjectForm({ ...projectForm, status: e.target.value as Project['status'] })}
-                >
-                  <option value="active">活跃</option>
-                  <option value="developing">开发中</option>
-                  <option value="paused">暂停</option>
-                  <option value="archived">已归档</option>
-                </Select>
-
-                <Select
-                  value={projectForm.visibility}
-                  onChange={(e) =>
-                    setProjectForm({
-                      ...projectForm,
-                      visibility: e.target.value as Project['visibility'],
-                    })
-                  }
-                >
-                  <option value="public">公开</option>
-                  <option value="private">私有</option>
-                </Select>
-              </div>
-            </FormGroup>
-
-            <FormGroup>
-              <Label>主要语言</Label>
-              <Input
-                type="text"
-                placeholder="例如：TypeScript"
-                value={projectForm.language}
-                onChange={(e) => setProjectForm({ ...projectForm, language: e.target.value })}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>标签（逗号分隔）</Label>
-              <Input
-                type="text"
-                placeholder="例如：blog, personal, open-source"
-                value={projectForm.tags}
-                onChange={(e) => setProjectForm({ ...projectForm, tags: e.target.value })}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>技术栈（逗号分隔）</Label>
-              <Input
-                type="text"
-                placeholder="例如：React, Node.js, MySQL"
-                value={projectForm.techStack}
-                onChange={(e) => setProjectForm({ ...projectForm, techStack: e.target.value })}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>链接</Label>
-              <Input
-                type="text"
-                placeholder="GitHub 仓库地址"
-                value={projectForm.githubUrl}
-                onChange={(e) => setProjectForm({ ...projectForm, githubUrl: e.target.value })}
-                style={{ marginBottom: '0.5rem' }}
-              />
-              <Input
-                type="text"
-                placeholder="Gitee 仓库地址（可选）"
-                value={projectForm.giteeUrl}
-                onChange={(e) => setProjectForm({ ...projectForm, giteeUrl: e.target.value })}
-                style={{ marginBottom: '0.5rem' }}
-              />
-              <Input
-                type="text"
-                placeholder="在线演示地址（可选）"
-                value={projectForm.demoUrl}
-                onChange={(e) => setProjectForm({ ...projectForm, demoUrl: e.target.value })}
-                style={{ marginBottom: '0.5rem' }}
-              />
-              <Input
-                type="text"
-                placeholder="文档地址（可选）"
-                value={projectForm.docsUrl}
-                onChange={(e) => setProjectForm({ ...projectForm, docsUrl: e.target.value })}
-                style={{ marginBottom: '0.5rem' }}
-              />
-              <Input
-                type="text"
-                placeholder="NPM 包名（可选）"
-                value={projectForm.npmPackage}
-                onChange={(e) => setProjectForm({ ...projectForm, npmPackage: e.target.value })}
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label>展示设置</Label>
-              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Switch
-                    checked={projectForm.isFeatured}
-                    onChange={(checked) => setProjectForm({ ...projectForm, isFeatured: checked })}
-                  />
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>精选项目</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Switch
-                    checked={projectForm.isOpenSource}
-                    onChange={(checked) => setProjectForm({ ...projectForm, isOpenSource: checked })}
-                  />
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>开源项目</span>
-                </div>
-              </div>
-            </FormGroup>
-          </Modal>
-
-          <GithubSyncModal
-            isOpen={isSyncModalOpen}
-            onClose={() => setIsSyncModalOpen(false)}
-            onSyncSuccess={() => {
-              setIsSyncModalOpen(false);
-              reload();
-            }}
-          />
-        </>
-      )}
-
+      {/* Modals - Categories */}
       {type === 'categories' && (
         <Modal
           isOpen={isCategoryModalOpen}
           onClose={() => setIsCategoryModalOpen(false)}
-          title={editingCategory ? '编辑分类' : '添加分类'}
-          size="medium"
-          footer={
-            <>
+          title={editingCategory ? '编辑分类' : '新建分类'}
+          width={500}
+        >
+          <div style={{ padding: '1.5rem' }}>
+            <FormGroup>
+              <Label>名称</Label>
+              <Input
+                value={categoryForm.name}
+                onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                placeholder="请输入分类名称"
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>Slug</Label>
+              <Input
+                value={categoryForm.slug}
+                onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
+                placeholder="请输入分类 Slug"
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>描述</Label>
+              <Textarea
+                value={categoryForm.description}
+                onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                placeholder="请输入分类描述"
+              />
+            </FormGroup>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
               <Button variant="secondary" onClick={() => setIsCategoryModalOpen(false)}>
                 取消
               </Button>
               <Button variant="primary" onClick={handleSaveCategory}>
                 保存
               </Button>
-            </>
-          }
-        >
-          <FormGroup>
-            <Label>分类名称 *</Label>
-            <Input
-              type="text"
-              placeholder="请输入分类名称"
-              value={categoryForm.name}
-              onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>URL Slug *</Label>
-            <Input
-              type="text"
-              placeholder="请输入URL slug（如：tech、life）"
-              value={categoryForm.slug}
-              onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>描述</Label>
-            <Textarea
-              placeholder="请输入分类描述（可选）"
-              value={categoryForm.description}
-              onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-              size="small"
-            />
-          </FormGroup>
+            </div>
+          </div>
         </Modal>
       )}
 
+      {/* Modals - Tags */}
       {type === 'tags' && (
         <Modal
           isOpen={isTagModalOpen}
           onClose={() => setIsTagModalOpen(false)}
-          title={editingTag ? '编辑标签' : '添加标签'}
-          size="medium"
-          footer={
-            <>
+          title={editingTag ? '编辑标签' : '新建标签'}
+          width={500}
+        >
+          <div style={{ padding: '1.5rem' }}>
+            <FormGroup>
+              <Label>名称</Label>
+              <Input
+                value={tagForm.name}
+                onChange={(e) => setTagForm({ ...tagForm, name: e.target.value })}
+                placeholder="请输入标签名称"
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>Slug</Label>
+              <Input
+                value={tagForm.slug}
+                onChange={(e) => setTagForm({ ...tagForm, slug: e.target.value })}
+                placeholder="请输入标签 Slug"
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>颜色</Label>
+              <ColorPicker value={tagForm.color} onChange={(color) => setTagForm({ ...tagForm, color })} />
+            </FormGroup>
+            <FormGroup>
+              <Label>描述</Label>
+              <Textarea
+                value={tagForm.description}
+                onChange={(e) => setTagForm({ ...tagForm, description: e.target.value })}
+                placeholder="请输入标签描述"
+              />
+            </FormGroup>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
               <Button variant="secondary" onClick={() => setIsTagModalOpen(false)}>
                 取消
               </Button>
               <Button variant="primary" onClick={handleSaveTag}>
                 保存
               </Button>
-            </>
-          }
-        >
-          <FormGroup>
-            <Label>标签名称 *</Label>
-            <Input
-              type="text"
-              placeholder="请输入标签名称"
-              value={tagForm.name}
-              onChange={(e) => setTagForm({ ...tagForm, name: e.target.value })}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>URL Slug *</Label>
-            <Input
-              type="text"
-              placeholder="请输入URL slug（如：react、vue）"
-              value={tagForm.slug}
-              onChange={(e) => setTagForm({ ...tagForm, slug: e.target.value })}
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>标签颜色</Label>
-            <ColorPicker value={tagForm.color} onChange={(color) => setTagForm({ ...tagForm, color })} />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>描述</Label>
-            <Textarea
-              placeholder="请输入标签描述（可选）"
-              value={tagForm.description}
-              onChange={(e) => setTagForm({ ...tagForm, description: e.target.value })}
-              size="small"
-            />
-          </FormGroup>
+            </div>
+          </div>
         </Modal>
       )}
+
+      {/* Modals - Projects */}
+      {type === 'projects' && (
+        <Modal
+          isOpen={isProjectModalOpen}
+          onClose={() => setIsProjectModalOpen(false)}
+          title={editingProject ? '编辑项目' : '新建项目'}
+          width={800}
+        >
+          <div style={{ padding: '1.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <FormGroup>
+                <Label>项目名称 *</Label>
+                <Input
+                  value={projectForm.title}
+                  onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
+                  placeholder="请输入项目名称"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Slug *</Label>
+                <Input
+                  value={projectForm.slug}
+                  onChange={(e) => setProjectForm({ ...projectForm, slug: e.target.value })}
+                  placeholder="project-slug"
+                />
+              </FormGroup>
+            </div>
+
+            <FormGroup>
+              <Label>描述</Label>
+              <Textarea
+                value={projectForm.description}
+                onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
+                placeholder="简短的项目描述"
+                rows={3}
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label>详细内容</Label>
+              <RichTextEditor
+                content={projectForm.content}
+                onChange={(content) => setProjectForm({ ...projectForm, content })}
+                placeholder="详细的项目介绍..."
+              />
+            </FormGroup>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <FormGroup>
+                <Label>状态</Label>
+                <Select
+                  value={projectForm.status}
+                  onChange={(e) => setProjectForm({ ...projectForm, status: e.target.value as any })}
+                >
+                  <option value="active">活跃</option>
+                  <option value="developing">开发中</option>
+                  <option value="paused">暂停</option>
+                  <option value="archived">已归档</option>
+                </Select>
+              </FormGroup>
+              <FormGroup>
+                <Label>可见性</Label>
+                <Select
+                  value={projectForm.visibility}
+                  onChange={(e) => setProjectForm({ ...projectForm, visibility: e.target.value as any })}
+                >
+                  <option value="public">公开</option>
+                  <option value="private">私密</option>
+                </Select>
+              </FormGroup>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <FormGroup>
+                <Label>主要语言</Label>
+                <Input
+                  value={projectForm.language}
+                  onChange={(e) => setProjectForm({ ...projectForm, language: e.target.value })}
+                  placeholder="e.g. TypeScript"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>标签 (逗号分隔)</Label>
+                <Input
+                  value={projectForm.tags}
+                  onChange={(e) => setProjectForm({ ...projectForm, tags: e.target.value })}
+                  placeholder="e.g. React, Node.js"
+                />
+              </FormGroup>
+            </div>
+
+            <FormGroup>
+              <Label>技术栈 (逗号分隔)</Label>
+              <Input
+                value={projectForm.techStack}
+                onChange={(e) => setProjectForm({ ...projectForm, techStack: e.target.value })}
+                placeholder="e.g. Next.js, Tailwind, Prisma"
+              />
+            </FormGroup>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <FormGroup>
+                <Label>GitHub URL</Label>
+                <Input
+                  value={projectForm.githubUrl}
+                  onChange={(e) => setProjectForm({ ...projectForm, githubUrl: e.target.value })}
+                  placeholder="https://github.com/..."
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Demo URL</Label>
+                <Input
+                  value={projectForm.demoUrl}
+                  onChange={(e) => setProjectForm({ ...projectForm, demoUrl: e.target.value })}
+                  placeholder="https://..."
+                />
+              </FormGroup>
+            </div>
+
+            <div style={{ display: 'flex', gap: '2rem', marginTop: '1rem' }}>
+              <FormGroup style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 0 }}>
+                <Switch
+                  checked={projectForm.isFeatured}
+                  onChange={(checked) => setProjectForm({ ...projectForm, isFeatured: checked })}
+                />
+                <Label style={{ marginBottom: 0 }}>精选项目</Label>
+              </FormGroup>
+              <FormGroup style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 0 }}>
+                <Switch
+                  checked={projectForm.isOpenSource}
+                  onChange={(checked) => setProjectForm({ ...projectForm, isOpenSource: checked })}
+                />
+                <Label style={{ marginBottom: 0 }}>开源</Label>
+              </FormGroup>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+              <Button variant="secondary" onClick={() => setIsProjectModalOpen(false)}>
+                取消
+              </Button>
+              <Button variant="primary" onClick={handleSaveProject}>
+                保存
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      <GithubSyncModal
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        onSyncSuccess={() => {
+          setIsSyncModalOpen(false);
+          reload();
+        }}
+      />
     </>
   );
 };

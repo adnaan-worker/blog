@@ -501,3 +501,26 @@ export interface AIChatMessage {
   content: string;
   timestamp?: string;
 }
+
+/**
+ * 仪表盘统一数据类型
+ */
+export interface DashboardTodoItem {
+  id: string;
+  title: string;
+  count: number;
+  type?: string;
+  priority?: 'high' | 'medium' | 'low';
+  action?: string;
+}
+
+export interface DashboardData {
+  user: UserProfile;
+  stats: UserStats[];
+  publishTrend: Array<{ month: string; value: number }>;
+  activities: UserActivity[];
+  achievements: UserAchievement[];
+  categoryStats: Array<{ name: string; value: number }>;
+  recentProjects: Project[];
+  todoItems: DashboardTodoItem[];
+}
