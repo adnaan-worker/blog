@@ -6,8 +6,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 import { useCompanionWidget } from '@/hooks/useCompanionWidget';
-import GhostVisual from './visuals/GhostVisual';
-import SheepVisual from './visuals/SheepVisual';
+import GhostVisual from './visuals/ghost-visual';
+import SheepVisual from './visuals/sheep-visual';
 import ExpandedPlayer from '../navbar-player/expanded-player';
 import { AIChatWindow } from '@/components/ai/chat-window';
 import { useModalScrollLock } from '@/hooks/useModalScrollLock';
@@ -15,30 +15,6 @@ import { useModalScrollLock } from '@/hooks/useModalScrollLock';
 // ============================================================================
 // 样式定义
 // ============================================================================
-
-const WaveBar = styled(motion.div)`
-  width: 3px;
-  background-color: var(--accent-color);
-  border-radius: 2px;
-  margin-right: 2px;
-`;
-
-const Visualizer = () => (
-  <div style={{ display: 'flex', alignItems: 'center', height: '12px', marginRight: '6px' }}>
-    {[1, 2, 3].map((i) => (
-      <WaveBar
-        key={i}
-        animate={{ height: [4, 12, 4] }}
-        transition={{
-          duration: 0.8,
-          repeat: Infinity,
-          delay: i * 0.1,
-          ease: 'easeInOut',
-        }}
-      />
-    ))}
-  </div>
-);
 
 // AI 面板 - 极光风格
 const AIPanel = styled(motion.div)`
@@ -115,21 +91,6 @@ const MusicCapsule = styled(motion.div)<{ isVisible: boolean }>`
   border: ${(props) => (props.isVisible ? '1px solid rgba(var(--border-rgb), 0.15)' : '1px solid transparent')};
 
   transform-origin: center right;
-`;
-
-// Pet 容器
-const PetContainer = styled(motion.div)`
-  position: fixed;
-  bottom: 24px;
-  right: 16px;
-  width: 56px; /* 与胶囊高度一致，保证中心对齐，或者稍大 */
-  height: 72px; /* 比胶囊高 */
-  z-index: 910; /* 比胶囊高 */
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  pointer-events: none; /* 让点击穿透到 BoundaryBreaker */
-  overflow: visible; /* 确保轨迹不被遮挡 */
 `;
 
 // 陪伴物容器 (负责拖拽和位置)
@@ -279,7 +240,7 @@ const MobileSmartDock: React.FC = () => {
   const [isMusicExpanded, setIsMusicExpanded] = useState(false);
 
   // 移除 useModalScrollLock 以修复滚动问题
-  // useModalScrollLock(isAIActive);
+  useModalScrollLock(isAIActive);
 
   const {
     isPlaying,
@@ -347,6 +308,10 @@ const MobileSmartDock: React.FC = () => {
   };
 
   const handleCompanionClick = () => {
+    // 如果音乐胶囊展开，先收缩它，避免遮挡AI面板
+    if (isMusicExpanded) {
+      setIsMusicExpanded(false);
+    }
     setIsAIActive(true);
     companion.createParticles();
   };
@@ -369,8 +334,6 @@ const MobileSmartDock: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const shouldShowDock = !isAIActive;
-
   const showCapsuleContent = isMusicExpanded;
 
   const mainText = hasTrack ? currentTrack.title : "Adnaan's Blog";
@@ -382,23 +345,6 @@ const MobileSmartDock: React.FC = () => {
         ? currentTrack.artist
         : `Paused - ${currentTrack.artist}`
     : '点击播放音乐';
-
-  const petVariants = {
-    idle: {
-      right: 16,
-      bottom: 24,
-      left: 'auto',
-      x: 0,
-      scale: 1,
-    },
-    active: {
-      right: '50%',
-      bottom: 'calc(16px + 65vh - 30px)',
-      left: 'auto',
-      x: '50%',
-      scale: 1.3,
-    },
-  };
 
   // 核心 Pet 视觉组件 (纯展示)
   const PetVisualContent = ({ isDark, companion }: { isDark: boolean; companion: any }) => (
