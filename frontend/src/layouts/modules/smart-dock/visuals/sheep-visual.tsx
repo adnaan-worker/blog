@@ -2,6 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { ParticlesContainer, StarParticle, floatVariants, jumpVariants } from '@/components/companion/companion-shared';
+import CompanionBubble from './companion-bubble';
 
 // ============================================================================
 // 🐑 懒羊羊 (Light Mode) 纯视觉组件 - 去除了所有拖拽逻辑，仅保留动画
@@ -51,6 +52,8 @@ interface SheepVisualProps {
   isBlinking?: boolean;
   eyeOffset?: { x: number; y: number };
   particles?: Array<{ id: number; x: number; y: number; emoji: string }>;
+  message?: string | null;
+  isMessageVisible?: boolean;
 }
 
 export const SheepVisual: React.FC<SheepVisualProps> = ({
@@ -59,9 +62,12 @@ export const SheepVisual: React.FC<SheepVisualProps> = ({
   isBlinking = false,
   eyeOffset = { x: 0, y: 0 },
   particles = [],
+  message = null,
+  isMessageVisible = false,
 }) => {
   return (
     <SheepContainer>
+      <CompanionBubble message={message} isVisible={isMessageVisible} />
       <SheepSVG
         viewBox="-200 -200 400 600"
         preserveAspectRatio="xMidYMid meet"

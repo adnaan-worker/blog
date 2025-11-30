@@ -8,6 +8,7 @@ import {
   floatVariants,
   jumpVariants,
 } from '@/components/companion/companion-shared';
+import CompanionBubble from './companion-bubble';
 
 // ============================================================================
 // 👻 幽灵 (Dark Mode) 纯视觉组件 - 去除了所有拖拽逻辑，仅保留动画
@@ -186,6 +187,8 @@ interface GhostVisualProps {
   isBlinking?: boolean;
   eyeOffset?: { x: number; y: number };
   particles?: Array<{ id: number; x: number; y: number; emoji: string }>;
+  message?: string | null;
+  isMessageVisible?: boolean;
 }
 
 export const GhostVisual: React.FC<GhostVisualProps> = ({
@@ -194,6 +197,8 @@ export const GhostVisual: React.FC<GhostVisualProps> = ({
   isBlinking = false,
   eyeOffset = { x: 0, y: 0 },
   particles = [],
+  message = null,
+  isMessageVisible = false,
 }) => {
   return (
     <GhostContainer>
@@ -213,6 +218,7 @@ export const GhostVisual: React.FC<GhostVisualProps> = ({
         variants={clickCount > 0 ? jumpVariants : floatVariants}
         animate={clickCount > 0 ? (clickCount >= 5 ? 'jump5x' : 'jump') : 'animate'}
       >
+        <CompanionBubble message={message} isVisible={isMessageVisible} />
         <GhostBackground />
 
         <Face>

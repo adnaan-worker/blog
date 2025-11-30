@@ -355,6 +355,8 @@ const MobileSmartDock: React.FC = () => {
           isHovered={companion.isHovered}
           isBlinking={companion.isBlinking}
           particles={companion.particles}
+          message={companion.message}
+          isMessageVisible={companion.isMessageVisible}
         />
       ) : (
         <SheepVisual
@@ -362,6 +364,8 @@ const MobileSmartDock: React.FC = () => {
           isHovered={companion.isHovered}
           isBlinking={companion.isBlinking}
           particles={companion.particles}
+          message={companion.message}
+          isMessageVisible={companion.isMessageVisible}
         />
       )}
     </>

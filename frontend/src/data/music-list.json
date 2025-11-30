@@ -4,9 +4,9 @@
     "songId": "004BJRhU4g74fg",
     "title": "明日坐标",
     "artist": "林俊杰/王者荣耀",
-    "url": "https://music.3e0.cn//?server=tencent&type=url&id=004BJRhU4g74fg",
-    "pic": "https://music.3e0.cn//?server=tencent&type=pic&id=000AImqc0jgZOu",
-    "lrc": "https://music.3e0.cn//?server=tencent&type=lrc&id=004BJRhU4g74fg",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=004BJRhU4g74fg",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=000AImqc0jgZOu",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=004BJRhU4g74fg",
     "lyrics": [
       {
         "time": 0,
@@ -19,9 +19,9 @@
     "songId": "001p1Z5Z3lrPlu",
     "title": "不死之身",
     "artist": "林俊杰",
-    "url": "https://music.3e0.cn//?server=tencent&type=url&id=001p1Z5Z3lrPlu",
-    "pic": "https://music.3e0.cn//?server=tencent&type=pic&id=002aaUOS24kcwh",
-    "lrc": "https://music.3e0.cn//?server=tencent&type=lrc&id=001p1Z5Z3lrPlu",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=001p1Z5Z3lrPlu",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=002aaUOS24kcwh",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=001p1Z5Z3lrPlu",
     "lyrics": [
       {
         "time": 0,
@@ -34,9 +34,9 @@
     "songId": "003XrK5P2xuSWF",
     "title": "为你揭晓",
     "artist": "张艺兴/林俊杰",
-    "url": "https://music.3e0.cn//?server=tencent&type=url&id=003XrK5P2xuSWF",
-    "pic": "https://music.3e0.cn//?server=tencent&type=pic&id=001a22ZU1kyrDf",
-    "lrc": "https://music.3e0.cn//?server=tencent&type=lrc&id=003XrK5P2xuSWF",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=003XrK5P2xuSWF",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=001a22ZU1kyrDf",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=003XrK5P2xuSWF",
     "lyrics": [
       {
         "time": 0,
@@ -49,9 +49,9 @@
     "songId": "0039PnSs3QC2Dh",
     "title": "绝不绝",
     "artist": "林俊杰/无畏契约",
-    "url": "https://music.3e0.cn//?server=tencent&type=url&id=0039PnSs3QC2Dh",
-    "pic": "https://music.3e0.cn//?server=tencent&type=pic&id=000cPuL32brjN5",
-    "lrc": "https://music.3e0.cn//?server=tencent&type=lrc&id=0039PnSs3QC2Dh",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=0039PnSs3QC2Dh",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=000cPuL32brjN5",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=0039PnSs3QC2Dh",
     "lyrics": [
       {
         "time": 0,
@@ -61,12 +61,87 @@
   },
   {
     "id": 5,
-    "songId": "001uOXrJ0x4vLk",
+    "songId": "000nyY3h1f03BX",
     "title": "无杂质",
-    "artist": "蔡宥绮/林俊杰",
-    "url": "https://music.3e0.cn//?server=tencent&type=url&id=001uOXrJ0x4vLk",
-    "pic": "https://music.3e0.cn//?server=tencent&type=pic&id=",
-    "lrc": "https://music.3e0.cn//?server=tencent&type=lrc&id=001uOXrJ0x4vLk",
+    "artist": "蔡宥绮",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=000nyY3h1f03BX",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=000nyY3h1f03BX",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=000nyY3h1f03BX",
+    "lyrics": [
+      {
+        "time": 0,
+        "text": "【点击播放加载歌词】"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "songId": "001NwtwK1sBDWh",
+    "title": "光阴副本",
+    "artist": "林俊杰",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=001NwtwK1sBDWh",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=001NwtwK1sBDWh",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=001NwtwK1sBDWh",
+    "lyrics": [
+      {
+        "time": 0,
+        "text": "【点击播放加载歌词】"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "songId": "001auUcH4WQs2V",
+    "title": "恋人",
+    "artist": "李荣浩",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=001auUcH4WQs2V",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=001auUcH4WQs2V",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=001auUcH4WQs2V",
+    "lyrics": [
+      {
+        "time": 0,
+        "text": "【点击播放加载歌词】"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "songId": "004czErX2hy62A",
+    "title": "Too Bad",
+    "artist": "林俊杰",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=004czErX2hy62A",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=004czErX2hy62A",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=004czErX2hy62A",
+    "lyrics": [
+      {
+        "time": 0,
+        "text": "【点击播放加载歌词】"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "songId": "002E2qJq0xKZfp",
+    "title": "BINGBIAN病变",
+    "artist": "Cubi /Fi9",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=002E2qJq0xKZfp",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=002E2qJq0xKZfp",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=002E2qJq0xKZfp",
+    "lyrics": [
+      {
+        "time": 0,
+        "text": "【点击播放加载歌词】"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "songId": "0005jrRs05ELQv",
+    "title": "我继续",
+    "artist": "林俊杰",
+    "url": "https://music.3e0.cn?server=tencent&type=url&id=0005jrRs05ELQv",
+    "pic": "https://music.3e0.cn?server=tencent&type=pic&id=0005jrRs05ELQv",
+    "lrc": "https://music.3e0.cn?server=tencent&type=lrc&id=0005jrRs05ELQv",
     "lyrics": [
       {
         "time": 0,

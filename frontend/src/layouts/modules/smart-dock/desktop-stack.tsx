@@ -197,6 +197,8 @@ const DesktopSmartDock: React.FC = () => {
                 isHovered={companion.isHovered}
                 isBlinking={companion.isBlinking}
                 particles={companion.particles}
+                message={companion.message}
+                isMessageVisible={companion.isMessageVisible}
               />
             ) : (
               <SheepVisual
@@ -204,6 +206,8 @@ const DesktopSmartDock: React.FC = () => {
                 isHovered={companion.isHovered}
                 isBlinking={companion.isBlinking}
                 particles={companion.particles}
+                message={companion.message}
+                isMessageVisible={companion.isMessageVisible}
               />
             )}
           </CompanionContainer>
