@@ -28,9 +28,12 @@ exports.chat = asyncHandler(async (req, res) => {
     return res.apiError(`每日聊天次数已达上限(${quota.limit})`, 429);
   }
 
-  // 调用 AI 服务（始终使用博客助手身份）
+  // 调用 AI 服务（始终使用博客助手身份，并启用工具）
   const systemPrompt = promptManager.getSystemPrompt('blog');
-  const response = await aiService.chat(message, { systemPrompt });
+  const response = await aiService.chat(message, {
+    systemPrompt,
+    enableTools: true, // 启用工具调用
+  });
 
   // 更新配额
   await aiQuotaService.incrementChatUsage(userId);
