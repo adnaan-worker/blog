@@ -1,90 +1,133 @@
 import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ============================================================================
-// 💭 智能陪伴气泡组件
+// 💭 智能陪伴气泡组件 (Creative Version)
 // ============================================================================
+
+// 边框流光动画
+const shine = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
+
+// 光标闪烁动画
+const blink = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+`;
 
 const BubbleContainer = styled(motion.div)`
   position: absolute;
-  // 位于幽灵上方
   bottom: 100%;
-  // 改为右对齐，避免在屏幕右侧被遮挡（向左延伸）
-  right: -10px;
-  margin-bottom: 12px;
+  right: -10px; // 保持原有位置逻辑
+  margin-bottom: 16px;
   width: max-content;
-  max-width: 200px;
-  z-index: 10;
-  pointer-events: none; // 点击穿透
+  max-width: 220px;
+  z-index: 20;
+  pointer-events: none;
+  perspective: 1000px;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.15));
 `;
 
-const BubbleContent = styled.div`
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  padding: 8px 12px;
-  border-radius: 12px;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.4) inset;
-
-  font-size: 12px;
-  line-height: 1.5;
-  color: #333;
-  text-align: center;
+const BubbleContent = styled(motion.div)`
   position: relative;
+  padding: 12px 16px;
+  border-radius: 16px;
+  border-bottom-right-radius: 4px; // 更有气泡感
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  overflow: hidden;
 
-  // 暗黑模式适配
-  [data-theme='dark'] & {
-    background: rgba(30, 30, 30, 0.85);
-    color: #eee;
-    box-shadow:
-      0 4px 12px rgba(0, 0, 0, 0.2),
-      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  }
+  /* 字体样式 */
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary, #333);
+  text-align: left;
+  font-weight: 500;
 
-  // 小三角
-  &::after {
+  /* 顶部流光边框 */
+  &::before {
     content: '';
     position: absolute;
-    bottom: -5px;
-    // 指向幽灵中心 (Right Offset 10px + Ghost Width 46px / 2 = 33px) - Arrow Width 5px = 28px
-    right: 28px;
-    border-width: 5px 5px 0;
-    border-style: solid;
-    border-color: rgba(255, 255, 255, 0.85) transparent transparent transparent;
-
-    [data-theme='dark'] & {
-      border-color: rgba(30, 30, 30, 0.85) transparent transparent transparent;
-    }
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-color, #007aff), #ff6b6b, var(--accent-color, #007aff));
+    background-size: 200% 100%;
+    animation: ${shine} 3s linear infinite;
+    opacity: 0.7;
   }
+
+  /* 暗黑模式适配 */
+  [data-theme='dark'] & {
+    background: rgba(30, 30, 30, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary, #eee);
+  }
+`;
+
+// 小三角 (SVG 实现更平滑)
+const Arrow = styled.svg`
+  position: absolute;
+  bottom: -8px;
+  right: 24px;
+  width: 16px;
+  height: 8px;
+  fill: rgba(255, 255, 255, 0.8);
+  filter: drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.4)); // 衔接边框
+
+  [data-theme='dark'] & {
+    fill: rgba(30, 30, 30, 0.8);
+    filter: drop-shadow(0 -1px 0 rgba(255, 255, 255, 0.1));
+  }
+`;
+
+const Cursor = styled.span`
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: var(--accent-color, #007aff);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: ${blink} 1s step-end infinite;
 `;
 
 // 打字机效果文本
 const TypewriterText = ({ text }: { text: string }) => {
   const [displayedText, setDisplayedText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
 
   useEffect(() => {
-    // 使用 Array.from 将字符串转换为字符数组，正确处理 Emoji (Surrogate pairs)
-    // 避免 charAt 将一个 Emoji 拆成两个乱码字符
     const characters = Array.from(text);
     setDisplayedText('');
+    setIsTyping(true);
 
     let index = 0;
     const timer = setInterval(() => {
       if (index < characters.length) {
-        // 使用 slice 截取当前应显示的部分，比累加更稳定
         setDisplayedText(characters.slice(0, index + 1).join(''));
         index++;
       } else {
+        setIsTyping(false);
         clearInterval(timer);
       }
-    }, 50); // 打字速度
+    }, 50);
 
     return () => clearInterval(timer);
   }, [text]);
 
-  return <>{displayedText}</>;
+  return (
+    <>
+      {displayedText}
+      {isTyping && <Cursor />}
+    </>
+  );
 };
 
 interface CompanionBubbleProps {
@@ -94,17 +137,25 @@ interface CompanionBubbleProps {
 
 export const CompanionBubble: React.FC<CompanionBubbleProps> = ({ message, isVisible }) => {
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isVisible && message && (
         <BubbleContainer
-          initial={{ opacity: 0, y: 10, scale: 0.8 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 5, scale: 0.9 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          initial={{ opacity: 0, scale: 0.5, y: 20, rotate: -5 }}
+          animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
+          exit={{ opacity: 0, scale: 0.8, y: 10 }}
+          transition={{
+            type: 'spring',
+            stiffness: 400,
+            damping: 20,
+            mass: 0.8,
+          }}
         >
           <BubbleContent>
             <TypewriterText text={message} />
           </BubbleContent>
+          <Arrow viewBox="0 0 16 8">
+            <path d="M0 0 L8 8 L16 0" />
+          </Arrow>
         </BubbleContainer>
       )}
     </AnimatePresence>

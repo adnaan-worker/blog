@@ -42,6 +42,10 @@ export const useCompanionWidget = (config: CompanionConfig) => {
   const messageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const particleIdRef = useRef(0);
   const widgetRef = useRef<HTMLDivElement>(null);
+
+  // 追踪消息可见性，避免 useEffect 依赖导致死循环
+  const isMessageVisibleRef = useRef(false);
+
   const userActivityRef = useRef<SmartContext['userActivity']>({
     isActive: true,
     idleTime: 0,
@@ -52,6 +56,11 @@ export const useCompanionWidget = (config: CompanionConfig) => {
     hasTyped: false,
     isHovered: false, // 初始化
   });
+
+  // 同步 ref 状态
+  useEffect(() => {
+    isMessageVisibleRef.current = isMessageVisible;
+  }, [isMessageVisible]);
 
   // ============================================================================
   // 工具函数
@@ -86,24 +95,6 @@ export const useCompanionWidget = (config: CompanionConfig) => {
     showMessage(msg);
   }, [showMessage]);
 
-  // 监听 hover 状态变化并更新 ref，触发互动
-  useEffect(() => {
-    userActivityRef.current.isHovered = isHovered;
-
-    // 悬浮超过 2 秒，尝试触发“盯着看”的文案
-    let hoverTimer: NodeJS.Timeout;
-    if (isHovered) {
-      hoverTimer = setTimeout(() => {
-        // 50% 概率触发
-        if (Math.random() > 0.5) {
-          triggerSmartMessage();
-        }
-      }, 2000);
-    }
-
-    return () => clearTimeout(hoverTimer);
-  }, [isHovered, triggerSmartMessage]);
-
   // 创建粒子效果
   const createParticles = useCallback(
     (emojis: string[] = ['⭐', '✨', '💫', '🌟'], count: number = 5, withVibration: boolean = false) => {
@@ -135,8 +126,28 @@ export const useCompanionWidget = (config: CompanionConfig) => {
   );
 
   // ============================================================================
-  // 鼠标/触摸移动 - 眼睛跟随 & 活跃度追踪
+  // 副作用管理
   // ============================================================================
+
+  // 1. 监听 hover 状态变化并更新 ref，触发互动
+  useEffect(() => {
+    userActivityRef.current.isHovered = isHovered;
+
+    let hoverTimer: NodeJS.Timeout;
+    if (isHovered) {
+      // 悬浮超过 2 秒，尝试触发交互
+      hoverTimer = setTimeout(() => {
+        // 50% 概率触发，且当前没有消息显示时才触发
+        if (Math.random() > 0.5 && !isMessageVisibleRef.current) {
+          triggerSmartMessage();
+        }
+      }, 2000);
+    }
+
+    return () => clearTimeout(hoverTimer);
+  }, [isHovered, triggerSmartMessage]);
+
+  // 2. 鼠标/触摸移动 - 眼睛跟随 & 活跃度追踪
   useEffect(() => {
     let rafId: number | null = null;
 
@@ -187,11 +198,8 @@ export const useCompanionWidget = (config: CompanionConfig) => {
     };
   }, []);
 
-  // ============================================================================
-  // 定时任务：眨眼 & 智能气泡
-  // ============================================================================
+  // 3. 眨眼动画 (独立副作用)
   useEffect(() => {
-    // 眨眼
     const blinkIntervalId = setInterval(
       () => {
         setIsBlinking(true);
@@ -199,11 +207,25 @@ export const useCompanionWidget = (config: CompanionConfig) => {
       },
       blinkInterval + Math.random() * 2000,
     );
+    return () => clearInterval(blinkIntervalId);
+  }, [blinkInterval]);
 
-    // 智能气泡 (每隔 3-8 分钟尝试弹一次)
+  // 4. 初始欢迎语 (只在挂载时运行一次)
+  useEffect(() => {
+    const initTimer = setTimeout(() => {
+      if (!isMessageVisibleRef.current) {
+        triggerSmartMessage();
+      }
+    }, 2000);
+    return () => clearTimeout(initTimer);
+  }, []); // 空依赖，确保只运行一次
+
+  // 5. 定时智能气泡 (独立副作用)
+  useEffect(() => {
     const messageCheckInterval = setInterval(
       () => {
-        if (!isMessageVisible && Math.random() > 0.6) {
+        // 检查 ref 而不是依赖 state，避免死循环
+        if (!isMessageVisibleRef.current && Math.random() > 0.6) {
           // 40% 概率弹出
           triggerSmartMessage();
         }
@@ -211,17 +233,8 @@ export const useCompanionWidget = (config: CompanionConfig) => {
       3 * 60 * 1000,
     ); // 3分钟检查一次
 
-    // 初始延迟 2 秒弹个欢迎
-    const initTimer = setTimeout(() => {
-      triggerSmartMessage();
-    }, 2000);
-
-    return () => {
-      clearInterval(blinkIntervalId);
-      clearInterval(messageCheckInterval);
-      clearTimeout(initTimer);
-    };
-  }, [blinkInterval, isMessageVisible, triggerSmartMessage]);
+    return () => clearInterval(messageCheckInterval);
+  }, [triggerSmartMessage]); // 只依赖 triggerSmartMessage
 
   // ============================================================================
   // 点击处理
@@ -232,8 +245,8 @@ export const useCompanionWidget = (config: CompanionConfig) => {
 
     createParticles();
 
-    // 每次点击有一定概率触发消息
-    if (Math.random() > 0.7) {
+    // 每次点击有一定概率触发消息，避免过于频繁
+    if (Math.random() > 0.7 && !isMessageVisible) {
       triggerSmartMessage();
     }
 
@@ -248,7 +261,7 @@ export const useCompanionWidget = (config: CompanionConfig) => {
     clickTimeoutRef.current = setTimeout(() => {
       setClickCount(0);
     }, 1000);
-  }, [clickCount, createParticles, triggerSmartMessage]);
+  }, [clickCount, createParticles, triggerSmartMessage, isMessageVisible]);
 
   // ============================================================================
   // 清理

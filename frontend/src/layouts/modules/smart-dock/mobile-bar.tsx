@@ -239,7 +239,6 @@ const MobileSmartDock: React.FC = () => {
   // 默认收起，只有播放时才自动展开，或者用户手动展开
   const [isMusicExpanded, setIsMusicExpanded] = useState(false);
 
-  // 移除 useModalScrollLock 以修复滚动问题
   useModalScrollLock(isAIActive);
 
   const {
