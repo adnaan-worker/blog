@@ -1,24 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import { FiPlus } from 'react-icons/fi';
+import { motion } from 'framer-motion';
+import { FiPlus, FiLink } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
 import MeteorBackground from '@/components/common/meteor-background';
 import { ListPageHeader } from '@/components/common/list-page-header';
 import { FriendCard } from './components/friend-card';
 import { ApplyModal } from './components/apply-modal';
-import { MOCK_FRIENDS, Friend } from './data';
+import { MOCK_FRIENDS } from './data';
+import { useAnimationEngine } from '@/utils/ui/animation';
 
 const Container = styled.div`
   min-height: 100vh;
   position: relative;
   background: var(--bg-primary);
   overflow-x: hidden;
-
-  /* Deep space gradient overlay for dark mode */
-  [data-theme='dark'] & {
-    background: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #050505 100%);
-  }
 `;
 
 const AmbientOrb = styled(motion.div)`
@@ -32,90 +28,59 @@ const AmbientOrb = styled(motion.div)`
 `;
 
 const Content = styled.div`
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 1.5rem 4rem;
   position: relative;
   z-index: 1;
+`;
+
+const Grid = styled(motion.div)`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
 
   @media (max-width: 768px) {
-    padding: 0 1rem;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 `;
 
-// ==================== Parallax Layout ====================
-
-const ParallaxContainer = styled.div`
-  display: flex;
-  gap: 4rem; /* Increased gap for spacious cosmic feel */
-  padding-bottom: 8rem;
-  align-items: flex-start;
-  justify-content: center;
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 2rem;
-  }
-`;
-
-const Column = styled(motion.div)`
+const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4rem; /* Increased vertical gap */
-  flex: 1;
-  min-width: 0;
-`;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 0;
+  color: var(--text-tertiary);
+  gap: 1rem;
+  text-align: center;
 
-// ==================== Responsive Visibility ====================
-
-const DesktopView = styled.div`
-  display: block;
-  @media (max-width: 1024px) {
-    display: none;
-  }
-`;
-
-const MobileView = styled.div`
-  display: none;
-  @media (max-width: 1024px) {
-    display: block;
+  svg {
+    font-size: 3rem;
+    opacity: 0.5;
   }
 `;
 
 const Friends = () => {
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { variants } = useAnimationEngine();
 
-  // Scroll Parallax Logic
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start start', 'end end'],
-  });
-
-  const springConfig = { stiffness: 100, damping: 30, restDelta: 0.001 };
-
-  // Column Transforms - More subtle movement for "floating" effect
-  const y1 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -100]), springConfig);
-  const y2 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -200]), springConfig);
-  const y3 = useSpring(useTransform(scrollYProgress, [0, 1], [0, -100]), springConfig);
-
-  // Split friends into 3 columns
-  const [columns, setColumns] = useState<Friend[][]>([[], [], []]);
-
-  useEffect(() => {
-    const cols: Friend[][] = [[], [], []];
-    MOCK_FRIENDS.forEach((friend, i) => {
-      cols[i % 3].push(friend);
-    });
-    setColumns(cols);
-  }, []);
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
 
   return (
-    <Container ref={containerRef}>
+    <Container>
       <MeteorBackground />
 
-      {/* Ambient Orbs - Cosmic Colors */}
       <AmbientOrb
         animate={{
           x: [0, 100, 0],
@@ -151,64 +116,30 @@ const Friends = () => {
 
       <Content>
         <ListPageHeader
-          title="Stellar Nodes"
-          subtitle="Explore the digital cosmos. Connect with like-minded creators."
+          title="友情链接"
+          subtitle="探索数字宇宙的邻居们。连接思想，分享见解。"
           count={MOCK_FRIENDS.length}
-          countUnit="Nodes"
+          countUnit="个伙伴"
         >
-          <div style={{ marginTop: '2rem' }}>
-            <Button
-              variant="primary"
-              size="medium"
-              leftIcon={<FiPlus />}
-              onClick={() => setIsApplyModalOpen(true)}
-              style={{
-                borderRadius: '999px',
-                padding: '0.8rem 2rem',
-                fontSize: '0.95rem',
-                fontWeight: 500,
-                letterSpacing: '0.02em',
-                background: 'var(--text-primary)',
-                color: 'var(--bg-primary)',
-                border: 'none',
-              }}
-            >
-              Establish Connection
+          <div style={{ marginTop: '1.5rem' }}>
+            <Button variant="primary" leftIcon={<FiPlus />} onClick={() => setIsApplyModalOpen(true)}>
+              申请友链
             </Button>
           </div>
         </ListPageHeader>
 
-        {/* Desktop Parallax Grid */}
-        <DesktopView>
-          <ParallaxContainer>
-            <Column style={{ y: y1 }}>
-              {columns[0].map((friend, i) => (
-                <FriendCard key={friend.id} friend={friend} index={i} />
-              ))}
-            </Column>
-            <Column style={{ y: y2, paddingTop: '8rem' }}>
-              {columns[1].map((friend, i) => (
-                <FriendCard key={friend.id} friend={friend} index={i} />
-              ))}
-            </Column>
-            <Column style={{ y: y3, paddingTop: '4rem' }}>
-              {columns[2].map((friend, i) => (
-                <FriendCard key={friend.id} friend={friend} index={i} />
-              ))}
-            </Column>
-          </ParallaxContainer>
-        </DesktopView>
-
-        {/* Mobile/Tablet Simple Grid */}
-        <MobileView>
-          <ParallaxContainer>
-            <Column>
-              {MOCK_FRIENDS.map((friend, i) => (
-                <FriendCard key={friend.id} friend={friend} index={i} />
-              ))}
-            </Column>
-          </ParallaxContainer>
-        </MobileView>
+        {MOCK_FRIENDS.length > 0 ? (
+          <Grid variants={containerVariants} initial="hidden" animate="visible">
+            {MOCK_FRIENDS.map((friend, index) => (
+              <FriendCard key={friend.id} friend={friend} index={index} />
+            ))}
+          </Grid>
+        ) : (
+          <EmptyState>
+            <FiLink />
+            <p>暂无友链，成为第一个伙伴吧！</p>
+          </EmptyState>
+        )}
       </Content>
 
       <ApplyModal isOpen={isApplyModalOpen} onClose={() => setIsApplyModalOpen(false)} />

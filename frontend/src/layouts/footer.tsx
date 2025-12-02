@@ -472,17 +472,20 @@ const Footer = () => {
                 <FooterLink to="/projects" variants={itemVariants}>
                   项目
                 </FooterLink>
-                <FooterLink to="/about" variants={itemVariants}>
-                  关于我
+                <FooterLink to="/profile" variants={itemVariants}>
+                  个人中心
                 </FooterLink>
               </FooterLinks>
 
               <FooterLinks>
                 <motion.div variants={itemVariants}>
-                  <FooterLinkTitle>资源</FooterLinkTitle>
+                  <FooterLinkTitle>关于</FooterLinkTitle>
                 </motion.div>
-                <FooterLink to="/timeline" variants={itemVariants}>
-                  时间线
+                <FooterLink to="/about-me" variants={itemVariants}>
+                  关于我
+                </FooterLink>
+                <FooterLink to="/about-site" variants={itemVariants}>
+                  关于本站
                 </FooterLink>
                 <FooterLink to="/friends" variants={itemVariants}>
                   友情链接
