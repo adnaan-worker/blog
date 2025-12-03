@@ -13,6 +13,7 @@ import {
   FiMail,
 } from 'react-icons/fi';
 import { Button, Input, Textarea, InfiniteScroll } from 'adnaan-ui';
+import { CommentAvatar } from '@/components/common';
 import { API } from '@/utils/api';
 import type { Comment as CommentType } from '@/types';
 import { storage } from '@/utils';
@@ -621,9 +622,34 @@ const CommentSection: React.FC<CommentSectionProps> = ({ targetId, targetType })
       >
         <CommentItem>
           <AvatarContainer>
-            <Avatar hasImage={!!avatarUrl}>
-              {avatarUrl && avatarUrl.trim() ? <img src={avatarUrl} alt={author} /> : authorInitial}
-            </Avatar>
+            {avatarUrl && avatarUrl.trim() ? (
+              <Avatar hasImage={true}>
+                <img
+                  src={avatarUrl}
+                  alt={author}
+                  onError={(e) => {
+                    // 头像加载失败时隐藏图片，显示 CommentAvatar
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.style.background = 'transparent';
+                  }}
+                />
+                {/* 后备头像 - 当图片加载失败时显示 */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    zIndex: -1,
+                  }}
+                >
+                  <CommentAvatar seed={author} />
+                </div>
+              </Avatar>
+            ) : (
+              <CommentAvatar seed={author} />
+            )}
           </AvatarContainer>
 
           <CommentContent>

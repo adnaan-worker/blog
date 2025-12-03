@@ -6,7 +6,7 @@ import {
   WordCloud,
   type WordCloudItem,
   RunningTimeCounter,
-  ListPageHeader,
+  PageHeader,
   type FilterGroup,
   type FilterValues,
 } from '@/components/common';
@@ -517,7 +517,7 @@ const AboutSite: React.FC = () => {
 
       {/* 页头 - 独立在最顶部 */}
       <HeaderContainer>
-        <ListPageHeader
+        <PageHeader
           title="光阴"
           subtitle="代码如诗，架构如画，在时间的河流里留下每一次迭代的痕迹，那些调试的夜、重构的风，终会让系统落进理想的经纬"
           count={filteredMilestones.length}

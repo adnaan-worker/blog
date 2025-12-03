@@ -335,7 +335,7 @@ const ClearAllButton = styled.button`
   }
 `;
 
-interface ListPageHeaderProps {
+interface PageHeaderProps {
   title: string;
   subtitle?: string;
   count?: number;
@@ -349,12 +349,14 @@ interface ListPageHeaderProps {
   /** 筛选值变化回调（自动清理空值） - 推荐使用 */
   onCleanFilterChange?: (cleanedValues: Record<string, any>) => void;
   defaultFilterCollapsed?: boolean; // 默认是否折叠筛选
+  // 自定义右侧内容（优先级高于筛选）
+  rightContent?: React.ReactNode;
 }
 
 /**
  * 列表页统一 Header 组件
  */
-export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
+export const PageHeader: React.FC<PageHeaderProps> = ({
   title,
   subtitle,
   count,
@@ -366,6 +368,7 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
   onFilterChange,
   onCleanFilterChange,
   defaultFilterCollapsed = true,
+  rightContent,
 }) => {
   const { setPageInfo } = usePageInfo();
   const { variants, springPresets } = useAnimationEngine();
@@ -565,93 +568,97 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = ({
         {children}
       </LeftContent>
 
-      {/* 右侧：筛选区域 */}
-      {hasFilters && (
-        <FilterArea>
-          <Button
-            variant={isFilterExpanded ? 'primary' : 'ghost'}
-            size="small"
-            onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.85rem',
-              background: isFilterExpanded
-                ? 'var(--accent-color)'
-                : 'rgba(var(--border-color-rgb, 229, 231, 235), 0.2)',
-              color: isFilterExpanded ? '#fff' : 'var(--text-secondary)',
-              border: 'none',
-              boxShadow: isFilterExpanded ? '0 4px 12px rgba(var(--accent-rgb), 0.25)' : 'none',
-            }}
-            leftIcon={<FiFilter />}
-            rightIcon={
-              <motion.div
-                animate={{ rotate: isFilterExpanded ? 180 : 0 }}
-                transition={{ duration: 0.3 }}
-                style={{ display: 'flex' }}
-              >
-                <FiChevronDown />
-              </motion.div>
-            }
-          >
-            筛选检索 {activeFilters.length > 0 && `(${activeFilters.length})`}
-          </Button>
+      {/* 右侧：自定义内容或筛选区域 */}
+      {rightContent ? (
+        <FilterArea>{rightContent}</FilterArea>
+      ) : (
+        hasFilters && (
+          <FilterArea>
+            <Button
+              variant={isFilterExpanded ? 'primary' : 'ghost'}
+              size="small"
+              onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.85rem',
+                background: isFilterExpanded
+                  ? 'var(--accent-color)'
+                  : 'rgba(var(--border-color-rgb, 229, 231, 235), 0.2)',
+                color: isFilterExpanded ? '#fff' : 'var(--text-secondary)',
+                border: 'none',
+                boxShadow: isFilterExpanded ? '0 4px 12px rgba(var(--accent-rgb), 0.25)' : 'none',
+              }}
+              leftIcon={<FiFilter />}
+              rightIcon={
+                <motion.div
+                  animate={{ rotate: isFilterExpanded ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ display: 'flex' }}
+                >
+                  <FiChevronDown />
+                </motion.div>
+              }
+            >
+              筛选检索 {activeFilters.length > 0 && `(${activeFilters.length})`}
+            </Button>
 
-          <AnimatePresence>
-            {isFilterExpanded && (
-              <AnimationWrapper
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-              >
-                <FilterContentInner>
-                  {filterGroups.map((group) => renderFilterGroup(group))}
+            <AnimatePresence>
+              {isFilterExpanded && (
+                <AnimationWrapper
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                >
+                  <FilterContentInner>
+                    {filterGroups.map((group) => renderFilterGroup(group))}
 
-                  {/* 已选条件展示区 */}
-                  {activeFilters.length > 0 && (
-                    <ActiveFiltersSection initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      <div
-                        style={{
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          marginBottom: '0.5rem',
-                        }}
-                      >
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>已选条件：</span>
-                        <ClearAllButton onClick={handleClearAll}>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <FiTrash2 size={12} /> 清空筛选
-                          </span>
-                        </ClearAllButton>
-                      </div>
-
-                      {activeFilters.map((filter) => (
-                        <ActiveTag
-                          key={filter.key}
-                          onClick={() => handleClearFilter(filter.key)}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          layout
+                    {/* 已选条件展示区 */}
+                    {activeFilters.length > 0 && (
+                      <ActiveFiltersSection initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <div
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '0.5rem',
+                          }}
                         >
-                          <span>{filter.label}:</span>
-                          <strong>{filter.valueLabel}</strong>
-                          <div className="close-icon">
-                            <FiX size={12} />
-                          </div>
-                        </ActiveTag>
-                      ))}
-                    </ActiveFiltersSection>
-                  )}
-                </FilterContentInner>
-              </AnimationWrapper>
-            )}
-          </AnimatePresence>
-        </FilterArea>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>已选条件：</span>
+                          <ClearAllButton onClick={handleClearAll}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <FiTrash2 size={12} /> 清空筛选
+                            </span>
+                          </ClearAllButton>
+                        </div>
+
+                        {activeFilters.map((filter) => (
+                          <ActiveTag
+                            key={filter.key}
+                            onClick={() => handleClearFilter(filter.key)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            layout
+                          >
+                            <span>{filter.label}:</span>
+                            <strong>{filter.valueLabel}</strong>
+                            <div className="close-icon">
+                              <FiX size={12} />
+                            </div>
+                          </ActiveTag>
+                        ))}
+                      </ActiveFiltersSection>
+                    )}
+                  </FilterContentInner>
+                </AnimationWrapper>
+              )}
+            </AnimatePresence>
+          </FilterArea>
+        )
       )}
     </Header>
   );
 };
 
-export default ListPageHeader;
+export default PageHeader;

@@ -209,8 +209,8 @@ export const NavLinkWithHover: React.FC<{
 interface NavLinksProps {
   mainNavItems: MenuItem[];
   onLinkClick: () => void;
-  moreDropdownOpen: boolean;
-  onDropdownOpen: () => void;
+  activeDropdown: string | null;
+  onDropdownOpen: (path: string) => void;
   onDropdownClose: () => void;
   onDropdownItemClick?: (item: MenuItem) => void;
   dropdownRef: React.RefObject<HTMLDivElement>;
@@ -219,7 +219,7 @@ interface NavLinksProps {
 const NavLinks: React.FC<NavLinksProps> = ({
   mainNavItems,
   onLinkClick,
-  moreDropdownOpen,
+  activeDropdown,
   onDropdownOpen,
   onDropdownClose,
   onDropdownItemClick,
@@ -231,15 +231,23 @@ const NavLinks: React.FC<NavLinksProps> = ({
 
   // 检查菜单项是否激活
   const isItemActive = (item: MenuItem) => {
+    const currentPath = location.pathname;
+
+    // 首页特殊处理：只有完全匹配才激活
     if (item.path === '/') {
-      return location.pathname === '/';
+      return currentPath === '/';
     }
 
+    // 下拉菜单项：检查子项是否匹配
     if (item.isDropdown && item.children) {
-      return item.children.some((child) => location.pathname.includes(child.path));
+      return item.children.some((child) => {
+        // 精确匹配或以路径开头（支持子路由）
+        return currentPath === child.path || (child.path !== '/' && currentPath.startsWith(child.path + '/'));
+      });
     }
 
-    return location.pathname.includes(item.path);
+    // 普通菜单项：精确匹配或以路径开头（支持子路由）
+    return currentPath === item.path || (item.path !== '/' && currentPath.startsWith(item.path + '/'));
   };
 
   return (
@@ -253,7 +261,7 @@ const NavLinks: React.FC<NavLinksProps> = ({
               key={item.path}
               ref={dropdownRef}
               style={{ position: 'relative' }}
-              onMouseEnter={onDropdownOpen}
+              onMouseEnter={() => onDropdownOpen(item.path)}
               onMouseLeave={onDropdownClose}
             >
               <NavLinkWithHover
@@ -268,7 +276,7 @@ const NavLinks: React.FC<NavLinksProps> = ({
               </NavLinkWithHover>
 
               <AnimatePresence>
-                {moreDropdownOpen && (
+                {activeDropdown === item.path && (
                   <DropdownContent initial="hidden" animate="visible" exit="exit" variants={variants.dropdown}>
                     {item.children.map((childItem) => {
                       const ChildIcon = childItem.icon;

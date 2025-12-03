@@ -16,6 +16,7 @@ import {
   FiEdit,
   FiGlobe,
   FiSmile,
+  FiMessageSquare,
 } from 'react-icons/fi';
 
 /* ==================== 类型定义 ==================== */
@@ -38,9 +39,22 @@ export interface MenuGroup {
 
 export const mainNavItems: MenuItem[] = [
   {
-    path: '/',
+    path: '#home',
     title: '首页',
     icon: FiHome,
+    isDropdown: true,
+    children: [
+      {
+        path: '/',
+        title: '主页',
+        icon: FiHome,
+      },
+      {
+        path: '/guestbook',
+        title: '留言板',
+        icon: FiMessageSquare,
+      },
+    ],
   },
   {
     path: '/blog',

@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { MultiYearTimeline } from '@/components/content';
 import type { TimelineItem } from '@/utils/helpers/timeline';
-import { ListPageHeader, type FilterGroup, type FilterValues } from '@/components/common';
+import { PageHeader, type FilterGroup, type FilterValues } from '@/components/common';
 import { SEO } from '@/components/common';
 import { API } from '@/utils/api';
 import type { Article, Category, Tag } from '@/types';
@@ -198,7 +198,7 @@ const BlogPage: React.FC = () => {
   const [tags, setTags] = useState<Tag[]>([]);
   const [filterValues, setFilterValues] = useState<FilterValues>({});
 
-  // 清理后的筛选参数（由 ListPageHeader 自动处理）
+  // 清理后的筛选参数（由 PageHeader 自动处理）
   const [cleanedFilters, setCleanedFilters] = useState<Record<string, any>>({});
 
   // 加载分类、标签和年份数据
@@ -389,7 +389,7 @@ const BlogPage: React.FC = () => {
       />
       <PageContainer initial="hidden" animate="visible" variants={variants.stagger}>
         <Container>
-          <ListPageHeader
+          <PageHeader
             title="织星"
             subtitle="以逻辑为经、语法为纬，在 0 与 1 的旷野里织就星河，那些调试的夜、重构的风，终会让指令落进理想的经纬"
             count={totalCount}

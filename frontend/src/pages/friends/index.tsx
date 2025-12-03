@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { FiPlus, FiLink } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
 import MeteorBackground from '@/components/common/meteor-background';
-import { ListPageHeader } from '@/components/common/list-page-header';
+import { PageHeader } from '@/components/common/page-header';
 import { FriendCard } from './components/friend-card';
 import { ApplyModal } from './components/apply-modal';
 import { MOCK_FRIENDS } from './data';
@@ -115,7 +115,7 @@ const Friends = () => {
       />
 
       <Content>
-        <ListPageHeader
+        <PageHeader
           title="友情链接"
           subtitle="探索数字宇宙的邻居们。连接思想，分享见解。"
           count={MOCK_FRIENDS.length}
@@ -126,7 +126,7 @@ const Friends = () => {
               申请友链
             </Button>
           </div>
-        </ListPageHeader>
+        </PageHeader>
 
         {MOCK_FRIENDS.length > 0 ? (
           <Grid variants={containerVariants} initial="hidden" animate="visible">

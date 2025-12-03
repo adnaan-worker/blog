@@ -8,7 +8,7 @@ import type { Project } from '@/types';
 import { formatDate } from '@/utils';
 import { Pagination } from 'adnaan-ui';
 import { useAnimationEngine, useSmartInView, useSpringInteractions } from '@/utils/ui/animation';
-import { ListPageHeader, type FilterGroup, type FilterValues, ProjectListSkeleton } from '@/components/common';
+import { PageHeader, type FilterGroup, type FilterValues, ProjectListSkeleton } from '@/components/common';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 
@@ -449,7 +449,7 @@ const Projects: React.FC = () => {
   // 筛选相关状态
   const [filterValues, setFilterValues] = useState<FilterValues>({});
 
-  // 清理后的筛选参数（由 ListPageHeader 自动处理）
+  // 清理后的筛选参数（由 PageHeader 自动处理）
   const [cleanedFilters, setCleanedFilters] = useState<Record<string, any>>({});
 
   // 加载项目
@@ -571,7 +571,7 @@ const Projects: React.FC = () => {
       />
       <PageContainer initial="hidden" animate="visible" variants={variants.stagger}>
         {/* 页面头部 - 统一组件 */}
-        <ListPageHeader
+        <PageHeader
           title="赴约"
           subtitle="以代码为信物，跨越屏幕的距离，每一行提交都是同频者的应答，在开源的旷野上，赴一场关于热爱与传承的约定"
           count={totalCount}

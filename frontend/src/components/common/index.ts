@@ -13,13 +13,7 @@ export { WordCloud, type WordCloudItem } from './word-cloud';
 export { default as RunningTimeCounter } from './running-time-counter';
 
 // 列表页组件
-export {
-  ListPageHeader,
-  cleanFilterValues,
-  type FilterGroup,
-  type FilterOption,
-  type FilterValues,
-} from './list-page-header';
+export { PageHeader, cleanFilterValues, type FilterGroup, type FilterOption, type FilterValues } from './page-header';
 
 // 虚化滚动容器
 export { FadeScrollContainer, type FadeScrollContainerProps } from './fade-scroll-container';
@@ -32,3 +26,6 @@ export { LazyImage } from './lazy-image';
 
 // 全局监控
 export { GlobalMonitors } from './global-monitors';
+
+// 随机头像组件
+export { RandomAvatar, UserAvatar, CommentAvatar, GuestbookAvatar, type AvatarStyle } from './random-avatar';

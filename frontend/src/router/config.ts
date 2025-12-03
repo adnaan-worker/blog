@@ -39,6 +39,10 @@ export const router = createHashRouter([
         element: elements.projectDetail,
       },
       {
+        path: '/guestbook',
+        element: elements.guestbook,
+      },
+      {
         path: '/friends',
         element: elements.friends,
       },

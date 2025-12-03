@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { MultiYearTimeline } from '@/components/content';
 import type { TimelineItem } from '@/utils/helpers/timeline';
-import { ListPageHeader, type FilterGroup, type FilterValues } from '@/components/common';
+import { PageHeader, type FilterGroup, type FilterValues } from '@/components/common';
 import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import { API } from '@/utils/api';
@@ -137,7 +137,7 @@ const NotesPage: React.FC = () => {
 
   // 筛选状态
   const [filterValues, setFilterValues] = useState<FilterValues>({});
-  // 清理后的筛选参数（由 ListPageHeader 自动处理）
+  // 清理后的筛选参数（由 PageHeader 自动处理）
   const [cleanedFilters, setCleanedFilters] = useState<Record<string, any>>({});
 
   // 图标映射辅助函数
@@ -342,7 +342,7 @@ const NotesPage: React.FC = () => {
       <PageContainer initial="hidden" animate="visible" variants={variants.stagger}>
         <Container>
           {/* 页面头部 */}
-          <ListPageHeader
+          <PageHeader
             title="拾光"
             subtitle="键盘敲碎的晨昏里，藏着踩坑的余温、顿悟的微光，把每一次批注都折成纸船，在笔记的河流里打捞成长的回响"
             count={totalCount}

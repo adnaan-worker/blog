@@ -298,7 +298,10 @@ const extractTagInfo = (tag: string | any, index: number) => {
  */
 const replaceMoreMenuItem = (items: MenuItem[], selectedChild: MenuItem): MenuItem[] => {
   return items.map((item) => {
-    if (item.isDropdown && item.children) {
+    // 检查当前项是否是选中子项的父级
+    const isParent = item.children?.some((child) => child.path === selectedChild.path);
+
+    if (item.isDropdown && item.children && isParent) {
       // 将选中的子项放到父级位置，保留下拉功能
       return {
         ...selectedChild,
@@ -358,7 +361,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
 
   // 其他状态
   const [internalScrolled, setInternalScrolled] = useState(scrolled);
-  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -513,7 +516,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
   const resetMainNavMenu = useCallback(() => {
     setMainNavItems(defaultMainNavItems);
     storage.local.remove(STORAGE_KEYS.SELECTED_MENU);
-    setMoreDropdownOpen(false);
+    setActiveDropdown(null);
   }, []);
 
   // ==================== 回调函数 ====================
@@ -526,7 +529,7 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
     setMainNavItems(newMainNavItems);
     // 只保存 path，避免函数类型的 icon 被 JSON 序列化后丢失
     storage.local.set(STORAGE_KEYS.SELECTED_MENU, item.path);
-    setMoreDropdownOpen(false);
+    setActiveDropdown(null);
   }, []);
 
   // 使用 useLayoutEffect 在浏览器绘制前同步执行，避免视觉闪烁
@@ -696,9 +699,9 @@ const Header: React.FC<HeaderProps> = ({ scrolled = false, pageInfo }) => {
                 <NavLinks
                   mainNavItems={mainNavItems}
                   onLinkClick={handleLinkClick}
-                  moreDropdownOpen={moreDropdownOpen}
-                  onDropdownOpen={() => setMoreDropdownOpen(true)}
-                  onDropdownClose={() => setMoreDropdownOpen(false)}
+                  activeDropdown={activeDropdown}
+                  onDropdownOpen={(path) => setActiveDropdown(path)}
+                  onDropdownClose={() => setActiveDropdown(null)}
                   onDropdownItemClick={handleDropdownItemClick}
                   dropdownRef={dropdownRef as React.RefObject<HTMLDivElement>}
                 />

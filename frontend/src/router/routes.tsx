@@ -12,6 +12,9 @@ const NoteDetail = lazy(() => import('@/pages/notes/detail'));
 const Projects = lazy(() => import('@/pages/project'));
 const ProjectDetail = lazy(() => import('@/pages/project/detail'));
 
+// 留言板页面
+const Guestbook = lazy(() => import('@/pages/guestbook'));
+
 // 个人中心相关页面
 const Profile = lazy(() => import('@/pages/profile'));
 
@@ -44,6 +47,7 @@ export const createRouteElements = () => ({
   noteDetail: <NoteDetail />,
   projects: <Projects />,
   projectDetail: <ProjectDetail />,
+  guestbook: <Guestbook />,
   profile: <Profile />,
   articleEditor: (
     <Suspense fallback={null}>
