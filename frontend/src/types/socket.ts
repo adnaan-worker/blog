@@ -92,12 +92,18 @@ export interface AIChunkData {
   chunk: string;
   type?: string;
   action?: string;
+  cached?: boolean; // 是否来自缓存
+  messageId?: string; // 消息ID
+  position?: number; // 当前位置（用于断点续传）
 }
 
 export interface AIDoneData {
   taskId?: string;
   sessionId?: string; // 支持 chat 功能
   action?: string;
+  cached?: boolean; // 是否来自缓存
+  messageId?: string; // 消息ID
+  totalLength?: number; // 总长度
 }
 
 export interface AIErrorData {

@@ -7,6 +7,7 @@ const { AI_EVENTS } = require('@/utils/socket-events');
 const { SocketValidationError, SocketAuthenticationError } = require('@/utils/socket-response');
 const promptManager = require('@/services/ai/prompts');
 const ConcurrencyLimiter = require('@/utils/concurrency-limiter');
+const cacheService = require('@/services/cache.service');
 
 /**
  * AI 流式输出 Socket 处理器（新版 + 并发控制）
@@ -23,6 +24,10 @@ class AINewHandler extends BaseSocketHandler {
       timeout: 120000, // 超时时间2分钟
     });
 
+    // 缓存配置
+    this.CACHE_TTL = 5 * 60; // 5分钟
+    this.CACHE_PREFIX = 'ai:chat:';
+
     // 注册事件处理器
     this.on(AI_EVENTS.STREAM_CHAT, this.handleStreamChat);
     this.on(AI_EVENTS.STREAM_POLISH, this.handleStreamPolish);
@@ -31,6 +36,196 @@ class AINewHandler extends BaseSocketHandler {
     this.on(AI_EVENTS.STREAM_SUMMARIZE, this.handleStreamSummarize);
     this.on(AI_EVENTS.STREAM_TRANSLATE, this.handleStreamTranslate);
     this.on(AI_EVENTS.CANCEL, this.handleCancel);
+  }
+
+  /**
+   * 获取消息缓存键
+   */
+  _getCacheKey(messageId) {
+    return `${this.CACHE_PREFIX}${messageId}`;
+  }
+
+  /**
+   * 检查消息是否已缓存（已处理）
+   */
+  async _isMessageCached(messageId) {
+    if (!messageId) return false;
+    const key = this._getCacheKey(messageId);
+    return await cacheService.exists(key);
+  }
+
+  /**
+   * 获取缓存的消息内容
+   */
+  async _getCachedMessage(messageId) {
+    if (!messageId) return null;
+    const key = this._getCacheKey(messageId);
+    return await cacheService.get(key);
+  }
+
+  /**
+   * 缓存消息内容
+   */
+  async _cacheMessage(messageId, content) {
+    if (!messageId) return;
+    const key = this._getCacheKey(messageId);
+    await cacheService.set(key, content, this.CACHE_TTL);
+  }
+
+  /**
+   * 追加内容到缓存（用于流式输出）
+   */
+  async _appendToCache(messageId, chunk) {
+    if (!messageId) return;
+    const key = this._getCacheKey(messageId);
+
+    // 获取现有内容
+    const existing = (await cacheService.get(key)) || '';
+    const updated = existing + chunk;
+
+    // 更新缓存并刷新TTL
+    await cacheService.set(key, updated, this.CACHE_TTL);
+
+    return updated.length; // 返回当前总长度
+  }
+
+  /**
+   * 通用流式处理包装器（支持幂等性和断点续传）
+   * @param {Object} socket - Socket实例
+   * @param {Object} data - 请求数据
+   * @param {Function} streamFunction - 流式生成函数
+   * @param {Object} options - 选项
+   */
+  async _handleStreamWithCache(socket, data, streamFunction, options = {}) {
+    const { taskId, _messageId, continue_from = 0 } = data;
+
+    const {
+      eventType = 'generate', // 事件类型
+      requireAuth = false, // 是否需要认证
+      checkQuota = true, // 是否检查配额
+      quotaType = 'generate', // 配额类型：'chat' 或 'generate'
+    } = options;
+
+    const userId = socket.userId || socket.id;
+    const isGuest = !socket.userId;
+
+    // 🔒 幂等性检查：如果消息已处理，直接返回缓存内容
+    if (_messageId && (await this._isMessageCached(_messageId))) {
+      this.log('info', `${eventType}消息已处理，返回缓存内容`, {
+        messageId: _messageId,
+        userId,
+        taskId,
+        continueFrom: continue_from,
+      });
+
+      const cachedContent = await this._getCachedMessage(_messageId);
+      if (cachedContent) {
+        // 🎯 主流方案：缓存消息直接发送done，不发送chunk
+        // 原因：前端可能已经有部分内容，发送chunk会导致重复
+        this.log('info', `返回缓存消息（不发送chunk）`, {
+          messageId: _messageId,
+          length: cachedContent.length,
+        });
+
+        this.emit(socket, AI_EVENTS.DONE, {
+          taskId,
+          cached: true,
+          totalLength: cachedContent.length,
+          messageId: _messageId,
+        });
+
+        if (_messageId) {
+          this.emit(socket, 'message:ack', {
+            messageId: _messageId,
+            success: true,
+            cached: true,
+            response: { taskId, userId, totalLength: cachedContent.length },
+          });
+        }
+
+        return;
+      }
+    }
+
+    try {
+      // 认证检查
+      if (requireAuth) {
+        this._checkAuth(socket);
+      }
+
+      // 并发控制
+      await this.concurrencyLimiter.acquire(userId);
+
+      // 配额检查
+      if (checkQuota && !isGuest) {
+        await this._checkQuota(userId, quotaType);
+      }
+
+      // 🎯 立即发送ACK，告知客户端消息已接收并开始处理
+      if (_messageId) {
+        this.emit(socket, 'message:ack', {
+          messageId: _messageId,
+          success: true,
+          processing: true, // 标记为处理中
+          response: { taskId, userId },
+        });
+      }
+
+      // 流式生成
+      let result = '';
+      let position = 0;
+
+      await streamFunction(async chunk => {
+        result += chunk;
+        position += chunk.length;
+
+        // 实时缓存
+        if (_messageId) {
+          await this._appendToCache(_messageId, chunk);
+        }
+
+        // 发送chunk
+        this.emit(socket, AI_EVENTS.CHUNK, {
+          taskId,
+          chunk,
+          type: eventType,
+          position,
+          messageId: _messageId,
+        });
+      });
+
+      // 更新配额
+      if (checkQuota && !isGuest) {
+        await this._updateQuota(userId, quotaType);
+      }
+
+      // 完成信号
+      this.emit(socket, AI_EVENTS.DONE, {
+        taskId,
+        totalLength: position,
+        messageId: _messageId,
+      });
+
+      return result;
+    } catch (error) {
+      this.log('error', `${eventType}失败`, { userId, error: error.message });
+      this.emit(socket, AI_EVENTS.ERROR, {
+        taskId,
+        error: error.message,
+      });
+
+      if (_messageId) {
+        this.emit(socket, 'message:ack', {
+          messageId: _messageId,
+          success: false,
+          error: error.message,
+        });
+      }
+
+      throw error;
+    } finally {
+      this.concurrencyLimiter.release(userId);
+    }
   }
 
   /**
@@ -81,124 +276,76 @@ class AINewHandler extends BaseSocketHandler {
       });
     }
 
-    const { message, sessionId, _messageId } = data;
-    const userId = socket.userId || socket.id; // 未登录用户使用 socket.id
+    const { message, sessionId } = data;
+    const userId = socket.userId || socket.id;
     const isGuest = !socket.userId;
 
-    try {
-      // 1. 并发控制检查
-      await this.concurrencyLimiter.acquire(userId);
-
-      this.log('info', '开始流式聊天', {
-        userId,
-        sessionId,
-        isGuest,
-        messageId: _messageId,
-        concurrency: this.concurrencyLimiter.getRunningCount(userId),
-      });
-
-      // 2. 登录用户检查配额
-      if (socket.userId) {
-        await this._checkQuota(userId, 'chat');
-      }
-
-      // 1. 保存用户消息（仅登录用户）
-      if (!isGuest) {
-        await chatHistoryService.saveMessage(userId, sessionId, 'user', message, 'blog_assistant');
-      }
-
-      // 2. 加载历史记录（仅登录用户，最近10轮对话）
-      let history = [];
-      if (!isGuest) {
-        history = await chatHistoryService.getSessionHistory(userId, sessionId, 20);
-      }
-
-      // 3. 构建消息上下文
-      const systemPrompt = promptManager.getSystemPrompt('blog');
-      const messages = [{ role: 'system', content: systemPrompt }];
-
-      // 添加历史消息（如果有）
-      if (history.length > 0) {
-        messages.push(...history);
-      }
-
-      // 添加当前消息
-      messages.push({ role: 'user', content: message });
-
-      // 4. 流式生成
-      let assistantReply = '';
-      await aiService.streamChat(
-        message,
-        chunk => {
-          assistantReply += chunk;
-          this.emit(socket, AI_EVENTS.CHUNK, {
+    // 使用通用包装器处理流式输出
+    await this._handleStreamWithCache(
+      socket,
+      { ...data, taskId: sessionId }, // 将sessionId映射为taskId
+      async onChunk => {
+        // 1. 保存用户消息（仅登录用户）
+        if (!isGuest) {
+          await chatHistoryService.saveMessage(
+            userId,
             sessionId,
-            chunk,
-            type: 'chat',
-          });
-        },
-        {
-          taskId: sessionId,
-          systemPrompt,
-          // 如果有历史，传递完整上下文
-          messages: history.length > 0 ? messages : undefined,
+            'user',
+            message,
+            'blog_assistant'
+          );
         }
-      );
 
-      // 5. 保存 AI 回复（仅登录用户）
-      if (!isGuest && assistantReply) {
-        await chatHistoryService.saveMessage(
-          userId,
-          sessionId,
-          'assistant',
-          assistantReply,
-          'blog_assistant'
+        // 2. 加载历史记录（仅登录用户）
+        let history = [];
+        if (!isGuest) {
+          history = await chatHistoryService.getSessionHistory(userId, sessionId, 20);
+        }
+
+        // 3. 构建消息上下文
+        const systemPrompt = promptManager.getSystemPrompt('blog');
+        const messages = [{ role: 'system', content: systemPrompt }];
+        if (history.length > 0) {
+          messages.push(...history);
+        }
+        messages.push({ role: 'user', content: message });
+
+        // 4. 流式生成
+        let assistantReply = '';
+        await aiService.streamChat(
+          message,
+          async chunk => {
+            assistantReply += chunk;
+            await onChunk(chunk); // 使用包装器的回调
+          },
+          {
+            taskId: sessionId,
+            systemPrompt,
+            messages: history.length > 0 ? messages : undefined,
+          }
         );
 
-        // 清理旧消息（保留最近50条）
-        await chatHistoryService.cleanOldMessages(userId, sessionId, 50);
-      }
+        // 5. 保存 AI 回复（仅登录用户）
+        if (!isGuest && assistantReply) {
+          await chatHistoryService.saveMessage(
+            userId,
+            sessionId,
+            'assistant',
+            assistantReply,
+            'blog_assistant'
+          );
+          await chatHistoryService.cleanOldMessages(userId, sessionId, 50);
+        }
 
-      // 6. 登录用户更新配额
-      if (socket.userId) {
-        await this._updateQuota(userId, 'chat');
+        return assistantReply;
+      },
+      {
+        eventType: 'chat',
+        requireAuth: false, // 支持访客
+        checkQuota: !isGuest, // 只对登录用户检查配额
+        quotaType: 'chat', // 使用聊天配额
       }
-
-      this.emit(socket, AI_EVENTS.DONE, { sessionId });
-
-      // 7. 发送消息确认 ACK（成功）
-      if (_messageId) {
-        this.emit(socket, 'message:ack', {
-          messageId: _messageId,
-          success: true,
-          response: { sessionId, userId },
-        });
-        this.log('info', '消息处理成功，已发送 ACK', { messageId: _messageId });
-      }
-    } catch (error) {
-      this.log('error', '流式聊天失败', { userId, error: error.message });
-      this.emit(socket, AI_EVENTS.ERROR, {
-        sessionId,
-        error: error.message,
-      });
-
-      // 发送消息确认 ACK（失败）
-      if (_messageId) {
-        this.emit(socket, 'message:ack', {
-          messageId: _messageId,
-          success: false,
-          error: error.message,
-        });
-        this.log('warn', '消息处理失败，已发送失败 ACK', { messageId: _messageId });
-      }
-    } finally {
-      // 释放并发控制
-      this.concurrencyLimiter.release(userId);
-      this.log('debug', '释放并发控制', {
-        userId,
-        remaining: this.concurrencyLimiter.getRunningCount(userId),
-      });
-    }
+    );
   }
 
   /**
@@ -212,39 +359,20 @@ class AINewHandler extends BaseSocketHandler {
       });
     }
 
-    this._checkAuth(socket);
+    const { content, style = '更加流畅和专业' } = data;
 
-    const { content, style = '更加流畅和专业', taskId } = data;
-    const userId = socket.userId;
-
-    try {
-      await this._checkQuota(userId);
-
-      this.log('info', '开始流式润色', { userId, taskId });
-
-      await writingService.polish(
-        content,
-        style,
-        chunk => {
-          this.emit(socket, AI_EVENTS.CHUNK, {
-            taskId,
-            chunk,
-            action: 'polish',
-          });
-        },
-        taskId
-      );
-
-      await this._updateQuota(userId);
-
-      this.emit(socket, AI_EVENTS.DONE, { taskId, action: 'polish' });
-    } catch (error) {
-      this.log('error', '流式润色失败', { userId, error: error.message });
-      this.emit(socket, AI_EVENTS.ERROR, {
-        taskId,
-        error: error.message,
-      });
-    }
+    await this._handleStreamWithCache(
+      socket,
+      data,
+      async onChunk => {
+        await writingService.polish(content, style, onChunk, data.taskId);
+      },
+      {
+        eventType: 'polish',
+        requireAuth: true,
+        checkQuota: true,
+      }
+    );
   }
 
   /**
@@ -258,39 +386,20 @@ class AINewHandler extends BaseSocketHandler {
       });
     }
 
-    this._checkAuth(socket);
+    const { content, improvements = '提高可读性和逻辑性' } = data;
 
-    const { content, improvements = '提高可读性和逻辑性', taskId } = data;
-    const userId = socket.userId;
-
-    try {
-      await this._checkQuota(userId);
-
-      this.log('info', '开始流式改进', { userId, taskId });
-
-      await writingService.improve(
-        content,
-        improvements,
-        chunk => {
-          this.emit(socket, AI_EVENTS.CHUNK, {
-            taskId,
-            chunk,
-            action: 'improve',
-          });
-        },
-        taskId
-      );
-
-      await this._updateQuota(userId);
-
-      this.emit(socket, AI_EVENTS.DONE, { taskId, action: 'improve' });
-    } catch (error) {
-      this.log('error', '流式改进失败', { userId, error: error.message });
-      this.emit(socket, AI_EVENTS.ERROR, {
-        taskId,
-        error: error.message,
-      });
-    }
+    await this._handleStreamWithCache(
+      socket,
+      data,
+      async onChunk => {
+        await writingService.improve(content, improvements, onChunk, data.taskId);
+      },
+      {
+        eventType: 'improve',
+        requireAuth: true,
+        checkQuota: true,
+      }
+    );
   }
 
   /**
@@ -304,39 +413,20 @@ class AINewHandler extends BaseSocketHandler {
       });
     }
 
-    this._checkAuth(socket);
+    const { content, length = 'medium' } = data;
 
-    const { content, length = 'medium', taskId } = data;
-    const userId = socket.userId;
-
-    try {
-      await this._checkQuota(userId);
-
-      this.log('info', '开始流式扩展', { userId, taskId });
-
-      await writingService.expand(
-        content,
-        length,
-        chunk => {
-          this.emit(socket, AI_EVENTS.CHUNK, {
-            taskId,
-            chunk,
-            action: 'expand',
-          });
-        },
-        taskId
-      );
-
-      await this._updateQuota(userId);
-
-      this.emit(socket, AI_EVENTS.DONE, { taskId, action: 'expand' });
-    } catch (error) {
-      this.log('error', '流式扩展失败', { userId, error: error.message });
-      this.emit(socket, AI_EVENTS.ERROR, {
-        taskId,
-        error: error.message,
-      });
-    }
+    await this._handleStreamWithCache(
+      socket,
+      data,
+      async onChunk => {
+        await writingService.expand(content, length, onChunk, data.taskId);
+      },
+      {
+        eventType: 'expand',
+        requireAuth: true,
+        checkQuota: true,
+      }
+    );
   }
 
   /**
@@ -350,39 +440,20 @@ class AINewHandler extends BaseSocketHandler {
       });
     }
 
-    this._checkAuth(socket);
+    const { content, length = 'medium' } = data;
 
-    const { content, length = 'medium', taskId } = data;
-    const userId = socket.userId;
-
-    try {
-      await this._checkQuota(userId);
-
-      this.log('info', '开始流式总结', { userId, taskId });
-
-      await writingService.summarize(
-        content,
-        length,
-        chunk => {
-          this.emit(socket, AI_EVENTS.CHUNK, {
-            taskId,
-            chunk,
-            action: 'summarize',
-          });
-        },
-        taskId
-      );
-
-      await this._updateQuota(userId);
-
-      this.emit(socket, AI_EVENTS.DONE, { taskId, action: 'summarize' });
-    } catch (error) {
-      this.log('error', '流式总结失败', { userId, error: error.message });
-      this.emit(socket, AI_EVENTS.ERROR, {
-        taskId,
-        error: error.message,
-      });
-    }
+    await this._handleStreamWithCache(
+      socket,
+      data,
+      async onChunk => {
+        await writingService.summarize(content, length, onChunk, data.taskId);
+      },
+      {
+        eventType: 'summarize',
+        requireAuth: true,
+        checkQuota: true,
+      }
+    );
   }
 
   /**
@@ -396,39 +467,20 @@ class AINewHandler extends BaseSocketHandler {
       });
     }
 
-    this._checkAuth(socket);
+    const { content, targetLang = '英文' } = data;
 
-    const { content, targetLang = '英文', taskId } = data;
-    const userId = socket.userId;
-
-    try {
-      await this._checkQuota(userId);
-
-      this.log('info', '开始流式翻译', { userId, taskId, targetLang });
-
-      await writingService.translate(
-        content,
-        targetLang,
-        chunk => {
-          this.emit(socket, AI_EVENTS.CHUNK, {
-            taskId,
-            chunk,
-            action: 'translate',
-          });
-        },
-        taskId
-      );
-
-      await this._updateQuota(userId);
-
-      this.emit(socket, AI_EVENTS.DONE, { taskId, action: 'translate' });
-    } catch (error) {
-      this.log('error', '流式翻译失败', { userId, error: error.message });
-      this.emit(socket, AI_EVENTS.ERROR, {
-        taskId,
-        error: error.message,
-      });
-    }
+    await this._handleStreamWithCache(
+      socket,
+      data,
+      async onChunk => {
+        await writingService.translate(content, targetLang, onChunk, data.taskId);
+      },
+      {
+        eventType: 'translate',
+        requireAuth: true,
+        checkQuota: true,
+      }
+    );
   }
 
   /**

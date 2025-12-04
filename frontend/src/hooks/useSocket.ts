@@ -73,7 +73,7 @@ class SocketManager {
   // 消息队列相关
   private messageQueue: Map<string, QueuedMessage> = new Map(); // 消息队列
   private pendingAcks: Map<string, NodeJS.Timeout> = new Map(); // 等待确认的消息
-  private ackTimeout = Number(import.meta.env.VITE_SOCKET_ACK_TIMEOUT) || 10000; // ACK 超时时间
+  private ackTimeout = Number(import.meta.env.VITE_SOCKET_ACK_TIMEOUT) || 60000; // ACK 超时时间（60秒，适应AI生成）
   private readonly STORAGE_KEY = 'socket_message_queue'; // localStorage 键
   private readonly MAX_QUEUE_SIZE = Number(import.meta.env.VITE_SOCKET_MAX_QUEUE_SIZE) || 100; // 最大队列大小
   private readonly MESSAGE_EXPIRE_TIME = Number(import.meta.env.VITE_SOCKET_MESSAGE_EXPIRE_TIME) || 86400000; // 消息过期时间

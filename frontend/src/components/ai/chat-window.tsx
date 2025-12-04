@@ -217,35 +217,68 @@ export const AIChatWindow: React.FC<ChatWindowProps> = ({ onClose, headerMode = 
     contentRef.current = streamingContent;
   }, [streamingContent]);
 
+  // 用于追踪已完整处理的消息ID（防止重复添加到列表）
+  const processedMessagesRef = useRef<Set<string>>(new Set());
+
   // 监听 AI 事件
   useEffect(() => {
     const unsubChunk = ai.onChunk((data) => {
       const id = data.taskId || data.sessionId;
-      if (id === sessionIdRef.current) {
-        setStreamingContent((prev) => prev + data.chunk);
-        setIsStreaming(true);
+      if (id !== sessionIdRef.current) return;
+
+      // 如果这条消息已经完整处理并添加到列表了，完全忽略
+      if (data.messageId && processedMessagesRef.current.has(data.messageId)) {
+        console.log('[AI] 忽略已完成消息的chunk:', data.messageId);
+        return;
       }
+
+      // 正常追加内容
+      setStreamingContent((prev) => prev + data.chunk);
+      setIsStreaming(true);
     });
 
     const unsubDone = ai.onDone((data) => {
       const id = data.taskId || data.sessionId;
-      if (id === sessionIdRef.current) {
-        // 使用 contentRef 获取完整的流式内容
-        const finalContent = contentRef.current;
+      if (id !== sessionIdRef.current) return;
 
+      // 🎯 如果是缓存的done（重连场景），直接忽略
+      // 原因：内容已经在streamingContent里了，不需要再添加
+      if (data.cached) {
+        console.log('[AI] 收到缓存done，内容已在气泡中，停止流式状态');
+        setIsStreaming(false);
+        return;
+      }
+
+      // 如果这条消息已经完整处理过，也忽略
+      if (data.messageId && processedMessagesRef.current.has(data.messageId)) {
+        console.log('[AI] 忽略已完成消息的done:', data.messageId);
+        return;
+      }
+
+      // 使用 contentRef 获取完整的流式内容
+      const finalContent = contentRef.current;
+
+      if (finalContent) {
         setMessages((prev) => [
           ...prev,
           {
-            id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, // 确保 ID 唯一
+            id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             role: 'assistant',
             content: finalContent,
             timestamp: new Date().toISOString(),
           },
         ]);
-        setStreamingContent('');
-        setIsStreaming(false);
-        contentRef.current = ''; // 重置 ref
+
+        // 标记消息已处理（这是关键！）
+        if (data.messageId) {
+          processedMessagesRef.current.add(data.messageId);
+          console.log('[AI] 消息已标记为完成:', data.messageId);
+        }
       }
+
+      setStreamingContent('');
+      setIsStreaming(false);
+      contentRef.current = ''; // 重置 ref
     });
 
     const unsubError = ai.onError((data) => {
