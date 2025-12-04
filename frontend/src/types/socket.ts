@@ -70,10 +70,20 @@ export interface VisitorRoomData {
 
 // ==================== AI 相关类型 ====================
 
+export interface AIStreamChatRequest {
+  message: string;
+  sessionId: string;
+  _messageId?: string; // 消息ID用于ACK确认
+}
+
 export interface AIStreamRequest {
   content: string;
   taskId?: string;
-  options?: Record<string, any>;
+  style?: string; // 用于 polish
+  improvements?: string; // 用于 improve
+  length?: string; // 用于 expand/summarize
+  targetLang?: string; // 用于 translate
+  _messageId?: string; // 消息ID用于ACK确认
 }
 
 export interface AIChunkData {
@@ -125,6 +135,28 @@ export interface SocketErrorData {
   type?: string;
 }
 
+// ==================== 消息确认相关类型 ====================
+
+export interface MessageAckData {
+  messageId: string;
+  success: boolean;
+  response?: any;
+  error?: string;
+}
+
+// ==================== 在线用户相关类型 ====================
+
+export interface OnlineUsersUpdateData {
+  count: number;
+  timestamp: number;
+}
+
+export interface RoomCountUpdateData {
+  room: string;
+  count: number;
+  timestamp: number;
+}
+
 // ==================== 事件映射类型 ====================
 
 export interface SocketEventMap {
@@ -135,8 +167,8 @@ export interface SocketEventMap {
   error: SocketErrorData;
 
   // 心跳事件
-  ping: HeartbeatData;
-  pong: HeartbeatData;
+  ping: void;
+  pong: void;
   heartbeat: HeartbeatData;
   heartbeat_ack: HeartbeatAckData;
 
@@ -154,8 +186,12 @@ export interface SocketEventMap {
   join: VisitorRoomData;
   leave: VisitorRoomData;
 
+  // 在线用户事件
+  online_users_update: OnlineUsersUpdateData;
+  room_count_update: RoomCountUpdateData;
+
   // AI 事件
-  'ai:stream_chat': AIStreamRequest;
+  'ai:stream_chat': AIStreamChatRequest;
   'ai:stream_polish': AIStreamRequest;
   'ai:stream_improve': AIStreamRequest;
   'ai:stream_expand': AIStreamRequest;
@@ -165,6 +201,14 @@ export interface SocketEventMap {
   'ai:done': AIDoneData;
   'ai:error': AIErrorData;
   'ai:cancel': AICancelData;
+  'ai:cancelled': AICancelData;
+
+  // 消息确认事件
+  'message:ack': MessageAckData;
+
+  // 内部事件（框架使用）
+  '_internal:connect': void;
+  '_internal:disconnect': void;
 }
 
 // ==================== 类型辅助工具 ====================

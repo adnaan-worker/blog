@@ -16,26 +16,43 @@ import type {
   AIChunkData,
   AIDoneData,
   AIErrorData,
+  SocketEventMap,
 } from '@/types';
 
-// Socket 连接状态枚举
-enum SocketStatus {
-  IDLE = 'idle',
-  CONNECTING = 'connecting',
-  CONNECTED = 'connected',
-  DISCONNECTED = 'disconnected',
-  ERROR = 'error',
-}
+// 使用统一的事件类型定义（来自 @/types/socket.ts）
+type SocketEvents = SocketEventMap;
 
-// Socket 配置
+// Socket 配置 - 从环境变量读取
 const SOCKET_CONFIG = {
   ...getSocketConfig(),
-  reconnectDelay: 2000,
-  maxReconnectAttempts: 2,
-  timeout: 15000,
+  reconnectDelay: Number(import.meta.env.VITE_SOCKET_RECONNECT_DELAY) || 2000,
+  maxReconnectAttempts: Number(import.meta.env.VITE_SOCKET_MAX_RECONNECT_ATTEMPTS) || 2,
+  timeout: Number(import.meta.env.VITE_SOCKET_TIMEOUT) || 15000,
 } as const;
 
-// 全局 Socket 管理器（单例 + 事件总线）
+// 消息状态枚举
+enum MessageStatus {
+  PENDING = 'pending', // 等待发送
+  SENT = 'sent', // 已发送
+  CONFIRMED = 'confirmed', // 已确认
+  FAILED = 'failed', // 发送失败
+}
+
+// 消息队列项
+interface QueuedMessage {
+  id: string;
+  event: string;
+  data: any;
+  timestamp: number;
+  retryCount: number;
+  maxRetries: number;
+  status: MessageStatus;
+  persistent: boolean; // 是否需要持久化（如 AI 聊天消息）
+  onSuccess?: (data: any) => void;
+  onError?: (error: any) => void;
+}
+
+// 全局 Socket 管理器（单例 + 事件总线 + 消息队列）
 class SocketManager {
   private static instance: SocketManager;
   private socket: Socket | null = null;
@@ -44,16 +61,30 @@ class SocketManager {
   private listeners = new Map<string, Set<Function>>();
   private refCount = 0; // 引用计数
   private reconnectAttempts = 0; // 当前重连次数
-  private maxReconnectAttempts = 10; // 最大重连次数（增加到10次）
+  private maxReconnectAttempts = Number(import.meta.env.VITE_SOCKET_MAX_RECONNECT_ATTEMPTS_INTERNAL) || 10; // 最大重连次数
   private reconnectBackoff = 1; // 重连退避倍数
   private heartbeatTimer: NodeJS.Timeout | null = null; // 心跳定时器
-  private heartbeatInterval = 25000; // 心跳间隔 25秒
+  private heartbeatInterval = Number(import.meta.env.VITE_SOCKET_HEARTBEAT_INTERVAL) || 25000; // 心跳间隔
   private inactivityTimer: NodeJS.Timeout | null = null; // 不活跃定时器
-  private inactivityTimeout = 300000; // 5分钟无活动后断开
+  private inactivityTimeout = Number(import.meta.env.VITE_SOCKET_INACTIVITY_TIMEOUT) || 300000; // 无活动后断开时间
   private lastActivityTime = Date.now(); // 最后活动时间
   private visibilityHandler: (() => void) | null = null; // 可见性监听器
 
-  private constructor() {}
+  // 消息队列相关
+  private messageQueue: Map<string, QueuedMessage> = new Map(); // 消息队列
+  private pendingAcks: Map<string, NodeJS.Timeout> = new Map(); // 等待确认的消息
+  private ackTimeout = Number(import.meta.env.VITE_SOCKET_ACK_TIMEOUT) || 10000; // ACK 超时时间
+  private readonly STORAGE_KEY = 'socket_message_queue'; // localStorage 键
+  private readonly MAX_QUEUE_SIZE = Number(import.meta.env.VITE_SOCKET_MAX_QUEUE_SIZE) || 100; // 最大队列大小
+  private readonly MESSAGE_EXPIRE_TIME = Number(import.meta.env.VITE_SOCKET_MESSAGE_EXPIRE_TIME) || 86400000; // 消息过期时间
+  private queueCleanupTimer: NodeJS.Timeout | null = null; // 队列清理定时器
+
+  private constructor() {
+    // 从 localStorage 恢复持久化消息
+    this.restorePersistedMessages();
+    // 启动定期清理
+    this.startQueueCleanup();
+  }
 
   static getInstance(): SocketManager {
     if (!SocketManager.instance) {
@@ -83,6 +114,219 @@ class SocketManager {
     }
   }
 
+  // ==================== 消息队列相关方法 ====================
+
+  // 从 localStorage 恢复持久化消息
+  private restorePersistedMessages() {
+    try {
+      const stored = storage.local.get(this.STORAGE_KEY);
+      if (stored && Array.isArray(stored)) {
+        stored.forEach((msg: QueuedMessage) => {
+          // 只恢复 MESSAGE_EXPIRE_TIME 内的消息
+          if (Date.now() - msg.timestamp < this.MESSAGE_EXPIRE_TIME) {
+            this.messageQueue.set(msg.id, msg);
+          }
+        });
+        console.log(`[Socket] 恢复了 ${this.messageQueue.size} 条持久化消息`);
+      }
+    } catch (error) {
+      console.error('[Socket] 恢复持久化消息失败:', error);
+    }
+  }
+
+  // 持久化消息到 localStorage
+  private persistMessages() {
+    try {
+      const persistentMessages = Array.from(this.messageQueue.values()).filter((msg) => msg.persistent);
+      storage.local.set(this.STORAGE_KEY, persistentMessages);
+    } catch (error) {
+      console.error('[Socket] 持久化消息失败:', error);
+    }
+  }
+
+  // 添加消息到队列（带大小限制）
+  private addToQueue(message: QueuedMessage) {
+    // 检查队列大小
+    if (this.messageQueue.size >= this.MAX_QUEUE_SIZE) {
+      console.warn(`[Socket] 队列已满 (${this.MAX_QUEUE_SIZE})，移除最旧的非持久化消息`);
+
+      // 找到最旧的非持久化消息
+      const oldestNonPersistent = Array.from(this.messageQueue.values())
+        .filter((msg) => !msg.persistent && msg.status !== MessageStatus.SENT)
+        .sort((a, b) => a.timestamp - b.timestamp)[0];
+
+      if (oldestNonPersistent) {
+        this.removeFromQueue(oldestNonPersistent.id);
+        console.log(`[Socket] 已移除过期消息: ${oldestNonPersistent.event}`);
+      } else {
+        // 如果没有非持久化消息，移除最旧的已确认消息
+        const oldestConfirmed = Array.from(this.messageQueue.values())
+          .filter((msg) => msg.status === MessageStatus.CONFIRMED)
+          .sort((a, b) => a.timestamp - b.timestamp)[0];
+
+        if (oldestConfirmed) {
+          this.removeFromQueue(oldestConfirmed.id);
+        }
+      }
+    }
+
+    this.messageQueue.set(message.id, message);
+    if (message.persistent) {
+      this.persistMessages();
+    }
+  }
+
+  // 从队列中移除消息
+  private removeFromQueue(messageId: string) {
+    const message = this.messageQueue.get(messageId);
+    this.messageQueue.delete(messageId);
+
+    // 清理 ACK 定时器
+    const ackTimer = this.pendingAcks.get(messageId);
+    if (ackTimer) {
+      clearTimeout(ackTimer);
+      this.pendingAcks.delete(messageId);
+    }
+
+    // 如果是持久化消息，更新 localStorage
+    if (message?.persistent) {
+      this.persistMessages();
+    }
+  }
+
+  // 处理消息队列（发送所有待发送的消息）
+  private processQueue() {
+    if (!this.socket?.connected) return;
+
+    this.messageQueue.forEach((message) => {
+      if (message.status === MessageStatus.PENDING || message.status === MessageStatus.FAILED) {
+        this.sendQueuedMessage(message);
+      }
+    });
+  }
+
+  // 发送队列中的单条消息
+  private sendQueuedMessage(message: QueuedMessage) {
+    if (!this.socket?.connected) {
+      message.status = MessageStatus.FAILED;
+      return;
+    }
+
+    try {
+      // 发送消息
+      this.socket.emit(message.event, {
+        ...message.data,
+        _messageId: message.id, // 添加消息 ID 用于确认
+      });
+
+      message.status = MessageStatus.SENT;
+      message.retryCount++;
+
+      // 设置 ACK 超时
+      const ackTimer = setTimeout(() => {
+        this.handleAckTimeout(message.id);
+      }, this.ackTimeout);
+
+      this.pendingAcks.set(message.id, ackTimer);
+
+      console.log(`[Socket] 消息已发送: ${message.event} (${message.id})`);
+    } catch (error) {
+      console.error(`[Socket] 发送消息失败: ${message.event}`, error);
+      this.retryMessage(message);
+    }
+  }
+
+  // 处理 ACK 超时
+  private handleAckTimeout(messageId: string) {
+    const message = this.messageQueue.get(messageId);
+    if (!message) return;
+
+    console.warn(`[Socket] 消息 ACK 超时: ${message.event} (${messageId})`);
+    this.retryMessage(message);
+  }
+
+  // 重试消息
+  private retryMessage(message: QueuedMessage) {
+    if (message.retryCount >= message.maxRetries) {
+      console.error(`[Socket] 消息重试次数已达上限: ${message.event} (${message.id})`);
+      message.status = MessageStatus.FAILED;
+      message.onError?.({ error: '消息发送失败，已达最大重试次数' });
+      this.removeFromQueue(message.id);
+      return;
+    }
+
+    message.status = MessageStatus.PENDING;
+
+    // 指数退避重试
+    const baseDelay = Number(import.meta.env.VITE_SOCKET_RETRY_BASE_DELAY) || 1000;
+    const maxDelay = Number(import.meta.env.VITE_SOCKET_RETRY_MAX_DELAY) || 10000;
+    const delay = Math.min(baseDelay * Math.pow(2, message.retryCount), maxDelay);
+    setTimeout(() => {
+      if (this.socket?.connected) {
+        this.sendQueuedMessage(message);
+      }
+    }, delay);
+  }
+
+  // 处理消息确认
+  private handleMessageAck(messageId: string, response?: any) {
+    const message = this.messageQueue.get(messageId);
+    if (!message) return;
+
+    message.status = MessageStatus.CONFIRMED;
+    message.onSuccess?.(response);
+    this.removeFromQueue(messageId);
+
+    console.log(`[Socket] 消息已确认: ${message.event} (${messageId})`);
+  }
+
+  // 启动队列定期清理（每5分钟清理一次过期消息）
+  private startQueueCleanup() {
+    this.stopQueueCleanup();
+    this.queueCleanupTimer = setInterval(() => {
+      this.cleanExpiredMessages();
+    }, 300000); // 5分钟
+  }
+
+  // 停止队列清理
+  private stopQueueCleanup() {
+    if (this.queueCleanupTimer) {
+      clearInterval(this.queueCleanupTimer);
+      this.queueCleanupTimer = null;
+    }
+  }
+
+  // 清理过期消息
+  private cleanExpiredMessages() {
+    const now = Date.now();
+    let cleanedCount = 0;
+
+    this.messageQueue.forEach((message, id) => {
+      // 清理超过24小时的消息
+      if (now - message.timestamp > this.MESSAGE_EXPIRE_TIME) {
+        this.removeFromQueue(id);
+        cleanedCount++;
+      }
+      // 清理已确认超过1小时的消息
+      else if (message.status === MessageStatus.CONFIRMED && now - message.timestamp > 3600000) {
+        this.removeFromQueue(id);
+        cleanedCount++;
+      }
+      // 清理失败次数过多的消息
+      else if (message.status === MessageStatus.FAILED && message.retryCount >= message.maxRetries) {
+        this.removeFromQueue(id);
+        cleanedCount++;
+      }
+    });
+
+    if (cleanedCount > 0) {
+      console.log(`[Socket] 清理了 ${cleanedCount} 条过期消息`);
+      this.persistMessages();
+    }
+  }
+
+  // ==================== Socket 连接相关方法 ====================
+
   // 连接 Socket
   private connect() {
     if (this.socket?.connected || this.isConnecting) return;
@@ -100,7 +344,7 @@ class SocketManager {
       },
       reconnection: true,
       reconnectionDelay: SOCKET_CONFIG.reconnectDelay,
-      reconnectionDelayMax: 10000, // 最大延迟10秒
+      reconnectionDelayMax: Number(import.meta.env.VITE_SOCKET_RECONNECTION_DELAY_MAX) || 10000, // 最大延迟
       reconnectionAttempts: this.maxReconnectAttempts,
       timeout: SOCKET_CONFIG.timeout,
     });
@@ -114,6 +358,11 @@ class SocketManager {
       this.stopInactivityTimer(); // 停止不活跃定时器
       this.startHeartbeat();
       this.setupVisibilityListener();
+
+      // 处理消息队列（重连后重发未确认的消息）
+      console.log(`[Socket] 连接成功，队列中有 ${this.messageQueue.size} 条消息待处理`);
+      this.processQueue();
+
       this.emit('_internal:connect');
       console.log('[Socket] 连接成功');
     });
@@ -121,7 +370,28 @@ class SocketManager {
     this.socket.on('disconnect', () => {
       this.isConnected = false;
       this.isConnecting = false;
+
+      // 将已发送但未确认的消息标记为 PENDING，等待重连后重发
+      this.messageQueue.forEach((message) => {
+        if (message.status === MessageStatus.SENT) {
+          message.status = MessageStatus.PENDING;
+          console.log(`[Socket] 消息 ${message.id} 标记为待重发`);
+        }
+      });
+
       this.emit('_internal:disconnect');
+    });
+
+    // 监听消息确认事件（需要后端支持）
+    this.socket.on('message:ack', (data: { messageId: string; success: boolean; response?: any }) => {
+      if (data.success) {
+        this.handleMessageAck(data.messageId, data.response);
+      } else {
+        const message = this.messageQueue.get(data.messageId);
+        if (message) {
+          this.retryMessage(message);
+        }
+      }
     });
 
     this.socket.on('connect_error', (error) => {
@@ -160,6 +430,7 @@ class SocketManager {
   private disconnect() {
     this.stopHeartbeat();
     this.stopInactivityTimer();
+    this.stopQueueCleanup();
     this.removeVisibilityListener();
 
     if (this.socket) {
@@ -262,7 +533,8 @@ class SocketManager {
     this.reconnectAttempts = 0;
     this.reconnectBackoff = 1;
     this.disconnect();
-    setTimeout(() => this.connect(), 100); // 延迟100ms再连接
+    const reconnectDelay = Number(import.meta.env.VITE_SOCKET_MANUAL_RECONNECT_DELAY) || 100;
+    setTimeout(() => this.connect(), reconnectDelay); // 延迟再连接
   }
 
   // 监听事件（自动去重）
@@ -303,19 +575,59 @@ class SocketManager {
     }
   }
 
-  // 发送事件
-  emit(event: string, data?: any) {
+  // 发送事件（支持可靠发送 + 类型安全）
+  emit<T extends keyof SocketEvents>(
+    event: T,
+    data?: SocketEvents[T],
+    options?: {
+      reliable?: boolean; // 是否使用可靠发送（队列+重试）
+      persistent?: boolean; // 是否持久化到 localStorage
+      maxRetries?: number; // 最大重试次数
+      onSuccess?: (response: any) => void; // 成功回调
+      onError?: (error: any) => void; // 失败回调
+    },
+  ) {
     // 内部事件直接触发本地监听器
     if (event.startsWith('_internal:')) {
       const callbacks = this.listeners.get(event);
       if (callbacks) {
         callbacks.forEach((callback) => callback(data));
       }
-    } else if (this.socket?.connected) {
+      return;
+    }
+
+    // 可靠发送模式：加入队列
+    if (options?.reliable) {
+      const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const queuedMessage: QueuedMessage = {
+        id: messageId,
+        event,
+        data,
+        timestamp: Date.now(),
+        retryCount: 0,
+        maxRetries: options.maxRetries ?? 3,
+        status: MessageStatus.PENDING,
+        persistent: options.persistent ?? false,
+        onSuccess: options.onSuccess,
+        onError: options.onError,
+      };
+
+      this.addToQueue(queuedMessage);
+
+      // 如果已连接，立即发送
+      if (this.socket?.connected) {
+        this.sendQueuedMessage(queuedMessage);
+      } else {
+        console.log(`[Socket] 未连接，消息已加入队列: ${event} (${messageId})`);
+      }
+    }
+    // 普通发送模式
+    else if (this.socket?.connected) {
       this.socket.emit(event, data);
       this.updateActivity(); // 发送消息时更新活动时间
     } else {
       console.warn('[Socket] 未连接，无法发送消息:', event);
+      options?.onError?.({ error: 'Socket 未连接' });
     }
   }
 
@@ -351,9 +663,16 @@ export function useSocket() {
   }, []); // 空依赖，只执行一次
 
   // 使用 useCallback 缓存函数，避免子组件重渲染
-  const emit = useCallback((event: string, ...args: any[]) => {
-    socketManager.emit(event, ...args);
-  }, []);
+  const emit = useCallback(
+    <T extends keyof SocketEvents>(
+      event: T,
+      data?: SocketEvents[T],
+      options?: Parameters<typeof socketManager.emit>[2],
+    ) => {
+      socketManager.emit(event, data, options);
+    },
+    [],
+  );
 
   const on = useCallback((event: string, callback: Function) => {
     return socketManager.on(event, callback);
@@ -464,14 +783,25 @@ export function useVisitor() {
 }
 
 /**
- * AI 服务 Hook（性能优化版）
+ * AI 服务 Hook（性能优化版 + 可靠消息）
  */
 export function useAI() {
   const { isConnected, emit, on } = useSocket();
 
   // 缓存所有方法
   const chat = useCallback(
-    (message: string, sessionId: string) => emit('ai:stream_chat', { message, sessionId }),
+    (message: string, sessionId: string, onSuccess?: (res: any) => void, onError?: (err: any) => void) =>
+      emit(
+        'ai:stream_chat',
+        { message, sessionId },
+        {
+          reliable: true, // 启用可靠发送
+          persistent: true, // 持久化消息
+          maxRetries: 5, // 最多重试 5 次
+          onSuccess,
+          onError,
+        },
+      ),
     [emit],
   );
 
@@ -670,6 +1000,50 @@ export function useRoomCount(roomName: string | null) {
   }, [roomName, onRoomUpdate, onStatsUpdate]);
 
   return count;
+}
+
+/**
+ * 消息队列状态 Hook
+ */
+export function useMessageQueue() {
+  const { isConnected } = useSocket();
+  const [queueSize, setQueueSize] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    // 定期更新队列状态
+    const timer = setInterval(() => {
+      const manager = SocketManager.getInstance() as any;
+      const queue = manager.messageQueue as Map<string, QueuedMessage>;
+
+      setQueueSize(queue.size);
+      setPendingCount(
+        Array.from(queue.values()).filter(
+          (msg) => msg.status === MessageStatus.PENDING || msg.status === MessageStatus.FAILED,
+        ).length,
+      );
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const clearQueue = useCallback(() => {
+    const manager = SocketManager.getInstance() as any;
+    manager.messageQueue.clear();
+    manager.persistMessages();
+    setQueueSize(0);
+    setPendingCount(0);
+  }, []);
+
+  return useMemo(
+    () => ({
+      isConnected,
+      queueSize,
+      pendingCount,
+      clearQueue,
+    }),
+    [isConnected, queueSize, pendingCount, clearQueue],
+  );
 }
 
 /**

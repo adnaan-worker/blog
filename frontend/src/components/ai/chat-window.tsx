@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { MessageList } from './message-list';
 import { InputArea } from './input-area';
-import { useAI } from '@/hooks/useSocket';
-import { FiRefreshCw, FiTrash2 } from 'react-icons/fi';
+import { useAI, useMessageQueue } from '@/hooks/useSocket';
+import { FiRefreshCw, FiTrash2, FiAlertCircle, FiClock } from 'react-icons/fi';
 
 interface ChatWindowProps {
   onClose?: () => void;
@@ -15,6 +15,7 @@ interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp?: string;
+  status?: 'sending' | 'sent' | 'failed'; // 消息发送状态
 }
 
 const Container = styled.div`
@@ -77,6 +78,33 @@ const Title = styled.div`
     margin: 0;
     color: var(--text-primary);
     letter-spacing: -0.02em;
+  }
+`;
+
+const QueueIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  color: #ff9800;
+  font-weight: 500;
+
+  svg {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
   }
 `;
 
@@ -171,6 +199,7 @@ export const AIChatWindow: React.FC<ChatWindowProps> = ({ onClose, headerMode = 
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const ai = useAI();
+  const messageQueue = useMessageQueue();
   const sessionIdRef = useRef<string | null>(null);
 
   // 初始化会话
@@ -237,17 +266,15 @@ export const AIChatWindow: React.FC<ChatWindowProps> = ({ onClose, headerMode = 
   }, [ai]); // 只依赖 ai，不依赖 streamingContent
 
   const handleSend = (text: string) => {
-    if (!ai.isConnected) {
-      adnaan.toast.error('网络连接已断开');
-      return;
-    }
+    const msgId = `msg_${Date.now()}`;
 
-    // 添加用户消息
+    // 添加用户消息（初始状态为 sending）
     const userMsg: Message = {
-      id: `msg_${Date.now()}`,
+      id: msgId,
       role: 'user',
       content: text,
       timestamp: new Date().toISOString(),
+      status: 'sending',
     };
     setMessages((prev) => [...prev, userMsg]);
 
@@ -257,7 +284,20 @@ export const AIChatWindow: React.FC<ChatWindowProps> = ({ onClose, headerMode = 
     contentRef.current = '';
 
     if (sessionIdRef.current) {
-      ai.chat(text, sessionIdRef.current);
+      // 使用可靠发送，带回调
+      ai.chat(
+        text,
+        sessionIdRef.current,
+        // 成功回调
+        () => {
+          setMessages((prev) => prev.map((msg) => (msg.id === msgId ? { ...msg, status: 'sent' } : msg)));
+        },
+        // 失败回调
+        (error) => {
+          setMessages((prev) => prev.map((msg) => (msg.id === msgId ? { ...msg, status: 'failed' } : msg)));
+          adnaan.toast.error(error.error || '消息发送失败，将自动重试');
+        },
+      );
     }
   };
 
@@ -294,7 +334,29 @@ export const AIChatWindow: React.FC<ChatWindowProps> = ({ onClose, headerMode = 
     <Container>
       {headerMode !== 'none' && (
         <Header style={headerMode === 'simple' ? { background: 'transparent', padding: '1rem' } : {}}>
-          <Title>{headerMode === 'default' && <h3>Wayne AI</h3>}</Title>
+          <Title>
+            {headerMode === 'default' && <h3>Wayne AI</h3>}
+            {/* 消息队列状态提示 */}
+            {messageQueue.pendingCount > 0 && (
+              <QueueIndicator title="有消息正在发送或等待重试">
+                <FiClock size={12} />
+                <span>{messageQueue.pendingCount} 条待发送</span>
+              </QueueIndicator>
+            )}
+            {/* 离线提示 */}
+            {!ai.isConnected && (
+              <QueueIndicator
+                style={{
+                  background: 'rgba(244, 67, 54, 0.1)',
+                  borderColor: 'rgba(244, 67, 54, 0.3)',
+                  color: '#f44336',
+                }}
+              >
+                <FiAlertCircle size={12} />
+                <span>连接断开</span>
+              </QueueIndicator>
+            )}
+          </Title>
           <Actions>
             <button onClick={handleClear} title="清空历史">
               <FiTrash2 />

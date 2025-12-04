@@ -11,22 +11,24 @@ module.exports = {
   password: process.env.REDIS_PASSWORD || '',
   db: redisConfig.db || 0,
 
-  // ioredis 特定配置 - 优化超时设置
-  connectTimeout: 30000, // 增加连接超时到30秒
-  commandTimeout: 10000, // 增加命令超时到10秒
-  retryDelayOnFailover: 100,
-  maxRetriesPerRequest: 5, // 增加重试次数
-  lazyConnect: false, // 改为立即连接，避免懒加载导致的延迟
-  keepAlive: 30000, // 增加keepAlive时间
+  // ioredis 特定配置 - 从环境变量读取超时设置
+  connectTimeout: parseInt(process.env.REDIS_CONNECT_TIMEOUT) || 30000, // 连接超时
+  commandTimeout: parseInt(process.env.REDIS_COMMAND_TIMEOUT) || 10000, // 命令超时
+  retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY_ON_FAILOVER) || 100,
+  maxRetriesPerRequest: parseInt(process.env.REDIS_MAX_RETRIES) || 5, // 最大重试次数
+  lazyConnect: process.env.REDIS_LAZY_CONNECT === 'true' ? true : false, // 是否懒加载连接
+  keepAlive: parseInt(process.env.REDIS_KEEP_ALIVE) || 30000, // keepAlive时间
 
   // 重连策略 - 更积极的重连
   retryStrategy: times => {
-    if (times > 20) {
-      // 增加重连次数
+    const maxRetries = parseInt(process.env.REDIS_MAX_RETRY_ATTEMPTS) || 20;
+    if (times > maxRetries) {
       return null; // 停止重连
     }
     // 指数退避，但有最大值限制
-    return Math.min(times * 200, 3000);
+    const retryDelay = parseInt(process.env.REDIS_RETRY_DELAY) || 200;
+    const maxRetryDelay = parseInt(process.env.REDIS_MAX_RETRY_DELAY) || 3000;
+    return Math.min(times * retryDelay, maxRetryDelay);
   },
 
   // 事件配置

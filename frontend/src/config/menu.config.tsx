@@ -51,7 +51,7 @@ export const mainNavItems: MenuItem[] = [
       },
       {
         path: '/guestbook',
-        title: '留言板',
+        title: '留言',
         icon: FiMessageSquare,
       },
     ],

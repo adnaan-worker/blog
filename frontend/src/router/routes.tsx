@@ -12,7 +12,7 @@ const NoteDetail = lazy(() => import('@/pages/notes/detail'));
 const Projects = lazy(() => import('@/pages/project'));
 const ProjectDetail = lazy(() => import('@/pages/project/detail'));
 
-// 留言板页面
+// 留言页面
 const Guestbook = lazy(() => import('@/pages/guestbook'));
 
 // 个人中心相关页面

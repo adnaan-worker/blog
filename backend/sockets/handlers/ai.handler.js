@@ -6,14 +6,22 @@ const chatHistoryService = require('@/services/ai/chat-history.service');
 const { AI_EVENTS } = require('@/utils/socket-events');
 const { SocketValidationError, SocketAuthenticationError } = require('@/utils/socket-response');
 const promptManager = require('@/services/ai/prompts');
+const ConcurrencyLimiter = require('@/utils/concurrency-limiter');
 
 /**
- * AI 流式输出 Socket 处理器（新版）
+ * AI 流式输出 Socket 处理器（新版 + 并发控制）
  * 基于重构后的 AI 服务
  */
 class AINewHandler extends BaseSocketHandler {
   constructor() {
     super('AI');
+
+    // 初始化并发控制器
+    this.concurrencyLimiter = new ConcurrencyLimiter({
+      maxConcurrent: 3, // 每用户最多3个并发AI请求
+      queueSize: 5, // 队列最多5个等待请求
+      timeout: 120000, // 超时时间2分钟
+    });
 
     // 注册事件处理器
     this.on(AI_EVENTS.STREAM_CHAT, this.handleStreamChat);
@@ -73,17 +81,26 @@ class AINewHandler extends BaseSocketHandler {
       });
     }
 
-    const { message, sessionId } = data;
+    const { message, sessionId, _messageId } = data;
     const userId = socket.userId || socket.id; // 未登录用户使用 socket.id
     const isGuest = !socket.userId;
 
     try {
-      // 登录用户检查配额
+      // 1. 并发控制检查
+      await this.concurrencyLimiter.acquire(userId);
+
+      this.log('info', '开始流式聊天', {
+        userId,
+        sessionId,
+        isGuest,
+        messageId: _messageId,
+        concurrency: this.concurrencyLimiter.getRunningCount(userId),
+      });
+
+      // 2. 登录用户检查配额
       if (socket.userId) {
         await this._checkQuota(userId, 'chat');
       }
-
-      this.log('info', '开始流式聊天', { userId, sessionId, isGuest });
 
       // 1. 保存用户消息（仅登录用户）
       if (!isGuest) {
@@ -148,11 +165,38 @@ class AINewHandler extends BaseSocketHandler {
       }
 
       this.emit(socket, AI_EVENTS.DONE, { sessionId });
+
+      // 7. 发送消息确认 ACK（成功）
+      if (_messageId) {
+        this.emit(socket, 'message:ack', {
+          messageId: _messageId,
+          success: true,
+          response: { sessionId, userId },
+        });
+        this.log('info', '消息处理成功，已发送 ACK', { messageId: _messageId });
+      }
     } catch (error) {
       this.log('error', '流式聊天失败', { userId, error: error.message });
       this.emit(socket, AI_EVENTS.ERROR, {
         sessionId,
         error: error.message,
+      });
+
+      // 发送消息确认 ACK（失败）
+      if (_messageId) {
+        this.emit(socket, 'message:ack', {
+          messageId: _messageId,
+          success: false,
+          error: error.message,
+        });
+        this.log('warn', '消息处理失败，已发送失败 ACK', { messageId: _messageId });
+      }
+    } finally {
+      // 释放并发控制
+      this.concurrencyLimiter.release(userId);
+      this.log('debug', '释放并发控制', {
+        userId,
+        remaining: this.concurrencyLimiter.getRunningCount(userId),
       });
     }
   }

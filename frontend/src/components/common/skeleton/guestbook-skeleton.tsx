@@ -6,7 +6,7 @@ import { useAnimationEngine } from '@/utils/ui/animation';
 import { SkeletonContainer, SkeletonAvatar } from './skeleton';
 
 /**
- * 留言板骨架屏 - 瀑布流便签风格
+ * 留言骨架屏 - 瀑布流便签风格
  */
 
 const MasonryContainer = styled(SkeletonContainer)`

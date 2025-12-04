@@ -18,7 +18,7 @@ export { ProjectListSkeleton, ProjectDetailSkeleton } from './project-skeleton';
 // 评论骨架屏
 export { CommentSkeleton } from './comment-skeleton';
 
-// 留言板骨架屏
+// 留言骨架屏
 export { GuestbookSkeleton } from './guestbook-skeleton';
 
 // 时间线骨架屏

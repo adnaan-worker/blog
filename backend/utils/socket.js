@@ -82,7 +82,7 @@ class SocketManager {
       path: process.env.SOCKET_IO_PATH || '/socket.io',
 
       // 连接限制
-      maxConnections: 1000,
+      maxConnections: parseInt(process.env.SOCKET_IO_MAX_CONNECTIONS) || 1000,
 
       // Engine.IO配置
       allowEIO3: true,
@@ -207,14 +207,16 @@ class SocketManager {
         lastReset: now,
       };
 
-      // 每分钟重置计数
-      if (now - clientData.lastReset > 60000) {
+      // 重置计数间隔
+      const resetInterval = parseInt(process.env.SOCKET_IO_RATE_LIMIT_RESET_INTERVAL) || 60000;
+      if (now - clientData.lastReset > resetInterval) {
         clientData.connections = 0;
         clientData.lastReset = now;
       }
 
-      // 限制每个IP每分钟最多10个连接
-      if (clientData.connections >= 10) {
+      // 限制每个IP的连接数
+      const maxConnections = parseInt(process.env.SOCKET_IO_RATE_LIMIT_CONNECTIONS) || 10;
+      if (clientData.connections >= maxConnections) {
         logger.warn('⚠️ 连接频率限制', { ip: clientKey });
         return next(new Error('连接过于频繁'));
       }

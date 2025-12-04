@@ -541,7 +541,7 @@ const Guestbook: React.FC = () => {
 
   return (
     <Container>
-      <SEO title="留言板" description="Leave a trace" />
+      <SEO title="留言" description="Leave a trace" />
 
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 2rem 0' }}>
         <PageHeader

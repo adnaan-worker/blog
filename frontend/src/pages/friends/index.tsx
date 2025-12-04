@@ -116,8 +116,8 @@ const Friends = () => {
 
       <Content>
         <PageHeader
-          title="友情链接"
-          subtitle="探索数字宇宙的邻居们。连接思想，分享见解。"
+          title="拾音"
+          subtitle="把同好的链接拾成散落的音符，以技术为谱、热爱为弦，在互联的时光里轻轻弹奏，让编程之路的孤独，都化作彼此呼应的细腻回响。"
           count={MOCK_FRIENDS.length}
           countUnit="个伙伴"
         >
