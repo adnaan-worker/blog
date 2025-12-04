@@ -39,3 +39,4 @@ env.txt
 /package-lock.json
 /uploads
 /docs
+docker/.env

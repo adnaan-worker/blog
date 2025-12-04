@@ -1,6 +1,6 @@
 {
   "name": "blog-node-service",
-  "version": "2.6.0",
+  "version": "3.0.0",
   "description": "博客系统node后端服务",
   "main": "app.js",
   "scripts": {

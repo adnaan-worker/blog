@@ -19,31 +19,32 @@ interface Message {
 }
 
 const Container = styled.div`
-  flex: 1; /* 关键：在父 Flex 容器中填满 */
+  flex: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: transparent;
+  /* 更柔和的背景，消除断层感 */
+  background: linear-gradient(to bottom, rgba(var(--bg-secondary-rgb), 0.3) 0%, rgba(var(--bg-primary-rgb), 0.5) 100%);
   position: relative;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  overflow: hidden; /* 防止溢出 */
+  overflow: hidden;
 `;
 
 const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  padding-right: 60px; /* 为外部关闭按钮留出空间 */
-  background: linear-gradient(to bottom, rgba(var(--bg-secondary-rgb), 0.8) 0%, transparent 100%);
-  z-index: 30; /* 提高层级 */
-  position: absolute; /* 悬浮 */
+  padding: 0 1.5rem; /* Remove vertical padding to rely on height for centering */
+  padding-right: 60px; /* Adjust space for close button */
+  /* 完全透明，移除断层 */
+  background: transparent;
+  z-index: 30;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  pointer-events: none; /* 让点击穿透，除非点击按钮 */
+  height: 56px; /* Reduced height for better alignment with standard close buttons */
+  pointer-events: none;
 
-  /* 让子元素可点击 */
   & > * {
     pointer-events: auto;
   }
@@ -53,10 +54,12 @@ const ContentArea = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* 关键：允许 Flex 子项收缩 */
+  min-height: 0;
   width: 100%;
   z-index: 1;
-  padding-top: 60px; /* 为 Header 留出空间 */
+  padding-top: 56px; /* Match Header height */
+  /* 双向遮罩：顶部渐隐（防止与Header文字重叠），底部渐隐（输入框后方） */
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 85%, transparent 100%);
 `;
 
 const InputContainer = styled.div`
@@ -65,6 +68,12 @@ const InputContainer = styled.div`
   left: 0;
   right: 0;
   z-index: 20;
+  pointer-events: none; /* Allow clicks to pass through to messages */
+
+  /* Re-enable pointer events for the input component */
+  & > * {
+    pointer-events: auto;
+  }
 `;
 
 const Title = styled.div`

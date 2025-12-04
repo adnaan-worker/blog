@@ -46,7 +46,7 @@ export const mainNavItems: MenuItem[] = [
     children: [
       {
         path: '/',
-        title: '主页',
+        title: '首页',
         icon: FiHome,
       },
       {

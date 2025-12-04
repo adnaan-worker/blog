@@ -244,81 +244,79 @@ const PoweredBy = styled.div`
   color: var(--text-secondary);
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.2rem;
+  flex-wrap: wrap;
 
   a {
-    color: var(--accent-color);
+    color: var(--text-secondary);
     transition: color 0.2s ease;
+    border-bottom: 1px dashed transparent;
 
     &:hover {
-      text-decoration: underline;
+      color: var(--accent-color);
+      border-bottom-color: var(--accent-color);
     }
+  }
+
+  .divider {
+    color: var(--border-color);
+    margin: 0 0.2rem;
   }
 `;
 
-const OnlineUsers = styled(motion.span)`
+const OnlineUsers = styled(motion.div)`
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.85rem;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(var(--accent-rgb), 0.04);
+  border: 1px solid rgba(var(--accent-rgb), 0.08);
+  border-radius: 14px;
+  font-size: 0.8rem;
   color: var(--text-secondary);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  user-select: none;
+  height: 28px;
+  white-space: nowrap;
 
   &:hover {
+    background: rgba(var(--accent-rgb), 0.08);
+    border-color: rgba(var(--accent-rgb), 0.2);
     color: var(--text-primary);
-
-    .pulse-dot {
-      animation-play-state: running;
-    }
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px rgba(var(--accent-rgb), 0.12);
   }
 
   .pulse-dot {
     position: relative;
     width: 6px;
     height: 6px;
-    background: var(--accent-color);
+    background: #10b981;
     border-radius: 50%;
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    animation-play-state: paused;
 
-    &::before {
+    &::after {
       content: '';
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100%;
-      height: 100%;
-      background: var(--accent-color);
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
       border-radius: 50%;
-      opacity: 0.6;
-      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-      animation-play-state: inherit;
+      background: #10b981;
+      opacity: 0.4;
+      animation: ripple 1.5s infinite cubic-bezier(0, 0, 0.2, 1);
+      z-index: -1;
     }
   }
 
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
+  @keyframes ripple {
+    0% {
+      transform: scale(0.8);
       opacity: 0.5;
     }
-  }
-
-  @keyframes pulse-ring {
-    0% {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 0.6;
-    }
-    50% {
-      transform: translate(-50%, -50%) scale(1.5);
-      opacity: 0;
-    }
     100% {
-      transform: translate(-50%, -50%) scale(1);
+      transform: scale(2.4);
       opacity: 0;
     }
   }
@@ -326,8 +324,8 @@ const OnlineUsers = styled(motion.span)`
   .count {
     font-weight: 600;
     color: var(--accent-color);
-    font-feature-settings: 'tnum';
-    font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
+    margin: 0 2px;
   }
 
   .full-text {
@@ -339,17 +337,11 @@ const OnlineUsers = styled(motion.span)`
   }
 
   @media (max-width: 768px) {
-    font-size: 0.8rem;
-
-    .pulse-dot {
-      width: 5px;
-      height: 5px;
-    }
+    padding: 4px 10px;
 
     .full-text {
       display: none;
     }
-
     .short-text {
       display: inline;
     }
@@ -368,7 +360,7 @@ const Footer = () => {
 
   // 访客统计 Tooltip 状态
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
-  const onlineUsersRef = useRef<HTMLSpanElement>(null);
+  const onlineUsersRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   // 使用增强版 useClickOutside，排除触发器和 tooltip 本身
@@ -527,12 +519,11 @@ const Footer = () => {
                       <span className="pulse-dot" />
                       {/* 桌面端：完整文案 */}
                       <span className="full-text">
-                        此刻有 <span className="count">{onlineCount}</span> 位{onlineCount === 1 ? '朋友' : '朋友'}
-                        在博客里闲逛
+                        正在与 <span className="count">{onlineCount}</span> 位同路人共赏此刻
                       </span>
                       {/* 移动端：简短文案 */}
                       <span className="short-text">
-                        <span className="count">{onlineCount}</span> 人在线
+                        与 <span className="count">{onlineCount}</span> 人同行
                       </span>
                     </OnlineUsers>
 
@@ -545,14 +536,17 @@ const Footer = () => {
                       />
                     </div>
                   </div>
-                  |{' '}
+                  <span className="divider"></span>
                 </>
               )}
-              由{' '}
-              <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-                React
-              </a>{' '}
-              强力驱动 |{' '}
+              <span>
+                由{' '}
+                <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
+                  React
+                </a>{' '}
+                强力驱动
+              </span>
+              <span className="divider">|</span>
               <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
                 陇ICP备2025016896号
               </a>

@@ -19,84 +19,56 @@ interface VisitorStatsTooltipProps {
 const TooltipContainer = styled(motion.div)<{ visible: boolean }>`
   position: absolute;
   bottom: 100%;
-  left: 50px;
-  z-index: 10000;
-  padding: 1rem;
-  min-width: 340px;
-  max-width: 400px;
-  border-radius: 12px;
-  margin-bottom: 8px;
+  left: 0; /* Align to the start of the parent wrapper */
+  z-index: 1000;
+  padding: 0;
+  min-width: 320px;
+  max-width: 380px;
+  border-radius: 16px;
+  margin-bottom: 12px;
 
   /* 毛玻璃效果 */
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 
   /* 边框和阴影 */
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 20px 40px -10px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+  overflow: hidden;
 
   /* 显示/隐藏 */
   opacity: ${(props) => (props.visible ? 1 : 0)};
   visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
   pointer-events: ${(props) => (props.visible ? 'auto' : 'none')};
-  transition: all 0.2s ease;
 
   /* 深色模式 */
   [data-theme='dark'] & {
-    background: rgba(28, 28, 32, 0.9);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(20, 20, 23, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.5),
-      0 2px 8px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 20px 40px -10px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   }
 
   /* 移动端优化 */
   @media (max-width: 768px) {
-    min-width: 280px;
-    max-width: 92vw;
-    padding: 0.875rem;
-    /* 移动端也显示在触发元素左上角 */
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    transform: none;
-    margin-bottom: 8px;
-    /* 确保在最顶层 */
-    z-index: 99999;
+    position: fixed; /* Use fixed on mobile for better positioning */
+    bottom: 80px; /* Above footer */
+    left: 50%;
+    transform: translateX(-50%) !important;
+    width: 90vw;
+    max-width: 400px;
+    min-width: auto;
+    margin-bottom: 0;
   }
 `;
 
-// 小三角指示器
+// 小三角指示器 - 移除（移动端不需要，桌面端左对齐不需要）
 const Arrow = styled.div`
-  position: absolute;
-  bottom: -6px;
-  left: 20px;
-  transform: rotate(45deg);
-  width: 12px;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-top: none;
-  border-left: none;
-  z-index: -1;
-
-  [data-theme='dark'] & {
-    background: rgba(28, 28, 32, 0.9);
-    border-color: rgba(255, 255, 255, 0.12);
-  }
-
-  /* 移动端也显示箭头（相对定位需要箭头） */
-  @media (max-width: 768px) {
-    display: block;
-  }
+  display: none;
 `;
 
 // 头部
@@ -104,71 +76,49 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.875rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 226, 232, 240), 0.3);
+  padding: 1rem 1.25rem;
+  background: rgba(var(--bg-secondary-rgb), 0.3);
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.1);
 `;
 
 const Title = styled.div`
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-
-  svg {
-    color: var(--accent-color);
-  }
+  gap: 0.5rem;
 `;
 
 const OnlineCount = styled.div`
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--accent-color);
+  color: #10b981;
+  padding: 2px 8px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 12px;
 
   .pulse-dot {
     width: 6px;
     height: 6px;
-    background: var(--accent-color);
+    background: #10b981;
     border-radius: 50%;
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    position: relative;
 
-    &::before {
+    &::after {
       content: '';
       position: absolute;
-      width: 6px;
-      height: 6px;
-      background: var(--accent-color);
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
       border-radius: 50%;
-      opacity: 0.6;
-      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-  }
-
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.5;
-    }
-  }
-
-  @keyframes pulse-ring {
-    0% {
-      transform: scale(1);
-      opacity: 0.6;
-    }
-    100% {
-      transform: scale(2.5);
-      opacity: 0;
+      background: #10b981;
+      opacity: 0.4;
+      animation: ripple 1.5s infinite ease-out;
     }
   }
 `;
@@ -177,30 +127,16 @@ const OnlineCount = styled.div`
 const ActivityList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
-  max-height: 320px;
+  max-height: 300px;
   overflow-y: auto;
+  padding: 0.5rem;
 
-  /* 自定义滚动条 */
   &::-webkit-scrollbar {
     width: 4px;
   }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
   &::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.3);
+    background: rgba(var(--text-rgb), 0.1);
     border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: rgba(var(--text-secondary-rgb, 107, 114, 126), 0.5);
-  }
-
-  @media (max-width: 768px) {
-    max-height: 260px;
   }
 `;
 
@@ -208,107 +144,32 @@ const ActivityList = styled.div`
 const ActivityItem = styled(motion.div)`
   display: flex;
   align-items: flex-start;
-  gap: 0.625rem;
+  gap: 0.75rem;
   padding: 0.75rem;
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.06), rgba(var(--accent-rgb), 0.02));
   border-radius: 12px;
-  border: 1px solid rgba(var(--accent-rgb), 0.12);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.1), transparent);
-    transition: left 0.6s ease;
-  }
+  transition: all 0.2s ease;
+  margin-bottom: 2px;
 
   &:hover {
-    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.12), rgba(var(--accent-rgb), 0.06));
-    border-color: rgba(var(--accent-rgb), 0.25);
-    transform: translateX(4px) translateY(-1px);
-    box-shadow:
-      0 4px 12px rgba(var(--accent-rgb), 0.15),
-      0 2px 4px rgba(0, 0, 0, 0.05);
-
-    &::before {
-      left: 100%;
-    }
-  }
-
-  [data-theme='dark'] & {
-    background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.08), rgba(var(--accent-rgb), 0.04));
-    border-color: rgba(var(--accent-rgb), 0.15);
-
-    &:hover {
-      background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.15), rgba(var(--accent-rgb), 0.08));
-      border-color: rgba(var(--accent-rgb), 0.3);
-      box-shadow:
-        0 4px 12px rgba(var(--accent-rgb), 0.2),
-        0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding: 0.625rem;
-    gap: 0.5rem;
-
-    &:hover {
-      transform: translateX(2px) translateY(-1px);
-    }
+    background: rgba(var(--bg-tertiary-rgb), 0.6);
   }
 `;
 
 // 图标容器
 const IconWrapper = styled.div<{ deviceType: 'desktop' | 'mobile' | 'tablet' }>`
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${(props) => {
-    switch (props.deviceType) {
-      case 'desktop':
-        return 'rgba(59, 130, 246, 0.15)';
-      case 'mobile':
-        return 'rgba(16, 185, 129, 0.15)';
-      case 'tablet':
-        return 'rgba(245, 158, 11, 0.15)';
-      default:
-        return 'rgba(107, 114, 126, 0.15)';
-    }
-  }};
-  color: ${(props) => {
-    switch (props.deviceType) {
-      case 'desktop':
-        return '#3b82f6';
-      case 'mobile':
-        return '#10b981';
-      case 'tablet':
-        return '#f59e0b';
-      default:
-        return 'var(--text-secondary)';
-    }
-  }};
+  background: rgba(var(--bg-secondary-rgb), 0.5);
+  color: var(--text-secondary);
+  border: 1px solid rgba(var(--border-rgb), 0.1);
 
   svg {
-    font-size: 14px;
-  }
-
-  @media (max-width: 768px) {
-    width: 24px;
-    height: 24px;
-
-    svg {
-      font-size: 12px;
-    }
+    font-size: 15px;
   }
 `;
 
@@ -319,94 +180,63 @@ const ActivityContent = styled.div`
 `;
 
 const ActivityText = styled.div`
-  font-size: 0.8rem;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  line-height: 1.5;
   color: var(--text-primary);
-  margin-bottom: 0.25rem;
 
   .location {
-    font-weight: 700;
-    color: var(--accent-color);
-    text-shadow: 0 1px 2px rgba(var(--accent-rgb), 0.2);
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
   .page {
-    font-weight: 600;
-    color: var(--text-primary);
-    background: linear-gradient(135deg, var(--text-primary), var(--accent-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--accent-color);
+    font-weight: 500;
   }
 
   @media (max-width: 768px) {
-    font-size: 0.75rem;
-    line-height: 1.5;
+    font-size: 0.8rem;
   }
 `;
 
 // 人数标签
 const CountBadge = styled.div`
   flex-shrink: 0;
-  padding: 0.25rem 0.5rem;
-  background: linear-gradient(135deg, var(--accent-color), rgba(var(--accent-rgb), 0.8));
-  color: white;
-  border-radius: 12px;
+  padding: 2px 6px;
+  background: rgba(var(--text-rgb), 0.05);
+  color: var(--text-secondary);
+  border-radius: 6px;
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 600;
   font-feature-settings: 'tnum';
   font-variant-numeric: tabular-nums;
-  box-shadow:
-    0 2px 8px rgba(var(--accent-rgb), 0.3),
-    0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-  }
-
-  &:hover::before {
-    left: 100%;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 0.65rem;
-    padding: 0.2rem 0.4rem;
-  }
 `;
 
 // 空状态
 const EmptyState = styled.div`
-  padding: 2rem 1rem;
+  padding: 3rem 1.5rem;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 
-  svg {
-    font-size: 2rem;
-    margin-bottom: 0.75rem;
-    opacity: 0.6;
+  .icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: rgba(var(--accent-rgb), 0.08);
     color: var(--accent-color);
-    animation: float 3s ease-in-out infinite;
-  }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
 
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-5px);
+    svg {
+      font-size: 24px;
     }
   }
 `;
@@ -429,32 +259,19 @@ const getDeviceIcon = (device: 'desktop' | 'mobile' | 'tablet') => {
 
 // 生成有趣的文案
 const generateActivityText = (activity: VisitorActivity): string => {
-  const location = activity.location;
-  const pageTitle = activity.pageTitle;
-  const device = activity.device;
+  const location = activity.location || '未知星球';
+  const pageTitle = activity.pageTitle || '某个角落';
 
-  // 根据设备类型选择不同的文案风格
-  const deviceEmojis = {
-    desktop: '💻',
-    mobile: '📱',
-    tablet: '📱',
-  };
-
-  const deviceTexts = {
-    desktop: '在电脑前',
-    mobile: '用手机',
-    tablet: '用平板',
-  };
+  // 移除设备文字描述，因为左侧已有图标展示，且容易导致文案生硬
+  // 专注于"地点"和"行为"的描述，让文案更流畅自然
 
   const templates = [
-    `✨ <span class="location">${location}</span> 的${deviceTexts[device]}朋友正在 <span class="page">${pageTitle}</span> 里漫游`,
-    `🌟 来自 <span class="location">${location}</span> 的访客${deviceTexts[device]}探索着 <span class="page">${pageTitle}</span>`,
-    `💫 <span class="location">${location}</span> 的小伙伴${deviceTexts[device]}在 <span class="page">${pageTitle}</span> 中寻找灵感`,
-    `🎯 有朋友从 <span class="location">${location}</span> 来，${deviceTexts[device]}正在 <span class="page">${pageTitle}</span> 里闲逛`,
-    `🚀 <span class="location">${location}</span> 的访客${deviceTexts[device]}在 <span class="page">${pageTitle}</span> 中发现新世界`,
-    `🎨 来自 <span class="location">${location}</span> 的创意者${deviceTexts[device]}在 <span class="page">${pageTitle}</span> 中汲取养分`,
-    `🌙 <span class="location">${location}</span> 的夜猫子${deviceTexts[device]}在 <span class="page">${pageTitle}</span> 里寻找共鸣`,
-    `☀️ <span class="location">${location}</span> 的阳光访客${deviceTexts[device]}在 <span class="page">${pageTitle}</span> 中享受时光`,
+    `来自 <span class="location">${location}</span> 的朋友正在浏览 <span class="page">${pageTitle}</span>`,
+    `<span class="location">${location}</span> 的访客在 <span class="page">${pageTitle}</span> 驻足`,
+    `一位 <span class="location">${location}</span> 的小伙伴正在阅读 <span class="page">${pageTitle}</span>`,
+    `有朋友从 <span class="location">${location}</span> 来，正在看 <span class="page">${pageTitle}</span>`,
+    `<span class="page">${pageTitle}</span> 吸引了一位 <span class="location">${location}</span> 的客人`,
+    `来自 <span class="location">${location}</span> 的读者正在 <span class="page">${pageTitle}</span> 寻找答案`,
   ];
 
   // 随机选择模板
@@ -568,7 +385,7 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
 
       <Header>
         <Title>
-          <FiActivity size={12} />
+          <FiActivity size={14} />
           访客足迹
         </Title>
         <OnlineCount>
@@ -584,10 +401,14 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
           transition={springPresets.gentle}
         >
           <EmptyState>
-            <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
-              <FiCoffee size={24} />
+            <motion.div
+              className="icon-box"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            >
+              <FiCoffee />
             </motion.div>
-            <div>正在泡咖啡，稍等片刻...</div>
+            <div>正在加载实时数据...</div>
           </EmptyState>
         </motion.div>
       ) : stats && stats.activities.length > 0 ? (
@@ -609,12 +430,7 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
                 <ActivityText dangerouslySetInnerHTML={{ __html: generateActivityText(activity) }} />
               </ActivityContent>
 
-              {activity.count > 1 && (
-                <CountBadge>
-                  <FiUsers size={10} style={{ marginRight: '2px', display: 'inline' }} />
-                  {activity.count}
-                </CountBadge>
-              )}
+              {activity.count > 1 && <CountBadge>+{activity.count}</CountBadge>}
             </ActivityItem>
           ))}
         </ActivityList>
@@ -622,6 +438,7 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={springPresets.gentle}>
           <EmptyState>
             <motion.div
+              className="icon-box"
               animate={{
                 y: [0, -5, 0],
                 scale: [1, 1.1, 1],
@@ -632,12 +449,12 @@ const VisitorStatsTooltip: React.FC<VisitorStatsTooltipProps> = ({ isVisible, ta
                 ease: 'easeInOut',
               }}
             >
-              <FiHeart size={24} />
+              <FiHeart />
             </motion.div>
             <div>
-              暂时没有访客足迹
+              暂无访客足迹
               <br />
-              期待你的第一个访客！
+              <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>也许下一秒就会有人来敲门</span>
             </div>
           </EmptyState>
         </motion.div>

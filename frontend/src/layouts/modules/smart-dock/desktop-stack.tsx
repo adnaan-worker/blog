@@ -115,7 +115,7 @@ const AISidebar = styled(motion.div)`
 
 const CloseButton = styled(motion.button)`
   position: absolute;
-  top: 16px;
+  top: 12px;
   right: 16px;
   width: 32px;
   height: 32px;

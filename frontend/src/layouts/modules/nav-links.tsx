@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { useAnimationEngine } from '@/utils/ui/animation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // 定义菜单项接口
 interface MenuItem {
@@ -14,312 +13,273 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-// 定义导航链接样式
-const NavLinkContainer = styled.div`
+// 导航链接容器
+const NavContainer = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* 增加间距 */
   position: relative;
-  margin: 0 0.5rem;
+  padding: 0 0.5rem;
 `;
 
-// 创建 motion Link 组件（使用新 API）
-const MotionLink = motion.create(Link);
-
-const NavLink = styled(MotionLink)<{ active: string }>`
+// 单个导航项包装器
+const NavItemWrapper = styled.div`
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+`;
+
+// 通用样式
+const commonItemStyles = (isActive: boolean) => `
+  position: relative;
+  display: flex;
+  align-items: center;
   padding: 0.5rem 0.75rem;
   font-size: 0.95rem;
-  font-weight: ${(props) => (props.active === 'true' ? '600' : '500')};
-  color: ${(props) => (props.active === 'true' ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  cursor: pointer;
-  border-radius: 8px;
+  font-weight: ${isActive ? '600' : '500'};
+  color: ${isActive ? 'var(--accent-color)' : 'var(--text-secondary)'};
+  text-decoration: none;
+  transition: color 0.2s ease;
+  z-index: 1;
   white-space: nowrap;
-  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
 
   &:hover {
     color: var(--accent-color);
   }
 `;
 
-// 内容容器 - flex 布局，图标和文字在同一行
-const ContentWrapper = styled.span`
-  position: relative;
-  display: flex;
-  align-items: center;
+// 链接类型的导航项
+const NavLinkItem = styled(Link)<{ isActive: boolean }>`
+  ${(props) => commonItemStyles(props.isActive)}
 `;
 
-// 下划线
-const Underline = styled.div`
+// 触发器类型的导航项（用于下拉菜单）
+const NavTriggerItem = styled.div<{ isActive: boolean }>`
+  ${(props) => commonItemStyles(props.isActive)}
+`;
+
+// 激活状态指示器（下划线）
+const ActiveIndicator = styled(motion.div)`
   position: absolute;
-  bottom: -5px;
+  bottom: -6px;
   left: 0;
-  width: 70px;
-  height: 2px;
-  background: linear-gradient(to right, var(--underline-bg));
-  opacity: 1;
-  pointer-events: none;
-`;
-
-// 下拉菜单样式
-const DropdownContent = styled(motion.div)`
-  position: absolute;
-  top: calc(100% + 0.5rem);
   right: 0;
-  width: 220px;
-  background: var(--bg-primary);
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  z-index: 100;
-
-  [data-theme='dark'] & {
-    background: var(--bg-secondary);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  }
+  height: 3px;
+  background: linear-gradient(to right, var(--underline-bg));
+  border-radius: 3px;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.2);
 `;
 
+// 下拉菜单容器
+const DropdownContainer = styled(motion.div)`
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 200px;
+  background: rgba(var(--bg-secondary-rgb), 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow:
+    0 10px 40px -10px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  z-index: 100;
+  overflow: hidden;
+  transform-origin: top center;
+`;
+
+// 下拉菜单项
 const DropdownItem = styled(Link)`
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
+  gap: 10px;
+  padding: 10px 12px;
   color: var(--text-secondary);
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
-  gap: 8px;
+  font-size: 0.9rem;
+  border-radius: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  position: relative;
 
   &:hover {
-    background: var(--bg-secondary);
+    background: rgba(var(--bg-tertiary-rgb), 0.6);
     color: var(--text-primary);
-  }
-
-  [data-theme='dark'] &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(4px);
   }
 
   svg {
-    opacity: 1;
+    color: var(--text-tertiary);
+    transition: color 0.2s;
+  }
+
+  &:hover svg {
+    color: var(--accent-color);
   }
 `;
-
-// NavLink组件 - 使用 Shared Layout Animation 实现平滑过渡
-export const NavLinkWithHover: React.FC<{
-  to: string;
-  active: boolean;
-  onClick?: (e: React.MouseEvent<Element, MouseEvent>) => void;
-  children: React.ReactNode;
-  icon: React.ComponentType<{ size?: number }>;
-}> = ({ to, active, onClick, children, icon: Icon }) => {
-  const { springPresets } = useAnimationEngine();
-
-  // Hover 动画配置
-  const hoverAnimation = {
-    y: -1,
-    transition: springPresets.snappy,
-  };
-
-  const tapAnimation = {
-    scale: 0.98,
-    transition: springPresets.stiff,
-  };
-
-  // 下划线动画变体
-  const underlineVariants = {
-    hidden: {
-      scaleX: 0,
-      opacity: 0,
-    },
-    visible: {
-      scaleX: 1,
-      opacity: 1,
-      transition: {
-        type: 'spring' as const,
-        stiffness: 400,
-        damping: 25,
-      },
-    },
-    exit: {
-      scaleX: 0,
-      opacity: 0,
-      transition: {
-        duration: 0.15,
-      },
-    },
-  };
-
-  return (
-    <NavLinkContainer>
-      <NavLink
-        to={to}
-        active={active ? 'true' : 'false'}
-        onClick={onClick}
-        className="nav-link-hover"
-        whileHover={hoverAnimation}
-        whileTap={tapAnimation}
-      >
-        {/* 图标和文字容器 */}
-        <ContentWrapper>
-          {/* 图标 - 简单淡入淡出 */}
-          {active && Icon && (
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                marginRight: '0.5rem',
-              }}
-            >
-              <Icon size={16} />
-            </motion.span>
-          )}
-
-          {/* 文字 */}
-          <span>{children}</span>
-        </ContentWrapper>
-
-        {/* 下划线 - 伸展动画 */}
-        <AnimatePresence mode="wait">
-          {active && (
-            <motion.div
-              key="underline"
-              style={{
-                position: 'absolute',
-                bottom: '-5px',
-                left: 0,
-                width: '70px',
-                height: '2px',
-                background: 'linear-gradient(to right, var(--underline-bg))',
-                opacity: 1,
-                pointerEvents: 'none',
-                transformOrigin: 'left',
-              }}
-              variants={underlineVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            />
-          )}
-        </AnimatePresence>
-      </NavLink>
-    </NavLinkContainer>
-  );
-};
 
 interface NavLinksProps {
   mainNavItems: MenuItem[];
   onLinkClick: () => void;
-  activeDropdown: string | null;
-  onDropdownOpen: (path: string) => void;
-  onDropdownClose: () => void;
   onDropdownItemClick?: (item: MenuItem) => void;
-  dropdownRef: React.RefObject<HTMLDivElement>;
+  // Compatibility props
+  activeDropdown?: string | null;
+  onDropdownOpen?: (path: string) => void;
+  onDropdownClose?: () => void;
+  dropdownRef?: React.RefObject<HTMLDivElement>;
 }
 
-const NavLinks: React.FC<NavLinksProps> = ({
-  mainNavItems,
-  onLinkClick,
-  activeDropdown,
-  onDropdownOpen,
-  onDropdownClose,
-  onDropdownItemClick,
-  dropdownRef,
-}) => {
+const NavLinks: React.FC<NavLinksProps> = ({ mainNavItems, onLinkClick, onDropdownItemClick }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { variants } = useAnimationEngine();
+  const [hoveredPath, setHoveredPath] = useState<string | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  // 检查菜单项是否激活
+  // 检查是否激活
   const isItemActive = (item: MenuItem) => {
     const currentPath = location.pathname;
 
-    // 首页特殊处理：只有完全匹配才激活
+    // 首页必须精确匹配
     if (item.path === '/') {
       return currentPath === '/';
     }
 
-    // 下拉菜单项：检查子项是否匹配
-    if (item.isDropdown && item.children) {
-      return item.children.some((child) => {
-        // 精确匹配或以路径开头（支持子路由）
-        return currentPath === child.path || (child.path !== '/' && currentPath.startsWith(child.path + '/'));
-      });
-    }
+    // 检查自身 (作为前缀匹配，但排除首页)
+    const isSelfActive = currentPath === item.path || (item.path !== '/' && currentPath.startsWith(item.path + '/'));
 
-    // 普通菜单项：精确匹配或以路径开头（支持子路由）
-    return currentPath === item.path || (item.path !== '/' && currentPath.startsWith(item.path + '/'));
+    // 检查子项
+    const isChildActive = item.children?.some(
+      (child) => currentPath === child.path || (child.path !== '/' && currentPath.startsWith(child.path + '/')),
+    );
+
+    return isSelfActive || isChildActive || false;
   };
 
   return (
-    <LayoutGroup>
-      {/* 渲染所有导航菜单项 */}
+    <NavContainer>
       {mainNavItems.map((item) => {
-        if (item.isDropdown && item.children) {
-          // 渲染下拉菜单 - 通过 hover 触发
-          return (
-            <div
-              key={item.path}
-              ref={dropdownRef}
-              style={{ position: 'relative' }}
-              onMouseEnter={() => onDropdownOpen(item.path)}
-              onMouseLeave={onDropdownClose}
-            >
-              <NavLinkWithHover
-                to="#"
-                active={isItemActive(item)}
-                onClick={(e) => {
-                  e.preventDefault();
-                }}
-                icon={item.icon}
-              >
-                {item.title}
-              </NavLinkWithHover>
+        const isActive = isItemActive(item);
+        const isDropdownOpen = activeDropdown === item.path;
 
-              <AnimatePresence>
-                {activeDropdown === item.path && (
-                  <DropdownContent initial="hidden" animate="visible" exit="exit" variants={variants.dropdown}>
-                    {item.children.map((childItem) => {
-                      const ChildIcon = childItem.icon;
-                      return (
+        return (
+          <NavItemWrapper
+            key={item.path}
+            onMouseEnter={() => {
+              if (item.children) setActiveDropdown(item.path);
+            }}
+            onMouseLeave={() => {
+              if (item.children) setActiveDropdown(null);
+            }}
+          >
+            {item.children ? (
+              // 下拉菜单触发器
+              <div style={{ position: 'relative' }}>
+                <NavTriggerItem
+                  isActive={isActive}
+                  onClick={() => {
+                    // 如果直接点击多级菜单，默认跳转到第一个子项
+                    if (item.children && item.children.length > 0) {
+                      const firstChild = item.children[0];
+                      navigate(firstChild.path);
+                      if (onDropdownItemClick) {
+                        onDropdownItemClick(firstChild);
+                      } else {
+                        onLinkClick();
+                      }
+                      setActiveDropdown(null);
+                    }
+                  }}
+                >
+                  <AnimatePresence>
+                    {isActive && (
+                      <motion.span
+                        initial={{ width: 0, opacity: 0, marginRight: 0 }}
+                        animate={{ width: 'auto', opacity: 1, marginRight: 8 }}
+                        exit={{ width: 0, opacity: 0, marginRight: 0 }}
+                        transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+                        style={{ display: 'flex', alignItems: 'center', overflow: 'hidden' }}
+                      >
+                        <item.icon size={16} />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  <span>{item.title}</span>
+
+                  {/* 选中指示器 */}
+                  {isActive && (
+                    <ActiveIndicator
+                      layoutId="nav-underline"
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                </NavTriggerItem>
+
+                {/* 下拉菜单内容 */}
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <DropdownContainer
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                      transition={{ type: 'spring', bounce: 0, duration: 0.2 }}
+                    >
+                      {item.children.map((child) => (
                         <DropdownItem
-                          key={childItem.path}
-                          to={childItem.path}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // 先替换父菜单
-                            onDropdownItemClick?.(childItem);
-                            // 再跳转到目标页面
-                            navigate(childItem.path);
+                          key={child.path}
+                          to={child.path}
+                          onClick={() => {
+                            if (onDropdownItemClick) {
+                              onDropdownItemClick(child);
+                            } else {
+                              onLinkClick();
+                            }
+                            setActiveDropdown(null);
                           }}
                         >
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <ChildIcon size={16} />
-                            <span>{childItem.title}</span>
-                          </span>
+                          <child.icon size={16} />
+                          {child.title}
                         </DropdownItem>
-                      );
-                    })}
-                  </DropdownContent>
+                      ))}
+                    </DropdownContainer>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              // 普通链接
+              <NavLinkItem to={item.path} isActive={isActive} onClick={onLinkClick}>
+                <AnimatePresence>
+                  {isActive && (
+                    <motion.span
+                      initial={{ width: 0, opacity: 0, marginRight: 0 }}
+                      animate={{ width: 'auto', opacity: 1, marginRight: 8 }}
+                      exit={{ width: 0, opacity: 0, marginRight: 0 }}
+                      transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+                      style={{ display: 'flex', alignItems: 'center', overflow: 'hidden' }}
+                    >
+                      <item.icon size={16} />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+                <span>{item.title}</span>
+
+                {/* 选中指示器 */}
+                {isActive && (
+                  <ActiveIndicator
+                    layoutId="nav-underline"
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                  />
                 )}
-              </AnimatePresence>
-            </div>
-          );
-        } else {
-          // 渲染普通菜单项
-          return (
-            <NavLinkWithHover
-              key={item.path}
-              to={item.path}
-              active={isItemActive(item)}
-              onClick={onLinkClick}
-              icon={item.icon}
-            >
-              {item.title}
-            </NavLinkWithHover>
-          );
-        }
+              </NavLinkItem>
+            )}
+          </NavItemWrapper>
+        );
       })}
-    </LayoutGroup>
+    </NavContainer>
   );
 };
 
