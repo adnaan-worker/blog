@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('@/middlewares/auth.middleware');
 const commentController = require('@/controllers/comment.controller');
+const authMiddleware = require('@/middlewares/auth.middleware');
+const { commentLimiter } = require('@/middlewares/rate-limit.middleware');
 const {
   withPagination,
   withUserContext,
@@ -196,7 +197,7 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 // 创建评论支持访客和登录用户（使用可选认证）
-router.post('/', authMiddleware.optionalAuth, commentController.createComment);
+router.post('/', authMiddleware.optionalAuth, commentLimiter, commentController.createComment);
 
 /**
  * @swagger

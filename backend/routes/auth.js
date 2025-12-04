@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('@/middlewares/auth.middleware');
 const authController = require('@/controllers/auth.controller');
+const { authLimiter, registerLimiter } = require('@/middlewares/rate-limit.middleware');
 
 /**
  * @swagger
@@ -48,7 +49,7 @@ const authController = require('@/controllers/auth.controller');
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/login', authController.login);
+router.post('/login', authLimiter, authController.login);
 
 /**
  * @swagger
@@ -94,7 +95,7 @@ router.post('/login', authController.login);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/register', authController.register);
+router.post('/register', registerLimiter, authController.register);
 
 /**
  * @swagger

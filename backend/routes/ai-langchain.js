@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const aiController = require('@/controllers/ai-langchain.controller');
 const authMiddleware = require('@/middlewares/auth.middleware');
+const { aiLimiter } = require('@/middlewares/rate-limit.middleware');
 
 /**
  * @swagger
@@ -67,7 +68,7 @@ const authMiddleware = require('@/middlewares/auth.middleware');
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.post('/chat', authMiddleware.verifyToken, aiController.chat);
+router.post('/chat', authMiddleware.verifyToken, aiLimiter, aiController.chat);
 
 /**
  * @swagger
@@ -131,7 +132,12 @@ router.post('/chat', authMiddleware.verifyToken, aiController.chat);
  *       429:
  *         description: 配额已用完
  */
-router.post('/generate/article', authMiddleware.verifyToken, aiController.generateArticle);
+router.post(
+  '/generate/article',
+  authMiddleware.verifyToken,
+  aiLimiter,
+  aiController.generateArticle
+);
 
 /**
  * @swagger
@@ -158,7 +164,7 @@ router.post('/generate/article', authMiddleware.verifyToken, aiController.genera
  *       200:
  *         description: 生成成功
  */
-router.post('/generate/title', authMiddleware.verifyToken, aiController.generateTitle);
+router.post('/generate/title', authMiddleware.verifyToken, aiLimiter, aiController.generateTitle);
 
 /**
  * @swagger
@@ -185,7 +191,12 @@ router.post('/generate/title', authMiddleware.verifyToken, aiController.generate
  *       200:
  *         description: 生成成功
  */
-router.post('/generate/summary', authMiddleware.verifyToken, aiController.generateSummary);
+router.post(
+  '/generate/summary',
+  authMiddleware.verifyToken,
+  aiLimiter,
+  aiController.generateSummary
+);
 
 /**
  * @swagger
@@ -270,9 +281,5 @@ router.get('/quota', authMiddleware.verifyToken, aiController.getQuota);
  *                       example: "gpt-3.5-turbo"
  */
 router.get('/status', authMiddleware.verifyToken, aiController.getStatus);
-
-// 注意：队列相关功能已废弃，改用 Socket.IO 流式输出
-// 注意：对话聊天（带记忆）功能已迁移到 /api/ai/conversation
-// 注意：清除记忆功能已迁移到 DELETE /api/ai/conversation 和 DELETE /api/ai/conversation/:sessionId
 
 module.exports = router;

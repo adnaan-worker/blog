@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('@/middlewares/auth.middleware');
 const postController = require('@/controllers/post.controller');
+const authMiddleware = require('@/middlewares/auth.middleware');
+const { interactionLimiter, looseLimiter } = require('@/middlewares/rate-limit.middleware');
 const { withPagination, withUserContext } = require('@/middlewares/request-context.middleware');
 
 /**
@@ -375,7 +376,12 @@ router.delete('/:id', authMiddleware.verifyToken, postController.deletePost);
  *       404:
  *         description: 文章不存在
  */
-router.post('/:id/like', authMiddleware.optionalAuth, postController.togglePostLike);
+router.post(
+  '/:id/like',
+  authMiddleware.optionalAuth,
+  interactionLimiter,
+  postController.togglePostLike
+);
 
 /**
  * @swagger
@@ -407,7 +413,12 @@ router.post('/:id/like', authMiddleware.optionalAuth, postController.togglePostL
  *       404:
  *         description: 文章不存在
  */
-router.post('/:id/bookmark', authMiddleware.optionalAuth, postController.togglePostBookmark);
+router.post(
+  '/:id/bookmark',
+  authMiddleware.optionalAuth,
+  interactionLimiter,
+  postController.togglePostBookmark
+);
 
 /**
  * @swagger

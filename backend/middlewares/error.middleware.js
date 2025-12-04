@@ -1,4 +1,14 @@
 const { logger } = require('@/utils/logger');
+const {
+  AppError,
+  NotFoundError,
+  InternalServerError,
+  formatSequelizeError,
+  formatJWTError,
+  formatErrorResponse,
+  isOperationalError,
+} = require('@/utils/errors');
+const environment = require('@/config/environment');
 
 /**
  * 错误处理中间件
@@ -14,22 +24,48 @@ const notFound = (req, res, next) => {
     userAgent: req.get('User-Agent'),
   });
 
-  res.apiNotFound(`未找到资源 - ${req.originalUrl}`, {
+  const error = new NotFoundError('RESOURCE_NOT_FOUND', `未找到资源 - ${req.originalUrl}`, {
     url: req.originalUrl,
     method: req.method,
-    ip: req.ip,
   });
+
+  next(error);
 };
 
 // 全局错误处理
 const errorHandler = (err, req, res, next) => {
+  let error = err;
+
+  // 转换Sequelize错误
+  if (
+    err.name === 'SequelizeValidationError' ||
+    err.name === 'SequelizeUniqueConstraintError' ||
+    err.name === 'SequelizeForeignKeyConstraintError'
+  ) {
+    error = formatSequelizeError(err);
+  }
+
+  // 转换JWT错误
+  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+    error = formatJWTError(err);
+  }
+
+  // 如果不是AppError，转换为InternalServerError
+  if (!(error instanceof AppError)) {
+    error = new InternalServerError('INTERNAL_SERVER_ERROR', err.message, {
+      originalError: err.name,
+    });
+  }
+
   // 确定状态码
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  const statusCode = error.statusCode || 500;
 
   // 记录错误日志
-  logger.error('应用错误', {
-    error: err.message,
-    stack: err.stack,
+  const logLevel = statusCode >= 500 ? 'error' : 'warn';
+  logger[logLevel]('应用错误', {
+    code: error.code,
+    errorCode: error.errorCode,
+    message: error.message,
     statusCode,
     url: req.originalUrl,
     method: req.method,
@@ -38,45 +74,16 @@ const errorHandler = (err, req, res, next) => {
     body: req.body,
     query: req.query,
     params: req.params,
+    stack: error.stack,
+    isOperational: isOperationalError(error),
   });
 
-  // 设置响应状态
-  res.status(statusCode);
+  // 格式化错误响应
+  const isDevelopment = environment.isDevelopment();
+  const response = formatErrorResponse(error, isDevelopment);
 
-  // 处理Sequelize验证错误
-  if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
-    const errors = err.errors.map(e => ({
-      field: e.path,
-      message: e.message,
-    }));
-    return res.apiValidationError(errors, '数据验证错误', {
-      errorType: err.name,
-    });
-  }
-
-  // 处理JWT错误
-  if (err.name === 'JsonWebTokenError') {
-    return res.apiUnauthorized('无效的令牌', {
-      errorType: err.name,
-    });
-  }
-
-  if (err.name === 'TokenExpiredError') {
-    return res.apiUnauthorized('令牌已过期', {
-      errorType: err.name,
-    });
-  }
-
-  // 返回标准错误响应
-  const meta = {
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
-  };
-
-  if (statusCode >= 500) {
-    return res.apiServerError(err.message, meta);
-  } else {
-    return res.apiError(err.message, statusCode, null, meta);
-  }
+  // 发送响应
+  res.status(statusCode).json(response);
 };
 
 module.exports = {

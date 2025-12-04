@@ -8,7 +8,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
-const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const path = require('path');
 const { createServer } = require('http');
@@ -22,6 +21,7 @@ const { aiService } = require('./services/ai');
 const { initializeQueues, shutdownQueues } = require('./queues');
 const specs = require('./config/swagger.config');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
+const { globalLimiter } = require('./middlewares/rate-limit.middleware');
 const routes = require('./routes');
 const socketManager = require('./utils/socket');
 
@@ -74,24 +74,8 @@ const setupMiddleware = () => {
     })
   );
 
-  // 速率限制
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15分钟
-    max: 1000, // 限制每个IP 15分钟内最多100个请求
-    message: {
-      message: '请求过于频繁，请稍后再试',
-      code: 429,
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    // 使用 X-Forwarded-For 头部来识别真实IP
-    keyGenerator: req => {
-      return req.ip || req.connection.remoteAddress;
-    },
-  });
-
-  // 应用速率限制到 API 路由
-  app.use('/api/', limiter);
+  // 全局速率限制（使用优化的限制器）
+  app.use('/api/', globalLimiter);
 
   // 请求体解析
   app.use(express.json({ limit: '10mb' }));
