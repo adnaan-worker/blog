@@ -1,12 +1,13 @@
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const userService = require('./user.service');
-const redisManager = require('@/utils/redis');
+const User = require('../models/user.model');
+const redisManager = require('../utils/redis');
+const environment = require('../config/environment');
 
-// Redis 管理已统一到 utils/redis.js
-
-// JWT密钥，实际应用中应从环境变量获取
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
+// 获取JWT配置
+const config = environment.get();
+const JWT_SECRET = config.jwt.secret;
+const JWT_EXPIRES_IN = config.jwt.expiresIn;
 
 /**
  * 认证服务层

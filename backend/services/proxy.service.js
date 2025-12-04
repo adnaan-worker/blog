@@ -5,14 +5,16 @@
 
 const { logger } = require('@/utils/logger');
 const redisManager = require('@/utils/redis');
+const environment = require('@/config/environment');
 
 class ProxyService {
   constructor() {
-    // 缓存配置
+    // 缓存配置 - 从环境配置读取(单位:秒)
+    const config = environment.get();
     this.CACHE_TTL = {
-      IP_LOCATION: 3600, // IP 定位缓存 1 小时
-      WEATHER: 1800, // 天气缓存 30 分钟
-      MUSIC_URL: 86400, // 音乐 URL 缓存 24 小时
+      IP_LOCATION: config.proxy.ipLocationTTL,
+      WEATHER: config.proxy.weatherTTL,
+      MUSIC_URL: config.proxy.musicUrlTTL,
     };
 
     // Redis 缓存键前缀

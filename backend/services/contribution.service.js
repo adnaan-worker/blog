@@ -6,6 +6,7 @@
 const axios = require('axios');
 const { logger } = require('@/utils/logger');
 const redisManager = require('@/utils/redis');
+const environment = require('@/config/environment');
 
 class ContributionService {
   /**
@@ -15,8 +16,9 @@ class ContributionService {
    */
   async getGitHubContributions(username) {
     try {
-      // 检查是否配置了 GitHub Token
-      const hasToken = !!process.env.GITHUB_TOKEN;
+      // 从环境配置获取GitHub配置
+      const config = environment.get();
+      const hasToken = !!config.github.token;
 
       if (!hasToken) {
         logger.warn('未配置 GITHUB_TOKEN，将使用 Gitee 数据或跳过 GitHub 统计');
@@ -50,10 +52,10 @@ class ContributionService {
         },
         {
           headers: {
-            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+            Authorization: `Bearer ${config.github.token}`,
             'Content-Type': 'application/json',
           },
-          timeout: 10000,
+          timeout: config.github.requestTimeout,
         }
       );
 
@@ -84,8 +86,9 @@ class ContributionService {
       const url = `https://gitee.com/${username}`;
       logger.info(`访问用户主页: ${url}`);
 
+      const config = environment.get();
       const response = await axios.get(url, {
-        timeout: 10000,
+        timeout: config.github.requestTimeout,
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -187,7 +190,8 @@ class ContributionService {
         }
       }
 
-      const hasGitHubToken = !!process.env.GITHUB_TOKEN;
+      const config = environment.get();
+      const hasGitHubToken = !!config.github.token;
       logger.info(
         `开始获取贡献数据 - GitHub: ${hasGitHubToken ? githubUsername || '未配置' : '未配置Token'}, Gitee: ${giteeUsername || '未配置'}`
       );
@@ -223,11 +227,12 @@ class ContributionService {
 
       logger.info(`成功生成贡献数据，共 ${chartData.length} 天`);
 
-      // 缓存结果（15分钟，900秒）
+      // 缓存结果
       if (await redisManager.isReady()) {
         try {
           // 使用 redisManager 封装的 set 方法（自动处理 JSON 序列化和过期时间）
-          await redisManager.set(cacheKey, chartData, 900);
+          const config = environment.get();
+          await redisManager.set(cacheKey, chartData, config.github.cacheTTL);
         } catch (cacheError) {
           logger.warn('写入缓存失败:', cacheError.message);
         }

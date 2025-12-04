@@ -1,5 +1,6 @@
 const { logger } = require('@/utils/logger');
 const redisManager = require('@/utils/redis');
+const environment = require('@/config/environment');
 
 class StatusService {
   constructor() {
@@ -13,14 +14,15 @@ class StatusService {
       ACTIVE_APPS_HASH: 'status:active_apps:hash', // Hash: 存储应用状态数据
     };
 
-    // 配置参数
+    // 配置参数 - 从环境配置读取
+    const config = environment.get();
     this.CONFIG = {
-      INACTIVE_THRESHOLD: 30 * 60 * 1000, // 30分钟无活动则认为不活跃
-      CLEANUP_THRESHOLD: 60 * 60 * 1000, // 1小时无活动则清理缓存
-      AUTO_CLEANUP_INTERVAL: 5 * 60 * 1000, // 每5分钟检查一次
-      MUSIC_EXPIRE_TIME: 3600, // 音乐状态1小时过期
-      MAX_ACTIVE_APPS: 3, // 最多保留3个活跃应用
-      APP_EXPIRE_TIME: 86400, // 应用状态24小时过期（刷新机制）
+      INACTIVE_THRESHOLD: config.status.inactiveThreshold,
+      CLEANUP_THRESHOLD: config.status.cleanupThreshold,
+      AUTO_CLEANUP_INTERVAL: config.status.autoCleanupInterval,
+      MUSIC_EXPIRE_TIME: config.status.musicExpireTime,
+      MAX_ACTIVE_APPS: config.status.maxActiveApps,
+      APP_EXPIRE_TIME: config.status.appExpireTime,
     };
 
     // 启动自动清理任务

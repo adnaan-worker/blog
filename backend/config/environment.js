@@ -126,6 +126,78 @@ class EnvironmentManager {
         // 默认 System Prompt 类型
         defaultPromptType: process.env.AI_DEFAULT_PROMPT_TYPE || 'WRITING',
       },
+
+      // Socket.IO配置
+      socketIO: {
+        // 基础配置
+        enabled: process.env.SOCKET_IO_ENABLED === 'true',
+        authKey: process.env.SOCKET_IO_AUTH_KEY || 'duyong-socket-328',
+        path: process.env.SOCKET_IO_PATH || '/socket.io',
+
+        // CORS配置
+        corsOrigin: process.env.SOCKET_IO_CORS_ORIGIN
+          ? process.env.SOCKET_IO_CORS_ORIGIN.split(',').map(origin => origin.trim())
+          : process.env.ALLOWED_ORIGINS
+            ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+            : ['http://localhost:3000', 'http://localhost:3001'],
+
+        // 连接配置
+        pingTimeout: parseInt(process.env.SOCKET_IO_PING_TIMEOUT) || 60000,
+        pingInterval: parseInt(process.env.SOCKET_IO_PING_INTERVAL) || 25000,
+        upgradeTimeout: parseInt(process.env.SOCKET_IO_UPGRADE_TIMEOUT) || 30000,
+        maxHttpBufferSize: parseInt(process.env.SOCKET_IO_MAX_HTTP_BUFFER_SIZE) || 1000000,
+        transports: process.env.SOCKET_IO_TRANSPORTS
+          ? process.env.SOCKET_IO_TRANSPORTS.split(',').map(t => t.trim())
+          : ['polling', 'websocket'],
+
+        // 限流与安全配置
+        maxConnections: parseInt(process.env.SOCKET_IO_MAX_CONNECTIONS) || 1000,
+        rateLimitConnections: parseInt(process.env.SOCKET_IO_RATE_LIMIT_CONNECTIONS) || 10,
+        rateLimitResetInterval: parseInt(process.env.SOCKET_IO_RATE_LIMIT_RESET_INTERVAL) || 60000,
+      },
+
+      // Redis高级配置
+      redisAdvanced: {
+        connectTimeout: parseInt(process.env.REDIS_CONNECT_TIMEOUT) || 30000,
+        commandTimeout: parseInt(process.env.REDIS_COMMAND_TIMEOUT) || 10000,
+        retryDelayOnFailover: parseInt(process.env.REDIS_RETRY_DELAY_ON_FAILOVER) || 100,
+        maxRetries: parseInt(process.env.REDIS_MAX_RETRIES) || 5,
+        lazyConnect: process.env.REDIS_LAZY_CONNECT === 'true',
+        keepAlive: parseInt(process.env.REDIS_KEEP_ALIVE) || 30000,
+        maxLoadingTimeout: parseInt(process.env.REDIS_MAX_LOADING_TIMEOUT) || 5000,
+        maxRetryAttempts: parseInt(process.env.REDIS_MAX_RETRY_ATTEMPTS) || 20,
+        retryDelay: parseInt(process.env.REDIS_RETRY_DELAY) || 200,
+        maxRetryDelay: parseInt(process.env.REDIS_MAX_RETRY_DELAY) || 3000,
+      },
+
+      // 状态服务配置
+      status: {
+        inactiveThreshold: parseInt(process.env.STATUS_INACTIVE_THRESHOLD) || 30 * 60 * 1000,
+        cleanupThreshold: parseInt(process.env.STATUS_CLEANUP_THRESHOLD) || 60 * 60 * 1000,
+        autoCleanupInterval: parseInt(process.env.STATUS_AUTO_CLEANUP_INTERVAL) || 5 * 60 * 1000,
+        musicExpireTime: parseInt(process.env.STATUS_MUSIC_EXPIRE_TIME) || 3600,
+        maxActiveApps: parseInt(process.env.STATUS_MAX_ACTIVE_APPS) || 3,
+        appExpireTime: parseInt(process.env.STATUS_APP_EXPIRE_TIME) || 86400,
+      },
+
+      // 代理服务配置
+      proxy: {
+        ipLocationTTL: parseInt(process.env.PROXY_IP_LOCATION_TTL) || 3600,
+        weatherTTL: parseInt(process.env.PROXY_WEATHER_TTL) || 1800,
+        musicUrlTTL: parseInt(process.env.PROXY_MUSIC_URL_TTL) || 86400,
+      },
+
+      // 访客统计配置
+      visitor: {
+        expireThreshold: parseInt(process.env.VISITOR_STATS_EXPIRE_THRESHOLD) || 5 * 60 * 1000,
+      },
+
+      // GitHub集成配置
+      github: {
+        token: process.env.GITHUB_TOKEN || null,
+        requestTimeout: parseInt(process.env.GITHUB_REQUEST_TIMEOUT) || 10000,
+        cacheTTL: parseInt(process.env.GITHUB_CACHE_TTL) || 900,
+      },
     };
 
     // 验证必需配置
@@ -242,8 +314,12 @@ class EnvironmentManager {
     console.log(
       `🗄️  数据库: ${this.config.database.host}:${this.config.database.port}/${this.config.database.name}`
     );
+    console.log(
+      `📦 Redis: ${this.config.redis.host}:${this.config.redis.port}/${this.config.redis.db}`
+    );
     console.log(`📝 日志级别: ${this.config.logging.level}`);
-    console.log(`🤖 AI提供商: ${this.config.ai.provider}`);
+    console.log(`🤖 AI提供商: ${this.config.ai.provider || '未配置'}`);
+    console.log(`🔌 Socket.IO: ${this.config.socketIO.enabled ? '启用' : '禁用'}`);
     console.log(`📊 监控: ${this.config.monitoring.enabled ? '启用' : '禁用'}\n`);
   }
 }

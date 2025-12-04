@@ -1,5 +1,6 @@
 const { Server } = require('socket.io');
 const { logger } = require('./logger');
+const environment = require('../config/environment');
 const visitorStatsService = require('@/services/visitor-stats.service');
 
 class SocketManager {
@@ -28,17 +29,9 @@ class SocketManager {
   }
 
   initialize(server, options = {}) {
-    // 从环境变量获取CORS配置
-    const allowedOrigins = process.env.SOCKET_IO_CORS_ORIGIN
-      ? process.env.SOCKET_IO_CORS_ORIGIN.split(',').map(origin => origin.trim())
-      : process.env.ALLOWED_ORIGINS
-        ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-        : [
-            'http://localhost:3000',
-            'http://localhost:3001',
-            'http://127.0.0.1:3000',
-            'http://127.0.0.1:3001',
-          ];
+    // 从环境配置获取CORS配置
+    const config = environment.get();
+    const allowedOrigins = config.socketIO.corsOrigin;
 
     // 添加WebSocket协议的URL
     const wsOrigins = allowedOrigins.map(origin =>
@@ -66,23 +59,21 @@ class SocketManager {
         allowedHeaders: ['Content-Type', 'Authorization'],
       },
 
-      // 连接配置优化 - 从环境变量读取
-      pingTimeout: parseInt(process.env.SOCKET_IO_PING_TIMEOUT) || 60000,
-      pingInterval: parseInt(process.env.SOCKET_IO_PING_INTERVAL) || 25000,
-      upgradeTimeout: parseInt(process.env.SOCKET_IO_UPGRADE_TIMEOUT) || 30000,
-      maxHttpBufferSize: parseInt(process.env.SOCKET_IO_MAX_HTTP_BUFFER_SIZE) || 1e6,
+      // 连接配置优化 - 从环境配置读取
+      pingTimeout: config.socketIO.pingTimeout,
+      pingInterval: config.socketIO.pingInterval,
+      upgradeTimeout: config.socketIO.upgradeTimeout,
+      maxHttpBufferSize: config.socketIO.maxHttpBufferSize,
 
-      // 传输方式 - 从环境变量读取
-      transports: process.env.SOCKET_IO_TRANSPORTS
-        ? process.env.SOCKET_IO_TRANSPORTS.split(',').map(t => t.trim())
-        : ['polling', 'websocket'],
+      // 传输方式 - 从环境配置读取
+      transports: config.socketIO.transports,
       allowUpgrades: true,
 
       // 路径配置
-      path: process.env.SOCKET_IO_PATH || '/socket.io',
+      path: config.socketIO.path,
 
       // 连接限制
-      maxConnections: parseInt(process.env.SOCKET_IO_MAX_CONNECTIONS) || 1000,
+      maxConnections: config.socketIO.maxConnections,
 
       // Engine.IO配置
       allowEIO3: true,
@@ -121,8 +112,9 @@ class SocketManager {
   setupMiddleware() {
     // Socket.IO 鉴权中间件 - 第一道防线
     this.io.use((socket, next) => {
+      const config = environment.get();
       const authToken = socket.handshake.auth.token || socket.handshake.headers.authorization;
-      const socketAuthKey = process.env.SOCKET_IO_AUTH_KEY || 'duyong-socket-328';
+      const socketAuthKey = config.socketIO.authKey;
 
       // 检查鉴权令牌
       if (!authToken) {
@@ -161,8 +153,9 @@ class SocketManager {
       // 解析JWT token获取用户ID（用于AI功能）
       if (jwtToken) {
         try {
+          const config = environment.get();
           const jwt = require('jsonwebtoken');
-          const decoded = jwt.verify(jwtToken, process.env.JWT_SECRET);
+          const decoded = jwt.verify(jwtToken, config.jwt.secret);
           socket.userId = decoded.id; // 设置用户ID
           logger.debug('✅ Socket JWT解析成功', { userId: socket.userId });
         } catch (error) {
@@ -208,14 +201,15 @@ class SocketManager {
       };
 
       // 重置计数间隔
-      const resetInterval = parseInt(process.env.SOCKET_IO_RATE_LIMIT_RESET_INTERVAL) || 60000;
+      const config = environment.get();
+      const resetInterval = config.socketIO.rateLimitResetInterval;
       if (now - clientData.lastReset > resetInterval) {
         clientData.connections = 0;
         clientData.lastReset = now;
       }
 
       // 限制每个IP的连接数
-      const maxConnections = parseInt(process.env.SOCKET_IO_RATE_LIMIT_CONNECTIONS) || 10;
+      const maxConnections = config.socketIO.rateLimitConnections;
       if (clientData.connections >= maxConnections) {
         logger.warn('⚠️ 连接频率限制', { ip: clientKey });
         return next(new Error('连接过于频繁'));

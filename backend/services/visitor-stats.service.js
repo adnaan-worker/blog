@@ -203,7 +203,11 @@ class VisitorStatsService {
    * 此方法用于清理可能遗漏的僵尸数据（如异常断开等）
    * @param {number} expireThreshold - 过期阈值（毫秒），默认5分钟
    */
-  cleanExpiredActivities(expireThreshold = 5 * 60 * 1000) {
+  cleanExpiredActivities(expireThreshold) {
+    // 从环境配置读取过期阈值
+    const environment = require('@/config/environment');
+    const config = environment.get();
+    expireThreshold = expireThreshold || config.visitor.expireThreshold;
     try {
       if (this.activities.size === 0) return 0;
 
