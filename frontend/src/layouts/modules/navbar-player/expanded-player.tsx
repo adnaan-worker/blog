@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
+import isPropValid from '@emotion/is-prop-valid';
 import {
   FiPlay,
   FiPause,
@@ -155,7 +156,9 @@ const Controls = styled.div`
   margin-top: 16px;
 `;
 
-const ControlButton = styled.button<{ size?: 'small' | 'medium' | 'large'; isActive?: boolean }>`
+const ControlButton = styled('button', {
+  shouldForwardProp: (prop) => isPropValid(prop) && prop !== 'isActive',
+})<{ size?: 'small' | 'medium' | 'large'; isActive?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -280,7 +283,9 @@ const Tabs = styled.div`
   margin-top: 16px;
 `;
 
-const Tab = styled.button<{ isActive: boolean }>`
+const Tab = styled('button', {
+  shouldForwardProp: (prop) => isPropValid(prop) && prop !== 'isActive',
+})<{ isActive: boolean }>`
   flex: 1;
   padding: 6px;
   border: none;
@@ -320,7 +325,9 @@ const ContentArea = styled.div`
   }
 `;
 
-const PlaylistItem = styled.div<{ isActive: boolean }>`
+const PlaylistItem = styled('div', {
+  shouldForwardProp: (prop) => isPropValid(prop) && prop !== 'isActive',
+})<{ isActive: boolean }>`
   display: flex;
   align-items: center;
   padding: 8px;
@@ -362,11 +369,13 @@ const PlaylistItem = styled.div<{ isActive: boolean }>`
   }
 `;
 
-const LyricLine = styled.div<{ isActive: boolean }>`
+const LyricLine = styled('div', {
+  shouldForwardProp: (prop) => isPropValid(prop) && prop !== 'isActive',
+})<{ isActive: boolean }>`
   text-align: center;
   padding: 8px 0;
+  font-weight: ${(props) => (props.isActive ? '600' : '500')};
   color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'var(--text-secondary)')};
-  font-weight: ${(props) => (props.isActive ? '600' : '400')};
   font-size: ${(props) => (props.isActive ? '1rem' : '0.9rem')};
   opacity: ${(props) => (props.isActive ? 1 : 0.6)};
   transition: all 0.3s;

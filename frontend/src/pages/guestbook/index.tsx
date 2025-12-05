@@ -56,14 +56,15 @@ const MOCK_DATA = [
 // ============================================================================
 
 const Container = styled.div`
+  max-width: var(--max-width);
   min-height: 100vh;
-  background: var(--bg-primary);
+  margin: 0 auto;
+  padding: 0 2rem;
   position: relative;
 `;
 
 const MainContent = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
   padding: 0 2rem 4rem;
 `;
 

@@ -11,10 +11,11 @@ import { MOCK_FRIENDS } from './data';
 import { useAnimationEngine } from '@/utils/ui/animation';
 
 const Container = styled.div`
+  max-width: var(--max-width);
   min-height: 100vh;
+  margin: 0 auto;
+  padding: 0 2rem;
   position: relative;
-  background: var(--bg-primary);
-  overflow-x: hidden;
 `;
 
 const AmbientOrb = styled(motion.div)`

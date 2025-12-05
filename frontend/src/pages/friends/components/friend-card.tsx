@@ -9,7 +9,6 @@ const CardContainer = styled(motion.a)<{ themeColor?: string }>`
   display: flex;
   flex-direction: column;
   height: 200px; /*稍微增加高度以容纳更多内容*/
-  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   overflow: hidden;
@@ -86,7 +85,6 @@ const InfoPanel = styled.div`
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
-  background: var(--bg-secondary); /* 默认背景 */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   justify-content: flex-start;
 `;

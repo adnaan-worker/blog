@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
+import isPropValid from '@emotion/is-prop-valid';
 
 // 定义菜单项接口
 interface MenuItem {
@@ -51,13 +52,17 @@ const commonItemStyles = (isActive: boolean) => `
   }
 `;
 
-// 链接类型的导航项
-const NavLinkItem = styled(Link)<{ isActive: boolean }>`
+// 链接类型的导航项 (使用 shouldForwardProp 过滤 isActive)
+const NavLinkItem = styled(Link, {
+  shouldForwardProp: (prop) => isPropValid(prop) && prop !== 'isActive',
+})<{ isActive: boolean }>`
   ${(props) => commonItemStyles(props.isActive)}
 `;
 
 // 触发器类型的导航项（用于下拉菜单）
-const NavTriggerItem = styled.div<{ isActive: boolean }>`
+const NavTriggerItem = styled('div', {
+  shouldForwardProp: (prop) => isPropValid(prop) && prop !== 'isActive',
+})<{ isActive: boolean }>`
   ${(props) => commonItemStyles(props.isActive)}
 `;
 

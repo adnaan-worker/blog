@@ -19,7 +19,6 @@ import { SiteSettingsContext } from './contexts';
 import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext';
 import { HydrationDetector } from '@/utils/ui/animation';
 
-// 重新导出 Hook，保持向后兼容
 export { useSiteSettings } from './hooks';
 
 // 定义页面主体样式
