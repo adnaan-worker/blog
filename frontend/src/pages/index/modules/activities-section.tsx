@@ -87,66 +87,84 @@ const ActivityGrid = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 0 0.75rem;
+  padding: 0 0 0 10px; /* 左侧留出时间线空间 */
   position: relative;
   min-height: 100%;
+
+  /* 连续的时间线 */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 21px; /* 对齐图标中心 */
+    top: 1.5rem;
+    bottom: 1rem;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      rgba(var(--accent-rgb), 0.1) 0%,
+      rgba(var(--accent-rgb), 0.2) 50%,
+      rgba(var(--accent-rgb), 0.1) 100%
+    );
+    z-index: 0;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0; /* 移动端去除额外内边距 */
+  }
 `;
 
 const ActivityItem = styled(motion.div)`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.875rem 0;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  gap: 0.3rem;
+  padding: 0.6rem 0; /* 更紧凑 */
   position: relative;
   cursor: pointer;
+  z-index: 1;
 
-  &:last-of-type {
-    border-bottom: none;
-  }
-
-  [data-theme='dark'] & {
-    border-bottom-color: rgba(75, 85, 99, 0.5);
+  @media (max-width: 768px) {
+    padding-left: 0.5rem; /* 移动端整体左移一点 */
   }
 `;
 
 const ActivityHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  flex-wrap: wrap;
+  gap: 0.75rem;
+  flex-wrap: nowrap; /* 不换行，保持单行 */
+
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+    flex-wrap: wrap; /* 移动端允许换行 */
+  }
 `;
 
 const ActivityIcon = styled.div<{ color?: string }>`
-  width: 24px;
-  height: 24px;
+  width: 22px; /* 稍微调小 */
+  height: 22px;
   border-radius: 50%;
   border: 1.5px solid ${({ color }) => color || 'var(--accent-color)'};
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: ${({ color }) => {
-    if (color && color.startsWith('var(')) {
-      return `rgba(var(--accent-rgb, 59, 130, 246), 0.1)`;
-    }
-    if (color && color.startsWith('#')) {
-      const hex = color.replace('#', '');
-      const r = parseInt(hex.substring(0, 2), 16);
-      const g = parseInt(hex.substring(2, 4), 16);
-      const b = parseInt(hex.substring(4, 6), 16);
-      return `rgba(${r}, ${g}, ${b}, 0.1)`;
-    }
-    return 'rgba(var(--accent-rgb, 59, 130, 246), 0.1)';
-  }};
+  background: var(--bg-primary); /* 遮挡时间线 */
+  box-shadow: 0 0 0 3px var(--bg-primary); /* 外圈间隙 */
   color: ${({ color }) => color || 'var(--accent-color)'};
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   transition: all 0.2s ease;
-  opacity: 0.8;
+  position: relative;
+  z-index: 2;
 
   ${ActivityItem}:hover & {
-    opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.15);
+    box-shadow:
+      0 0 0 3px var(--bg-primary),
+      0 0 10px
+        ${({ color }) =>
+          color
+            ? `rgba(${color.startsWith('#') ? parseInt(color.slice(1, 3), 16) + ',' + parseInt(color.slice(3, 5), 16) + ',' + parseInt(color.slice(5, 7), 16) : 'var(--accent-rgb)'}, 0.2)`
+            : 'rgba(var(--accent-rgb), 0.2)'};
   }
 `;
 
@@ -156,95 +174,89 @@ const ActivityHeaderContent = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  overflow: hidden;
+  flex-wrap: wrap; /* 移动端允许换行 */
 `;
 
 const ActivityAuthor = styled.div`
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 500;
   line-height: 1.4;
   color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  flex-wrap: wrap;
-`;
+  white-space: nowrap;
 
-const ActivityTitle = styled.span`
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.4;
-  color: var(--text-primary);
-  transition: color 0.2s ease;
-
-  ${ActivityItem}:hover & {
-    color: var(--accent-color);
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+    flex-wrap: wrap;
+    white-space: normal;
   }
 `;
 
 const ActivityTime = styled.span`
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
-  font-weight: 400;
-  opacity: 0.7;
+  opacity: 0.6;
   flex-shrink: 0;
   margin-left: auto;
+  font-family: monospace;
 `;
 
 const ActivityBubble = styled.div`
-  margin-left: 2rem;
-  padding: 0.625rem 0.875rem;
-  border-radius: 0.75rem;
-  border-top-left-radius: 0.25rem;
-  background: rgba(107, 114, 126, 0.05);
+  margin-left: calc(22px + 0.75rem); /* 对齐图标右侧 */
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border-top-left-radius: 0.1rem;
+  background: rgba(107, 114, 126, 0.04);
   color: var(--text-primary);
-  font-size: 0.8125rem;
-  line-height: 20px;
-  word-break: break-word;
-  white-space: normal;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  position: relative;
 
   & > .clamp-3 {
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2; /* 限制为2行，更紧凑 */
     -webkit-box-orient: vertical;
     text-overflow: ellipsis;
   }
+
   transition: background 0.2s ease;
 
   [data-theme='dark'] & {
-    background: rgba(75, 85, 99, 0.2);
+    background: rgba(75, 85, 99, 0.15);
   }
 
   ${ActivityItem}:hover & {
     background: rgba(107, 114, 126, 0.08);
-
     [data-theme='dark'] & {
-      background: rgba(75, 85, 99, 0.3);
+      background: rgba(75, 85, 99, 0.25);
     }
+  }
+
+  @media (max-width: 768px) {
+    margin-left: calc(22px + 0.5rem);
+    padding: 0.4rem 0.6rem;
   }
 `;
 
 const ActivitySecondary = styled.div`
-  margin-left: 2rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 20px;
-  color: var(--text-primary);
+  margin-left: calc(22px + 0.75rem);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 
   & > .clamp-2 {
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1; /* 限制为1行 */
     -webkit-box-orient: vertical;
     text-overflow: ellipsis;
   }
-  word-break: break-word;
-  white-space: normal;
-  transition: color 0.2s ease;
 
-  ${ActivityItem}:hover & {
-    color: var(--accent-color);
+  @media (max-width: 768px) {
+    margin-left: calc(22px + 0.5rem);
   }
 `;
 

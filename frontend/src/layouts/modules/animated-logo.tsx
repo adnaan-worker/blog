@@ -1,88 +1,105 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { keyframes } from '@emotion/react';
+import { keyframes, css } from '@emotion/react';
 
-// 字符划出动画
-const charReveal = keyframes`
-  0% {
-    opacity: 0;
-    transform: translateY(-10px) rotateX(90deg);
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) rotateX(0deg);
-  }
+// 简单的抖动动画
+const shake = keyframes`
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0, 0); }
 `;
 
-// Logo 容器
-const LogoContainer = styled(Link)`
+// RGB 分离动画（通过 text-shadow 实现，兼容性更好）
+const rgbSplit = keyframes`
+  0% { text-shadow: none; }
+  20% { text-shadow: -2px 0 #ff00ff, 2px 0 #00ffff; }
+  40% { text-shadow: 2px 0 #ff00ff, -2px 0 #00ffff; }
+  60% { text-shadow: -1px 0 #ff00ff, 1px 0 #00ffff; }
+  80% { text-shadow: 1px 0 #ff00ff, -1px 0 #00ffff; }
+  100% { text-shadow: none; }
+`;
+
+// 光标闪烁
+const blink = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+`;
+
+// 律动跳跃动画
+const jump = keyframes`
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-30%); }
+  50% { transform: translateY(10%); }
+  70% { transform: translateY(-5%); }
+  100% { transform: translateY(0); }
+`;
+
+const LogoLink = styled(Link)`
+  text-decoration: none;
+  position: relative;
   display: inline-flex;
   align-items: center;
-  position: relative;
-  text-decoration: none;
-  padding: 0.6rem 1rem;
+  padding: 0.5rem;
+  z-index: 50;
+  line-height: 1;
+`;
+
+// 文本容器 - 负责整体布局和悬停时的故障效果
+const TextContainer = styled.div<{ isHovered: boolean }>`
+  display: inline-flex;
   font-family: 'Press Start 2P', 'Courier New', monospace;
   font-size: 1.5rem;
-  line-height: 1.5;
-  transition: transform 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-
-  @media (max-width: 480px) {
-    padding: 0.5rem 0.8rem;
-    font-size: 1.2rem;
-    z-index: 51;
-  }
-`;
-
-// 内容容器
-const ContentWrapper = styled.span`
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1em;
-`;
-
-// 单个字符容器
-const CharContainer = styled.span<{ isRevealed: boolean; delay: number }>`
-  display: inline-block;
-  position: relative;
-  min-width: 0.6em;
-  text-align: center;
-  perspective: 1000px;
-
-  /* 字符划出动画 */
-  animation: ${(props) => (props.isRevealed ? charReveal : 'none')} 0.5s ease-out ${(props) => props.delay}s forwards;
-  transform-origin: center bottom;
-`;
-
-// 字符样式
-const Character = styled.span<{ isPlaceholder: boolean }>`
-  font-weight: 400;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.05em;
   text-transform: lowercase;
-  letter-spacing: 0.05em;
+  position: relative;
+  transition: color 0.2s;
+  text-shadow: none;
 
-  /* 根据是否是占位符显示不同样式 */
+  /* 悬停效果：整体抖动 + RGB分离 */
   ${(props) =>
-    props.isPlaceholder
-      ? `
-    /* 短横线 */
-    color: var(--text-secondary);
-    opacity: 0.4;
-  `
-      : `
-    /* 真实字符 - 使用主题色渐变 */
-    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-color) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  `}
+    props.isHovered &&
+    css`
+      animation:
+        ${shake} 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both infinite,
+        ${rgbSplit} 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both infinite;
+      color: var(--text-primary);
+    `}
+
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
+`;
+
+// 单个字符 - 负责加载时的跳动动画
+const Char = styled.span<{ delay: number; isPlaying: boolean }>`
+  display: inline-block;
+  transform-origin: bottom center;
+  animation: ${(props) =>
+    props.isPlaying
+      ? css`
+          ${jump} 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${props.delay}s forwards
+        `
+      : 'none'};
+
+  /* 避免动画结束后的闪烁 */
+  will-change: transform;
+`;
+
+const Cursor = styled.span<{ isHovered: boolean }>`
+  display: inline-block;
+  width: 0.6em;
+  height: 0.15em;
+  background-color: ${(props) => (props.isHovered ? 'var(--accent-color)' : 'var(--text-primary)')};
+  margin-left: 0.1em;
+  animation: ${blink} 1s step-end infinite;
+  margin-bottom: 0.15em;
+  vertical-align: bottom;
 `;
 
 interface AnimatedLogoProps {
@@ -90,50 +107,35 @@ interface AnimatedLogoProps {
 }
 
 const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ className }) => {
-  const fullText = 'adnaan';
-  const [revealedIndices, setRevealedIndices] = useState<number[]>([]);
-  const [animationStarted, setAnimationStarted] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const text = 'adnaan';
 
-  useEffect(() => {
-    // 延迟300ms开始动画
-    const startDelay = setTimeout(() => {
-      setAnimationStarted(true);
-    }, 300);
-
-    return () => clearTimeout(startDelay);
+  // 控制开场动画状态
+  React.useEffect(() => {
+    // 动画总时长 = 延迟(最大0.5s) + 动画时长(0.8s)
+    const timer = setTimeout(() => {
+      setIsPlaying(false);
+    }, 1500);
+    return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (!animationStarted) return;
-
-    // 生成随机顺序
-    const indices = Array.from({ length: fullText.length }, (_, i) => i);
-    const shuffled = [...indices].sort(() => Math.random() - 0.5);
-
-    // 逐个随机显示字符
-    shuffled.forEach((index, i) => {
-      setTimeout(() => {
-        setRevealedIndices((prev) => [...prev, index]);
-      }, i * 200); // 每个字符间隔200ms
-    });
-  }, [animationStarted, fullText.length]);
-
   return (
-    <LogoContainer to="/" className={className}>
-      <ContentWrapper>
-        {Array.from(fullText).map((char, index) => {
-          const isRevealed = revealedIndices.includes(index);
-          const revealIndex = revealedIndices.indexOf(index);
-          const delay = revealIndex >= 0 ? revealIndex * 0.05 : 0;
-
-          return (
-            <CharContainer key={index} isRevealed={isRevealed} delay={delay}>
-              <Character isPlaceholder={!isRevealed}>{isRevealed ? char : '-'}</Character>
-            </CharContainer>
-          );
-        })}
-      </ContentWrapper>
-    </LogoContainer>
+    <LogoLink
+      to="/"
+      className={className}
+      onMouseEnter={() => !isPlaying && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <TextContainer isHovered={isHovered}>
+        {text.split('').map((char, index) => (
+          <Char key={index} delay={index * 0.1} isPlaying={isPlaying}>
+            {char}
+          </Char>
+        ))}
+      </TextContainer>
+      <Cursor isHovered={isHovered} />
+    </LogoLink>
   );
 };
 

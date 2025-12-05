@@ -6,15 +6,15 @@ import { useAnimationEngine, useSmartInView } from '@/utils/ui/animation';
 
 // Styled Components
 const ChartSection = styled(motion.section)`
-  margin: 2.5rem 0;
+  margin: 1.5rem 0;
 `;
 
 const CreativeSectionHeader = styled.div`
   text-align: center;
-  margin: 3.5rem 0 2.5rem;
+  margin: 1rem 0 1.5rem;
 
   @media (max-width: 768px) {
-    margin: 2.5rem 0 2rem;
+    margin: 1rem 0 1rem;
   }
 `;
 
@@ -43,7 +43,7 @@ const SectionSubtitle = styled(motion.p)`
 `;
 
 const ChartContainer = styled(motion.div)`
-  padding: 1.25rem 0;
+  padding: 1rem 0;
 `;
 
 // 活动图表容器
@@ -78,34 +78,66 @@ const MonthGroup = styled.div`
 `;
 
 // 每一天的线条（在月份组内均分空间）
-const DayLine = styled(motion.div)<{ height: number }>`
+const DayLine = styled(motion.div)<{ height: number; intensity: number }>`
   flex: 1;
-  min-width: 2px;
-  height: ${(props) => props.height}px; /* 使用绝对高度 */
-  background: linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.7) 100%);
-  border-radius: 3px 3px 0 0;
-  opacity: 0.85;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 3px;
+  height: ${(props) => props.height}px; /* 恢复高度，确保布局稳定 */
+  background: ${(props) =>
+    props.intensity > 0
+      ? `linear-gradient(180deg, var(--accent-color) 0%, rgba(var(--accent-rgb), 0.2) 100%)`
+      : `rgba(var(--text-secondary-rgb, 107, 114, 126), 0.1)`};
+  border-radius: 2px 2px 0 0;
+  opacity: ${(props) => (props.intensity > 0 ? 1 : 0.3)};
+  transform-origin: bottom;
   cursor: pointer;
+  position: relative;
+
+  /* 顶部高亮条，增加立体感 */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: ${(props) => (props.intensity > 0 ? 'rgba(255,255,255,0.5)' : 'transparent')};
+    border-radius: 2px 2px 0 0;
+  }
 
   &:hover {
-    opacity: 1;
-    transform: scaleY(1.15) translateY(-2px);
-    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.6);
-    filter: brightness(1.1);
+    filter: brightness(1.3);
+    z-index: 10;
+    box-shadow: 0 0 10px var(--accent-color);
   }
 
   @media (max-width: 768px) {
-    min-width: 1.5px;
+    min-width: 2px;
   }
 `;
 
 // 月份标签容器
 const ChartLabels = styled.div`
   display: flex;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
   padding: 0 1rem;
   gap: 4px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -0.75rem;
+    left: 1rem;
+    right: 1rem;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(var(--text-secondary-rgb), 0.2) 20%,
+      rgba(var(--text-secondary-rgb), 0.2) 80%,
+      transparent 100%
+    );
+  }
 
   @media (max-width: 768px) {
     padding: 0 0.75rem;
@@ -118,49 +150,65 @@ const MonthLabel = styled.div`
   flex: 1;
   font-size: 0.7rem;
   color: var(--text-secondary);
-  opacity: 0.8;
+  opacity: 0.6;
   text-align: center;
+  font-family: 'Courier New', monospace; /* 增加科技感 */
+  letter-spacing: 1px;
 
   @media (max-width: 768px) {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
   }
 `;
 
+// 律动动画变体
+const rhythmVariants = {
+  hidden: { height: 4, opacity: 0 },
+  visible: (custom: { height: number; index: number }) => ({
+    height: [4, Math.min(custom.height * 1.5, 120), custom.height * 0.8, custom.height],
+    opacity: 1,
+    transition: {
+      duration: 1.2,
+      delay: custom.index * 0.01, // 紧凑的交错延迟，形成波浪
+      times: [0, 0.4, 0.7, 1],
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number], // Custom cubic-bezier for nice bounce
+    },
+  }),
+  hover: (custom: { height: number }) => ({
+    height: Math.min(custom.height * 1.2 + 5, 140),
+    transition: { duration: 0.2, ease: 'easeOut' as const },
+  }),
+};
+
 // 主组件
 export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ chartData }) => {
-  const { variants, springPresets } = useAnimationEngine();
-
-  // 使用智能视口检测 - 优化初始加载和刷新时的动画
-  const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
+  const { variants } = useAnimationEngine();
 
   if (!Array.isArray(chartData) || chartData.length === 0) {
     return (
       <ChartSection
-        ref={containerView.ref as React.RefObject<HTMLElement>}
         initial="hidden"
-        animate={containerView.isInView ? 'visible' : 'hidden'}
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
         variants={variants.stagger}
       >
         <CreativeSectionHeader>
-          <CreativeSectionTitle variants={variants.fadeIn}>年度活跃度一览</CreativeSectionTitle>
-          <SectionSubtitle variants={variants.fadeIn}>暂无数据</SectionSubtitle>
+          <CreativeSectionTitle variants={variants.fadeIn}>年度活跃度频谱</CreativeSectionTitle>
+          <SectionSubtitle variants={variants.fadeIn}>暂无信号</SectionSubtitle>
         </CreativeSectionHeader>
       </ChartSection>
     );
   }
 
-  // 获取某个月的天数（考虑闰年）
   const getDaysInMonth = (year: number, month: number): number => {
     return new Date(year, month + 1, 0).getDate();
   };
 
-  // 处理API返回的数据
   const dailyData = chartData.map((item: any) => {
     const date = new Date(item.date);
     return {
       date: item.date,
       displayDate: `${date.getMonth() + 1}/${date.getDate()}`,
-      month: `${date.getMonth() + 1}月`,
+      month: `${date.getMonth() + 1}`, // 简化月份显示
       monthNum: date.getMonth(),
       year: date.getFullYear(),
       day: date.getDate(),
@@ -168,24 +216,21 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
     };
   });
 
-  // 计算最大贡献数和图表高度
   const maxCount = Math.max(...dailyData.map((item) => item.count), 1);
-  const chartHeight = window.innerWidth <= 768 ? 96 : 118;
+  const chartHeight = window.innerWidth <= 768 ? 80 : 100; // 稍微减小高度，留出空间给倒影
 
-  // 标准化数据为绝对高度（避免百分比高度问题）
   const normalizedData = dailyData.map((item) => ({
     ...item,
     heightPx:
       item.count === 0
-        ? 3 // 无贡献时显示最小高度
-        : Math.max((item.count / maxCount) * chartHeight, 5), // 有贡献时至少5px
+        ? 4 // 基线高度
+        : Math.max((item.count / maxCount) * chartHeight, 8),
+    intensity: item.count / maxCount,
   }));
 
-  // 按月份分组数据（用于月份均分布局）
   const monthGroups = normalizedData.reduce(
     (groups: Array<{ month: string; monthNum: number; year: number; days: typeof normalizedData }>, item) => {
       const lastGroup = groups[groups.length - 1];
-
       if (!lastGroup || lastGroup.month !== item.month) {
         groups.push({
           month: item.month,
@@ -196,25 +241,19 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
       } else {
         lastGroup.days.push(item);
       }
-
       return groups;
     },
     [],
   );
 
-  // 为每个月份组填充完整天数
   const completeMonthGroups = monthGroups.map((group) => {
     const daysInMonth = getDaysInMonth(group.year, group.monthNum);
     const completeDays: typeof normalizedData = [];
-
-    // 填充整个月的天数（1号到月末）
     for (let day = 1; day <= daysInMonth; day++) {
       const existingDay = group.days.find((d) => d.day === day);
       if (existingDay) {
-        // 使用已有数据
         completeDays.push(existingDay);
       } else {
-        // 填充缺失天数（count为0）
         const date = new Date(group.year, group.monthNum, day);
         completeDays.push({
           date: date.toISOString().split('T')[0],
@@ -224,22 +263,22 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
           year: group.year,
           day: day,
           count: 0,
-          heightPx: 3, // 无贡献时显示最小高度
+          heightPx: 4,
+          intensity: 0,
         });
       }
     }
-
-    return {
-      ...group,
-      days: completeDays,
-    };
+    return { ...group, days: completeDays };
   });
+
+  // 计算总索引，用于动画延迟
+  let globalIndex = 0;
 
   return (
     <ChartSection
-      ref={containerView.ref as React.RefObject<HTMLElement>}
       initial="hidden"
-      animate={containerView.isInView ? 'visible' : 'hidden'}
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.2 }}
       variants={variants.stagger}
     >
       <CreativeSectionHeader>
@@ -254,20 +293,26 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
       </CreativeSectionHeader>
 
       <ChartContainer>
-        <Chart>
+        {/* 添加倒影效果 -webkit-box-reflect 是最简单高性能的方式 */}
+        <Chart style={{ WebkitBoxReflect: 'below 2px linear-gradient(transparent, rgba(0,0,0,0.2))' } as any}>
           {completeMonthGroups.map((group, groupIndex) => (
             <MonthGroup key={`${group.month}-${groupIndex}`}>
-              {group.days.map((item, dayIndex) => (
-                <DayLine
-                  key={`${item.date}-${dayIndex}`}
-                  height={item.heightPx}
-                  title={`${item.displayDate}: ${item.count} 次贡献`}
-                  style={{
-                    background: item.count === 0 ? 'rgba(var(--text-secondary-rgb, 107, 114, 126), 0.15)' : undefined,
-                    opacity: item.count === 0 ? 0.5 : 0.85,
-                  }}
-                />
-              ))}
+              {group.days.map((item, dayIndex) => {
+                const currentIndex = globalIndex++;
+                // 确保 key 唯一，使用完整日期加索引
+                const uniqueKey = `${item.date}-${group.month}-${dayIndex}`;
+                return (
+                  <DayLine
+                    key={uniqueKey}
+                    custom={{ height: item.heightPx, index: currentIndex }}
+                    variants={rhythmVariants}
+                    intensity={item.intensity}
+                    height={item.heightPx} // 用于 styled-component 的 prop
+                    title={`${item.displayDate}: ${item.count} 次贡献`}
+                    whileHover="hover"
+                  />
+                );
+              })}
             </MonthGroup>
           ))}
         </Chart>

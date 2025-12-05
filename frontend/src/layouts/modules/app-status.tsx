@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { keyframes, css } from '@emotion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStatus } from '@/hooks/useSocket';
-import type { StatusData, StatusResponse } from '@/types';
+import type { StatusData } from '@/types';
 import {
   FiChrome,
   FiCode,
@@ -16,10 +17,11 @@ import {
   FiSun,
   FiCoffee,
   FiStar,
+  FiActivity,
 } from 'react-icons/fi';
 import { getAppIcon, getAppColor } from '@/utils/ui/icons';
 
-// 备用图标（当图片加载失败时使用）
+// 备用图标
 const FALLBACK_ICONS: Record<string, React.ReactNode> = {
   Cursor: <FiCode />,
   Windsurf: <FiCode />,
@@ -38,7 +40,6 @@ const FALLBACK_ICONS: Record<string, React.ReactNode> = {
   PotPlayer: <FiVideo />,
   VLC: <FiVideo />,
   微信: <FiMessageCircle />,
-  // 默认状态图标
   深夜休息: <FiMoon />,
   早晨时光: <FiCoffee />,
   工作状态: <FiCode />,
@@ -48,138 +49,126 @@ const FALLBACK_ICONS: Record<string, React.ReactNode> = {
   default: <FiMonitor />,
 };
 
-// 动画定义
-const pulse = keyframes`
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.4); }
-  50% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(29, 185, 84, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(29, 185, 84, 0); }
+// 波形动画
+const wave = keyframes`
+  0%, 100% { height: 3px; }
+  50% { height: 10px; }
 `;
 
-const slideIn = keyframes`
-  from { transform: translateX(20px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-`;
-
-// 样式组件
 const StatusContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px; /* 紧凑间距 */
   z-index: 50;
-
-  @media (max-width: 768px) {
-    gap: 4px;
-  }
+  height: 32px; /* 固定高度 */
 `;
 
-const AppIcon = styled.div<{
-  color: string;
-  size: 'large' | 'medium' | 'small';
-  isActive?: boolean;
-  isNew?: boolean;
-}>`
+const AppIconWrapper = styled(motion.div)<{ $color: string; $isActive?: boolean }>`
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: ${(props) => (props.$isActive ? `${props.$color}25` : 'var(--bg-secondary)')};
+  border: 1px solid ${(props) => (props.$isActive ? `${props.$color}40` : 'transparent')};
+  color: ${(props) => props.$color};
   display: flex;
   align-items: center;
   justify-content: center;
-  width: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
-  height: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
-  min-width: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
-  min-height: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
-  max-width: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
-  max-height: ${(props) => (props.size === 'large' ? '32px' : props.size === 'medium' ? '26px' : '22px')};
-  border-radius: ${(props) => (props.size === 'large' ? '8px' : '6px')};
-  background: ${(props) => props.color}20;
-  color: ${(props) => props.color};
-  font-size: ${(props) => (props.size === 'large' ? '16px' : props.size === 'medium' ? '13px' : '11px')};
-  transition: all 0.2s ease;
-  position: relative;
+  font-size: 14px;
   cursor: pointer;
-  opacity: ${(props) => (props.size === 'large' ? 1 : props.size === 'medium' ? 0.8 : 0.6)};
-  overflow: visible;
+  /* 非活跃图标半透明 */
+  opacity: ${(props) => (props.$isActive ? 1 : 0.5)};
+  transition: all 0.2s ease;
 
-  ${(props) =>
-    props.isNew &&
-    css`
-      animation: ${slideIn} 0.3s ease forwards;
-    `}
-
-  ${(props) =>
-    props.isActive &&
-    css`
-      animation: ${pulse} 2s ease-in-out infinite;
-    `}
-
+  /* 悬停效果 */
   &:hover {
-    transform: translateY(-1px) scale(1.05);
-    background: ${(props) => props.color}30;
-    box-shadow: 0 2px 8px ${(props) => props.color}40;
+    transform: translateY(-2px);
     opacity: 1;
+    background: ${(props) => props.$color}30;
+    box-shadow: 0 4px 12px ${(props) => props.$color}25;
+    border-color: ${(props) => props.$color};
+    z-index: 10;
   }
 
-  /* 图片样式 */
   img {
     width: 100%;
     height: 100%;
-    max-width: 100%;
-    max-height: 100%;
     object-fit: contain;
-    padding: ${(props) => (props.size === 'large' ? '4px' : '3px')};
-    border-radius: inherit;
-    display: block;
-  }
-
-  @media (max-width: 768px) {
-    width: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
-    height: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
-    min-width: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
-    min-height: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
-    max-width: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
-    max-height: ${(props) => (props.size === 'large' ? '28px' : props.size === 'medium' ? '24px' : '20px')};
-    font-size: ${(props) => (props.size === 'large' ? '14px' : props.size === 'medium' ? '12px' : '10px')};
+    padding: 5px;
+    border-radius: 8px;
   }
 `;
 
-const StatusIndicator = styled.div<{ connected: boolean }>`
+// 极简的状态点
+const StatusDot = styled.div<{ $connected: boolean }>`
   position: absolute;
   top: -2px;
   right: -2px;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: ${(props) => (props.connected ? 'var(--success-color)' : 'var(--warning-color)')};
+  background: ${(props) => (props.$connected ? 'var(--success-color)' : 'var(--warning-color)')};
   border: 1px solid var(--bg-primary);
-
-  ${(props) =>
-    props.connected &&
-    css`
-      animation: ${pulse} 2s ease-in-out infinite;
-    `}
+  box-shadow: 0 0 0 1px var(--bg-primary);
 `;
 
-const Tooltip = styled.div<{ visible: boolean }>`
+// 音乐波形指示器
+const MiniWaveform = styled.div`
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1px;
+  align-items: flex-end;
+  height: 10px;
+
+  div {
+    width: 2px;
+    background: var(--accent-color);
+    border-radius: 1px;
+    animation: ${wave} 1s ease-in-out infinite;
+
+    &:nth-of-type(1) {
+      animation-delay: 0s;
+    }
+    &:nth-of-type(2) {
+      animation-delay: 0.1s;
+    }
+    &:nth-of-type(3) {
+      animation-delay: 0.2s;
+    }
+  }
+`;
+
+const Tooltip = styled(motion.div)`
   position: absolute;
   top: 100%;
   left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-secondary, #f7f9fb);
-  color: var(--text-primary, #252525);
-  padding: 10px 14px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  margin-top: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  white-space: nowrap;
-  min-width: 200px;
-  opacity: ${(props) => (props.visible ? 1 : 0)};
-  visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
-  pointer-events: none; /* 始终穿透鼠标事件，避免触发父元素的 onMouseLeave */
-  z-index: 1000;
-  transition: all 0.2s ease;
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
-  text-align: left;
-  line-height: 1.6;
+  /* 移除 CSS transform，改用 style={{ x: '-50%' }} 以兼容 Framer Motion */
+  /* transform: translateX(-50%); */
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  /* 允许换行，防止太宽 */
+  white-space: normal;
+  max-width: 260px;
+  min-width: 120px;
+  z-index: 100;
+  margin-top: 10px;
+  pointer-events: none;
+  text-align: center;
 
-  &:before {
+  [data-theme='dark'] & {
+    background: rgba(30, 30, 30, 0.9);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* 小三角 */
+  &::before {
     content: '';
     position: absolute;
     top: -4px;
@@ -187,115 +176,83 @@ const Tooltip = styled.div<{ visible: boolean }>`
     transform: translateX(-50%) rotate(45deg);
     width: 8px;
     height: 8px;
-    background: var(--bg-secondary, #f7f9fb);
-    border-left: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
-    border-top: 1px solid var(--border-color, rgba(0, 0, 0, 0.06));
+    background: inherit;
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+
+    [data-theme='dark'] & {
+      border-color: rgba(255, 255, 255, 0.1);
+    }
   }
 `;
 
-const TooltipHeader = styled.div`
-  font-weight: 500;
-  color: var(--text-primary, #252525);
-  margin-bottom: 2px;
-`;
-
-const TooltipApp = styled.div`
+const TooltipTitle = styled.div`
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--accent-color, #5183f5);
+  color: var(--text-primary);
   margin-bottom: 2px;
 `;
 
-const TooltipDetail = styled.div`
-  opacity: 0.8;
+const TooltipDesc = styled.div`
   font-size: 0.7rem;
-  color: var(--text-secondary, #606060);
+  color: var(--text-secondary);
+  opacity: 0.8;
 `;
 
-// 获取默认状态（当没有实时推送时）
+// 获取默认状态
 const getDefaultStatus = (): StatusData => {
   const now = new Date();
   const hour = now.getHours();
+  let appName = '深夜休息';
+  let icon = 'rest';
+  let info = '夜深了，梦中编织着明天的代码~ 😴';
+  let action = '休息中';
 
-  // 定义时间段和对应状态
-  if (hour >= 0 && hour < 6) {
-    // 深夜 0-6点
-    return {
-      appName: '深夜休息',
-      appIcon: 'rest',
-      appType: 'app',
-      displayInfo: '夜深了，梦中编织着明天的代码~ 😴',
-      action: '休息中',
-      timestamp: new Date().toISOString(),
-      computer_name: 'Default',
-    };
-  } else if (hour >= 6 && hour < 8) {
-    // 早晨 6-8点
-    return {
-      appName: '早晨时光',
-      appIcon: 'morning',
-      appType: 'app',
-      displayInfo: '晨光微熹，新的一天即将开启~ ☕',
-      action: '准备中',
-      timestamp: new Date().toISOString(),
-      computer_name: 'Default',
-    };
+  if (hour >= 6 && hour < 8) {
+    appName = '早晨时光';
+    icon = 'morning';
+    info = '晨光微熹，新的一天即将开启~ ☕';
+    action = '准备中';
   } else if (hour >= 8 && hour < 12) {
-    // 上午工作 8-12点
-    return {
-      appName: '工作状态',
-      appIcon: 'work',
-      appType: 'app',
-      displayInfo: '上午工作时光，专注创造价值~ 💻',
-      action: '工作中',
-      timestamp: new Date().toISOString(),
-      computer_name: 'Default',
-    };
+    appName = '工作状态';
+    icon = 'work';
+    info = '上午工作时光，专注创造价值~ 💻';
+    action = '工作中';
   } else if (hour >= 12 && hour < 13) {
-    // 午休 12-13点
-    return {
-      appName: '午间休息',
-      appIcon: 'lunch',
-      appType: 'app',
-      displayInfo: '享受午餐，为下午储备能量~ 🍱',
-      action: '午休中',
-      timestamp: new Date().toISOString(),
-      computer_name: 'Default',
-    };
+    appName = '午间休息';
+    icon = 'lunch';
+    info = '享受午餐，为下午储备能量~ 🍱';
+    action = '午休中';
   } else if (hour >= 13 && hour < 18) {
-    // 下午工作 13-18点
-    return {
-      appName: '工作状态',
-      appIcon: 'work',
-      appType: 'app',
-      displayInfo: '下午时光，让代码如诗般优雅~ ⌨️',
-      action: '工作中',
-      timestamp: new Date().toISOString(),
-      computer_name: 'Default',
-    };
+    appName = '工作状态';
+    icon = 'work';
+    info = '下午时光，让代码如诗般优雅~ ⌨️';
+    action = '工作中';
   } else if (hour >= 18 && hour < 22) {
-    // 傍晚 18-22点
-    return {
-      appName: '夜间时光',
-      appIcon: 'evening',
-      appType: 'app',
-      displayInfo: '夜幕降临，是学习充电还是放松娱乐？🌙',
-      action: '自由时间',
-      timestamp: new Date().toISOString(),
-      computer_name: 'Default',
-    };
-  } else {
-    // 深夜 22-24点
-    return {
-      appName: '深夜时光',
-      appIcon: 'late',
-      appType: 'app',
-      displayInfo: '夜深了，要不要早点休息呀？✨',
-      action: '夜猫子',
-      timestamp: new Date().toISOString(),
-      computer_name: 'Default',
-    };
+    appName = '夜间时光';
+    icon = 'evening';
+    info = '夜幕降临，是学习充电还是放松娱乐？🌙';
+    action = '自由时间';
+  } else if (hour >= 22) {
+    appName = '深夜时光';
+    icon = 'late';
+    info = '夜深了，要不要早点休息呀？✨';
+    action = '夜猫子';
   }
+
+  return {
+    appName,
+    appIcon: icon,
+    appType: 'app',
+    displayInfo: info,
+    action,
+    timestamp: new Date().toISOString(),
+    computer_name: 'Default',
+  };
 };
+
+// 最大显示应用数量
+const MAX_DISPLAY_APPS = 3;
 
 // 主组件
 const AppStatus: React.FC = () => {
@@ -305,7 +262,6 @@ const AppStatus: React.FC = () => {
 
   const statusData = status || { current: null, history: [] };
 
-  // 图片加载错误处理
   const handleImageError = useCallback((appName: string) => {
     setImageErrors((prev) => new Set(prev).add(appName));
   }, []);
@@ -326,16 +282,15 @@ const AppStatus: React.FC = () => {
       if (!seenApps.has(app.appName)) {
         seenApps.add(app.appName);
         uniqueApps.push(app);
-        // 最多显示3个不同的应用
-        if (uniqueApps.length >= 3) break;
+        // 最多显示 MAX_DISPLAY_APPS 个不同的应用
+        if (uniqueApps.length >= MAX_DISPLAY_APPS) break;
       }
     }
 
     // 映射为显示数据
     return uniqueApps.map((app, index) => ({
       ...app,
-      size: index === 0 ? 'large' : index === 1 ? 'medium' : 'small',
-      isActive: index === 0,
+      isActive: index === 0, // 第一个是活跃应用
       color: getAppColor(app.appName),
       imageUrl: getAppIcon(app.appName),
       fallbackIcon: FALLBACK_ICONS[app.appName] || FALLBACK_ICONS.default,
@@ -343,86 +298,77 @@ const AppStatus: React.FC = () => {
     }));
   }, [statusData, imageErrors]);
 
-  const userName = 'adnaan';
-
-  // 格式化Tooltip内容
-  const getTooltipContent = useCallback(
-    (app: StatusData, index: number) => {
-      // 判断是否是默认状态（没有实时推送）
-      const isDefaultStatus = app.computer_name === 'Default';
-
-      // 默认状态使用特殊文案
-      if (isDefaultStatus) {
-        return {
-          header: `${userName} 当前状态:`,
-          app: app.action, // 直接显示状态（如"休息中"、"工作中"）
-          detail: app.displayInfo,
-        };
-      }
-
-      // 实时状态使用原有逻辑
-      const prefix = index === 0 ? '正在使用' : '最近使用';
-
-      // 直接使用小工具解析的动作状态
-      const getAppAction = () => {
-        return app.action || '使用中'; // 使用小工具推送的action字段
-      };
-
-      // 对于音乐类应用，提取歌曲信息
-      const getDetailInfo = () => {
-        if (app.appType === 'music' && app.active_app) {
-          // 从 active_app 中提取歌曲信息
-          // 格式: "QQ音乐 - 一千年以后 (2025王者荣耀共创之夜现场) - 林俊杰"
-          const parts = app.active_app.split(' - ');
-          if (parts.length >= 2) {
-            // parts[0]: 应用名, parts[1]: 歌曲名, parts[2]: 艺术家
-            const songName = parts[1] || '';
-            const artist = parts.slice(2).join(' - ') || '';
-            return artist ? `${songName} - ${artist}` : songName;
-          }
-        }
-        return app.displayInfo;
-      };
-
+  // 获取 Tooltip 内容
+  const getTooltipContent = (app: any) => {
+    if (app.appType === 'music' && app.active_app) {
+      const parts = app.active_app.split(' - ');
       return {
-        header: `${userName} ${prefix}:`,
-        app: `${app.appName} ${getAppAction()}`,
-        detail: getDetailInfo(),
+        title: parts[1] || 'Listening',
+        desc: parts.length > 2 ? parts.slice(2).join(' - ') : app.displayInfo,
       };
-    },
-    [userName],
-  );
+    }
+    return {
+      title: app.appName,
+      desc: app.displayInfo || app.action,
+    };
+  };
 
   return (
     <StatusContainer>
-      {displayApps.map((app, index) => {
-        const tooltipContent = getTooltipContent(app, index);
+      <AnimatePresence mode="popLayout">
+        {displayApps.map((app, index) => {
+          const tooltipData = getTooltipContent(app);
+          const isMusicPlaying = app.isActive && app.appType === 'music';
 
-        return (
-          <AppIcon
-            key={`${app.timestamp}-${index}`}
-            color={app.color}
-            size={app.size as 'large' | 'medium' | 'small'}
-            isActive={app.isActive}
-            isNew={index === 0}
-            onMouseEnter={() => setHoveredIndex(index)}
-            onMouseLeave={() => setHoveredIndex(null)}
-          >
-            {/* 优先显示图片，加载失败则显示备用图标 */}
-            {app.imageUrl && app.imageUrl.trim() && !app.hasImageError ? (
-              <img src={app.imageUrl} alt={app.appName} onError={() => handleImageError(app.appName)} />
-            ) : (
-              app.fallbackIcon
-            )}
-            {app.isActive && <StatusIndicator connected={isConnected} />}
-            <Tooltip visible={hoveredIndex === index}>
-              <TooltipHeader>{tooltipContent.header}</TooltipHeader>
-              <TooltipApp>{tooltipContent.app}</TooltipApp>
-              <TooltipDetail>{tooltipContent.detail}</TooltipDetail>
-            </Tooltip>
-          </AppIcon>
-        );
-      })}
+          return (
+            <AppIconWrapper
+              key={`${app.appName}`}
+              $color={app.color}
+              $isActive={app.isActive}
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              layout // 自动布局动画
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: app.isActive ? 1 : 0.5, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            >
+              {!app.hasImageError && app.imageUrl ? (
+                <img src={app.imageUrl} alt={app.appName} onError={() => handleImageError(app.appName)} />
+              ) : (
+                app.fallbackIcon
+              )}
+
+              {/* 在线状态指示器 (仅第一个) */}
+              {app.isActive && <StatusDot $connected={isConnected} />}
+
+              {/* 音乐波形 (仅活跃且为音乐时) */}
+              {isMusicPlaying && (
+                <MiniWaveform>
+                  <div />
+                  <div />
+                  <div />
+                </MiniWaveform>
+              )}
+
+              {/* 悬停提示 */}
+              <AnimatePresence>
+                {hoveredIndex === index && (
+                  <Tooltip
+                    style={{ x: '-50%' }} // 使用 Motion style 进行居中
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                  >
+                    <TooltipTitle>{tooltipData.title}</TooltipTitle>
+                    <TooltipDesc>{tooltipData.desc}</TooltipDesc>
+                  </Tooltip>
+                )}
+              </AnimatePresence>
+            </AppIconWrapper>
+          );
+        })}
+      </AnimatePresence>
     </StatusContainer>
   );
 };

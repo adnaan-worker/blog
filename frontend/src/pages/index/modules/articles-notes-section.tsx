@@ -55,68 +55,87 @@ const ArticleGrid = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 0;
-  overflow-x: hidden; /* 防止横向滚动条 */
-  padding: 0 12px;
+  overflow-x: hidden;
+  padding: 0 0 0 8px; /* 左侧留出空间给时间线 */
+  position: relative;
+
+  /* 添加左侧贯穿时间线 */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 11px; /* 调整位置以对齐圆点中心 */
+    top: 1rem;
+    bottom: 1rem;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      rgba(var(--accent-rgb), 0.1) 0%,
+      rgba(var(--accent-rgb), 0.3) 50%,
+      rgba(var(--accent-rgb), 0.1) 100%
+    );
+
+    @media (max-width: 768px) {
+      left: 11px; /* 保持与 PC 端一致 */
+    }
+  }
 `;
 
 const ArticleCard = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  padding: 0.5rem 0; /* 更加紧凑 */
   position: relative;
-  /* 优化性能，防止抖动 */
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
 
-  /* 左侧彩色指示点 */
+  /* 左侧彩色指示点 - 节点 */
   &::before {
     content: '';
     position: absolute;
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 6px;
-    height: 6px;
-    background: var(--accent-color);
+    width: 7px;
+    height: 7px;
+    background: var(--bg-primary); /*以此背景色遮挡线条*/
+    border: 1.5px solid var(--accent-color);
     border-radius: 50%;
-    opacity: 0.7;
-    transition:
-      opacity 0.2s ease,
-      transform 0.2s ease;
+    z-index: 1;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 0 0 2px var(--bg-primary); /* 增加外圈间隙感 */
   }
 
   &:hover {
     &::before {
-      opacity: 1;
-      transform: translateY(-50%) scale(1.2);
+      background: var(--accent-color);
+      transform: translateY(-50%) scale(1.3);
+      box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
     }
-  }
-
-  &:last-child {
-    border-bottom: none;
   }
 
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.3rem;
-  }
+    gap: 0.2rem;
+    padding-left: 1.5rem; /* 移动端增加左侧缩进，避开圆点 */
 
-  [data-theme='dark'] & {
-    border-bottom-color: rgba(75, 85, 99, 0.5);
+    &::before {
+      left: 0; /* 保持与 PC 端一致 */
+      top: 0.9rem; /* 移动端对齐标题首行 */
+      transform: none;
+    }
   }
 `;
 
 const ArticleContent = styled.div`
   flex: 1;
   min-width: 0;
-  padding-left: 1.2rem;
+  padding-left: 1.5rem; /* 增加文字左侧间距 */
 
   @media (max-width: 768px) {
-    padding-left: 1rem;
+    padding-left: 0;
   }
 `;
 
@@ -128,21 +147,28 @@ const ArticleTitle = styled.h3`
   margin: 0;
   transition: color 0.2s ease;
 
+  /* 单行截断 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
   ${ArticleCard}:hover & {
     color: var(--accent-color);
   }
 `;
 
 const ArticleTime = styled.div`
-  font-size: 0.8rem;
+  font-size: 0.75rem; /* 稍微调小字体 */
   color: var(--text-secondary);
   font-weight: 400;
-  opacity: 0.7;
+  opacity: 0.6;
   flex-shrink: 0;
+  font-family: monospace; /* 科技感字体 */
+  margin-left: 1rem;
 
   @media (max-width: 768px) {
-    font-size: 0.75rem;
-    margin-left: 1rem;
+    margin-left: 0;
+    margin-top: 2px;
   }
 `;
 
