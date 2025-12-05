@@ -141,109 +141,49 @@ const CopyButton = styled.button<{ copied: boolean }>`
 // 代码内容区域
 const CodeContent = styled.div<{ collapsed: boolean; maxHeight: number }>`
   position: relative;
+  /* 折叠时限制高度，展开时无限高 */
   max-height: ${(props) => (props.collapsed ? `${props.maxHeight}px` : 'none')};
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden !important; /* 强制隐藏溢出，避免出现外层滚动条 */
   transition: max-height 0.3s ease;
-  /* 使用 GPU 加速，避免强制重排 */
   will-change: max-height;
-  transform: translateZ(0);
 
-  /* 滚动条样式 */
-  &::-webkit-scrollbar {
-    width: 8px;
+  /* 遮罩效果：仅在折叠时显示 */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, var(--bg-secondary));
+    opacity: ${(props) => (props.collapsed ? 1 : 0)};
+    pointer-events: none;
+    transition: opacity 0.3s;
   }
 
-  &::-webkit-scrollbar-track {
-    background: var(--bg-primary);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: var(--text-tertiary);
-  }
-
-  /* 深色模式滚动条 */
-  [data-theme='dark'] &::-webkit-scrollbar-track {
-    background: var(--bg-primary);
-  }
-
-  [data-theme='dark'] &::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-  }
-
-  [data-theme='dark'] &::-webkit-scrollbar-thumb:hover {
-    background: var(--text-tertiary);
+  [data-theme='dark'] &::after {
+    background: linear-gradient(to bottom, transparent, #1e1e1e);
   }
 
   pre {
+    /* 重置样式以适配容器 */
     margin: 0 !important;
-    padding: 1rem !important;
-    background: var(--bg-secondary) !important;
     border: none !important;
     border-radius: 0 !important;
-    overflow-x: auto;
-    font-family: var(--font-code, 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace);
-    font-size: 0.875rem;
-    line-height: 1.6;
+    background: transparent !important;
 
-    /* 深色模式代码背景 */
-    [data-theme='dark'] & {
-      background: var(--rich-text-code-bg) !important;
-    }
-
-    /* 浅色模式代码背景 */
-    [data-theme='light'] & {
-      background: var(--rich-text-background-secondary) !important;
-    }
-
-    /* pre 内部的滚动条样式 */
-    &::-webkit-scrollbar {
-      height: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: var(--border-color);
-      border-radius: 4px;
-    }
-
-    &::-webkit-scrollbar-thumb:hover {
-      background: var(--text-tertiary);
-    }
-
-    /* 深色模式横向滚动条 */
-    [data-theme='dark'] &::-webkit-scrollbar-thumb {
-      background: var(--border-color);
-    }
-
-    [data-theme='dark'] &::-webkit-scrollbar-thumb:hover {
-      background: var(--text-tertiary);
-    }
+    /* 核心修复：强制取消高度限制和纵向滚动 */
+    max-height: none !important;
+    overflow-y: hidden !important;
+    overflow-x: auto !important; /* 保持横向滚动 */
 
     code {
       background: transparent !important;
-      padding: 0;
-      border: none;
-      font-family: inherit;
-      font-size: inherit;
-      display: block;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: visible !important;
       white-space: pre;
-      color: var(--rich-text-primary);
-
-      /* 移除所有装饰 */
-      * {
-        text-decoration: none !important;
-        border: none !important;
-        background: transparent !important;
-      }
     }
   }
 `;

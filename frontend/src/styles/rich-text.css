@@ -57,12 +57,14 @@
   border-radius: 8px;
   padding: 1rem;
   margin: 1.5rem 0;
-  overflow-x: auto;
+  /* 关键：Pre 负责滚动 */
+  overflow: auto;
+  max-height: 500px;
   font-family: var(--font-code);
   font-size: 14px;
   line-height: 1.6;
-  white-space: pre;
   position: relative;
+  tab-size: 2;
 }
 
 /* 代码块内的代码元素 */
@@ -75,8 +77,10 @@
   font-family: inherit;
   color: var(--rich-text-primary);
   white-space: pre;
-  display: block;
-  width: 100%;
+  /* 关键：Code 不滚动，只负责撑开宽度 */
+  display: inline-block;
+  min-width: 100%;
+  overflow: visible !important;
 }
 
 /* 深色模式 - 代码块优化 */
@@ -676,7 +680,6 @@
   border-radius: 6px;
   font-size: 0.85em;
   border: 1px solid rgba(var(--accent-rgb), 0.15);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
   margin: 0 0.1em;
   vertical-align: middle;
 }
@@ -754,9 +757,32 @@
     line-height: 1.7;
   }
 
+  /* 代码块和表格在移动端全宽显示（负边距） */
+  .rich-text-content pre,
+  .rich-text-content table,
+  .ProseMirror pre,
+  .ProseMirror table {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    border-radius: 0;
+    width: calc(100% + 2rem);
+    border-left: none;
+    border-right: none;
+  }
+
   .rich-text-content h1,
   .ProseMirror h1 {
     font-size: 1.8em;
+  }
+
+  /* 图片在移动端全宽显示 */
+  .rich-text-content img:not(.image-preview-img),
+  .ProseMirror img {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    border-radius: 0;
+    width: calc(100% + 2rem) !important;
+    max-width: none;
   }
 
   .rich-text-content h2,

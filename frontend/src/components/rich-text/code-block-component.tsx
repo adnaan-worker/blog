@@ -146,44 +146,7 @@ const LanguageMenuItem = styled.div<{ active?: boolean }>`
   }
 `;
 
-const StyledPre = styled.pre`
-  max-height: 500px;
-  overflow-y: auto;
-  overflow-x: auto;
-  margin: 0;
-  padding: 1rem !important;
-  background: var(--bg-secondary) !important;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  position: relative;
-
-  /* 自定义滚动条 */
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: var(--bg-primary);
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 4px;
-
-    &:hover {
-      background: var(--text-tertiary);
-    }
-  }
-
-  /* 深色模式 */
-  [data-theme='dark'] & {
-    background: #1e1e1e !important;
-    border-color: #3e3e3e;
-  }
-`;
-
+// 删除 StyledPre 定义
 interface CodeBlockComponentProps {
   node: any;
   updateAttributes: (attrs: any) => void;
@@ -265,9 +228,10 @@ export const CodeBlockComponent: React.FC<CodeBlockComponentProps> = ({ node, up
           )}
         </div>
       </CodeBlockToolbar>
-      <StyledPre ref={preRef}>
+      {/* 直接使用原生 pre 标签，样式由全局 rich-text.css 控制 */}
+      <pre ref={preRef}>
         <NodeViewContent as="code" />
-      </StyledPre>
+      </pre>
     </CodeBlockWrapper>
   );
 };

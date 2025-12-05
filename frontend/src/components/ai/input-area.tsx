@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { FiSend, FiStopCircle, FiPaperclip, FiMic, FiCommand } from 'react-icons/fi';
+import { css } from '@emotion/react';
+import { FiSend, FiSquare, FiPaperclip, FiMic, FiCommand, FiCpu, FiZap, FiDatabase, FiLayers } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { keyframes } from '@emotion/react';
 
 interface InputAreaProps {
   onSend: (text: string) => void;
@@ -10,71 +12,90 @@ interface InputAreaProps {
   isStreaming?: boolean;
 }
 
+const shimmer = keyframes`
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+`;
+
+const gentlePulse = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.1); }
+  50% { box-shadow: 0 0 20px 4px rgba(var(--accent-rgb), 0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.1); }
+`;
+
 const Container = styled.div`
   padding: 0 1.5rem 1.5rem;
   position: relative;
   z-index: 20;
   display: flex;
   justify-content: center;
-  pointer-events: none; /* Allow clicks to pass through the container padding */
+  pointer-events: none;
 
   @media (max-width: 768px) {
     padding: 0 1rem 1rem;
   }
 `;
 
-const InputWrapper = styled(motion.div)<{ isFocused: boolean }>`
-  pointer-events: auto; /* Re-enable clicks for the input */
+const InputWrapper = styled(motion.div)<{ isFocused: boolean; isStreaming?: boolean }>`
+  pointer-events: auto;
   position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
   max-width: 800px;
-  background: rgba(var(--bg-secondary-rgb), 0.7);
-  backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 24px;
+  /* 高级毛玻璃质感 */
+  background: rgba(var(--bg-secondary-rgb), 0.6);
+  backdrop-filter: blur(24px) saturate(120%);
+  border-radius: 20px;
+  /* 极细的边框 */
   border: 1px solid rgba(var(--border-rgb), 0.1);
-  box-shadow:
-    0 4px 24px -1px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-  overflow: hidden;
-  transition: background 0.3s ease;
 
-  /* 动态边框效果 */
+  /* 移除 CSS transition，完全交给 Framer Motion 的 layout 属性处理，避免冲突 */
+  /* transition: background-color 0.3s ease, border-color 0.3s ease; */
+
+  /* 使用伪元素实现阴影过渡 */
   &::before {
     content: '';
     position: absolute;
-    inset: -2px;
-    border-radius: 26px;
-    padding: 2px;
-    background: linear-gradient(135deg, var(--accent-color), #a855f7, var(--accent-color));
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: ${(props) => (props.isFocused ? 0.5 : 0)};
+    inset: -1px;
+    border-radius: 20px;
+    z-index: -1;
     transition: opacity 0.3s ease;
-    pointer-events: none;
+    opacity: ${(props) => (props.isStreaming ? 1 : props.isFocused ? 1 : 0)};
+    box-shadow: ${(props) =>
+      props.isStreaming ? '0 12px 40px -8px rgba(0, 0, 0, 0.15)' : '0 8px 32px -8px rgba(0, 0, 0, 0.12)'};
   }
 
-  /* 光晕效果 */
+  /* 默认态的轻微阴影 */
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.05);
+
+  /* 思考时的呼吸光效 */
+  ${(props) =>
+    props.isStreaming &&
+    css`
+      animation: ${gentlePulse} 3s infinite;
+    `}
+
+  /* 底部的高亮线条，暗示能量 */
   &::after {
     content: '';
     position: absolute;
-    inset: 0;
-    border-radius: 24px;
-    box-shadow: ${(props) => (props.isFocused ? '0 0 30px rgba(var(--accent-rgb), 0.15)' : 'none')};
-    transition: box-shadow 0.3s ease;
-    pointer-events: none;
+    bottom: 0;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(var(--accent-rgb), 0.5) 50%, transparent 100%);
+    opacity: ${(props) => (props.isStreaming ? 1 : 0)};
+    transition: opacity 0.5s;
   }
 `;
 
 const TopSection = styled.div`
   display: flex;
   align-items: flex-end;
-  padding: 12px;
-  gap: 8px;
+  padding: 16px 16px 8px;
+  gap: 12px;
+  position: relative;
 `;
 
 const TextArea = styled.textarea`
@@ -82,9 +103,9 @@ const TextArea = styled.textarea`
   border: none;
   background: transparent;
   resize: none;
-  padding: 8px 4px;
+  padding: 8px 0;
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--text-primary);
   max-height: 200px;
   min-height: 24px;
@@ -96,7 +117,12 @@ const TextArea = styled.textarea`
 
   &::placeholder {
     color: var(--text-tertiary);
-    transition: color 0.2s;
+    font-weight: 400;
+  }
+
+  &:disabled {
+    color: var(--text-secondary);
+    cursor: default;
   }
 `;
 
@@ -104,97 +130,128 @@ const ToolBar = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px 12px;
-  border-top: 1px solid rgba(var(--border-rgb), 0.05);
-`;
-
-const ToolsLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  padding: 4px 12px 12px;
 `;
 
 const ToolButton = styled(motion.button)`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
   color: var(--text-tertiary);
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    background: rgba(var(--text-rgb), 0.05);
+    background: rgba(var(--text-rgb), 0.04);
     color: var(--text-secondary);
   }
 `;
 
-const SendButton = styled(motion.button)<{ variant?: 'stop' }>`
+const SendButton = styled(motion.button)`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  width: 36px;
   height: 36px;
-  padding: 0 16px;
   border: none;
-  border-radius: 18px; /* Capsule shape */
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
+  background: var(--accent-color); /* 使用主题强调色 */
+  color: white;
+  transition: all 0.2s;
 
-  ${(props) =>
-    props.variant === 'stop'
-      ? `
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    &:hover { background: rgba(239, 68, 68, 0.2); }
-  `
-      : `
+  &:hover {
+    transform: scale(1.05);
     background: var(--accent-color);
-    color: white;
-    box-shadow: 0 2px 10px rgba(var(--accent-rgb), 0.3);
-    &:hover { filter: brightness(1.1); }
-    &:disabled { 
-      background: var(--bg-tertiary); 
-      color: var(--text-tertiary);
-      box-shadow: none;
-      cursor: not-allowed;
-    }
-  `}
+    box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.3); /* 使用主题色阴影 */
+    filter: brightness(1.1);
+  }
+
+  &:disabled {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    filter: none;
+  }
 `;
 
-const ShortcutHint = styled.span`
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  margin-right: 8px;
+const StopButton = styled(motion.button)`
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid rgba(var(--text-rgb), 0.1);
+  border-radius: 16px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
 
-  kbd {
-    background: rgba(var(--text-rgb), 0.1);
-    padding: 2px 4px;
-    border-radius: 4px;
-    font-family: inherit;
-    min-width: 16px;
-    text-align: center;
+  &:hover {
+    background: rgba(var(--text-rgb), 0.04);
+    color: var(--text-primary);
+    border-color: rgba(var(--text-rgb), 0.2);
   }
 
-  @media (max-width: 768px) {
-    display: none;
+  /* 激活状态更加明显 */
+  &:active {
+    transform: scale(0.96);
   }
 `;
+
+// 流体文字效果
+const FluidText = styled.span`
+  background: linear-gradient(90deg, var(--text-secondary) 0%, var(--text-primary) 50%, var(--text-secondary) 100%);
+  background-size: 200% 100%;
+  animation: ${shimmer} 3s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 500;
+`;
+
+const StatusBadge = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 4px 0;
+`;
+
+const STATUS_MESSAGES = [
+  { text: '正在连接神经元...', icon: FiCpu },
+  { text: '正在检索记忆碎片...', icon: FiDatabase },
+  { text: '正在编织语言魔法...', icon: FiZap },
+];
 
 export const InputArea: React.FC<InputAreaProps> = ({ onSend, onStop, disabled, isStreaming }) => {
   const [text, setText] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [statusIndex, setStatusIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 自动调整高度
+  useEffect(() => {
+    if (!isStreaming) {
+      setStatusIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setStatusIndex((prev) => (prev + 1) % STATUS_MESSAGES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isStreaming]);
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -213,25 +270,24 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSend, onStop, disabled, 
     if (!text.trim() || disabled || isStreaming) return;
     onSend(text.trim());
     setText('');
-    // Reset height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
   };
 
+  const CurrentStatusIcon = STATUS_MESSAGES[statusIndex].icon;
+
   return (
     <Container>
       <InputWrapper
+        layout
+        transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
         isFocused={isFocused || text.length > 0}
-        animate={{
-          boxShadow: isFocused
-            ? '0 12px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
-            : '0 4px 24px -1px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
-        }}
+        isStreaming={isStreaming}
       >
         <TopSection>
-          <ToolButton whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-            <FiPaperclip size={18} />
+          <ToolButton whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} disabled={isStreaming}>
+            <FiPaperclip size={20} />
           </ToolButton>
 
           <TextArea
@@ -241,56 +297,89 @@ export const InputArea: React.FC<InputAreaProps> = ({ onSend, onStop, disabled, 
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyDown}
-            placeholder={isStreaming ? 'Wayne 正在思考...' : '有什么可以帮你的吗？'}
+            placeholder={isStreaming ? '' : '与 Wayne 一起探索数字宇宙...'}
             disabled={disabled || isStreaming}
             rows={1}
           />
 
+          {/* 思考状态展示 - 极简风格 */}
+          {isStreaming && (
+            <div
+              style={{
+                position: 'absolute',
+                left: '60px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none',
+              }}
+            >
+              <AnimatePresence mode="wait">
+                <StatusBadge
+                  key={statusIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <CurrentStatusIcon size={14} style={{ opacity: 0.7 }} />
+                  </motion.div>
+                  <FluidText>{STATUS_MESSAGES[statusIndex].text}</FluidText>
+                </StatusBadge>
+              </AnimatePresence>
+            </div>
+          )}
+
           {!text && !isStreaming && (
-            <ToolButton whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <FiMic size={18} />
+            <ToolButton whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <FiMic size={20} />
             </ToolButton>
           )}
         </TopSection>
 
-        {/* 工具栏 - 当有内容或 Focus 时显示 */}
         <AnimatePresence>
           {(isFocused || text.length > 0 || isStreaming) && (
             <ToolBar
-              initial={{ height: 0, opacity: 0, padding: 0 }}
-              animate={{ height: 'auto', opacity: 1, padding: '8px 12px 12px' }}
-              exit={{ height: 0, opacity: 0, padding: 0 }}
-              transition={{ duration: 0.2 }}
+              layout
+              /* 关键修复：Enter 时不要从 height: 0 开始，直接让它存在，靠父容器的 layout 属性去平滑过渡 */
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, height: 0, padding: 0, marginBottom: 0 }}
+              transition={{
+                opacity: { duration: 0.2 },
+                /* 收缩时使用 spring，确保平滑 */
+                height: { type: 'spring', bounce: 0, duration: 0.3 },
+              }}
             >
-              <ToolsLeft>
-                <ToolButton title="模型设置" whileHover={{ scale: 1.05 }}>
-                  <FiCommand size={14} />
-                </ToolButton>
-                <ShortcutHint>使用模型: Doubao</ShortcutHint>
-              </ToolsLeft>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {!isStreaming && (
+                  <>
+                    <ToolButton title="模型" style={{ width: 'auto', padding: '0 8px', gap: 6 }}>
+                      <FiLayers size={14} />
+                      <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>Doubao-Pro</span>
+                    </ToolButton>
+                  </>
+                )}
+              </div>
 
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ShortcutHint>
-                  <kbd>↵</kbd> 发送 <kbd>⇧</kbd>
-                  <kbd>↵</kbd> 换行
-                </ShortcutHint>
-
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 {isStreaming ? (
-                  <SendButton variant="stop" onClick={onStop} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <FiStopCircle size={16} />
-                    <span>停止</span>
-                  </SendButton>
+                  <StopButton onClick={onStop} whileTap={{ scale: 0.95 }}>
+                    <FiSquare size={10} fill="currentColor" />
+                    <span>停止生成</span>
+                  </StopButton>
                 ) : (
                   <SendButton
                     onClick={handleSend}
                     disabled={!text.trim() || disabled}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    whileTap={{ scale: 0.9 }}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
                   >
-                    <span>发送</span>
-                    <FiSend size={14} />
+                    <FiSend size={16} style={{ marginLeft: text.trim() ? -2 : 0 }} />
                   </SendButton>
                 )}
               </div>

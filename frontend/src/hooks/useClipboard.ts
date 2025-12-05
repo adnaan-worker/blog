@@ -26,15 +26,35 @@ export const useClipboard = (options: UseClipboardOptions = {}) => {
 
   const copy = useCallback(
     async (text: string) => {
-      if (!navigator?.clipboard) {
-        const err = new Error('Clipboard API not supported');
-        setError(err);
-        onError?.(err);
-        return false;
-      }
-
       try {
-        await navigator.clipboard.writeText(text);
+        // 优先尝试使用现代 Clipboard API
+        if (navigator?.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // 降级策略：使用 execCommand
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+
+          // 确保 textarea 不可见但可选中
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-9999px';
+          textArea.style.top = '0';
+          textArea.style.opacity = '0';
+
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+
+          try {
+            const successful = document.execCommand('copy');
+            if (!successful) {
+              throw new Error('Copy command failed');
+            }
+          } finally {
+            document.body.removeChild(textArea);
+          }
+        }
+
         setCopied(true);
         setError(null);
         onSuccess?.();
@@ -46,7 +66,8 @@ export const useClipboard = (options: UseClipboardOptions = {}) => {
 
         return true;
       } catch (err) {
-        const error = err as Error;
+        const error = err instanceof Error ? err : new Error('Failed to copy');
+        console.warn('Copy failed:', error);
         setError(error);
         onError?.(error);
         return false;
