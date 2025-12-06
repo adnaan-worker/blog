@@ -85,10 +85,26 @@ const Header = styled(motion.div)`
   grid-template-columns: 1fr auto;
   gap: 2rem;
   align-items: start;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(var(--border-color-rgb, 229, 231, 235), 0.4);
   position: relative;
+
+  /* 渐变底部装饰线 */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      var(--accent-color) 0%,
+      rgba(var(--border-color-rgb), 0.5) 50%,
+      transparent 100%
+    );
+    opacity: 0.3;
+  }
 
   @media (max-width: 968px) {
     grid-template-columns: 1fr;
@@ -100,26 +116,28 @@ const Header = styled(motion.div)`
 const LeftContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
   min-width: 0;
   max-width: 100%;
+  position: relative;
 `;
 
 // 页面标题
 const Title = styled.h1`
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 700;
-  color: var(--text-primary);
   margin: 0;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 
-  background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
+  /* 文字微渐变 */
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 
   @media (max-width: 768px) {
-    font-size: 1.75rem;
+    font-size: 1.8rem;
   }
 `;
 
@@ -127,36 +145,50 @@ const Title = styled.h1`
 const Subtitle = styled.p`
   font-size: 1rem;
   color: var(--text-secondary);
-  margin: 0.25rem 0 0;
+  margin: 0;
   line-height: 1.6;
-  opacity: 0.85;
+  opacity: 0.8;
   max-width: 600px;
+  font-weight: 400;
 
   @media (max-width: 768px) {
     font-size: 0.9rem;
   }
 `;
 
-// 统计信息
+// 统计信息 - Data Chip 风格
 const StatsInfo = styled.div`
-  font-size: 0.85rem;
-  color: var(--text-tertiary);
-  margin-top: 0.5rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+  padding: 0.35rem 0.8rem;
+  background: rgba(var(--accent-rgb), 0.05);
+  border: 1px solid rgba(var(--accent-rgb), 0.1);
+  border-radius: 20px;
+  width: fit-content;
+
+  /* 脉冲圆点 */
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    box-shadow: 0 0 6px var(--accent-color);
+  }
 
   .count {
     color: var(--accent-color);
     font-weight: 600;
-    font-family: var(--font-code, 'Consolas', 'Monaco', monospace);
-    font-size: 1rem;
-    background: rgba(var(--accent-rgb), 0.1);
-    padding: 0 0.4rem;
-    border-radius: 4px;
+    font-family: 'Courier New', monospace; /* 科技感字体 */
+    font-size: 1.1rem;
+    line-height: 1;
   }
 
   .text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
     opacity: 0.8;
   }
 `;
@@ -173,6 +205,7 @@ const FilterArea = styled.div`
     align-items: stretch;
     min-width: auto;
     width: 100%;
+    margin-top: 0.5rem;
   }
 `;
 
@@ -180,17 +213,21 @@ const AnimationWrapper = styled(motion.div)`
   width: 100%;
   overflow: hidden;
   margin-top: 1rem;
+  position: relative;
+  z-index: 10;
 `;
 
 const FilterContentInner = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.2rem;
   width: 100%;
-  background: var(--bg-secondary);
-  padding: 1.25rem;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
+  background: rgba(var(--bg-secondary-rgb), 0.8); /* 半透明背景 */
+  backdrop-filter: blur(12px); /* 毛玻璃效果 */
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(var(--border-color-rgb), 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 `;
 
 const FilterGroup = styled.div`
@@ -575,18 +612,21 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         hasFilters && (
           <FilterArea>
             <Button
-              variant={isFilterExpanded ? 'primary' : 'ghost'}
+              variant="ghost"
               size="small"
               onClick={() => setIsFilterExpanded(!isFilterExpanded)}
               style={{
-                padding: '0.5rem 1rem',
+                padding: '0.5rem 1.2rem',
                 fontSize: '0.85rem',
-                background: isFilterExpanded
-                  ? 'var(--accent-color)'
-                  : 'rgba(var(--border-color-rgb, 229, 231, 235), 0.2)',
-                color: isFilterExpanded ? '#fff' : 'var(--text-secondary)',
-                border: 'none',
-                boxShadow: isFilterExpanded ? '0 4px 12px rgba(var(--accent-rgb), 0.25)' : 'none',
+                background: isFilterExpanded ? 'rgba(var(--accent-rgb), 0.1)' : 'transparent',
+                color: isFilterExpanded ? 'var(--accent-color)' : 'var(--text-secondary)',
+                border: isFilterExpanded
+                  ? '1px solid var(--accent-color)'
+                  : '1px solid rgba(var(--border-color-rgb), 0.4)',
+                borderRadius: '8px',
+                transition: 'all 0.3s ease',
+                fontWeight: isFilterExpanded ? '600' : '500',
+                boxShadow: isFilterExpanded ? '0 0 12px rgba(var(--accent-rgb), 0.15)' : 'none',
               }}
               leftIcon={<FiFilter />}
               rightIcon={
