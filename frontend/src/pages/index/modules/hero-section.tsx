@@ -1,8 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from '@emotion/styled';
-import { Variants, motion } from 'framer-motion';
-import { FiCode, FiGithub, FiMail, FiMapPin, FiTwitter } from 'react-icons/fi';
-import { useSiteSettings } from '@/layouts';
+import { Variants, motion, useMotionValue, useSpring, useTransform, AnimatePresence } from 'framer-motion';
+import {
+  FiCode,
+  FiGithub,
+  FiMail,
+  FiMapPin,
+  FiTwitter,
+  FiCpu,
+  FiLayers,
+  FiActivity,
+  FiTerminal,
+  FiHash,
+  FiArrowDown,
+} from 'react-icons/fi';
 import { useAnimationEngine, useSpringInteractions } from '@/utils/ui/animation';
 import { LazyImage } from '@/components/common';
 import { Icon } from '@/components/common/icon';
@@ -29,310 +40,299 @@ const HeroContainer = styled(motion.div)`
   align-items: center;
   justify-content: space-between;
   position: relative;
-  flex: 1;
-  padding-top: 2rem;
+  height: calc(100vh - var(--header-height));
+  max-width: var(--max-width); /* Limit width for better layout */
+  margin: 0 auto; /* Center align */
+
+  @media (max-width: 968px) {
+    flex-direction: column; /* Standard column layout for mobile */
+    gap: 1rem;
+    padding-top: 1rem;
+    text-align: center;
+    height: auto;
+    min-height: calc(100vh - var(--header-height));
+    justify-content: center; /* Center the single card stack vertically */
+  }
 
   @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 2rem;
-    margin-bottom: 2rem;
-    padding-top: 1rem;
+    padding: 1rem 1.5rem 2rem 1.5rem; /* Reduced top padding */
+    gap: 3rem;
   }
 `;
 
 const HeroContent = styled(motion.div)`
-  max-width: 800px;
-  position: relative;
-  z-index: 1;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem 0;
+  gap: 0.8rem;
+  z-index: 2;
 
+  @media (max-width: 968px) {
+    display: none; /* Hide on mobile as requested */
+  }
+`;
+
+// --- New Right Side Visuals: Layered Card Stack ---
+
+const CardStackContainer = styled(motion.div)`
+  position: relative;
+  width: 420px;
+  height: 520px;
+  perspective: 1000px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+
+  @media (max-width: 968px) {
+    width: 100%;
+    height: 400px; /* Slightly increased for visibility */
+    order: 1;
+    margin-bottom: 2rem; /* More space between card and footer */
+    transform: scale(0.95);
+  }
+
+  @media (max-width: 768px) {
+    height: 340px;
+    transform: scale(0.85);
+    margin-top: 0.5rem;
+  }
+`;
+
+const CodeWindow = styled(motion.div)`
+  position: absolute;
+  width: 340px;
+  height: 220px;
+  background: #1e1e1e;
+  border-radius: 12px;
+  top: 0;
+  right: 0;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  font-family: 'Fira Code', monospace;
+  overflow: hidden;
+  z-index: 1;
+  transform-origin: center center;
+
+  /* Window Controls */
   &::before {
     content: '';
     position: absolute;
-    top: -10px;
-    left: -30px;
-    width: 80px;
-    height: 80px;
-    background: radial-gradient(circle, var(--accent-color-alpha) 0%, transparent 70%);
+    top: 16px;
+    left: 16px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    opacity: 0.6;
-    z-index: -1;
-    filter: blur(10px);
-  }
-
-  @media (max-width: 768px) {
-    max-width: 100%;
-    text-align: center;
-    order: 2;
-    padding: 0;
-
-    &::before {
-      left: 50%;
-      transform: translateX(-50%);
-    }
-  }
-`;
-
-const HeroImage = styled(motion.div)`
-  width: 320px;
-  height: 450px;
-  position: relative;
-  z-index: 1;
-  perspective: 1000px;
-  perspective-origin: center center;
-
-  @media (max-width: 768px) {
-    width: 280px;
-    height: 380px;
-    order: 1;
-    margin-bottom: 1rem;
-  }
-`;
-
-const ProfileCard = styled.div`
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transform-style: preserve-3d;
-  transform-origin: center center;
-  transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border-radius: 16px;
-  box-shadow:
-    0 8px 32px rgba(var(--accent-rgb), 0.2),
-    0 4px 16px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  will-change: transform;
-
-  &:hover:not(.flipped) {
-    transform: translateY(-8px);
+    background: #ff5f56;
     box-shadow:
-      0 16px 48px rgba(var(--accent-rgb), 0.3),
-      0 8px 24px rgba(0, 0, 0, 0.15),
-      0 0 0 1px rgba(255, 255, 255, 0.2);
+      20px 0 0 #ffbd2e,
+      40px 0 0 #27c93f;
   }
 
-  &.flipped {
-    transform: rotateY(180deg);
+  @media (max-width: 768px) {
+    left: 50%;
+    right: auto;
+    margin-left: -170px;
+    top: 0; /* Move to top */
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    &.flipped {
-      transform: rotateY(180deg);
+  [data-theme='light'] & {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  }
+`;
+
+const CodeContent = styled.div`
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: #a9b7c6;
+
+  [data-theme='light'] & {
+    color: #5c6c7f;
+  }
+
+  .k {
+    color: #cc7832;
+  } /* keyword */
+  .s {
+    color: #6a8759;
+  } /* string */
+  .f {
+    color: #ffc66d;
+  } /* function */
+  .c {
+    color: #808080;
+  } /* comment */
+
+  [data-theme='light'] & {
+    .k {
+      color: #d73a49;
+    }
+    .s {
+      color: #032f62;
+    }
+    .f {
+      color: #6f42c1;
+    }
+    .c {
+      color: #6a737d;
     }
   }
 `;
 
-const CardFace = styled.div`
+const ProfileGlassCard = styled(motion.div)`
   position: absolute;
-  width: 100%;
-  height: 100%;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  border-radius: 16px;
-  overflow: hidden;
-`;
-
-const CardFront = styled(CardFace)`
+  width: 300px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem 1rem;
-  transform: rotateY(0deg);
-`;
-
-const CardBack = styled(CardFace)`
-  transform: rotateY(180deg);
-  display: flex;
-  flex-direction: column;
-`;
-
-const CardBackContent = styled.div`
-  padding: 1.2rem 1rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  height: 100%;
-  position: relative;
-  z-index: 1;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(var(--accent-rgb), 0.3);
-    border-radius: 2px;
-
-    &:hover {
-      background: rgba(var(--accent-rgb), 0.5);
-    }
-  }
-`;
-
-const CardTitle = styled.h4`
-  font-size: 1.1rem;
-  margin-bottom: 0.8rem;
-  color: var(--text-primary);
-  position: relative;
-  padding-bottom: 0.4rem;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 40px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent-color), transparent);
-    border-radius: 3px;
-  }
-`;
-
-const SkillList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.7rem;
-  margin-bottom: 1.5rem;
-`;
-
-const SkillItem = styled.span`
-  font-size: 0.8rem;
-  padding: 0.3rem 0.6rem;
-  background: rgba(var(--accent-rgb), 0.12);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border-radius: 6px;
-  color: var(--accent-color);
-  border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow:
-    0 2px 8px rgba(var(--accent-rgb), 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  z-index: 2;
+  top: 20%;
+  left: 5%;
 
-  &:hover {
-    background: rgba(var(--accent-rgb), 0.18);
-    transform: translateY(-1px);
-    box-shadow:
-      0 4px 12px rgba(var(--accent-rgb), 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  @media (max-width: 768px) {
+    left: 50%;
+    margin-left: -150px;
+    top: 20%; /* Adjusted for new height */
   }
 
   [data-theme='dark'] & {
-    background: rgba(var(--accent-rgb), 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow:
-      0 2px 8px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
-
-    &:hover {
-      background: rgba(var(--accent-rgb), 0.22);
-      box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
+    background: rgba(30, 30, 35, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   }
 `;
 
-const ProfileImage = styled.div`
+const CardAvatar = styled.div`
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.5);
-  margin-bottom: 1.2rem;
-  flex-shrink: 0;
-  box-shadow:
-    0 8px 24px rgba(var(--accent-rgb), 0.3),
-    0 4px 12px rgba(0, 0, 0, 0.1),
-    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  margin-bottom: 1.5rem;
   position: relative;
-  z-index: 1;
+  padding: 4px;
+  background: var(--bg-primary);
+  box-shadow: 0 10px 25px rgba(var(--accent-rgb), 0.2);
 
   img {
     width: 100%;
     height: 100%;
+    border-radius: 50%;
     object-fit: cover;
-    transition: all 0.5s ease;
   }
 
-  [data-theme='dark'] & {
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.4),
-      0 4px 12px rgba(var(--accent-rgb), 0.2),
-      inset 0 2px 4px rgba(255, 255, 255, 0.15);
+  /* Status Dot */
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 16px;
+    height: 16px;
+    background: #27c93f;
+    border: 3px solid var(--bg-primary);
+    border-radius: 50%;
   }
 `;
 
-const ProfileName = styled.h3`
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin-bottom: 0.4rem;
-  background: linear-gradient(90deg, var(--accent-color), var(--accent-color-assistant));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-align: center;
-`;
-
-const ProfileTitle = styled.div`
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  margin-bottom: 1.2rem;
-  text-align: center;
-`;
-
-const ProfileInfoList = styled.div`
-  width: 100%;
+const InfoGrid = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.8rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
 `;
 
-const ProfileInfoItem = styled.div`
+const InfoRow = styled.div`
   display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px dashed var(--border-color);
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  span:first-of-type {
-    color: var(--text-secondary);
-  }
-
-  span:last-of-type {
-    color: var(--text-primary);
-    font-weight: 500;
-  }
+  gap: 0.8rem;
+  width: 100%;
 `;
 
-const CardFlipHint = styled.div`
-  position: absolute;
-  bottom: 0.75rem;
-  right: 0.75rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  opacity: 0.7;
+const InfoItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(var(--accent-rgb), 0.05);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  flex: 1;
+  justify-content: center;
 
   svg {
+    color: var(--accent-color);
     width: 14px;
     height: 14px;
+    flex-shrink: 0;
+  }
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 `;
+
+const SkillPillsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  justify-content: center;
+
+  [data-theme='dark'] & {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+`;
+
+const SkillPill = styled.span`
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(var(--accent-rgb), 0.05);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+  }
+`;
+
+const DecorCircle = styled(motion.div)`
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(var(--accent-rgb), 0.2), transparent 70%);
+  filter: blur(40px);
+  opacity: 0.6;
+  z-index: 0;
+`;
+
+// --------------------------------------
 
 const Title = styled(motion.h1)`
   font-size: 2.4rem;
@@ -510,40 +510,181 @@ const SocialLink = styled(motion.a)`
   }
 `;
 
-const Quote = styled(motion.div)`
-  color: var(--text-secondary);
-  font-style: italic;
-  font-size: 0.9rem;
-  opacity: 0.8;
-  text-align: center;
-  padding: 1rem 0;
-  margin-bottom: 0.5rem;
-`;
-
-const ScrollIndicator = styled(motion.div)`
+const QuoteContainer = styled(motion.div)`
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1.5rem;
-  width: 100%;
-  color: var(--text-secondary);
-  opacity: 0.7;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 5rem;
+  gap: 1.5rem;
+  padding: 1rem 2rem;
+  margin-bottom: 1rem;
+  position: relative;
+  cursor: pointer;
 
-  svg {
-    width: 28px;
-    height: 40px;
+  @media (max-width: 768px) {
+    order: 3; /* Ensure it's at the bottom */
+    flex-direction: column;
+    gap: 0.8rem;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+`;
+
+const AudioVisualizer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+
+  span {
+    width: 3px;
+    background: var(--accent-color);
+    border-radius: 2px;
+    display: block;
+    animation: visualize 1s ease-in-out infinite;
+  }
+
+  span:nth-of-type(1) {
+    height: 12px;
+    animation-duration: 0.8s;
+  }
+  span:nth-of-type(2) {
+    height: 20px;
+    animation-duration: 1.1s;
+  }
+  span:nth-of-type(3) {
+    height: 16px;
+    animation-duration: 0.9s;
+  }
+  span:nth-of-type(4) {
+    height: 8px;
+    animation-duration: 1.2s;
+  }
+
+  @keyframes visualize {
+    0%,
+    100% {
+      transform: scaleY(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scaleY(0.5);
+      opacity: 0.4;
+    }
+  }
+`;
+
+const QuoteContent = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+
+  @media (max-width: 768px) {
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    align-items: center !important;
+  }
+`;
+
+const QuoteText = styled.p`
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+
+  /* Typewriter effect cursor */
+  &::after {
+    content: '|';
+    margin-left: 4px;
+    color: var(--accent-color);
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
   }
 
   @media (max-width: 768px) {
-    margin-bottom: 2rem;
-    padding-bottom: 2rem;
-    svg {
-      width: 24px;
-      height: 32px;
-    }
+    font-size: 1rem;
+  }
+`;
+
+const QuoteAuthor = styled.span`
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--border-color);
+  }
+`;
+
+const MagneticScroll = styled(motion.div)`
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  z-index: 10;
+
+  .magnetic-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.2rem;
+    border-radius: 2rem;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+
+  [data-theme='dark'] & .magnetic-content {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+  &:hover .magnetic-content {
+    border-color: var(--accent-color);
+    background: rgba(var(--accent-rgb), 0.1);
+    transform: translateY(-2px);
+  }
+
+  span {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  svg {
+    color: var(--text-secondary);
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover span,
+  &:hover svg {
+    color: var(--accent-color);
   }
 `;
 
@@ -587,6 +728,99 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
   const { variants, springPresets } = useAnimationEngine();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // --- Animation Variants for Shuffle Effect ---
+  // Defined inside component to access isMobile
+  const frontCardVariants: Variants = {
+    normal: {
+      scale: 1,
+      opacity: 1,
+      filter: 'blur(0px)',
+      zIndex: 2,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: 'circOut',
+      },
+    },
+    flipped: {
+      scale: isMobile ? 0.9 : 0.85,
+      opacity: 0.4,
+      filter: 'blur(6px)',
+      zIndex: 1,
+      y: isMobile ? -76 : -30, // Move up more on mobile to swap with window
+      transition: { duration: 0.5, ease: 'easeInOut' },
+    },
+  };
+
+  const backWindowVariants: Variants = {
+    normal: {
+      scale: 0.92,
+      opacity: 0.6,
+      filter: 'blur(2px)',
+      zIndex: 1,
+      y: 0,
+      x: 0,
+      transition: { duration: 0.5, ease: 'easeInOut' },
+    },
+    flipped: {
+      scale: 1.1,
+      opacity: 1,
+      filter: 'blur(0px)',
+      zIndex: 2,
+      y: isMobile ? 76 : 20, // Move down more on mobile to swap with card
+      x: isMobile ? 0 : -20, // No horizontal shift on mobile
+      transition: {
+        duration: 0.5,
+        ease: 'circOut',
+      },
+    },
+  };
+
+  // 3D Tilt Effect Logic
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const mouseX = useSpring(x, { stiffness: 150, damping: 15 });
+  const mouseY = useSpring(y, { stiffness: 150, damping: 15 });
+
+  const rotateX = useTransform(mouseY, [-0.5, 0.5], [10, -10]); // Slightly more tilt
+  const rotateY = useTransform(mouseX, [-0.5, 0.5], [-10, 10]);
+
+  // Parallax for layers
+  const codeWindowX = useTransform(mouseX, [-0.5, 0.5], [-10, 10]);
+  const codeWindowY = useTransform(mouseY, [-0.5, 0.5], [10, -10]);
+
+  const cardX = useTransform(mouseX, [-0.5, 0.5], [15, -15]); // Moves opposite/more for depth
+  const cardY = useTransform(mouseY, [-0.5, 0.5], [-15, 15]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseXVal = e.clientX - rect.left;
+    const mouseYVal = e.clientY - rect.top;
+    const xPct = mouseXVal / width - 0.5;
+    const yPct = mouseYVal / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
   const socialInteractions = useSpringInteractions({
     hoverScale: 1.1,
     hoverY: -3,
@@ -606,6 +840,56 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
   const handleCardFlip = () => {
     setIsFlipped(!isFlipped);
   };
+
+  // Quote Logic
+  const [currentQuote, setCurrentQuote] = useState({
+    text: siteSettings?.quote || '每一行代码都有诗意，每一个像素都有故事',
+    author: siteSettings?.quoteAuthor || 'adnaan',
+  });
+
+  // Update quote when siteSettings loads (if it wasn't available initially)
+  useEffect(() => {
+    if (siteSettings?.quote) {
+      setCurrentQuote({
+        text: siteSettings.quote,
+        author: siteSettings.quoteAuthor || 'Unknown',
+      });
+    }
+  }, [siteSettings?.quote, siteSettings?.quoteAuthor]);
+
+  const fetchHitokoto = async () => {
+    try {
+      // c=d: 文学, c=i: 诗词, c=k: 哲学
+      const res = await fetch('https://v1.hitokoto.cn?c=d&c=i&c=k');
+      const data = await res.json();
+      setCurrentQuote({
+        text: data.hitokoto,
+        author: data.from_who || data.from || 'Hitokoto',
+      });
+    } catch (error) {
+      console.error('Hitokoto fetch failed', error);
+      // Fallback to random local quote
+      setCurrentQuote({
+        text: '每一行代码都有诗意，每一个像素都有故事',
+        author: 'Adnaan',
+      });
+    }
+  };
+
+  const handleQuoteClick = () => {
+    fetchHitokoto();
+  };
+
+  // Scroll Hint Logic
+  const [scrollHintIndex, setScrollHintIndex] = useState(0);
+  const scrollHints = ['探索更多', '向下滑动', '更多精彩', '继续阅读', '发现惊喜', '深入了解'];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setScrollHintIndex((prev) => (prev + 1) % scrollHints.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Section>
@@ -757,7 +1041,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
                 「每一行代码都有诗意，每一个像素都有故事」
               </WaveText>
               <motion.span
-                initial={{ opacity: 0, scaleX: 0 }}
                 animate={showLine4 ? { opacity: 0.3, scaleX: 1 } : { opacity: 0, scaleX: 0 }}
                 transition={{ duration: 0.4, delay: 0.3 }}
                 style={{
@@ -843,14 +1126,87 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
           </SocialLinks>
         </HeroContent>
 
-        <HeroImage
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={springPresets.bouncy}
+        {/* Right Column: Layered Card Stack */}
+        <CardStackContainer
+          ref={containerRef}
+          onMouseMove={!isMobile ? handleMouseMove : undefined}
+          onMouseLeave={handleMouseLeave}
+          onClick={handleCardFlip}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: 'backOut', delay: 0.2 }}
         >
-          <ProfileCard className={isFlipped ? 'flipped' : ''} onClick={handleCardFlip}>
-            <CardFront className="glass glass-highlight">
-              <ProfileImage>
+          <motion.div
+            style={{
+              rotateX: isMobile ? 0 : rotateX,
+              rotateY: isMobile ? 0 : rotateY,
+              transformStyle: 'preserve-3d',
+              width: '100%',
+              height: '100%',
+              position: 'relative',
+            }}
+          >
+            {/* Layer 0: Decorative Background */}
+            <DecorCircle
+              style={{
+                width: 400,
+                height: 400,
+                top: '50%',
+                left: '50%',
+                x: '-50%',
+                y: '-50%',
+              }}
+              animate={{
+                scale: isFlipped ? [1.1, 1.2, 1.1] : [1, 1.1, 1],
+                opacity: [0.4, 0.6, 0.4],
+                filter: isFlipped ? 'blur(50px) hue-rotate(90deg)' : 'blur(40px) hue-rotate(0deg)',
+              }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+            />
+
+            {/* Layer 1: Code Window (Background -> Foreground) */}
+            <CodeWindow
+              style={{ x: isMobile ? 0 : codeWindowX, y: isMobile ? 0 : codeWindowY }}
+              variants={backWindowVariants}
+              initial="normal"
+              animate={isFlipped ? 'flipped' : 'normal'}
+            >
+              <CodeContent>
+                <span className="k">const</span> <span className="f">Developer</span> = {'{'}
+                <br />
+                &nbsp;&nbsp;<span className="k">name</span>:{' '}
+                <span className="s">"{siteSettings?.authorName || 'Adnaan'}"</span>,
+                <br />
+                &nbsp;&nbsp;<span className="k">skills</span>: [<span className="s">"React"</span>,{' '}
+                <span className="s">"Node"</span>, <span className="s">"Design"</span>],
+                <br />
+                &nbsp;&nbsp;<span className="k">status</span>:{' '}
+                <span className="s">"{isFlipped ? 'Ready to Code' : 'Sleeping'}"</span>,
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={isFlipped ? { opacity: 1, height: 'auto' } : { opacity: 0, height: 0 }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  &nbsp;&nbsp;<span className="c">// Click to toggle view</span>
+                  <br />
+                  &nbsp;&nbsp;<span className="f">contact</span>: () ={'>'} <span className="s">"Hire Me!"</span>,
+                  <br />
+                  &nbsp;&nbsp;<span className="k">location</span>:{' '}
+                  <span className="s">"{siteSettings?.location || 'Digital World'}"</span>
+                </motion.div>
+                <br />
+                {'}'};
+              </CodeContent>
+            </CodeWindow>
+
+            {/* Layer 2: Glass Profile Card (Foreground -> Background) */}
+            <ProfileGlassCard
+              style={{ x: isMobile ? 0 : cardX, y: isMobile ? 0 : cardY }}
+              variants={frontCardVariants}
+              initial="normal"
+              animate={isFlipped ? 'flipped' : 'normal'}
+            >
+              <CardAvatar>
                 <LazyImage
                   src={
                     siteSettings?.avatar ||
@@ -858,104 +1214,132 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
                   }
                   alt={siteSettings?.authorName || '头像'}
                 />
-              </ProfileImage>
-              <ProfileName>{siteSettings?.authorName || ''}</ProfileName>
-              <ProfileTitle>{siteSettings?.authorTitle || ''}</ProfileTitle>
+              </CardAvatar>
 
-              <ProfileInfoList>
-                {siteSettings?.mbti && (
-                  <ProfileInfoItem>
-                    <span>MBTI</span>
-                    <span>{siteSettings.mbti}</span>
-                  </ProfileInfoItem>
-                )}
-                {siteSettings?.location && (
-                  <ProfileInfoItem>
-                    <span>地点</span>
-                    <span>{siteSettings.location}</span>
-                  </ProfileInfoItem>
-                )}
+              <InfoGrid>
+                <InfoRow>
+                  {siteSettings?.location && (
+                    <InfoItem>
+                      <FiMapPin /> <span>{siteSettings.location}</span>
+                    </InfoItem>
+                  )}
+                  {siteSettings?.mbti && (
+                    <InfoItem>
+                      <FiActivity /> <span>{siteSettings.mbti}</span>
+                    </InfoItem>
+                  )}
+                </InfoRow>
                 {siteSettings?.occupation && (
-                  <ProfileInfoItem>
-                    <span>职业</span>
-                    <span>{siteSettings.occupation}</span>
-                  </ProfileInfoItem>
+                  <InfoItem style={{ width: '100%' }}>
+                    <FiLayers /> <span>{siteSettings.occupation.split(' ')[0]}</span>
+                  </InfoItem>
                 )}
-                {siteSettings?.skills && siteSettings.skills.length > 0 && (
-                  <ProfileInfoItem>
-                    <span>技能</span>
-                    <span>{siteSettings.skills.join(', ')}</span>
-                  </ProfileInfoItem>
-                )}
-              </ProfileInfoList>
+              </InfoGrid>
 
-              <CardFlipHint>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M7 16l-4-4m0 0l4-4m-4 4h18"></path>
-                </svg>
-                点击翻转
-              </CardFlipHint>
-            </CardFront>
-
-            <CardBack className="glass glass-highlight">
-              <CardBackContent>
-                <CardTitle>关于我</CardTitle>
-                <p
-                  style={{
-                    fontSize: '0.85rem',
-                    lineHeight: '1.5',
-                    marginBottom: '0.8rem',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {siteSettings?.authorBio || ''}
-                </p>
-
-                <CardTitle>技能标签</CardTitle>
-                <SkillList>
-                  {siteSettings?.skills?.map((skill, index) => (
-                    <SkillItem key={index}>{skill}</SkillItem>
+              {siteSettings?.skills && siteSettings.skills.length > 0 && (
+                <SkillPillsContainer>
+                  {siteSettings.skills.slice(0, 6).map((skill, index) => (
+                    <SkillPill key={index}>{skill}</SkillPill>
                   ))}
-                </SkillList>
+                </SkillPillsContainer>
+              )}
+            </ProfileGlassCard>
+          </motion.div>
+        </CardStackContainer>
 
-                <CardFlipHint>
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+        {/* Quote Footer - Full Width, Bottom Aligned */}
+        <QuoteContainer
+          onClick={handleQuoteClick}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.8 }}
+          whileHover={{ scale: 1.01 }}
+          style={{
+            position: isMobile ? 'relative' : 'absolute',
+            bottom: isMobile ? 'auto' : 0,
+            left: isMobile ? 'auto' : 0,
+            width: '100%',
+            padding: isMobile ? '2rem 0 1rem 0' : '1.5rem 0',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: isMobile ? '1rem' : '3rem',
+            marginTop: isMobile ? '2rem' : 0, // Add space on mobile
+          }}
+        >
+          {/* Left: Audio Visualizer & Quote */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: isMobile ? '1rem' : '1.5rem',
+              flexDirection: isMobile ? 'column' : 'row', // Stack on mobile
+              width: isMobile ? '100%' : 'auto',
+            }}
+          >
+            <AudioVisualizer>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </AudioVisualizer>
+
+            <div
+              style={{
+                position: 'relative',
+                height: '1.5em',
+                minWidth: isMobile ? '100%' : '300px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <AnimatePresence mode="wait">
+                <QuoteContent
+                  key={currentQuote.text}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      height: '100%',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      textAlign: 'center',
+                    }}
                   >
-                    <path d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                  </svg>
-                  返回正面
-                </CardFlipHint>
-              </CardBackContent>
-            </CardBack>
-          </ProfileCard>
-        </HeroImage>
+                    <QuoteText style={{ fontSize: '0.95rem', lineHeight: 1.4 }}>{currentQuote.text}</QuoteText>
+                    <QuoteAuthor style={{ lineHeight: 1.4, fontSize: '0.8rem' }}>{currentQuote.author}</QuoteAuthor>
+                  </div>
+                </QuoteContent>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Right: Scroll Hint (Desktop Only) */}
+          {!isMobile && (
+            <motion.div
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6, cursor: 'pointer' }}
+              animate={{ y: [0, 3, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <div
+                style={{ width: '1px', height: '16px', background: 'var(--border-color)', marginRight: '1rem' }}
+              ></div>
+              <span style={{ fontSize: '0.85rem', letterSpacing: '1px', fontWeight: 500 }}>
+                {scrollHints[scrollHintIndex]}
+              </span>
+              <FiArrowDown size={16} />
+            </motion.div>
+          )}
+        </QuoteContainer>
       </HeroContainer>
-
-      <Quote initial={{ opacity: 0 }} animate={{ opacity: 0.8 }} transition={{ ...springPresets.floaty, delay: 0.5 }}>
-        {siteSettings?.quote || ''} {siteSettings?.quoteAuthor && `—— ${siteSettings.quoteAuthor}`}
-      </Quote>
-
-      <ScrollIndicator>
-        <motion.div initial="initial" animate="animate" variants={mouseScrollVariants}>
-          <svg viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="1" y="1" width="26" height="38" rx="13" stroke="currentColor" strokeWidth="2" />
-            <motion.rect x="12" y="10" width="4" height="8" rx="2" fill="currentColor" variants={scrollWheelVariants} />
-          </svg>
-        </motion.div>
-      </ScrollIndicator>
     </Section>
   );
 };

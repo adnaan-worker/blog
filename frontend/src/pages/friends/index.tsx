@@ -3,37 +3,25 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiPlus, FiLink } from 'react-icons/fi';
 import { Button } from 'adnaan-ui';
-import MeteorBackground from '@/components/common/meteor-background';
 import { PageHeader } from '@/components/common/page-header';
 import { FriendCard } from './components/friend-card';
 import { ApplyModal } from './components/apply-modal';
 import { MOCK_FRIENDS } from './data';
 import { useAnimationEngine } from '@/utils/ui/animation';
 
+const PageContainer = styled(motion.div)`
+  min-height: 100vh;
+  padding: 2rem 0;
+`;
+
 const Container = styled.div`
   max-width: var(--max-width);
-  min-height: 100vh;
   margin: 0 auto;
   padding: 0 2rem;
-  position: relative;
-`;
 
-const AmbientOrb = styled(motion.div)`
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(120px);
-  z-index: 0;
-  opacity: 0.3;
-  pointer-events: none;
-  mix-blend-mode: screen;
-`;
-
-const Content = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem 4rem;
-  position: relative;
-  z-index: 1;
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+  }
 `;
 
 const Grid = styled(motion.div)`
@@ -79,43 +67,8 @@ const Friends = () => {
   };
 
   return (
-    <Container>
-      <MeteorBackground />
-
-      <AmbientOrb
-        animate={{
-          x: [0, 100, 0],
-          y: [0, -50, 0],
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-        style={{
-          top: '-10%',
-          left: '-10%',
-          width: '800px',
-          height: '800px',
-          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 70%)', // Violet
-        }}
-      />
-      <AmbientOrb
-        animate={{
-          x: [0, -100, 0],
-          y: [0, 50, 0],
-          scale: [1, 1.1, 1],
-          opacity: [0.2, 0.4, 0.2],
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-        style={{
-          bottom: '10%',
-          right: '-5%',
-          width: '600px',
-          height: '600px',
-          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.2), transparent 70%)', // Cyan
-        }}
-      />
-
-      <Content>
+    <PageContainer>
+      <Container>
         <PageHeader
           title="拾音"
           subtitle="把同好的链接拾成散落的音符，以技术为谱、热爱为弦，在互联的时光里轻轻弹奏，让编程之路的孤独，都化作彼此呼应的细腻回响。"
@@ -141,10 +94,10 @@ const Friends = () => {
             <p>暂无友链，成为第一个伙伴吧！</p>
           </EmptyState>
         )}
-      </Content>
+      </Container>
 
       <ApplyModal isOpen={isApplyModalOpen} onClose={() => setIsApplyModalOpen(false)} />
-    </Container>
+    </PageContainer>
   );
 };
 

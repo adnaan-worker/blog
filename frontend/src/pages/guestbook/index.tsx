@@ -11,14 +11,6 @@ import { getTimeAgo, storage } from '@/utils';
 // 工具函数 & 数据
 // ============================================================================
 
-const getHash = (str: string) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash);
-};
-
 const MOCK_DATA = [
   {
     id: 1,
@@ -54,18 +46,23 @@ const MOCK_DATA = [
 // ============================================================================
 // Styled Components
 // ============================================================================
+const PageContainer = styled(motion.div)`
+  min-height: 100vh;
+  padding: 2rem 0;
+`;
 
 const Container = styled.div`
   max-width: var(--max-width);
-  min-height: 100vh;
   margin: 0 auto;
   padding: 0 2rem;
-  position: relative;
+
+  @media (max-width: 768px) {
+    padding: 0 1rem;
+  }
 `;
 
 const MainContent = styled.div`
   width: 100%;
-  padding: 0 2rem 4rem;
 `;
 
 // 写留言表单容器（用于 PageHeader 右侧）
@@ -455,8 +452,7 @@ const Guestbook: React.FC = () => {
     storage.local.set('guest_email', email);
     storage.local.set('guest_website', website);
 
-    // @ts-ignore
-    if (window.adnaan?.toast) window.adnaan.toast.success('留言成功');
+    adnaan.toast.success('留言成功');
   };
 
   // 渲染写留言表单（用于 PageHeader 右侧）
@@ -541,87 +537,88 @@ const Guestbook: React.FC = () => {
   );
 
   return (
-    <Container>
+    <>
       <SEO title="留言" description="Leave a trace" />
+      <PageContainer>
+        <Container>
+          <PageHeader
+            title="暖笺"
+            subtitle="以留言作暖融的信笺，记下技术交流的热忱与共情，在互联的经纬里，留存一段治愈的同行印记。"
+            count={messages.length}
+            countUnit="条留言"
+            rightContent={renderWriteForm()}
+          />
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem 2rem 0' }}>
-        <PageHeader
-          title="暖笺"
-          subtitle="以留言作暖融的信笺，记下技术交流的热忱与共情，在互联的经纬里，留存一段治愈的同行印记。"
-          count={messages.length}
-          countUnit="条留言"
-          rightContent={renderWriteForm()}
-        />
-      </div>
+          <MainContent>
+            {/* 右侧：便签式瀑布流 */}
+            <MessageList>
+              {loading ? (
+                <div style={{ columnSpan: 'all' }}>
+                  <GuestbookSkeleton count={6} />
+                </div>
+              ) : (
+                <>
+                  {messages.map((msg, index) => (
+                    <MessageCard
+                      key={msg.id}
+                      colorIndex={index}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.08, duration: 0.3 }}
+                    >
+                      <MessageInner>
+                        {/* 用户留言行（头像 + 信息 + 气泡） */}
+                        <UserMessageRow>
+                          <GuestbookAvatar seed={msg.author} />
 
-      <MainContent>
-        {/* 右侧：便签式瀑布流 */}
-        <MessageList>
-          {loading ? (
-            <div style={{ columnSpan: 'all' }}>
-              <GuestbookSkeleton count={6} />
-            </div>
-          ) : (
-            <>
-              {messages.map((msg, index) => (
-                <MessageCard
-                  key={msg.id}
-                  colorIndex={index}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.08, duration: 0.3 }}
-                >
-                  <MessageInner>
-                    {/* 用户留言行（头像 + 信息 + 气泡） */}
-                    <UserMessageRow>
-                      <GuestbookAvatar seed={msg.author} />
+                          <MessageContentColumn>
+                            {/* 第一行：用户信息 */}
+                            <UserMetaRow>
+                              <UserName>{msg.author}</UserName>
+                              <UserMeta>
+                                <FiClock size={10} /> {getTimeAgo(msg.date)}
+                                {msg.location && (
+                                  <>
+                                    • <FiMapPin size={10} /> {msg.location}
+                                  </>
+                                )}
+                              </UserMeta>
+                            </UserMetaRow>
 
-                      <MessageContentColumn>
-                        {/* 第一行：用户信息 */}
-                        <UserMetaRow>
-                          <UserName>{msg.author}</UserName>
-                          <UserMeta>
-                            <FiClock size={10} /> {getTimeAgo(msg.date)}
-                            {msg.location && (
-                              <>
-                                • <FiMapPin size={10} /> {msg.location}
-                              </>
-                            )}
-                          </UserMeta>
-                        </UserMetaRow>
+                            {/* 第二行：留言气泡 */}
+                            <UserBubble>{msg.content}</UserBubble>
+                          </MessageContentColumn>
+                        </UserMessageRow>
 
-                        {/* 第二行：留言气泡 */}
-                        <UserBubble>{msg.content}</UserBubble>
-                      </MessageContentColumn>
-                    </UserMessageRow>
+                        {/* 博主回复（气泡 + 头像，右对齐）*/}
+                        {msg.reply && (
+                          <AuthorReply>
+                            <AuthorLabel>
+                              <FiCpu size={10} /> Author Reply
+                            </AuthorLabel>
+                            <AuthorMessageRow>
+                              <RandomAvatar seed="博主" size={32} style="personas" />
+                              <AuthorBubble>{msg.reply}</AuthorBubble>
+                            </AuthorMessageRow>
+                          </AuthorReply>
+                        )}
+                      </MessageInner>
 
-                    {/* 博主回复（气泡 + 头像，右对齐）*/}
-                    {msg.reply && (
-                      <AuthorReply>
-                        <AuthorLabel>
-                          <FiCpu size={10} /> Author Reply
-                        </AuthorLabel>
-                        <AuthorMessageRow>
-                          <RandomAvatar seed="博主" size={32} style="personas" />
-                          <AuthorBubble>{msg.reply}</AuthorBubble>
-                        </AuthorMessageRow>
-                      </AuthorReply>
-                    )}
-                  </MessageInner>
-
-                  {/* 网站链接按钮（右上角） */}
-                  {msg.website && (
-                    <WebsiteButton onClick={() => window.open(msg.website, '_blank')}>
-                      <FiGlobe size={12} /> Visit
-                    </WebsiteButton>
-                  )}
-                </MessageCard>
-              ))}
-            </>
-          )}
-        </MessageList>
-      </MainContent>
-    </Container>
+                      {/* 网站链接按钮（右上角） */}
+                      {msg.website && (
+                        <WebsiteButton onClick={() => window.open(msg.website, '_blank')}>
+                          <FiGlobe size={12} /> Visit
+                        </WebsiteButton>
+                      )}
+                    </MessageCard>
+                  ))}
+                </>
+              )}
+            </MessageList>
+          </MainContent>
+        </Container>
+      </PageContainer>
+    </>
   );
 };
 

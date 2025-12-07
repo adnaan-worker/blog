@@ -36,7 +36,6 @@ const Content = styled.main<{ isProfileContext?: boolean }>`
   flex: 1;
   width: 100vw;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
   overflow: visible;
   margin-top: ${(props) => (props.isProfileContext ? '0' : 'var(--header-height)')};
   min-height: ${(props) => (props.isProfileContext ? '100vh' : 'calc(100vh - var(--header-height))')};

@@ -17,7 +17,6 @@ interface LazyImageProps {
 const ImageContainer = styled.div`
   position: relative;
   overflow: hidden;
-  background: var(--bg-secondary);
 `;
 
 const StyledImage = styled(motion.img)`
