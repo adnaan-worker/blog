@@ -45,18 +45,11 @@ const HeroContainer = styled(motion.div)`
   margin: 0 auto; /* Center align */
 
   @media (max-width: 968px) {
-    flex-direction: column; /* Standard column layout for mobile */
+    flex-direction: column;
     gap: 1rem;
-    padding-top: 1rem;
-    text-align: center;
     height: auto;
     min-height: calc(100vh - var(--header-height));
-    justify-content: center; /* Center the single card stack vertically */
-  }
-
-  @media (max-width: 768px) {
-    padding: 1rem 1.5rem 2rem 1.5rem; /* Reduced top padding */
-    gap: 3rem;
+    justify-content: center;
   }
 `;
 
@@ -755,7 +748,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
     flipped: {
       scale: isMobile ? 0.9 : 0.85,
       opacity: 0.4,
-      filter: 'blur(6px)',
+      filter: 'blur(3px)',
       zIndex: 1,
       y: isMobile ? -76 : -30, // Move up more on mobile to swap with window
       transition: { duration: 0.5, ease: 'easeInOut' },
@@ -764,9 +757,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
 
   const backWindowVariants: Variants = {
     normal: {
-      scale: 0.92,
-      opacity: 0.6,
-      filter: 'blur(2px)',
+      scale: isMobile ? 1.08 : 0.92,
+      opacity: 0.8,
+      filter: 'blur(0.5px)',
       zIndex: 1,
       y: 0,
       x: 0,
@@ -842,6 +835,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
   };
 
   // Quote Logic
+  const [isLoadingQuote, setIsLoadingQuote] = useState(false);
   const [currentQuote, setCurrentQuote] = useState({
     text: siteSettings?.quote || '每一行代码都有诗意，每一个像素都有故事',
     author: siteSettings?.quoteAuthor || 'adnaan',
@@ -858,6 +852,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
   }, [siteSettings?.quote, siteSettings?.quoteAuthor]);
 
   const fetchHitokoto = async () => {
+    if (isLoadingQuote) return;
+    setIsLoadingQuote(true);
     try {
       // c=d: 文学, c=i: 诗词, c=k: 哲学
       const res = await fetch('https://v1.hitokoto.cn?c=d&c=i&c=k');
@@ -873,6 +869,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
         text: '每一行代码都有诗意，每一个像素都有故事',
         author: 'Adnaan',
       });
+    } finally {
+      setIsLoadingQuote(false);
     }
   };
 
@@ -998,7 +996,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
                 <AnimatedChar key={i} variants={variants.waveChar}>
                   {char}
                 </AnimatedChar>
-              ))}
+              ))}{' '}
               <strong style={{ color: 'var(--accent-color)' }}>
                 {'全栈工程师'.split('').map((char, i) => (
                   <AnimatedChar key={`s1-${i}`} variants={variants.waveChar}>
@@ -1010,7 +1008,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
                 <AnimatedChar key={`and-${i}`} variants={variants.waveChar}>
                   {char}
                 </AnimatedChar>
-              ))}
+              ))}{' '}
               <strong style={{ color: 'var(--accent-color)' }}>
                 {'UI/UX爱好者'.split('').map((char, i) => (
                   <AnimatedChar key={`s2-${i}`} variants={variants.waveChar}>
@@ -1265,6 +1263,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
             alignItems: 'center',
             gap: isMobile ? '1rem' : '3rem',
             marginTop: isMobile ? '2rem' : 0, // Add space on mobile
+            cursor: isLoadingQuote ? 'wait' : 'pointer', // Show wait cursor when loading
           }}
         >
           {/* Left: Audio Visualizer & Quote */}
@@ -1277,7 +1276,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
               width: isMobile ? '100%' : 'auto',
             }}
           >
-            <AudioVisualizer>
+            <AudioVisualizer style={{ opacity: isLoadingQuote ? 0.5 : 1 }}>
               <span></span>
               <span></span>
               <span></span>
@@ -1298,10 +1297,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
                 <QuoteContent
                   key={currentQuote.text}
                   initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  animate={{ opacity: isLoadingQuote ? 0.5 : 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
                   transition={{ duration: 0.3 }}
-                  style={{ alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}
+                  style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    width: '100%',
+                  }}
                 >
                   <div
                     style={{
@@ -1314,30 +1318,42 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ siteSettings }) => {
                       textAlign: 'center',
                     }}
                   >
-                    <QuoteText style={{ fontSize: '0.95rem', lineHeight: 1.4 }}>{currentQuote.text}</QuoteText>
-                    <QuoteAuthor style={{ lineHeight: 1.4, fontSize: '0.8rem' }}>{currentQuote.author}</QuoteAuthor>
+                    <QuoteText style={{ fontSize: '0.95rem', lineHeight: 1.4 }}>
+                      {isLoadingQuote ? '获取灵感中...' : currentQuote.text}
+                    </QuoteText>
+                    {!isLoadingQuote && (
+                      <QuoteAuthor style={{ lineHeight: 1.4, fontSize: '0.8rem' }}>{currentQuote.author}</QuoteAuthor>
+                    )}
                   </div>
                 </QuoteContent>
               </AnimatePresence>
             </div>
           </div>
 
-          {/* Right: Scroll Hint (Desktop Only) */}
-          {!isMobile && (
-            <motion.div
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.6, cursor: 'pointer' }}
-              animate={{ y: [0, 3, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
+          {/* Right: Scroll Hint (Desktop & Mobile) */}
+          <motion.div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              opacity: 0.6,
+              cursor: 'pointer',
+              // Mobile styles
+              marginTop: isMobile ? '0.5rem' : '0',
+            }}
+            animate={{ y: [0, 3, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            {!isMobile && (
               <div
                 style={{ width: '1px', height: '16px', background: 'var(--border-color)', marginRight: '1rem' }}
               ></div>
-              <span style={{ fontSize: '0.85rem', letterSpacing: '1px', fontWeight: 500 }}>
-                {scrollHints[scrollHintIndex]}
-              </span>
-              <FiArrowDown size={16} />
-            </motion.div>
-          )}
+            )}
+            <span style={{ fontSize: '0.85rem', letterSpacing: '1px', fontWeight: 500 }}>
+              {scrollHints[scrollHintIndex]}
+            </span>
+            <FiArrowDown size={16} />
+          </motion.div>
         </QuoteContainer>
       </HeroContainer>
     </Section>
