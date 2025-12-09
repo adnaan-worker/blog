@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiHeart, FiBookmark, FiShare2 } from 'react-icons/fi';
 import { ArticleContent, ArticleToc } from './modules';
+import ShareModal from './modules/share-modal';
 import { CommentSection } from '@/components/content';
 import styled from '@emotion/styled';
 import { API } from '@/utils/api';
@@ -273,6 +274,9 @@ const BlogDetail: React.FC = () => {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
 
+  // 新增状态：控制分享模态框显示
+  const [showShareModal, setShowShareModal] = useState(false);
+
   // 使用页面信息 Hook
   const { setPageInfo } = usePageInfo();
 
@@ -536,21 +540,9 @@ const BlogDetail: React.FC = () => {
   }, [id]);
 
   const handleShare = useCallback(() => {
-    if (navigator.share) {
-      navigator
-        .share({
-          title: article?.title,
-          text: article?.excerpt,
-          url: window.location.href,
-        })
-        .catch((error) => console.log('分享失败', error));
-    } else {
-      navigator.clipboard
-        .writeText(window.location.href)
-        .then(() => adnaan.toast.success('链接已复制到剪贴板'))
-        .catch(() => adnaan.toast.error('复制失败'));
-    }
-  }, [article]);
+    // 无论是桌面端还是移动端，都统一使用 ShareModal 以支持海报生成
+    setShowShareModal(true);
+  }, []);
 
   const handleHeadingClick = useCallback(
     (headingId: string) => {
@@ -569,6 +561,13 @@ const BlogDetail: React.FC = () => {
     [headings],
   );
 
+  const handleCommentClick = useCallback(() => {
+    const commentSection = document.getElementById('comment-section');
+    if (commentSection) {
+      commentSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
   // TOC Props
   const tocProps = useMemo(
     () => ({
@@ -577,9 +576,18 @@ const BlogDetail: React.FC = () => {
       readingProgress,
       liked,
       bookmarked,
+      commentCount: (article as any)?.commentCount || 0,
+      articleData: article
+        ? {
+            title: article.title,
+            excerpt: article.excerpt || article.summary || '',
+            author: typeof article.author === 'string' ? article.author : article.author?.fullName,
+            coverImage: article.coverImage,
+          }
+        : undefined,
       onLike: handleLike,
       onBookmark: handleBookmark,
-      onShare: handleShare,
+      onCommentClick: handleCommentClick,
       onHeadingClick: handleHeadingClick,
     }),
     [
@@ -588,9 +596,10 @@ const BlogDetail: React.FC = () => {
       readingProgress,
       liked,
       bookmarked,
+      article,
       handleLike,
       handleBookmark,
-      handleShare,
+      handleCommentClick,
       handleHeadingClick,
     ],
   );
@@ -664,7 +673,9 @@ const BlogDetail: React.FC = () => {
                   )}
 
                   {/* 评论区 */}
-                  <CommentSection targetId={Number(article.id)} targetType="post" />
+                  <div id="comment-section">
+                    <CommentSection targetId={Number(article.id)} targetType="post" />
+                  </div>
                 </ArticleMain>
               </DetailMainContent>
 
@@ -746,6 +757,20 @@ const BlogDetail: React.FC = () => {
               </MobileTocBookmarks>
             )}
           </PageContainer>
+
+          {/* 分享模态框 - 桌面端/移动端共用 */}
+          {article && (
+            <ShareModal
+              isOpen={showShareModal}
+              onClose={() => setShowShareModal(false)}
+              article={{
+                title: article.title,
+                excerpt: article.excerpt || article.summary || '',
+                author: typeof article.author === 'string' ? article.author : article.author?.fullName || 'Geek',
+                coverImage: article.coverImage,
+              }}
+            />
+          )}
         </DetailPageLayout>
       )}
     </>
