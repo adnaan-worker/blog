@@ -444,7 +444,7 @@ const Projects: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const limit = 5;
+  const [pageSize, setPageSize] = useState(6); // 默认每页6条
 
   // 筛选相关状态
   const [filterValues, setFilterValues] = useState<FilterValues>({});
@@ -453,14 +453,14 @@ const Projects: React.FC = () => {
   const [cleanedFilters, setCleanedFilters] = useState<Record<string, any>>({});
 
   // 加载项目
-  const loadProjects = async (currentPage: number) => {
+  const loadProjects = async (currentPage: number, currentPageSize: number) => {
     try {
       setLoading(true);
 
       // 使用清理后的参数，映射到API字段
       const params: any = {
         page: currentPage,
-        limit: limit,
+        limit: currentPageSize,
         ...cleanedFilters,
       };
 
@@ -493,18 +493,24 @@ const Projects: React.FC = () => {
     setPage(1);
   }, [cleanedFilters]);
 
-  // 页码变化或筛选条件变化时加载数据
+  // 页码变化、每页条数变化或筛选条件变化时加载数据
   useEffect(() => {
-    loadProjects(page);
+    loadProjects(page, pageSize);
     // 滚动到顶部
     if (page > 1) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [page, cleanedFilters]);
+  }, [page, pageSize, cleanedFilters]);
 
   // 处理分页变化
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
+  };
+
+  // 处理每页条数变化
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1); // 切换每页条数时重置回第一页
   };
 
   // 筛选组配置
@@ -598,11 +604,13 @@ const Projects: React.FC = () => {
                 <Pagination
                   currentPage={page}
                   totalPages={totalPages}
-                  pageSize={limit}
+                  pageSize={pageSize}
                   totalItems={totalCount}
                   onPageChange={handlePageChange}
-                  showInfo={false}
-                  showSizeChanger={false}
+                  onPageSizeChange={handlePageSizeChange}
+                  showInfo={true}
+                  showSizeChanger={true}
+                  showQuickJumper={true}
                 />
               </PaginationWrapper>
             )}

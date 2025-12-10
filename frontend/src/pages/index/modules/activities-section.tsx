@@ -934,7 +934,6 @@ export const ActivitiesSection: React.FC<ActivitiesSectionProps> = () => {
                   <ActivityItem
                     key={activity.id}
                     onClick={() => handleActivityClick(activity.link)}
-                    variants={variants.listItem}
                     custom={actualIndex}
                     {...itemInteractions}
                     ref={(el) => {

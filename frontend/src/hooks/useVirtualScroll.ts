@@ -32,11 +32,12 @@ export function useVirtualScroll<T>({
   items,
   threshold = 10,
   estimatedHeight = 200,
-  overscan = 5,
+  overscan = 10, // 增加默认缓冲区，防止滚动过快出现空白
   getItemKey,
 }: UseVirtualScrollOptions<T>): UseVirtualScrollReturn<T> {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: Math.min(items.length, 20) });
   const itemHeightsRef = useRef<Map<string | number, number>>(new Map());
+  const rafRef = useRef<number | null>(null);
 
   // 是否启用虚拟滚动
   const isVirtualEnabled = items.length > threshold;
@@ -52,7 +53,8 @@ export function useVirtualScroll<T>({
   const avgHeight = useMemo(() => {
     if (itemHeightsRef.current.size === 0) return estimatedHeight;
     const heights = Array.from(itemHeightsRef.current.values());
-    return heights.reduce((a, b) => a + b, 0) / heights.length;
+    const total = heights.reduce((a, b) => a + b, 0);
+    return total / heights.length || estimatedHeight;
   }, [estimatedHeight]);
 
   // 滚动处理
@@ -63,26 +65,40 @@ export function useVirtualScroll<T>({
         return;
       }
 
-      // 计算可见范围
-      const visibleStart = Math.floor(scrollTop / avgHeight);
-      const visibleEnd = Math.ceil((scrollTop + clientHeight) / avgHeight);
+      // 使用 requestAnimationFrame 优化性能
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
 
-      // 加上 overscan
-      const start = Math.max(0, visibleStart - overscan);
-      const end = Math.min(items.length, visibleEnd + overscan);
+      rafRef.current = requestAnimationFrame(() => {
+        // 计算可见范围
+        const visibleStart = Math.floor(scrollTop / avgHeight);
+        const visibleEnd = Math.ceil((scrollTop + clientHeight) / avgHeight);
 
-      // 防抖：范围变化时才更新（降低阈值提升响应速度）
-      setVisibleRange((prev) => {
-        const startDiff = Math.abs(prev.start - start);
-        const endDiff = Math.abs(prev.end - end);
-        if (startDiff > 0 || endDiff > 0) {
-          return { start, end };
-        }
-        return prev;
+        // 加上 overscan
+        const start = Math.max(0, visibleStart - overscan);
+        const end = Math.min(items.length, visibleEnd + overscan);
+
+        // 只有范围真正变化时才更新状态
+        setVisibleRange((prev) => {
+          if (prev.start !== start || prev.end !== end) {
+            return { start, end };
+          }
+          return prev;
+        });
       });
     },
     [isVirtualEnabled, avgHeight, overscan, items.length],
   );
+
+  // 组件卸载时清理 rAF
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   // 记录项目高度
   const recordItemHeight = useCallback((key: string | number, height: number) => {
