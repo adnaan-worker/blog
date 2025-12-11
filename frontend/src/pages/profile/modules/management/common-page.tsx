@@ -388,9 +388,20 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     isOpenSource: true,
   });
 
+  const [isReplyModalOpen, setIsReplyModalOpen] = React.useState(false);
+  const [replyTarget, setReplyTarget] = React.useState<GuestbookMessage | null>(null);
+  const [replyContent, setReplyContent] = React.useState('');
+
   const [isSyncModalOpen, setIsSyncModalOpen] = React.useState(false);
 
-  useModalScrollLock(isUserModalOpen || isCategoryModalOpen || isTagModalOpen || isProjectModalOpen || isSyncModalOpen);
+  useModalScrollLock(
+    isUserModalOpen ||
+      isCategoryModalOpen ||
+      isTagModalOpen ||
+      isProjectModalOpen ||
+      isReplyModalOpen ||
+      isSyncModalOpen,
+  );
 
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   const {
@@ -603,6 +614,18 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     }
   }, [editingProject, projectForm, reload]);
 
+  const handleSaveReply = useCallback(async () => {
+    if (!replyTarget) return;
+    try {
+      await API.guestbook.updateMessageReply(replyTarget.id, replyContent);
+      adnaan.toast.success('回复已更新');
+      setIsReplyModalOpen(false);
+      reload();
+    } catch (error: any) {
+      adnaan.toast.error(error.message || '更新回复失败');
+    }
+  }, [replyTarget, replyContent, reload]);
+
   const handleDelete = async (id: number, title: string) => {
     if (!config.deleteFn) return;
     const confirmed = await adnaan.confirm.delete(`确定要删除"${title}"吗？`, '删除确认');
@@ -741,17 +764,10 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
         }
       };
 
-      const handleEditReply = async () => {
-        const current = message.replyContent || '';
-        const reply = window.prompt('编辑回复内容', current);
-        if (reply === null) return;
-        try {
-          await API.guestbook.updateMessageReply(message.id, reply);
-          adnaan.toast.success('回复已更新');
-          reload();
-        } catch (error: any) {
-          adnaan.toast.error(error.message || '更新回复失败');
-        }
+      const handleEditReply = () => {
+        setReplyTarget(message);
+        setReplyContent(message.replyContent || '');
+        setIsReplyModalOpen(true);
       };
 
       return (
@@ -1027,6 +1043,48 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
           </ScrollWrapper>
         )}
       </ManagementLayout>
+
+      {type === 'guestbook' && (
+        <Modal isOpen={isReplyModalOpen} onClose={() => setIsReplyModalOpen(false)} title="编辑回复" width={600}>
+          <div style={{ padding: '1.5rem' }}>
+            <FormGroup>
+              <Label>原始留言</Label>
+              <div
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.75rem',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.875rem',
+                  lineHeight: 1.6,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {replyTarget?.content || '暂无内容'}
+              </div>
+            </FormGroup>
+            <FormGroup>
+              <Label>回复内容</Label>
+              <Textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                placeholder="请输入回复内容..."
+                rows={4}
+              />
+            </FormGroup>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
+              <Button variant="secondary" onClick={() => setIsReplyModalOpen(false)}>
+                取消
+              </Button>
+              <Button variant="primary" onClick={handleSaveReply} disabled={!replyTarget}>
+                保存
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Modals - Users */}
       {type === 'users' && (
