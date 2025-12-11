@@ -64,6 +64,8 @@ const ACTION_TO_TAB_MAP: Record<string, string> = {
   'view-articles': 'articles',
   'view-notes': 'notes',
   'view-comments': 'comments',
+  'view-guestbook': 'guestbook',
+  'view-friends': 'friends',
   'view-users': 'users',
   'view-tags': 'tags',
   'view-categories': 'categories',
@@ -95,6 +97,10 @@ const getQuickActionIcon = (actionId: string, defaultIcon: string) => {
       return <FiFolder />;
     case 'view-projects':
       return <FiLayers />;
+    case 'view-guestbook':
+      return <FiMessageCircle />;
+    case 'view-friends':
+      return <FiUsers />;
     case 'edit-site-settings':
       return <FiSettings />;
     case 'view-security':
@@ -1230,6 +1236,12 @@ const Profile: React.FC = () => {
       case 'view-comments':
         setActiveTab('comments');
         break;
+      case 'view-guestbook':
+        if (isAdmin) setActiveTab('guestbook');
+        break;
+      case 'view-friends':
+        if (isAdmin) setActiveTab('friends');
+        break;
       case 'view-likes':
         setActiveTab('likes');
         break;
@@ -1675,6 +1687,13 @@ const Profile: React.FC = () => {
             <CommonPage type="comments" initialStatusFilter={commentStatusFilter} />
           </ContentGlassCard>
         );
+      case 'guestbook':
+        if (!isAdmin) return <div>无权限访问</div>;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="guestbook" />
+          </ContentGlassCard>
+        );
       case 'likes':
         return (
           <ContentGlassCard {...pageTransition}>
@@ -1714,6 +1733,13 @@ const Profile: React.FC = () => {
         return (
           <ContentGlassCard {...pageTransition}>
             <CommonPage type="projects" />
+          </ContentGlassCard>
+        );
+      case 'friends':
+        if (!isAdmin) return <div>无权限访问</div>;
+        return (
+          <ContentGlassCard {...pageTransition}>
+            <CommonPage type="friends" />
           </ContentGlassCard>
         );
       case 'users':

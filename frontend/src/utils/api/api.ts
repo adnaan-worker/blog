@@ -20,6 +20,9 @@ import type {
   Comment,
   CommentParams,
   CreateCommentData,
+  GuestbookMessage,
+  GuestbookMessageParams,
+  CreateGuestbookMessageData,
   Note,
   CreateNoteParams,
   UpdateNoteParams,
@@ -28,6 +31,9 @@ import type {
   NoteMetadata,
   SiteSettings,
   UpdateSiteSettingsParams,
+  FriendLink,
+  FriendLinkParams,
+  FriendLinkApplyData,
   Project,
   ProjectParams,
   ContributionChartData,
@@ -572,6 +578,51 @@ export const API = {
     },
   },
 
+  // 留言板相关
+  guestbook: {
+    /**
+     * 获取前台留言列表（公开）
+     */
+    getMessages: (params?: GuestbookMessageParams): Promise<ApiResponse<PaginationResult<GuestbookMessage>>> => {
+      return http.get('/guestbook/messages', params);
+    },
+
+    /**
+     * 创建留言（支持访客和登录用户）
+     */
+    createMessage: (data: CreateGuestbookMessageData): Promise<ApiResponse<GuestbookMessage>> => {
+      return http.post('/guestbook/messages', data);
+    },
+
+    /**
+     * 管理端：获取留言列表
+     */
+    getAdminMessages: (params?: GuestbookMessageParams): Promise<ApiResponse<PaginationResult<GuestbookMessage>>> => {
+      return http.get('/guestbook/admin/messages', params);
+    },
+
+    /**
+     * 管理端：更新留言状态
+     */
+    updateMessageStatus: (id: number, status: GuestbookMessage['status']): Promise<ApiResponse<GuestbookMessage>> => {
+      return http.patch(`/guestbook/messages/${id}/status`, { status });
+    },
+
+    /**
+     * 管理端：更新留言回复
+     */
+    updateMessageReply: (id: number, replyContent: string): Promise<ApiResponse<GuestbookMessage>> => {
+      return http.patch(`/guestbook/messages/${id}/reply`, { replyContent });
+    },
+
+    /**
+     * 管理端：删除留言
+     */
+    deleteMessage: (id: number): Promise<ApiResponse<null>> => {
+      return http.delete(`/guestbook/messages/${id}`);
+    },
+  },
+
   // 网站设置相关
   siteSettings: {
     /**
@@ -589,6 +640,51 @@ export const API = {
      */
     updateSiteSettings: (data: UpdateSiteSettingsParams): Promise<ApiResponse<SiteSettings>> => {
       return http.put('/site-settings', data);
+    },
+  },
+
+  // 友情链接相关
+  friends: {
+    /**
+     * 获取公开友链列表（仅已通过）
+     */
+    getFriends: (params?: FriendLinkParams): Promise<ApiResponse<PaginationResult<FriendLink>>> => {
+      return http.get('/friends', params);
+    },
+
+    /**
+     * 提交友链申请
+     */
+    applyFriend: (data: FriendLinkApplyData): Promise<ApiResponse<FriendLink>> => {
+      return http.post('/friends/apply', data);
+    },
+
+    /**
+     * 管理端：获取友链列表
+     */
+    getAdminFriends: (params?: FriendLinkParams): Promise<ApiResponse<PaginationResult<FriendLink>>> => {
+      return http.get('/friends/admin', params);
+    },
+
+    /**
+     * 管理端：更新友链
+     */
+    updateFriend: (id: number, data: Partial<FriendLink>): Promise<ApiResponse<FriendLink>> => {
+      return http.put(`/friends/${id}`, data);
+    },
+
+    /**
+     * 管理端：更新友链状态
+     */
+    updateFriendStatus: (id: number, status: FriendLink['status']): Promise<ApiResponse<FriendLink>> => {
+      return http.patch(`/friends/${id}/status`, { status });
+    },
+
+    /**
+     * 管理端：删除友链
+     */
+    deleteFriend: (id: number): Promise<ApiResponse<null>> => {
+      return http.delete(`/friends/${id}`);
     },
   },
 
@@ -746,6 +842,9 @@ export type {
   Comment,
   CommentParams,
   CreateCommentData,
+  GuestbookMessage,
+  GuestbookMessageParams,
+  CreateGuestbookMessageData,
   Note,
   CreateNoteParams,
   UpdateNoteParams,
@@ -754,6 +853,9 @@ export type {
   NoteMetadata,
   SiteSettings,
   UpdateSiteSettingsParams,
+  FriendLink,
+  FriendLinkParams,
+  FriendLinkApplyData,
   Project,
   ProjectParams,
   ContributionChartData,

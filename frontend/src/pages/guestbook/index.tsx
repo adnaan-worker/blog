@@ -6,42 +6,14 @@ import { Button } from 'adnaan-ui';
 import { PageHeader, SEO, GuestbookSkeleton, GuestbookAvatar, RandomAvatar } from '@/components/common';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import { getTimeAgo, storage } from '@/utils';
+import { API } from '@/utils/api';
+import type { GuestbookMessage, CreateGuestbookMessageData } from '@/types';
 
 // ============================================================================
 // 工具函数 & 数据
 // ============================================================================
 
-const MOCK_DATA = [
-  {
-    id: 1,
-    author: 'AI_Enthusiast',
-    content: '界面设计真的很惊艳，这种极简风格让我想起了早期的 OpenAI 产品。非常纯粹，专注于内容本身。',
-    location: 'San Francisco',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    reply: 'Less is more. 很高兴你喜欢这种纯粹的风格。',
-  },
-  {
-    id: 2,
-    author: 'Designer_X',
-    content: '排版非常舒适，特别是字体的选择和间距的把控。这种呼吸感在国内的博客中很少见。',
-    location: 'Tokyo',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: 3,
-    author: 'FullStackDev',
-    content: 'React Server Components 的实践文章写得很好，期待更多深入的技术分享！',
-    location: 'London',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-  {
-    id: 4,
-    author: 'ProductGuy',
-    content: '这种左右布局确实比单列更有层次感，左侧的 Sticky 效果很棒，输入框随时可用，体验很好。',
-    location: 'Shenzhen',
-    date: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-  },
-];
+// 真实数据改为从后端获取，这里保留原结构示例作为设计参考
 
 // ============================================================================
 // Styled Components
@@ -408,7 +380,7 @@ const WebsiteButton = styled.button`
 
 const Guestbook: React.FC = () => {
   const { variants } = useAnimationEngine();
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<GuestbookMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isFormExpanded, setIsFormExpanded] = useState(false); // 默认折叠
@@ -419,40 +391,58 @@ const Guestbook: React.FC = () => {
   const [content, setContent] = useState('');
 
   useEffect(() => {
-    // 模拟数据加载，防止 ReferenceError
-    try {
-      setTimeout(() => {
-        setMessages(MOCK_DATA);
+    const fetchMessages = async () => {
+      setLoading(true);
+      try {
+        const response = await API.guestbook.getMessages({ page: 1, limit: 50 });
+        setMessages(response.data || []);
+      } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error('加载留言失败:', error);
+        adnaan.toast.error(error.message || '加载留言失败');
+      } finally {
         setLoading(false);
-      }, 800);
-    } catch (e) {
-      console.error(e);
-      setLoading(false);
-    }
+      }
+    };
+
+    fetchMessages();
   }, []);
 
   const handleSubmit = async () => {
     if (!content.trim() || !name.trim()) return;
     setSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const newMessage = {
-      id: Date.now(),
-      author: name,
-      content,
-      location: 'Unknown',
-      date: new Date().toISOString(),
+    const payload: CreateGuestbookMessageData = {
+      content: content.trim(),
+      guestName: name.trim(),
+      guestEmail: email.trim() || undefined,
+      guestWebsite: website.trim() || undefined,
     };
 
-    setMessages((prev) => [newMessage, ...prev]);
-    setContent('');
-    setSubmitting(false);
-    setIsFormExpanded(false);
-    storage.local.set('guest_name', name);
-    storage.local.set('guest_email', email);
-    storage.local.set('guest_website', website);
+    try {
+      const response = await API.guestbook.createMessage(payload);
+      const created = response.data;
 
-    adnaan.toast.success('留言成功');
+      storage.local.set('guest_name', name);
+      storage.local.set('guest_email', email);
+      storage.local.set('guest_website', website);
+
+      setContent('');
+      setIsFormExpanded(false);
+
+      const approvedImmediately = created?.status === 'approved';
+      adnaan.toast.success(approvedImmediately ? '留言成功' : '留言已提交，审核通过后会展示');
+
+      if (approvedImmediately) {
+        setMessages((prev) => [created, ...prev]);
+      }
+    } catch (error: any) {
+      // eslint-disable-next-line no-console
+      console.error('发送留言失败:', error);
+      adnaan.toast.error(error.message || '发送留言失败');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // 渲染写留言表单（用于 PageHeader 右侧）
@@ -558,60 +548,70 @@ const Guestbook: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  {messages.map((msg, index) => (
-                    <MessageCard
-                      key={msg.id}
-                      colorIndex={index}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.08, duration: 0.3 }}
-                    >
-                      <MessageInner>
-                        {/* 用户留言行（头像 + 信息 + 气泡） */}
-                        <UserMessageRow>
-                          <GuestbookAvatar seed={msg.author} />
+                  {messages.map((msg, index) => {
+                    const author =
+                      (msg.user && ((msg.user as any).nickname || msg.user.username)) || msg.guestName || '访客';
+                    const createdAt = msg.createdAt || msg.updatedAt;
+                    const location = msg.location;
+                    const reply = msg.replyContent;
+                    const website = msg.guestWebsite;
 
-                          <MessageContentColumn>
-                            {/* 第一行：用户信息 */}
-                            <UserMetaRow>
-                              <UserName>{msg.author}</UserName>
-                              <UserMeta>
-                                <FiClock size={10} /> {getTimeAgo(msg.date)}
-                                {msg.location && (
-                                  <>
-                                    • <FiMapPin size={10} /> {msg.location}
-                                  </>
-                                )}
-                              </UserMeta>
-                            </UserMetaRow>
+                    return (
+                      <MessageCard
+                        key={msg.id}
+                        colorIndex={index}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.08, duration: 0.3 }}
+                      >
+                        <MessageInner>
+                          {/* 用户留言行（头像 + 信息 + 气泡） */}
+                          <UserMessageRow>
+                            <GuestbookAvatar seed={author} />
 
-                            {/* 第二行：留言气泡 */}
-                            <UserBubble>{msg.content}</UserBubble>
-                          </MessageContentColumn>
-                        </UserMessageRow>
+                            <MessageContentColumn>
+                              {/* 第一行：用户信息 */}
+                              <UserMetaRow>
+                                <UserName>{author}</UserName>
+                                <UserMeta>
+                                  <FiClock size={10} /> {createdAt ? getTimeAgo(createdAt) : '刚刚'}
+                                  {location && (
+                                    <>
+                                      {' '}
+                                      • <FiMapPin size={10} /> {location}
+                                    </>
+                                  )}
+                                </UserMeta>
+                              </UserMetaRow>
 
-                        {/* 博主回复（气泡 + 头像，右对齐）*/}
-                        {msg.reply && (
-                          <AuthorReply>
-                            <AuthorLabel>
-                              <FiCpu size={10} /> Author Reply
-                            </AuthorLabel>
-                            <AuthorMessageRow>
-                              <RandomAvatar seed="博主" size={32} style="personas" />
-                              <AuthorBubble>{msg.reply}</AuthorBubble>
-                            </AuthorMessageRow>
-                          </AuthorReply>
+                              {/* 第二行：留言气泡 */}
+                              <UserBubble>{msg.content}</UserBubble>
+                            </MessageContentColumn>
+                          </UserMessageRow>
+
+                          {/* 博主回复（气泡 + 头像，右对齐）*/}
+                          {reply && (
+                            <AuthorReply>
+                              <AuthorLabel>
+                                <FiCpu size={10} /> Author Reply
+                              </AuthorLabel>
+                              <AuthorMessageRow>
+                                <RandomAvatar seed="博主" size={32} style="personas" />
+                                <AuthorBubble>{reply}</AuthorBubble>
+                              </AuthorMessageRow>
+                            </AuthorReply>
+                          )}
+                        </MessageInner>
+
+                        {/* 网站链接按钮（右上角） */}
+                        {website && (
+                          <WebsiteButton onClick={() => window.open(website, '_blank')}>
+                            <FiGlobe size={12} /> Visit
+                          </WebsiteButton>
                         )}
-                      </MessageInner>
-
-                      {/* 网站链接按钮（右上角） */}
-                      {msg.website && (
-                        <WebsiteButton onClick={() => window.open(msg.website, '_blank')}>
-                          <FiGlobe size={12} /> Visit
-                        </WebsiteButton>
-                      )}
-                    </MessageCard>
-                  ))}
+                      </MessageCard>
+                    );
+                  })}
                 </>
               )}
             </MessageList>

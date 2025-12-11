@@ -256,6 +256,46 @@ export interface CreateCommentData {
 }
 
 /**
+ * 留言板相关类型
+ * 与后端 guestbook_messages 表结构对齐
+ */
+export interface GuestbookMessage {
+  id: number;
+  content: string;
+  userId?: number | null;
+  user?: UserInfo;
+  isGuest?: boolean;
+  guestName?: string;
+  guestEmail?: string;
+  guestWebsite?: string;
+  status?: 'approved' | 'pending' | 'spam';
+  isPinned?: boolean;
+  replyContent?: string | null;
+  replyUserId?: number | null;
+  replyAt?: string | null;
+  ip?: string | null;
+  userAgent?: string | null;
+  location?: string | null;
+  browser?: string | null;
+  os?: string | null;
+  device?: 'Desktop' | 'Mobile' | 'Tablet' | string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GuestbookMessageParams extends PaginationParams {
+  status?: 'approved' | 'pending' | 'spam';
+}
+
+export interface CreateGuestbookMessageData {
+  content: string;
+  // 访客留言字段（未登录时使用）
+  guestName?: string;
+  guestEmail?: string;
+  guestWebsite?: string;
+}
+
+/**
  * 手记相关类型
  */
 export interface Note {
@@ -380,6 +420,41 @@ export interface UpdateSiteSettingsParams {
   quoteAuthor?: string;
   githubUsername?: string;
   giteeUsername?: string;
+}
+
+/**
+ * 友情链接相关类型
+ */
+export interface FriendLink {
+  id: number;
+  name: string;
+  url: string;
+  description?: string;
+  avatar?: string;
+  themeColor?: string | null;
+  tags?: string[] | null;
+  status: 'pending' | 'approved' | 'rejected' | 'blocked';
+  isFeatured: boolean;
+  order: number;
+  ownerName?: string | null;
+  ownerEmail?: string | null;
+  applyUserId?: number | null;
+  clickCount: number;
+  lastClickAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FriendLinkParams extends PaginationParams {
+  status?: 'pending' | 'approved' | 'rejected' | 'blocked';
+  search?: string;
+}
+
+export interface FriendLinkApplyData {
+  name: string;
+  url: string;
+  description?: string;
+  avatar?: string;
 }
 
 /**

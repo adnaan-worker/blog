@@ -33,6 +33,10 @@ db.PostBookmark = require('./post-bookmark.model.js')(sequelize, Sequelize);
 // 网站设置模型
 db.SiteSettings = require('./site-settings.model.js')(sequelize, Sequelize);
 
+// 留言板与友链模型
+db.GuestbookMessage = require('./guestbook-message.model.js')(sequelize, Sequelize);
+db.FriendLink = require('./friend-link.model.js')(sequelize, Sequelize);
+
 // 项目模型
 db.Project = require('./project.model.js')(sequelize, Sequelize);
 
@@ -132,6 +136,14 @@ db.NoteLike.belongsTo(db.User, { as: 'user', foreignKey: 'userId' });
 // 用户与网站设置的关系：一对一
 db.User.hasOne(db.SiteSettings, { as: 'siteSettings', foreignKey: 'userId' });
 db.SiteSettings.belongsTo(db.User, { as: 'user', foreignKey: 'userId' });
+
+// 留言板消息与用户关系
+db.User.hasMany(db.GuestbookMessage, { as: 'guestbookMessages', foreignKey: 'userId' });
+db.GuestbookMessage.belongsTo(db.User, { as: 'user', foreignKey: 'userId' });
+
+// 友链与用户关系（申请用户）
+db.User.hasMany(db.FriendLink, { as: 'appliedFriendLinks', foreignKey: 'applyUserId' });
+db.FriendLink.belongsTo(db.User, { as: 'applicant', foreignKey: 'applyUserId' });
 
 // 文章点赞和收藏关系
 // 文章与点赞的关系：一对多

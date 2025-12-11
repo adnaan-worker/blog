@@ -26,7 +26,7 @@ import { RichTextParser } from '@/utils/editor/parser';
 import { RichTextEditor } from '@/components/rich-text';
 import { useVirtualScroll } from '@/hooks/useVirtualScroll';
 import { useModalScrollLock } from '@/hooks';
-import type { UserProfile, Category, Tag, Project } from '@/types';
+import type { UserProfile, Category, Tag, Project, GuestbookMessage, FriendLink } from '@/types';
 import { ManagementLayout } from '../common/management-layout';
 import {
   ItemCard,
@@ -56,7 +56,9 @@ type PageType =
   | 'users'
   | 'categories'
   | 'tags'
-  | 'projects';
+  | 'projects'
+  | 'guestbook'
+  | 'friends';
 
 // 页面配置接口
 interface PageConfig {
@@ -153,6 +155,28 @@ const PAGE_CONFIG: Record<PageType, PageConfig> = {
     fetchFn: (params: any) => API.project.getProjects({ ...params, keyword: params.keyword, includePrivate: true }),
     deleteFn: (id: number) => API.project.deleteProject(id),
     getViewUrl: (id: number) => `/projects/${id}`,
+  },
+  guestbook: {
+    title: '留言管理',
+    emptyText: '还没有任何留言',
+    searchPlaceholder: '搜索留言内容或访客昵称...',
+    fetchFn: (params: any) => {
+      const { status, keyword, ...rest } = params || {};
+      const apiParams: any = { ...rest, status: status || undefined, keyword };
+      return API.guestbook.getAdminMessages(apiParams);
+    },
+    deleteFn: (id: number) => API.guestbook.deleteMessage(id),
+  },
+  friends: {
+    title: '友链管理',
+    emptyText: '还没有任何友链申请',
+    searchPlaceholder: '搜索站点名称或描述...',
+    fetchFn: (params: any) => {
+      const { status, keyword, ...rest } = params || {};
+      const apiParams: any = { ...rest, status: status || undefined, search: keyword };
+      return API.friends.getAdminFriends(apiParams);
+    },
+    deleteFn: (id: number) => API.friends.deleteFriend(id),
   },
 };
 
@@ -251,10 +275,12 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
     [type],
   );
 
-  const initialParams = useMemo(
-    () => (type === 'comments' && initialStatusFilter ? { status: initialStatusFilter } : {}),
-    [type, initialStatusFilter],
-  );
+  const initialParams = useMemo(() => {
+    if ((type === 'comments' || type === 'guestbook' || type === 'friends') && initialStatusFilter) {
+      return { status: initialStatusFilter };
+    }
+    return {};
+  }, [type, initialStatusFilter]);
 
   const { items, isLoading, hasMore, error, loadMore, reload, search, totalItems, filter } = useManagementPage({
     fetchFunction: fetchData,
@@ -264,8 +290,16 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
 
   const supportsCreate =
     type === 'notes' || type === 'articles' || type === 'users' || type === 'categories' || type === 'tags';
-  const enableFilters = type === 'comments' || type === 'projects' || type === 'notes' || type === 'articles';
-  const [isFilterOpen, setIsFilterOpen] = React.useState(type === 'comments' && !!initialStatusFilter);
+  const enableFilters =
+    type === 'comments' ||
+    type === 'projects' ||
+    type === 'notes' ||
+    type === 'articles' ||
+    type === 'guestbook' ||
+    type === 'friends';
+  const [isFilterOpen, setIsFilterOpen] = React.useState(
+    (type === 'comments' || type === 'guestbook' || type === 'friends') && !!initialStatusFilter,
+  );
 
   const filterOptions = useMemo(() => {
     if (type === 'comments')
@@ -291,6 +325,19 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
         { key: '0', label: '草稿' },
         { key: '1', label: '已发布' },
         { key: '2', label: '已归档' },
+      ];
+    if (type === 'guestbook')
+      return [
+        { key: 'approved', label: '已通过' },
+        { key: 'pending', label: '待审核' },
+        { key: 'spam', label: '垃圾/屏蔽' },
+      ];
+    if (type === 'friends')
+      return [
+        { key: 'pending', label: '待审核' },
+        { key: 'approved', label: '已通过' },
+        { key: 'rejected', label: '已拒绝' },
+        { key: 'blocked', label: '已屏蔽' },
       ];
     return [];
   }, [type]);
@@ -582,9 +629,20 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
       const statusMap: any = { 0: 'draft', 1: 'published', 2: 'archived' };
       const statusLabel: any = { 0: '草稿', 1: '已发布', 2: '已归档' };
       statusBadge = <StatusBadge status={statusMap[item.status]}>{statusLabel[item.status]}</StatusBadge>;
-    } else if (type === 'comments' && item.status) {
+    } else if ((type === 'comments' || type === 'guestbook' || type === 'friends') && item.status) {
       const statusLabel: any = { approved: '已通过', pending: '待审核', spam: '垃圾' };
-      statusBadge = <StatusBadge status={item.status}>{statusLabel[item.status]}</StatusBadge>;
+      const friendStatusLabel: any = {
+        pending: '待审核',
+        approved: '已通过',
+        rejected: '已拒绝',
+        blocked: '已屏蔽',
+      };
+
+      if (type === 'friends') {
+        statusBadge = <StatusBadge status={item.status}>{friendStatusLabel[item.status] || item.status}</StatusBadge>;
+      } else {
+        statusBadge = <StatusBadge status={item.status}>{statusLabel[item.status]}</StatusBadge>;
+      }
     }
 
     const tags = item.tags || [];
@@ -660,6 +718,155 @@ export const CommonPage: React.FC<CommonPageProps> = ({ type, initialStatusFilte
             )}
             {config.deleteFn && (
               <ActionButton data-variant="delete" onClick={() => handleDelete(item.id, '评论')} title="删除">
+                <FiTrash2 />
+              </ActionButton>
+            )}
+          </ItemActions>
+        </ItemCard>
+      );
+    }
+
+    if (type === 'guestbook') {
+      const message = item as GuestbookMessage;
+      const author =
+        (message.user && ((message.user as any).nickname || message.user.username)) || message.guestName || '访客';
+
+      const handleChangeStatus = async (newStatus: GuestbookMessage['status']) => {
+        try {
+          await API.guestbook.updateMessageStatus(message.id, newStatus || 'pending');
+          adnaan.toast.success('留言状态更新成功');
+          reload();
+        } catch (error: any) {
+          adnaan.toast.error(error.message || '更新留言状态失败');
+        }
+      };
+
+      const handleEditReply = async () => {
+        const current = message.replyContent || '';
+        const reply = window.prompt('编辑回复内容', current);
+        if (reply === null) return;
+        try {
+          await API.guestbook.updateMessageReply(message.id, reply);
+          adnaan.toast.success('回复已更新');
+          reload();
+        } catch (error: any) {
+          adnaan.toast.error(error.message || '更新回复失败');
+        }
+      };
+
+      return (
+        <ItemCard>
+          <ItemCover src={(message.user as any)?.avatar}>
+            {!(message.user as any)?.avatar && <FiMessageSquare />}
+          </ItemCover>
+          <ItemBody>
+            <ItemHeader>
+              <ItemTitle>{author}</ItemTitle>
+              {statusBadge}
+            </ItemHeader>
+            <ItemContent>{message.content}</ItemContent>
+            <ItemMeta>
+              <MetaItem>
+                <FiCalendar />
+                <span>{formatDate(message.createdAt)}</span>
+              </MetaItem>
+              {message.location && (
+                <MetaItem>
+                  <FiFolder />
+                  <span>{message.location}</span>
+                </MetaItem>
+              )}
+              {message.guestWebsite && (
+                <MetaItem>
+                  <FiFileText />
+                  <span>{message.guestWebsite}</span>
+                </MetaItem>
+              )}
+            </ItemMeta>
+          </ItemBody>
+          <ItemActions>
+            {message.status === 'pending' && (
+              <ActionButton onClick={() => handleChangeStatus('approved')} title="通过" style={{ color: '#22c55e' }}>
+                <FiCheck />
+              </ActionButton>
+            )}
+            {message.status !== 'spam' && (
+              <ActionButton onClick={() => handleChangeStatus('spam')} title="标记垃圾" style={{ color: '#ef4444' }}>
+                <FiAlertTriangle />
+              </ActionButton>
+            )}
+            <ActionButton onClick={handleEditReply} title="编辑回复">
+              <FiEdit3 />
+            </ActionButton>
+            {config.deleteFn && (
+              <ActionButton data-variant="delete" onClick={() => handleDelete(message.id, author)} title="删除">
+                <FiTrash2 />
+              </ActionButton>
+            )}
+          </ItemActions>
+        </ItemCard>
+      );
+    }
+
+    if (type === 'friends') {
+      const link = item as FriendLink;
+
+      const handleChangeStatus = async (newStatus: FriendLink['status']) => {
+        try {
+          await API.friends.updateFriendStatus(link.id, newStatus);
+          adnaan.toast.success('友链状态更新成功');
+          reload();
+        } catch (error: any) {
+          adnaan.toast.error(error.message || '更新友链状态失败');
+        }
+      };
+
+      return (
+        <ItemCard>
+          <ItemCover src={link.avatar}>{!link.avatar && <FiFileText />}</ItemCover>
+          <ItemBody>
+            <ItemHeader>
+              <ItemTitle>{link.name}</ItemTitle>
+              {statusBadge}
+            </ItemHeader>
+            <ItemContent>{link.description}</ItemContent>
+            <ItemMeta>
+              <MetaItem>
+                <FiCalendar />
+                <span>{formatDate(link.createdAt)}</span>
+              </MetaItem>
+              {link.url && (
+                <MetaItem>
+                  <FiFileText />
+                  <span>{link.url}</span>
+                </MetaItem>
+              )}
+              {link.clickCount !== undefined && (
+                <MetaItem>
+                  <FiEye />
+                  <span>{link.clickCount}</span>
+                </MetaItem>
+              )}
+            </ItemMeta>
+          </ItemBody>
+          <ItemActions>
+            {link.status === 'pending' && (
+              <>
+                <ActionButton onClick={() => handleChangeStatus('approved')} title="通过" style={{ color: '#22c55e' }}>
+                  <FiCheck />
+                </ActionButton>
+                <ActionButton onClick={() => handleChangeStatus('rejected')} title="拒绝" style={{ color: '#f97316' }}>
+                  <FiAlertTriangle />
+                </ActionButton>
+              </>
+            )}
+            {link.status !== 'blocked' && (
+              <ActionButton onClick={() => handleChangeStatus('blocked')} title="屏蔽" style={{ color: '#ef4444' }}>
+                <FiAlertTriangle />
+              </ActionButton>
+            )}
+            {config.deleteFn && (
+              <ActionButton data-variant="delete" onClick={() => handleDelete(link.id, link.name)} title="删除">
                 <FiTrash2 />
               </ActionButton>
             )}

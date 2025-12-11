@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { FiPlus, FiLink } from 'react-icons/fi';
@@ -6,8 +6,10 @@ import { Button } from 'adnaan-ui';
 import { PageHeader } from '@/components/common/page-header';
 import { FriendCard } from './components/friend-card';
 import { ApplyModal } from './components/apply-modal';
-import { MOCK_FRIENDS } from './data';
+import type { Friend } from './data';
 import { useAnimationEngine } from '@/utils/ui/animation';
+import { API } from '@/utils/api';
+import type { FriendLink } from '@/types';
 
 const PageContainer = styled(motion.div)`
   min-height: 100vh;
@@ -54,6 +56,9 @@ const EmptyState = styled.div`
 
 const Friends = () => {
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(0);
   const { variants } = useAnimationEngine();
 
   const containerVariants = {
@@ -66,13 +71,47 @@ const Friends = () => {
     },
   };
 
+  useEffect(() => {
+    const fetchFriends = async () => {
+      setLoading(true);
+      try {
+        const response = await API.friends.getFriends({ page: 1, limit: 100 });
+        const list: FriendLink[] = response.data || [];
+        const mapped: Friend[] = list.map((item) => ({
+          id: String(item.id),
+          name: item.name,
+          description: item.description || '',
+          avatar: item.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(item.name)}`,
+          url: item.url,
+          theme: item.themeColor || undefined,
+          tags: item.tags || [],
+        }));
+        setFriends(mapped);
+        const pagination = response.meta?.pagination;
+        if (pagination) {
+          setTotal(pagination.total);
+        } else {
+          setTotal(mapped.length);
+        }
+      } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error('加载友链失败:', error);
+        adnaan.toast.error(error.message || '加载友链失败');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFriends();
+  }, []);
+
   return (
     <PageContainer>
       <Container>
         <PageHeader
           title="拾音"
           subtitle="把同好的链接拾成散落的音符，以技术为谱、热爱为弦，在互联的时光里轻轻弹奏，让编程之路的孤独，都化作彼此呼应的细腻回响。"
-          count={MOCK_FRIENDS.length}
+          count={total || friends.length}
           countUnit="个伙伴"
         >
           <div style={{ marginTop: '1.5rem' }}>
@@ -82,9 +121,13 @@ const Friends = () => {
           </div>
         </PageHeader>
 
-        {MOCK_FRIENDS.length > 0 ? (
+        {loading ? (
+          <EmptyState>
+            <p>正在加载友链...</p>
+          </EmptyState>
+        ) : friends.length > 0 ? (
           <Grid variants={containerVariants} initial="hidden" animate="visible">
-            {MOCK_FRIENDS.map((friend, index) => (
+            {friends.map((friend, index) => (
               <FriendCard key={friend.id} friend={friend} index={index} />
             ))}
           </Grid>

@@ -118,6 +118,20 @@ export const useUserRole = (user: UserProfile | null) => {
             action: 'view-comments',
           },
           {
+            id: 'view-guestbook',
+            label: '留言管理',
+            icon: 'guestbook',
+            description: '管理留言板消息',
+            action: 'view-guestbook',
+          },
+          {
+            id: 'view-friends',
+            label: '友链管理',
+            icon: 'friends',
+            description: '管理友情链接',
+            action: 'view-friends',
+          },
+          {
             id: 'view-users',
             label: '用户管理',
             icon: 'users',

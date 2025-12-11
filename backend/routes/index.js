@@ -22,6 +22,9 @@ const postRoutes = require('./posts');
 // 💬 评论模块
 const commentRoutes = require('./comments');
 
+// 📝 留言板模块
+const guestbookRoutes = require('./guestbook');
+
 // 🏷️ 标签模块
 const tagRoutes = require('./tags');
 
@@ -33,6 +36,9 @@ const noteRoutes = require('./notes');
 
 // 🚀 项目模块
 const projectRoutes = require('./projects');
+
+// 🤝 友情链接模块
+const friendRoutes = require('./friends');
 
 // ==================== AI 模块 ====================
 
@@ -76,10 +82,12 @@ router.use('/users', userRoutes);
 // 内容模块
 router.use('/posts', postRoutes);
 router.use('/comments', commentRoutes);
+router.use('/guestbook', guestbookRoutes);
 router.use('/tags', tagRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/notes', noteRoutes);
 router.use('/projects', projectRoutes);
+router.use('/friends', friendRoutes);
 
 // AI模块
 router.use('/ai', aiRoutes);

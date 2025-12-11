@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { Modal, Input, Button, Textarea } from 'adnaan-ui';
+import { API } from '@/utils/api';
+import type { FriendLinkApplyData } from '@/types';
 
 const Form = styled.form`
   display: flex;
@@ -24,23 +26,45 @@ const Label = styled.label`
 interface ApplyModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export const ApplyModal: React.FC<ApplyModalProps> = ({ isOpen, onClose }) => {
-  const [formData, setFormData] = useState({
+export const ApplyModal: React.FC<ApplyModalProps> = ({ isOpen, onClose, onSuccess }) => {
+  const [formData, setFormData] = useState<FriendLinkApplyData>({
     name: '',
     url: '',
     description: '',
     avatar: '',
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would send data to backend
-    // For now, we just simulate success
-    const mailBody = `Name: ${formData.name}%0D%0AURL: ${formData.url}%0D%0ADescription: ${formData.description}%0D%0AAvatar: ${formData.avatar}`;
-    window.open(`mailto:your-email@example.com?subject=Friend Link Application&body=${mailBody}`);
-    onClose();
+
+    if (!formData.name.trim() || !formData.url.trim()) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await API.friends.applyFriend({
+        name: formData.name.trim(),
+        url: formData.url.trim(),
+        description: formData.description?.trim(),
+        avatar: formData.avatar?.trim(),
+      });
+
+      adnaan.toast.success('友链申请已提交，审核通过后会展示');
+      setFormData({ name: '', url: '', description: '', avatar: '' });
+      onClose();
+      onSuccess?.();
+    } catch (error: any) {
+      // eslint-disable-next-line no-console
+      console.error('提交友链申请失败:', error);
+      adnaan.toast.error(error.message || '提交友链申请失败');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -95,7 +119,7 @@ export const ApplyModal: React.FC<ApplyModalProps> = ({ isOpen, onClose }) => {
           <Button onClick={onClose} variant="secondary">
             取消
           </Button>
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" isLoading={submitting} disabled={submitting}>
             发送申请
           </Button>
         </div>
