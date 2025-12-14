@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiGithub, FiMail, FiRss, FiHeart } from 'react-icons/fi';
+import { FiGithub, FiMail, FiRss } from 'react-icons/fi';
 import React, { useState, useRef, useEffect } from 'react';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import { useOnlineUsers } from '@/hooks/useSocket';
@@ -9,361 +9,256 @@ import { useSiteSettings } from './index';
 import VisitorStatsTooltip from '@/components/common/visitor-stats-tooltip';
 import { useClickOutside } from '@/hooks';
 
-// 使用motion组件增强动画效果
-const MotionFooter = motion.footer;
+// === 样式组件 ===
 
-const FooterContainer = styled(MotionFooter)`
+const FooterContainer = styled.footer`
   width: 100%;
-  padding: 3rem 0 1.5rem;
-  background: transparent;
-  margin-top: 3rem;
-  position: relative;
+  /* Light mode: Subtle semi-transparent secondary background */
+  background-color: rgba(var(--bg-secondary-rgb), 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-color);
-  z-index: 4;
+  margin-top: 6rem;
+  font-family: var(--font-sans);
+  position: relative;
+  z-index: 10;
+
+  /* Dark mode: More transparent to show galaxy background */
+  [data-theme='dark'] & {
+    background-color: rgba(var(--bg-secondary-rgb), 0.3);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
 `;
 
 const FooterContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 4rem 2rem 2rem;
+
+  @media (max-width: 768px) {
+    padding: 3rem 1.5rem 1.5rem;
+  }
 `;
 
-const FooterTop = styled.div`
+// === 上半部分：网格布局 ===
+const TopSection = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 4rem;
+  padding-bottom: 3rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 3rem;
+  }
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 2.5rem;
   }
 `;
 
-const FooterLeft = styled.div`
+// 品牌区域
+const BrandColumn = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
+
+  @media (max-width: 1024px) {
+    grid-column: 1 / -1;
+    max-width: 100%;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 2rem;
+    margin-bottom: 1rem;
+  }
 `;
 
-// 使用自定义组件包装
-const MotionLinkContainer = styled(motion.div)`
-  display: inline-block;
+const LogoLink = styled(Link)`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+
+  &:hover {
+    color: var(--accent-color);
+  }
 `;
 
-const StyledLink = styled(Link)`
+const Slogan = styled.p`
   font-size: 0.9rem;
+  line-height: 1.6;
   color: var(--text-secondary);
+  max-width: 320px;
+  margin: 0;
+`;
+
+const SocialIcons = styled.div`
+  display: flex;
+  gap: 1rem;
+`;
+
+const SocialIcon = styled.a`
+  color: var(--text-tertiary);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  width: fit-content;
+  justify-content: center;
 
   &:hover {
-    color: var(--accent-color);
-    transform: translateX(3px);
-  }
-
-  &::before {
-    content: '';
-    width: 4px;
-    height: 4px;
-    background-color: var(--accent-color);
-    opacity: 0.6;
-    border-radius: 50%;
+    color: var(--text-primary);
+    transform: translateY(-1px);
   }
 `;
 
-// 自定义Logo组件
-const LogoContainer = styled(motion.div)`
-  display: inline-block;
+// 链接列
+const LinkColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 `;
 
-const StyledLogo = styled(Link)`
-  font-size: 1.4rem;
-  font-weight: 700;
+const ColumnTitle = styled.h3`
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--text-primary);
-
-  &:hover {
-    color: var(--accent-color);
-  }
+  margin: 0;
 `;
 
-// 新的FooterLink组件
-interface FooterLinkProps {
-  to: string;
-  children: React.ReactNode;
-  variants?: any;
-}
-
-const FooterLink: React.FC<FooterLinkProps> = ({ to, children, variants, ...props }) => (
-  <MotionLinkContainer variants={variants} {...props}>
-    <StyledLink to={to}>{children}</StyledLink>
-  </MotionLinkContainer>
-);
-
-// 新的FooterLogo组件
-interface FooterLogoProps {
-  to: string;
-  children: React.ReactNode;
-  variants?: any;
-}
-
-const FooterLogo: React.FC<FooterLogoProps> = ({ to, children, variants, ...props }) => (
-  <LogoContainer variants={variants} {...props}>
-    <StyledLogo to={to}>{children}</StyledLogo>
-  </LogoContainer>
-);
-
-const FooterDescription = styled(motion.p)`
-  font-size: 0.95rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  max-width: 420px;
-`;
-
-const FooterRight = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-`;
-
-const FooterLinks = styled.div`
+const LinkList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 `;
 
-const FooterLinkTitle = styled(motion.h4)`
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  position: relative;
-
-  &:after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -0.25rem;
-    width: 24px;
-    height: 2px;
-    background: var(--accent-color);
-    border-radius: 4px;
-  }
-`;
-
-const FooterExternalLink = styled(motion.a)`
-  font-size: 0.9rem;
+const FooterLink = styled(Link)`
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  transition: color 0.2s ease;
   width: fit-content;
 
   &:hover {
     color: var(--accent-color);
-    transform: translateX(3px);
-  }
-
-  &::before {
-    content: '';
-    width: 4px;
-    height: 4px;
-    background-color: var(--accent-color);
-    opacity: 0.6;
-    border-radius: 50%;
   }
 `;
 
-const SocialLinks = styled.div`
-  display: flex;
-  gap: 0.8rem;
-  margin-top: 0.5rem;
-`;
-
-const SocialLink = styled(motion.a)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--bg-secondary);
+const ExternalFooterLink = styled.a`
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
+  width: fit-content;
 
   &:hover {
     color: var(--accent-color);
-    background-color: rgba(81, 131, 245, 0.1);
-    transform: translateY(-2px);
   }
 `;
 
-const FooterBottom = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 1.5rem;
+// === 下半部分：底部栏 ===
+const BottomBar = styled.div`
   border-top: 1px solid var(--border-color);
+  padding-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem; /* 13px */
+  color: var(--text-tertiary);
 
   @media (max-width: 768px) {
-    flex-direction: column;
+    flex-direction: column-reverse;
+    gap: 1.5rem;
     align-items: flex-start;
-    gap: 1rem;
   }
 `;
 
-const Copyright = styled.div`
+const CopyrightInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  a {
+    color: var(--text-tertiary);
+    &:hover {
+      color: var(--text-secondary);
+    }
+  }
+`;
+
+const StatusInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
+  }
+`;
+
+const OnlineStatus = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-
-  a {
-    color: var(--text-secondary);
-    transition: color 0.2s ease;
-    &:hover {
-      color: var(--accent-color);
-    }
-  }
-`;
-
-const PoweredBy = styled.div`
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
-  flex-wrap: wrap;
-
-  a {
-    color: var(--text-secondary);
-    transition: color 0.2s ease;
-    border-bottom: 1px dashed transparent;
-
-    &:hover {
-      color: var(--accent-color);
-      border-bottom-color: var(--accent-color);
-    }
-  }
-
-  .divider {
-    color: var(--border-color);
-    margin: 0 0.2rem;
-  }
-`;
-
-const OnlineUsers = styled(motion.div)`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
-  background: rgba(var(--accent-rgb), 0.04);
-  border: 1px solid rgba(var(--accent-rgb), 0.08);
-  border-radius: 14px;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  user-select: none;
-  height: 28px;
-  white-space: nowrap;
+  transition: color 0.2s;
 
   &:hover {
-    background: rgba(var(--accent-rgb), 0.08);
-    border-color: rgba(var(--accent-rgb), 0.2);
-    color: var(--text-primary);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px -2px rgba(var(--accent-rgb), 0.12);
+    color: var(--text-secondary);
   }
 
-  .pulse-dot {
-    position: relative;
+  .dot {
     width: 6px;
     height: 6px;
-    background: #10b981;
     border-radius: 50%;
+    background-color: #10b981;
+    position: relative;
 
     &::after {
       content: '';
       position: absolute;
-      top: -3px;
-      left: -3px;
-      right: -3px;
-      bottom: -3px;
+      inset: -2px;
       border-radius: 50%;
-      background: #10b981;
+      border: 1px solid #10b981;
       opacity: 0.4;
-      animation: ripple 1.5s infinite cubic-bezier(0, 0, 0.2, 1);
-      z-index: -1;
-    }
-  }
-
-  @keyframes ripple {
-    0% {
-      transform: scale(0.8);
-      opacity: 0.5;
-    }
-    100% {
-      transform: scale(2.4);
-      opacity: 0;
-    }
-  }
-
-  .count {
-    font-weight: 600;
-    color: var(--accent-color);
-    font-family: var(--font-mono);
-    margin: 0 2px;
-  }
-
-  .full-text {
-    display: inline;
-  }
-
-  .short-text {
-    display: none;
-  }
-
-  @media (max-width: 768px) {
-    padding: 4px 10px;
-
-    .full-text {
-      display: none;
-    }
-    .short-text {
-      display: inline;
     }
   }
 `;
 
+// 数字时钟
+const DigitalClock = () => {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <span style={{ fontFamily: 'var(--font-mono)' }}>
+      {time.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit' })}
+      <span style={{ marginLeft: '0.5rem', opacity: 0.8 }}>
+        {time.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short' })}
+      </span>
+    </span>
+  );
+};
+
 const Footer = () => {
-  // 使用动画引擎
-  const { variants, springPresets } = useAnimationEngine();
-
-  // 使用在线人数Hook
+  const { variants } = useAnimationEngine();
   const { onlineCount } = useOnlineUsers();
-
-  // 使用网站设置Hook - 增加加载状态检查
   const { siteSettings, loading } = useSiteSettings();
 
-  // 访客统计 Tooltip 状态
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const onlineUsersRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  // 使用增强版 useClickOutside，排除触发器和 tooltip 本身
   useClickOutside(tooltipRef, () => setIsTooltipVisible(false), {
     enabled: isTooltipVisible,
     excludeRefs: onlineUsersRef,
@@ -372,189 +267,111 @@ const Footer = () => {
     delay: 100,
   });
 
-  // 如果还在加载中，返回 null 或显示加载占位符
-  if (loading) {
-    return null;
-  }
-
-  // 动画变量 - 使用动画引擎的配置
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-        ...springPresets.gentle,
-      },
-    },
-  };
-
-  const itemVariants = variants.fadeIn;
+  if (loading) return null;
 
   return (
-    <>
-      <FooterContainer
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.1 }}
-        variants={containerVariants}
-      >
-        <FooterContent>
-          <FooterTop>
-            <FooterLeft>
-              <motion.div variants={itemVariants}>
-                <FooterLogo to="/">Turn of The Page</FooterLogo>
-              </motion.div>
+    <FooterContainer>
+      <FooterContent>
+        <TopSection>
+          {/* 品牌栏 */}
+          <BrandColumn>
+            <LogoLink to="/">Turn of The Page</LogoLink>
+            <Slogan>
+              用代码丈量世界，以文字记录流年。
+              <br />
+              保持热爱，奔赴山海。
+            </Slogan>
+            <SocialIcons>
+              <SocialIcon href={siteSettings?.socialLinks?.github} target="_blank" title="GitHub">
+                <FiGithub size={18} />
+              </SocialIcon>
+              <SocialIcon href={`mailto:${siteSettings?.socialLinks?.email}`} title="Email">
+                <FiMail size={18} />
+              </SocialIcon>
+              <SocialIcon href="/rss.xml" title="RSS">
+                <FiRss size={18} />
+              </SocialIcon>
+            </SocialIcons>
+          </BrandColumn>
 
-              <motion.div variants={itemVariants}>
-                <FooterDescription>
-                  "分享编程知识、设计理念与生活感悟。一个记录思考与成长的空间，希望能为你带来一些启发和帮助。"
-                </FooterDescription>
-              </motion.div>
+          {/* 链接栏 1 */}
+          <LinkColumn>
+            <ColumnTitle>发现</ColumnTitle>
+            <LinkList>
+              <FooterLink to="/blog">博客文章</FooterLink>
+              <FooterLink to="/notes">生活手记</FooterLink>
+              <FooterLink to="/projects">我的项目</FooterLink>
+            </LinkList>
+          </LinkColumn>
 
-              <SocialLinks>
-                <SocialLink
-                  href={siteSettings?.socialLinks?.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variants={itemVariants}
-                  whileHover={{ y: -2, scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label="GitHub"
-                >
-                  <FiGithub size={18} />
-                </SocialLink>
-                <SocialLink
-                  href={`mailto:${siteSettings?.socialLinks?.email}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variants={itemVariants}
-                  whileHover={{ y: -2, scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label="Email"
-                >
-                  <FiMail size={18} />
-                </SocialLink>
-                <SocialLink
-                  href="/rss.xml"
-                  variants={itemVariants}
-                  whileHover={{ y: -2, scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  aria-label="RSS Feed"
-                >
-                  <FiRss size={18} />
-                </SocialLink>
-              </SocialLinks>
-            </FooterLeft>
+          {/* 链接栏 2 */}
+          <LinkColumn>
+            <ColumnTitle>关于</ColumnTitle>
+            <LinkList>
+              <FooterLink to="/about-me">关于我</FooterLink>
+              <FooterLink to="/about-site">关于本站</FooterLink>
+              <FooterLink to="/friends">友情链接</FooterLink>
+            </LinkList>
+          </LinkColumn>
 
-            <FooterRight>
-              <FooterLinks>
-                <motion.div variants={itemVariants}>
-                  <FooterLinkTitle>导航</FooterLinkTitle>
-                </motion.div>
-                <FooterLink to="/" variants={itemVariants}>
-                  首页
-                </FooterLink>
-                <FooterLink to="/blog" variants={itemVariants}>
-                  博客
-                </FooterLink>
-                <FooterLink to="/notes" variants={itemVariants}>
-                  手记
-                </FooterLink>
-                <FooterLink to="/projects" variants={itemVariants}>
-                  项目
-                </FooterLink>
-                <FooterLink to="/profile" variants={itemVariants}>
-                  个人中心
-                </FooterLink>
-              </FooterLinks>
+          {/* 链接栏 3 */}
+          <LinkColumn>
+            <ColumnTitle>更多</ColumnTitle>
+            <LinkList>
+              <FooterLink to="/guestbook">留言板</FooterLink>
+              <ExternalFooterLink href="/sitemap.xml" target="_blank">
+                网站地图
+              </ExternalFooterLink>
+              <ExternalFooterLink href="/rss.xml" target="_blank">
+                RSS 订阅
+              </ExternalFooterLink>
+            </LinkList>
+          </LinkColumn>
+        </TopSection>
 
-              <FooterLinks>
-                <motion.div variants={itemVariants}>
-                  <FooterLinkTitle>关于</FooterLinkTitle>
-                </motion.div>
-                <FooterLink to="/about-me" variants={itemVariants}>
-                  关于我
-                </FooterLink>
-                <FooterLink to="/about-site" variants={itemVariants}>
-                  关于本站
-                </FooterLink>
-                <FooterLink to="/friends" variants={itemVariants}>
-                  友情链接
-                </FooterLink>
-                <FooterExternalLink href="/sitemap.xml" target="_blank" variants={itemVariants}>
-                  网站地图
-                </FooterExternalLink>
-                <FooterExternalLink href="/rss.xml" target="_blank" variants={itemVariants}>
-                  RSS订阅
-                </FooterExternalLink>
-              </FooterLinks>
-            </FooterRight>
-          </FooterTop>
-
-          <FooterBottom>
-            <Copyright>
-              <span>© {new Date().getFullYear()}</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                Design by {siteSettings?.authorName || 'adnaan'}.
-                <FiHeart style={{ color: 'var(--error-color)' }} size={12} />
-              </span>
-            </Copyright>
-            <PoweredBy>
-              {/* 在线人数显示 - 响应式文案 */}
-              {onlineCount > 0 && (
-                <>
-                  <div style={{ position: 'relative', display: 'inline-block' }}>
-                    <OnlineUsers
-                      ref={onlineUsersRef}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.3 }}
-                      title={`当前有 ${onlineCount} 位访客在线`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsTooltipVisible((prev) => !prev);
-                      }}
-                    >
-                      <span className="pulse-dot" />
-                      {/* 桌面端：完整文案 */}
-                      <span className="full-text">
-                        正在与 <span className="count">{onlineCount}</span> 位同路人共赏此刻
-                      </span>
-                      {/* 移动端：简短文案 */}
-                      <span className="short-text">
-                        与 <span className="count">{onlineCount}</span> 人同行
-                      </span>
-                    </OnlineUsers>
-
-                    {/* 访客统计 Tooltip - 相对定位 */}
-                    <div ref={tooltipRef}>
-                      <VisitorStatsTooltip
-                        isVisible={isTooltipVisible}
-                        targetRef={onlineUsersRef}
-                        onlineCount={onlineCount}
-                      />
-                    </div>
-                  </div>
-                  <span className="divider"></span>
-                </>
-              )}
+        <BottomBar>
+          <CopyrightInfo>
+            <div className="row">
               <span>
-                由{' '}
-                <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-                  React
-                </a>{' '}
-                强力驱动
+                &copy; {new Date().getFullYear()} {siteSettings?.authorName || 'Adnaan'}. All rights reserved.
               </span>
-              <span className="divider">|</span>
+            </div>
+            <div className="row">
               <a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer">
                 陇ICP备2025016896号
               </a>
-            </PoweredBy>
-          </FooterBottom>
-        </FooterContent>
-      </FooterContainer>
-    </>
+              <span>·</span>
+              <span>Designed with code & love</span>
+            </div>
+          </CopyrightInfo>
+
+          <StatusInfo>
+            <DigitalClock />
+
+            <div style={{ position: 'relative' }}>
+              <OnlineStatus
+                ref={onlineUsersRef}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsTooltipVisible((prev) => !prev);
+                }}
+              >
+                <div className="dot" />
+                <span>{onlineCount} 在线</span>
+              </OnlineStatus>
+
+              <div ref={tooltipRef}>
+                <VisitorStatsTooltip
+                  isVisible={isTooltipVisible}
+                  targetRef={onlineUsersRef}
+                  onlineCount={onlineCount}
+                />
+              </div>
+            </div>
+          </StatusInfo>
+        </BottomBar>
+      </FooterContent>
+    </FooterContainer>
   );
 };
 

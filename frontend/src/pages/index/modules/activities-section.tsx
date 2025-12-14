@@ -32,19 +32,10 @@ import type { UserActivity } from '@/types';
 // Styled Components
 const ContentSection = styled(motion.section)`
   margin-bottom: 2.5rem;
-  overflow-x: hidden; /* 防止横向滚动条 */
+  overflow-x: hidden;
   -ms-overflow-style: none;
   scrollbar-width: none;
   &::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
-  }
-  & * {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  & *::-webkit-scrollbar {
     width: 0;
     height: 0;
     display: none;
@@ -81,13 +72,39 @@ const ScrollWrapper = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
+  padding-bottom: 2rem; /* 防止底部被遮挡 */
+`;
+
+const ActivityItem = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.75rem 0; /* 增加一点内边距 */
+  position: relative;
+  cursor: pointer;
+  z-index: 1;
+  border-radius: 8px;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.2s ease;
+
+  /* 悬停时的背景高亮 */
+  &:hover {
+    background-color: rgba(var(--accent-rgb), 0.03);
+    z-index: 10; /* 提升层级 */
+  }
+
+  @media (max-width: 768px) {
+    padding-left: 0.5rem;
+  }
 `;
 
 const ActivityGrid = styled(motion.div)`
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 0 0 0 10px; /* 左侧留出时间线空间 */
+  padding: 0 0 0 10px;
   position: relative;
   min-height: 100%;
 
@@ -95,7 +112,7 @@ const ActivityGrid = styled(motion.div)`
   &::before {
     content: '';
     position: absolute;
-    left: 21px; /* 对齐图标中心 */
+    left: 21px;
     top: 1.5rem;
     bottom: 1rem;
     width: 1px;
@@ -108,22 +125,30 @@ const ActivityGrid = styled(motion.div)`
     z-index: 0;
   }
 
-  @media (max-width: 768px) {
-    padding: 0; /* 移动端去除额外内边距 */
+  /* 聚焦模式：当 Grid 被 hover 时，所有 Item 变暗 */
+  &:hover ${ActivityItem} {
+    opacity: 0.4;
+    filter: blur(0.5px); /* 增加模糊感，强化景深 */
   }
-`;
 
-const ActivityItem = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.6rem 0; /* 更紧凑 */
-  position: relative;
-  cursor: pointer;
-  z-index: 1;
+  /* 排除被 hover 的 Item，使其高亮 */
+  &:hover ${ActivityItem}:hover {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1.02) translateX(4px); /* 轻微放大并右移 */
+  }
 
   @media (max-width: 768px) {
-    padding-left: 0.5rem; /* 移动端整体左移一点 */
+    padding: 0;
+
+    /* 移动端取消 hover 效果，防止触摸时的闪烁 */
+    &:hover ${ActivityItem} {
+      opacity: 1;
+      filter: none;
+    }
+    &:hover ${ActivityItem}:hover {
+      transform: none;
+    }
   }
 `;
 
@@ -131,16 +156,26 @@ const ActivityHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-wrap: nowrap; /* 不换行，保持单行 */
+  flex-wrap: nowrap;
 
   @media (max-width: 768px) {
     gap: 0.5rem;
-    flex-wrap: wrap; /* 移动端允许换行 */
+    flex-wrap: wrap;
   }
 `;
 
+// 定义脉冲动画
+const pulse = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(var(--accent-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0); }
+`;
+
+// 需要引入 keyframes
+import { keyframes } from '@emotion/react';
+
 const ActivityIcon = styled.div<{ color?: string }>`
-  width: 22px; /* 稍微调小 */
+  width: 22px;
   height: 22px;
   border-radius: 50%;
   border: 1.5px solid ${({ color }) => color || 'var(--accent-color)'};
@@ -148,23 +183,20 @@ const ActivityIcon = styled.div<{ color?: string }>`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: var(--bg-primary); /* 遮挡时间线 */
-  box-shadow: 0 0 0 3px var(--bg-primary); /* 外圈间隙 */
+  background: var(--bg-primary);
+  box-shadow: 0 0 0 3px var(--bg-primary);
   color: ${({ color }) => color || 'var(--accent-color)'};
   font-size: 0.7rem;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   z-index: 2;
 
+  /* 悬停时的图标动画 */
   ${ActivityItem}:hover & {
-    transform: scale(1.15);
-    box-shadow:
-      0 0 0 3px var(--bg-primary),
-      0 0 10px
-        ${({ color }) =>
-          color
-            ? `rgba(${color.startsWith('#') ? parseInt(color.slice(1, 3), 16) + ',' + parseInt(color.slice(3, 5), 16) + ',' + parseInt(color.slice(5, 7), 16) : 'var(--accent-rgb)'}, 0.2)`
-            : 'rgba(var(--accent-rgb), 0.2)'};
+    transform: scale(1.2);
+    border-color: ${({ color }) => color || 'var(--accent-color)'};
+    background-color: var(--bg-primary);
+    animation: ${pulse} 1.5s infinite; /* 添加脉冲动画 */
   }
 `;
 

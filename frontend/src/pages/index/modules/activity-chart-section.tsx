@@ -168,16 +168,37 @@ const rhythmVariants = {
     opacity: 1,
     transition: {
       duration: 1.2,
-      delay: custom.index * 0.01, // 紧凑的交错延迟，形成波浪
+      delay: custom.index * 0.008, // 更紧凑的延迟
       times: [0, 0.4, 0.7, 1],
-      ease: [0.22, 1, 0.36, 1] as [number, number, number, number], // Custom cubic-bezier for nice bounce
+      ease: [0.22, 1, 0.36, 1],
     },
   }),
   hover: (custom: { height: number }) => ({
-    height: Math.min(custom.height * 1.2 + 5, 140),
-    transition: { duration: 0.2, ease: 'easeOut' as const },
+    height: Math.min(custom.height * 1.4 + 10, 140),
+    scaleY: 1.1,
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 10,
+    },
   }),
+  tap: {
+    scaleY: 0.9,
+  },
 };
+
+// 扫描线组件
+const ScanLine = styled(motion.div)`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, var(--accent-color), transparent);
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.5;
+  box-shadow: 0 0 8px var(--accent-color);
+`;
 
 // 主组件
 export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ chartData }) => {
@@ -295,6 +316,18 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
       <ChartContainer>
         {/* 添加倒影效果 -webkit-box-reflect 是最简单高性能的方式 */}
         <Chart style={{ WebkitBoxReflect: 'below 2px linear-gradient(transparent, rgba(0,0,0,0.2))' } as any}>
+          {/* 扫描线动画 */}
+          <ScanLine
+            initial={{ left: '0%' }}
+            animate={{ left: '100%' }}
+            transition={{
+              repeat: Infinity,
+              duration: 8,
+              ease: 'linear',
+              repeatDelay: 2,
+            }}
+          />
+
           {completeMonthGroups.map((group, groupIndex) => (
             <MonthGroup key={`${group.month}-${groupIndex}`}>
               {group.days.map((item, dayIndex) => {
@@ -310,6 +343,7 @@ export const ActivityChartSection: React.FC<ActivityChartSectionProps> = ({ char
                     height={item.heightPx} // 用于 styled-component 的 prop
                     title={`${item.displayDate}: ${item.count} 次贡献`}
                     whileHover="hover"
+                    whileTap="tap"
                   />
                 );
               })}

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import styled from '@emotion/styled';
-import { motion, Variants } from 'framer-motion';
+import { motion, Variants, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiArrowRight, FiStar, FiGithub, FiCode, FiCalendar, FiFolderPlus, FiExternalLink } from 'react-icons/fi';
 import { SiGitee } from 'react-icons/si';
@@ -465,6 +465,30 @@ const GeometryGridContainer = styled.div`
   }
 `;
 
+const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+  min-height: 420px;
+
+  svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+  }
+
+  p {
+    font-size: 0.9rem;
+    margin: 0;
+    opacity: 0.7;
+  }
+`;
+
 // 几何块标题（悬停显示）- 需要在 GeometryBlock 之前声明
 const GeometryBlockTitle = styled.div`
   position: absolute;
@@ -493,6 +517,19 @@ const GeometryBlockTitle = styled.div`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
+const GeometryBlockContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--accent-color);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+`;
+
 // 几何块 - 不规则尺寸
 const GeometryBlock = styled(motion.div)<{
   isActive: boolean;
@@ -506,16 +543,26 @@ const GeometryBlock = styled(motion.div)<{
   top: calc(${(props) => props.y}% + 4px);
   width: calc(${(props) => props.width}% - 8px);
   height: calc(${(props) => props.height}% - 8px);
+
+  /* 默认（亮色模式） */
   background: ${(props) => (props.isActive ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--accent-rgb), 0.06)')};
+  border: 1px solid ${(props) => (props.isActive ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.15)')};
+
+  /* 暗黑模式适配 */
+  [data-theme='dark'] & {
+    background: ${(props) => (props.isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(255, 255, 255, 0.03)')};
+    border-color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'rgba(255, 255, 255, 0.1)')};
+  }
+
   border-radius: 8px;
-  border: 2px solid ${(props) => (props.isActive ? 'var(--accent-color)' : 'transparent')};
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition:
     background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
   /* 扁平化装饰 */
@@ -533,8 +580,15 @@ const GeometryBlock = styled(motion.div)<{
 
   &:hover {
     background: rgba(var(--accent-rgb), 0.12);
-    border-color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.4)')};
+    border-color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.5)')};
+    box-shadow: 0 10px 30px -10px rgba(var(--accent-rgb), 0.3);
     z-index: 10;
+
+    /* 暗黑模式 hover */
+    [data-theme='dark'] & {
+      background: rgba(var(--accent-rgb), 0.25);
+      border-color: ${(props) => (props.isActive ? 'var(--accent-color)' : 'rgba(var(--accent-rgb), 0.6)')};
+    }
 
     &::before {
       opacity: 1;
@@ -552,42 +606,34 @@ const GeometryBlock = styled(motion.div)<{
   }
 `;
 
-const GeometryBlockContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  color: var(--accent-color);
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-`;
-
-const EmptyState = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 1rem;
-  text-align: center;
-  color: var(--text-secondary);
-  min-height: 420px;
-
-  svg {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 1rem;
-    opacity: 0.4;
-  }
-
-  p {
-    font-size: 0.9rem;
-    margin: 0;
-    opacity: 0.7;
-  }
-`;
+// 定义呼吸动画
+const breathingVariants: Variants = {
+  idle: {
+    scale: 1,
+    opacity: 1,
+    transition: {
+      duration: 3,
+      repeat: Infinity,
+      repeatType: 'reverse' as const,
+      ease: 'easeInOut',
+    },
+  },
+  hover: {
+    scale: 1.05,
+    opacity: 1,
+    zIndex: 10,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 15,
+    },
+  },
+  active: {
+    scale: 1.02,
+    opacity: 1,
+    zIndex: 5,
+  },
+};
 
 // 生成几何布局
 const generateGeometryLayout = (count: number) => {
@@ -644,7 +690,6 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
   // 使用动画引擎 - Spring 系统
   const { variants, springPresets } = useAnimationEngine();
   const linkInteractions = useSpringInteractions({ hoverScale: 1.05, tapScale: 0.95 });
-  const blockInteractions = useSpringInteractions({ hoverScale: 1.02, tapScale: 0.98 });
 
   // 使用智能视口检测 - 优化初始加载和刷新时的动画
   const containerView = useSmartInView({ amount: 0.2, lcpOptimization: true });
@@ -683,149 +728,160 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
       <ProjectsGrid>
         {/* 左侧：选中项目的详细信息 */}
         <ProjectMainCard>
-          {projects.length === 0 ? (
-            <EmptyState>
-              <FiFolderPlus />
-              <p>暂无精选项目</p>
-            </EmptyState>
-          ) : projects[selectedProjectIndex] ? (
-            <ProjectDetailContainer
-              key={projects[selectedProjectIndex].id}
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={springPresets.bouncy}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
-              onDragEnd={(e, { offset, velocity }) => {
-                const swipe = Math.abs(offset.x) * velocity.x;
-                if (swipe < -500) {
-                  handleNextProject();
-                } else if (swipe > 500) {
-                  handlePrevProject();
-                }
-              }}
-            >
-              {/* 项目基本信息 */}
-              <ProjectInfo>
-                <ProjectHeader>
-                  <ProjectIcon size="large">
-                    {getLanguageIcon(projects[selectedProjectIndex].language).icon === 'code' ? (
-                      <FiCode size={28} />
-                    ) : (
-                      <Icon
-                        name={getLanguageIcon(projects[selectedProjectIndex].language).icon}
-                        size={28}
-                        color={getLanguageIcon(projects[selectedProjectIndex].language).color}
+          <AnimatePresence mode="wait">
+            {projects.length === 0 ? (
+              <EmptyState key="empty">
+                <FiFolderPlus />
+                <p>暂无精选项目</p>
+              </EmptyState>
+            ) : projects[selectedProjectIndex] ? (
+              <ProjectDetailContainer
+                key={projects[selectedProjectIndex].id}
+                initial={{ opacity: 0, x: 20, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+                transition={{
+                  duration: 0.4,
+                  ease: [0.4, 0, 0.2, 1],
+                }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(e, { offset, velocity }) => {
+                  const swipe = Math.abs(offset.x) * velocity.x;
+                  if (swipe < -500) {
+                    handleNextProject();
+                  } else if (swipe > 500) {
+                    handlePrevProject();
+                  }
+                }}
+              >
+                {/* 项目基本信息 */}
+                <ProjectInfo>
+                  <ProjectHeader>
+                    <ProjectIcon size="large">
+                      {getLanguageIcon(projects[selectedProjectIndex].language).icon === 'code' ? (
+                        <FiCode size={28} />
+                      ) : (
+                        <Icon
+                          name={getLanguageIcon(projects[selectedProjectIndex].language).icon}
+                          size={28}
+                          color={getLanguageIcon(projects[selectedProjectIndex].language).color}
+                        />
+                      )}
+                    </ProjectIcon>
+                    <ProjectTitleWrapper>
+                      <ProjectTitle>{projects[selectedProjectIndex].title}</ProjectTitle>
+                      <ProjectDescription>{projects[selectedProjectIndex].description}</ProjectDescription>
+                    </ProjectTitleWrapper>
+                    <ViewDetailLink to={`/projects/${projects[selectedProjectIndex].slug}`}>
+                      查看详情
+                      <FiArrowRight size={12} />
+                    </ViewDetailLink>
+                  </ProjectHeader>
+                </ProjectInfo>
+
+                {/* 项目数据和雷达图 */}
+                <ProjectDataSection>
+                  {/* 左侧：项目数据 */}
+                  <DataCard>
+                    <DataItem>
+                      <DataLabel>
+                        <FiStar size={16} />
+                        Stars
+                      </DataLabel>
+                      <DataValue>{projects[selectedProjectIndex].stars || 0}</DataValue>
+                    </DataItem>
+                    <DataItem>
+                      <DataLabel>
+                        <FiGithub size={16} />
+                        Forks
+                      </DataLabel>
+                      <DataValue>{projects[selectedProjectIndex].forks || 0}</DataValue>
+                    </DataItem>
+                    <DataItem>
+                      <DataLabel>
+                        <FiCode size={16} />
+                        语言
+                      </DataLabel>
+                      <DataValue>
+                        <LanguageTag color={getLanguageIcon(projects[selectedProjectIndex].language).color}>
+                          {projects[selectedProjectIndex].language || 'N/A'}
+                        </LanguageTag>
+                      </DataValue>
+                    </DataItem>
+                    <DataItem>
+                      <DataLabel>
+                        <FiCalendar size={16} />
+                        更新时间
+                      </DataLabel>
+                      <DataValue>
+                        {projects[selectedProjectIndex].updatedAt
+                          ? formatDate(projects[selectedProjectIndex].updatedAt, 'YYYY-MM-DD')
+                          : '最近'}
+                      </DataValue>
+                    </DataItem>
+
+                    {/* 项目链接 */}
+                    <ProjectLinks>
+                      {projects[selectedProjectIndex].githubUrl && (
+                        <ProjectLink
+                          href={projects[selectedProjectIndex].githubUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          {...linkInteractions}
+                        >
+                          <FiGithub />
+                          GitHub
+                        </ProjectLink>
+                      )}
+                      {projects[selectedProjectIndex].giteeUrl && (
+                        <ProjectLink
+                          href={projects[selectedProjectIndex].giteeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          {...linkInteractions}
+                        >
+                          <SiGitee />
+                          Gitee
+                        </ProjectLink>
+                      )}
+                      {projects[selectedProjectIndex].demoUrl && (
+                        <ProjectLink
+                          href={projects[selectedProjectIndex].demoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          {...linkInteractions}
+                        >
+                          <FiExternalLink />
+                          Demo
+                        </ProjectLink>
+                      )}
+                    </ProjectLinks>
+                  </DataCard>
+
+                  {/* 雷达图 */}
+                  <RadarChartWrapper>
+                    <RadarChart data={calculateProjectRadarData(projects[selectedProjectIndex], projects)} size={280} />
+                  </RadarChartWrapper>
+                </ProjectDataSection>
+
+                {/* 手机端项目指示器 */}
+                <MobileProjectIndicator>
+                  <div className="dots">
+                    {projects.map((_, index) => (
+                      <Dot
+                        key={index}
+                        active={index === selectedProjectIndex}
+                        initial={false}
+                        animate={{ opacity: 1 }}
                       />
-                    )}
-                  </ProjectIcon>
-                  <ProjectTitleWrapper>
-                    <ProjectTitle>{projects[selectedProjectIndex].title}</ProjectTitle>
-                    <ProjectDescription>{projects[selectedProjectIndex].description}</ProjectDescription>
-                  </ProjectTitleWrapper>
-                  <ViewDetailLink to={`/projects/${projects[selectedProjectIndex].slug}`}>
-                    查看详情
-                    <FiArrowRight size={12} />
-                  </ViewDetailLink>
-                </ProjectHeader>
-              </ProjectInfo>
-
-              {/* 项目数据和雷达图 */}
-              <ProjectDataSection>
-                {/* 左侧：项目数据 */}
-                <DataCard>
-                  <DataItem>
-                    <DataLabel>
-                      <FiStar size={16} />
-                      Stars
-                    </DataLabel>
-                    <DataValue>{projects[selectedProjectIndex].stars || 0}</DataValue>
-                  </DataItem>
-                  <DataItem>
-                    <DataLabel>
-                      <FiGithub size={16} />
-                      Forks
-                    </DataLabel>
-                    <DataValue>{projects[selectedProjectIndex].forks || 0}</DataValue>
-                  </DataItem>
-                  <DataItem>
-                    <DataLabel>
-                      <FiCode size={16} />
-                      语言
-                    </DataLabel>
-                    <DataValue>
-                      <LanguageTag color={getLanguageIcon(projects[selectedProjectIndex].language).color}>
-                        {projects[selectedProjectIndex].language || 'N/A'}
-                      </LanguageTag>
-                    </DataValue>
-                  </DataItem>
-                  <DataItem>
-                    <DataLabel>
-                      <FiCalendar size={16} />
-                      更新时间
-                    </DataLabel>
-                    <DataValue>
-                      {projects[selectedProjectIndex].updatedAt
-                        ? formatDate(projects[selectedProjectIndex].updatedAt, 'YYYY-MM-DD')
-                        : '最近'}
-                    </DataValue>
-                  </DataItem>
-
-                  {/* 项目链接 */}
-                  <ProjectLinks>
-                    {projects[selectedProjectIndex].githubUrl && (
-                      <ProjectLink
-                        href={projects[selectedProjectIndex].githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        {...linkInteractions}
-                      >
-                        <FiGithub />
-                        GitHub
-                      </ProjectLink>
-                    )}
-                    {projects[selectedProjectIndex].giteeUrl && (
-                      <ProjectLink
-                        href={projects[selectedProjectIndex].giteeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        {...linkInteractions}
-                      >
-                        <SiGitee />
-                        Gitee
-                      </ProjectLink>
-                    )}
-                    {projects[selectedProjectIndex].demoUrl && (
-                      <ProjectLink
-                        href={projects[selectedProjectIndex].demoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        {...linkInteractions}
-                      >
-                        <FiExternalLink />
-                        Demo
-                      </ProjectLink>
-                    )}
-                  </ProjectLinks>
-                </DataCard>
-
-                {/* 雷达图 */}
-                <RadarChartWrapper>
-                  <RadarChart data={calculateProjectRadarData(projects[selectedProjectIndex], projects)} size={280} />
-                </RadarChartWrapper>
-              </ProjectDataSection>
-
-              {/* 手机端项目指示器 */}
-              <MobileProjectIndicator>
-                <div className="dots">
-                  {projects.map((_, index) => (
-                    <Dot key={index} active={index === selectedProjectIndex} initial={false} animate={{ opacity: 1 }} />
-                  ))}
-                </div>
-              </MobileProjectIndicator>
-            </ProjectDetailContainer>
-          ) : null}
+                    ))}
+                  </div>
+                </MobileProjectIndicator>
+              </ProjectDetailContainer>
+            ) : null}
+          </AnimatePresence>
         </ProjectMainCard>
 
         {/* 右侧：几何拼图 */}
@@ -849,6 +905,13 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
                 width={layout.width}
                 height={layout.height}
                 onClick={() => onProjectChange(index)}
+                // 添加呼吸动画和悬停效果
+                variants={breathingVariants}
+                initial="idle"
+                animate={selectedProjectIndex === index ? 'active' : 'idle'}
+                whileHover="hover"
+                // 随机延迟，使呼吸不同步，更有机
+                custom={index}
               >
                 <GeometryBlockContent>
                   {getLanguageIcon(project.language).icon === 'code' ? (
