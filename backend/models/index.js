@@ -40,6 +40,9 @@ db.FriendLink = require('./friend-link.model.js')(sequelize, Sequelize);
 // 项目模型
 db.Project = require('./project.model.js')(sequelize, Sequelize);
 
+// 用户音乐模型
+db.UserMusic = require('./user-music.model.js')(sequelize, Sequelize);
+
 // 定义模型之间的关系
 // 用户与文章的关系：一对多
 db.User.hasMany(db.Post, { as: 'posts', foreignKey: 'userId' });
@@ -166,5 +169,10 @@ db.PostBookmark.belongsTo(db.User, { as: 'user', foreignKey: 'userId' });
 // 用户与项目的关系：一对多
 db.User.hasMany(db.Project, { as: 'projects', foreignKey: 'authorId' });
 db.Project.belongsTo(db.User, { as: 'author', foreignKey: 'authorId' });
+
+// 用户音乐相关关系
+// 用户与音乐的关系：一对多
+db.User.hasMany(db.UserMusic, { as: 'musicList', foreignKey: 'userId' });
+db.UserMusic.belongsTo(db.User, { as: 'user', foreignKey: 'userId' });
 
 module.exports = db;

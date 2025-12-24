@@ -1,18 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import musicListData from '@/data/music-list.json';
-import { API } from '@/utils/api';
-
-// 歌曲信息接口
-export interface SongInfo {
-  id: number | string;
-  songId?: string;
-  title: string;
-  artist: string;
-  url: string;
-  pic: string;
-  lrc?: string;
-  lyrics?: Array<{ time: number; text: string }>;
-}
+import { API, type SongInfo } from '@/utils/api';
 
 export type PlayMode = 'list' | 'single' | 'shuffle';
 
@@ -112,8 +99,14 @@ const fetchLyrics = async (lrcUrl: string, signal?: AbortSignal): Promise<Array<
 };
 
 export const MusicPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [musicList] = useState<SongInfo[]>(musicListData);
-  const [currentTrack, setCurrentTrack] = useState<SongInfo>(musicList[0]);
+  const [musicList, setMusicList] = useState<SongInfo[]>([]);
+  const [currentTrack, setCurrentTrack] = useState<SongInfo>({
+    id: 0,
+    title: '未在播放',
+    artist: '请选择歌曲',
+    url: '',
+    pic: '',
+  });
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -122,6 +115,27 @@ export const MusicPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showNavbarLyrics, setShowNavbarLyrics] = useState(false);
   const [playMode, setPlayMode] = useState<PlayMode>('list');
+
+  const loadUserMusic = useCallback(async () => {
+    try {
+      // 使用公共接口获取管理员配置的音乐列表
+      const response = await API.userMusic.getPublicMusicList();
+      if (response.success && response.data && response.data.length > 0) {
+        setMusicList(response.data);
+        // 如果当前没有在播放，或者当前播放的是占位符，则切换到新列表的第一首
+        if (!isPlaying && (!currentTrack.url || currentTrack.id === 0)) {
+          setCurrentTrack(response.data[0]);
+        }
+      }
+    } catch (error) {
+      console.error('加载公共音乐列表失败:', error);
+    }
+  }, [currentTrack.id, isPlaying]);
+
+  // 初始化加载用户音乐
+  useEffect(() => {
+    loadUserMusic();
+  }, [loadUserMusic]);
 
   const toggleNavbarLyrics = useCallback(() => {
     setShowNavbarLyrics((prev) => !prev);

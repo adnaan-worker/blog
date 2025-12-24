@@ -43,6 +43,7 @@ import type {
   AIQuota,
   AIChatMessage,
   DashboardData,
+  SongInfo,
 } from '@/types/entities';
 
 /**
@@ -806,8 +807,31 @@ export const API = {
     getStatus: (): Promise<ApiResponse<{ provider: string; model: string; available: boolean }>> => {
       return http.get('/ai/status');
     },
+  },
 
-    // 队列相关功能已废弃，改用 Socket.IO 流式输出
+  // 用户音乐相关 API
+  userMusic: {
+    // 获取我的音乐列表
+    getMyMusic: () => http.get<SongInfo[]>('/user/music'),
+    // 获取公共音乐列表（管理员配置）
+    getPublicMusicList: () => http.get<SongInfo[]>('/user/music/list'),
+    // 预览歌曲信息
+    previewMusic: (params: { server: string; songId: string }) =>
+      http.get<any>('/user/music/preview', params),
+    // 预览歌单
+    previewPlaylist: (params: { server: string; playlistId: string }) =>
+      http.get<SongInfo[]>('/user/music/preview-playlist', params),
+    // 添加歌曲
+    addMusic: (data: { server: string; songId: string }) =>
+      http.post<any>('/user/music', data),
+    // 批量导入歌单
+    importPlaylist: (data: { server: string; playlistId: string; songIds?: string[] }) =>
+      http.post<any>('/user/music/batch', data),
+    // 删除歌曲
+    deleteMusic: (id: number) => http.delete(`/user/music/${id}`),
+    // 调整歌曲顺序
+    reorderMusic: (orderedIds: number[]) =>
+      http.put('/user/music/reorder', { orderedIds }),
   },
 };
 
@@ -865,4 +889,5 @@ export type {
   AIQuota,
   AIChatMessage,
   DashboardData,
+  SongInfo,
 } from '@/types';

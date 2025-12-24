@@ -260,6 +260,129 @@ class ProxyService {
   }
 
   /**
+   * 获取单曲完整信息
+   * @param {string} server - 音乐平台 (tencent/netease)
+   * @param {string} id - 歌曲 ID
+   * @returns {Promise<Object>} 歌曲信息 { id, name, artist, url, pic, lrc }
+   */
+  async getMusicInfo(server = 'netease', id) {
+    try {
+      if (!id) {
+        throw new Error('歌曲ID不能为空');
+      }
+
+      const cacheKey = `${this.CACHE_PREFIX.MUSIC_URL}info:${server}:${id}`;
+
+      // 尝试从缓存获取
+      const cached = await redisManager.get(cacheKey);
+      if (cached) {
+        logger.debug(`✅ 音乐信息缓存命中: ${server}:${id}`);
+        return cached;
+      }
+
+      // 调用音乐 API 获取单曲信息
+      const url = `https://music.3e0.cn/?server=${server}&type=song&id=${id}`;
+
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`音乐API返回错误: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // API 返回的是数组，取第一个
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('未找到歌曲信息');
+      }
+
+      const songInfo = data[0];
+      const result = {
+        songId: String(songInfo.id || id),
+        name: songInfo.name || '未知歌曲',
+        artist: songInfo.artist || '未知歌手',
+        url: songInfo.url || '',
+        pic: songInfo.pic || '',
+        lrc: songInfo.lrc || '',
+      };
+
+      // 缓存24小时
+      await redisManager.set(cacheKey, result, this.CACHE_TTL.MUSIC_URL);
+
+      logger.info(`✅ 获取音乐信息成功: ${result.name} - ${result.artist}`);
+      return result;
+    } catch (error) {
+      logger.error('获取音乐信息失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取歌单中的所有歌曲
+   * @param {string} server - 音乐平台 (tencent/netease)
+   * @param {string} playlistId - 歌单 ID
+   * @returns {Promise<Array>} 歌曲列表
+   */
+  async getPlaylistSongs(server = 'netease', playlistId) {
+    try {
+      if (!playlistId) {
+        throw new Error('歌单ID不能为空');
+      }
+
+      const cacheKey = `${this.CACHE_PREFIX.MUSIC_URL}playlist:${server}:${playlistId}`;
+
+      // 尝试从缓存获取
+      const cached = await redisManager.get(cacheKey);
+      if (cached) {
+        logger.debug(`✅ 歌单缓存命中: ${server}:${playlistId}`);
+        return cached;
+      }
+
+      // 调用音乐 API 获取歌单
+      const url = `https://music.3e0.cn/?server=${server}&type=playlist&id=${playlistId}`;
+
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`音乐API返回错误: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // API 返回的是歌曲数组
+      if (!Array.isArray(data)) {
+        throw new Error('歌单解析失败');
+      }
+
+      const songs = data.map(song => ({
+        songId: String(song.id),
+        name: song.name || '未知歌曲',
+        artist: song.artist || '未知歌手',
+        url: song.url || '',
+        pic: song.pic || '',
+        lrc: song.lrc || '',
+      }));
+
+      // 缓存1小时
+      await redisManager.set(cacheKey, songs, 3600);
+
+      logger.info(`✅ 获取歌单成功: ${songs.length} 首歌曲`);
+      return songs;
+    } catch (error) {
+      logger.error('获取歌单失败:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 清除指定类型的缓存
    * @param {string} type - 缓存类型 (ip/weather/music/all)
    */

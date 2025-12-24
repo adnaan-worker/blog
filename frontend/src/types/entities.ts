@@ -81,36 +81,36 @@ export interface ChangePasswordParams {
 export interface UserActivity {
   id: string | number;
   type:
-    | 'post_created'
-    | 'post_updated'
-    | 'post_deleted'
-    | 'note_created'
-    | 'note_updated'
-    | 'note_deleted'
-    | 'comment_created'
-    | 'comment_updated'
-    | 'comment_deleted'
-    | 'post_liked'
-    | 'post_unliked'
-    | 'note_liked'
-    | 'note_unliked'
-    | 'post_bookmarked'
-    | 'post_unbookmarked'
-    | 'like_received'
-    | 'comment_received'
-    | 'bookmark_received'
-    | 'achievement_unlocked'
-    | 'level_up'
-    | 'milestone_reached'
-    | 'post_approved'
-    | 'post_rejected'
-    | 'comment_approved'
-    | 'comment_rejected'
-    | 'system_notice'
-    | 'account_warning'
-    | 'welcome'
-    | 'post_trending'
-    | 'post_featured';
+  | 'post_created'
+  | 'post_updated'
+  | 'post_deleted'
+  | 'note_created'
+  | 'note_updated'
+  | 'note_deleted'
+  | 'comment_created'
+  | 'comment_updated'
+  | 'comment_deleted'
+  | 'post_liked'
+  | 'post_unliked'
+  | 'note_liked'
+  | 'note_unliked'
+  | 'post_bookmarked'
+  | 'post_unbookmarked'
+  | 'like_received'
+  | 'comment_received'
+  | 'bookmark_received'
+  | 'achievement_unlocked'
+  | 'level_up'
+  | 'milestone_reached'
+  | 'post_approved'
+  | 'post_rejected'
+  | 'comment_approved'
+  | 'comment_rejected'
+  | 'system_notice'
+  | 'account_warning'
+  | 'welcome'
+  | 'post_trending'
+  | 'post_featured';
   title: string;
   description?: string;
   timestamp: string;
@@ -580,6 +580,20 @@ export interface AIChatMessage {
 /**
  * 仪表盘统一数据类型
  */
+/**
+ * 音乐相关类型
+ */
+export interface SongInfo {
+  id: number | string;
+  songId?: string;
+  title: string;
+  artist: string;
+  url: string;
+  pic: string;
+  lrc?: string;
+  lyrics?: Array<{ time: number; text: string }>;
+}
+
 export interface DashboardTodoItem {
   id: string;
   title: string;

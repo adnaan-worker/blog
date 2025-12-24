@@ -67,12 +67,6 @@ const contributionRoutes = require('./contributions');
 // 🔄 代理服务
 const proxyRoutes = require('./proxy');
 
-// 🎨 站点设置
-const siteSettingsRoutes = require('./site-settings');
-
-// 📚 示例接口
-const exampleRoutes = require('./example');
-
 // ==================== 路由注册 ====================
 
 // 核心模块
@@ -89,6 +83,10 @@ router.use('/notes', noteRoutes);
 router.use('/projects', projectRoutes);
 router.use('/friends', friendRoutes);
 
+// 用户音乐模块
+const userMusicRoutes = require('./user-music');
+router.use('/user/music', userMusicRoutes);
+
 // AI模块
 router.use('/ai', aiRoutes);
 router.use('/ai/sessions', aiSessionRoutes);
@@ -101,7 +99,13 @@ router.use('/contributions', contributionRoutes);
 
 // 工具模块
 router.use('/proxy', proxyRoutes);
+
+// 🎨 站点设置
+const siteSettingsRoutes = require('./site-settings');
 router.use('/site-settings', siteSettingsRoutes);
+
+// 📚 示例接口
+const exampleRoutes = require('./example');
 router.use('/example', exampleRoutes);
 
 module.exports = router;
