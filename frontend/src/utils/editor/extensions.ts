@@ -124,8 +124,13 @@ export const createExtensions = () => {
     Highlight.configure({
       multicolor: true,
     }),
-    // 表格
-    Table,
+    // 表格 - 禁用列宽调整避免布局问题
+    Table.configure({
+      resizable: false,
+      HTMLAttributes: {
+        class: 'editor-table',
+      },
+    }),
     TableRow,
     TableHeader,
     TableCell,

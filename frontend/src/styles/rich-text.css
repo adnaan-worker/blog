@@ -335,39 +335,64 @@
   pointer-events: auto;
 }
 
-/* 调整大小手柄 - 增强可见性和交互性 */
+/* 调整大小手柄 - 四角手柄 */
 .ProseMirror .resize-handle {
   position: absolute;
-  right: -8px;
-  bottom: -8px;
-  width: 24px;
-  height: 24px;
+  width: 12px;
+  height: 12px;
   background: var(--accent-color);
-  border: 3px solid #fff;
+  border: 2px solid #fff;
   border-radius: 50%;
-  cursor: nwse-resize;
   opacity: 0;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.15s ease;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  pointer-events: auto !important; /* 确保可以点击 */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  pointer-events: auto !important;
 }
 
 [data-theme='dark'] .ProseMirror .resize-handle {
   border-color: #1a1a1a;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* 四角位置 */
+.ProseMirror .resize-handle-nw {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.ProseMirror .resize-handle-ne {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.ProseMirror .resize-handle-sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+.ProseMirror .resize-handle-se {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
 }
 
 .ProseMirror .resizable-image-container:hover .resize-handle,
-.ProseMirror .resizable-image-wrapper.resizing .resize-handle {
+.ProseMirror .resizable-image-wrapper.resizing .resize-handle,
+.ProseMirror .resizable-image-container.ProseMirror-selectednode .resize-handle {
   opacity: 1;
-  transform: scale(1.1);
 }
 
 .ProseMirror .resize-handle:hover {
-  background: var(--accent-color);
-  transform: scale(1.2) !important;
-  box-shadow: 0 4px 12px rgba(var(--accent-rgb, 81, 131, 245), 0.4);
+  transform: scale(1.3);
+  box-shadow: 0 3px 10px rgba(var(--accent-rgb, 81, 131, 245), 0.4);
+}
+
+.ProseMirror .resize-handle:active {
+  transform: scale(1.1);
 }
 
 /* 图片工具栏 */
@@ -833,43 +858,44 @@
 
 /* ===== 表格样式 ===== */
 
-/* 表格外层包装 - 提供横向滚动 */
-.rich-text-content > table,
-.ProseMirror > table {
-  display: block;
+/* 表格容器 */
+.ProseMirror .tableWrapper {
+  margin: 1.5rem 0;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* iOS 流畅滚动 */
+  overflow-y: hidden;
 }
 
-/* 表格本身 */
+/* 表格 - 禁用列宽调整以避免布局问题 */
 .rich-text-content table,
 .ProseMirror table {
   border-collapse: collapse;
-  table-layout: auto; /* 改为 auto 以适应移动端 */
+  table-layout: fixed;
   width: 100%;
-  margin: 2rem 0;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
   border-radius: 8px;
-  border: 1px solid var(--rich-text-border);
-  background: var(--rich-text-background);
 }
 
 [data-theme='dark'] .rich-text-content table,
 [data-theme='dark'] .ProseMirror table {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.02);
 }
 
+/* 单元格 */
 .rich-text-content td,
 .rich-text-content th,
 .ProseMirror td,
 .ProseMirror th {
-  min-width: 1em;
-  border: 1px solid var(--rich-text-border);
-  padding: 0.75rem 1rem;
+  min-width: 100px;
+  border: 1px solid var(--border-color);
+  padding: 12px 16px;
   vertical-align: top;
   box-sizing: border-box;
   position: relative;
-  color: var(--rich-text-secondary);
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  word-wrap: break-word;
 }
 
 [data-theme='dark'] .rich-text-content td,
@@ -877,15 +903,17 @@
 [data-theme='dark'] .ProseMirror td,
 [data-theme='dark'] .ProseMirror th {
   border-color: rgba(255, 255, 255, 0.1);
-  color: #d4d4d4;
+  color: #e0e0e0;
+  background: transparent;
 }
 
+/* 表头 */
 .rich-text-content th,
 .ProseMirror th {
   font-weight: 600;
   text-align: left;
-  background: var(--rich-text-background-secondary);
-  color: var(--rich-text-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 [data-theme='dark'] .rich-text-content th,
@@ -894,34 +922,47 @@
   color: #f0f0f0;
 }
 
-/* 表格单元格选中状态 */
-.ProseMirror .selectedCell:after {
-  z-index: 2;
-  position: absolute;
+/* 单元格选中 */
+.ProseMirror .selectedCell::after {
   content: '';
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  background: rgba(var(--accent-rgb, 81, 131, 245), 0.1);
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--accent-rgb, 81, 131, 245), 0.12);
   pointer-events: none;
+  z-index: 1;
 }
 
-/* 表格列调整大小手柄 */
+/* 列调整手柄 - 简化实现 */
 .ProseMirror .column-resize-handle {
   position: absolute;
   right: -2px;
   top: 0;
   bottom: 0;
   width: 4px;
-  z-index: 20;
-  background-color: var(--accent-color);
+  background: var(--accent-color);
   cursor: col-resize;
+  z-index: 10;
   opacity: 0;
+  transition: opacity 0.15s;
 }
 
-.ProseMirror .column-resize-handle:hover {
+.ProseMirror td:hover .column-resize-handle,
+.ProseMirror th:hover .column-resize-handle {
   opacity: 1;
+}
+
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+.ProseMirror.resize-cursor .column-resize-handle {
+  opacity: 1;
+}
+
+/* 表格选中 */
+.ProseMirror table.ProseMirror-selectednode {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
 /* ===== 任务列表样式 ===== */

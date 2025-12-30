@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import { FiSave, FiX, FiEye, FiUpload, FiCpu, FiChevronLeft, FiChevronRight, FiSettings, FiZap } from 'react-icons/fi';
+import { FiSave, FiX, FiUpload, FiSettings, FiZap, FiLoader } from 'react-icons/fi';
 import RichTextEditor from '@/components/rich-text/rich-text-editor';
 import { AIFloatingTask } from '@/components/rich-text/ai-floating-task';
 import { useAITasks } from '@/hooks/useAITasks';
@@ -12,17 +12,6 @@ import { SEO } from '@/components/common';
 import { PAGE_SEO_CONFIG } from '@/config/seo.config';
 import { useAnimationEngine } from '@/utils/ui/animation';
 import { useSocket } from '@/hooks/useSocket';
-
-interface Article {
-  id: number;
-  title: string;
-  content: string;
-  summary?: string;
-  coverImage?: string;
-  typeId?: number;
-  tagIds?: number[];
-  status: number;
-}
 
 interface Category {
   id: number;
@@ -35,7 +24,7 @@ interface Tag {
 }
 
 const ArticleEditorPage: React.FC = () => {
-  const { variants, level } = useAnimationEngine();
+  const { variants } = useAnimationEngine();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -49,13 +38,14 @@ const ArticleEditorPage: React.FC = () => {
   const [coverImage, setCoverImage] = useState('');
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
-  const [status, setStatus] = useState<number>(0); // 0: 草稿, 1: 已发布
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [showSidebar, setShowSidebar] = useState(window.innerWidth > 1024);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   // 监听窗口大小变化，自动收起侧边栏
   useEffect(() => {
@@ -99,7 +89,6 @@ const ArticleEditorPage: React.FC = () => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = '';
       }
     };
 
@@ -135,7 +124,6 @@ const ArticleEditorPage: React.FC = () => {
         setCoverImage(loadedData.coverImage);
         setCategoryId(loadedData.categoryId);
         setSelectedTagIds(loadedData.selectedTagIds);
-        setStatus(article.status || 0);
         setOriginalData(loadedData);
       } catch (error: any) {
         adnaan.toast.error(error.message || '加载文章失败');
@@ -286,6 +274,34 @@ const ArticleEditorPage: React.FC = () => {
     navigate(-1);
   };
 
+  // 处理封面图上传
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      adnaan.toast.error('请选择图片文件');
+      return;
+    }
+
+    setIsUploadingCover(true);
+    try {
+      const response = await API.user.batchUpload([file], 'cover', 1);
+      const urls = response.data?.urls || response.data;
+      if (urls && urls.length > 0) {
+        setCoverImage(urls[0]);
+        adnaan.toast.success('封面上传成功');
+      }
+    } catch (error: any) {
+      adnaan.toast.error(error.message || '上传失败');
+    } finally {
+      setIsUploadingCover(false);
+      if (coverInputRef.current) {
+        coverInputRef.current.value = '';
+      }
+    }
+  };
+
   // 生成标题
   const handleGenerateTitle = async () => {
     if (!content) {
@@ -333,6 +349,15 @@ const ArticleEditorPage: React.FC = () => {
   };
 
   // 加载状态由路由级别的Suspense处理，不需要额外显示
+  if (isLoading) {
+    return (
+      <LoadingContainer>
+        <FiLoader className="spinning" />
+        <span>加载中...</span>
+      </LoadingContainer>
+    );
+  }
+
   return (
     <>
       <SEO
@@ -444,14 +469,34 @@ const ArticleEditorPage: React.FC = () => {
                       封面图
                       <OptionalTag>（选填）</OptionalTag>
                     </Label>
-                    <Input
-                      placeholder="请输入封面图地址..."
-                      value={coverImage}
-                      onChange={(e) => setCoverImage(e.target.value)}
-                    />
+                    <CoverUploadArea>
+                      <Input
+                        placeholder="请输入封面图地址..."
+                        value={coverImage}
+                        onChange={(e) => setCoverImage(e.target.value)}
+                      />
+                      <UploadButton
+                        type="button"
+                        onClick={() => coverInputRef.current?.click()}
+                        disabled={isUploadingCover}
+                        title="上传封面图"
+                      >
+                        {isUploadingCover ? <FiLoader className="spinning" /> : <FiUpload />}
+                      </UploadButton>
+                      <input
+                        ref={coverInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleCoverUpload}
+                      />
+                    </CoverUploadArea>
                     {coverImage && coverImage.trim() && (
                       <CoverPreview>
                         <img src={coverImage} alt="封面预览" />
+                        <CoverRemoveButton onClick={() => setCoverImage('')}>
+                          <FiX />
+                        </CoverRemoveButton>
                       </CoverPreview>
                     )}
                   </Field>
@@ -674,34 +719,6 @@ const EditorSection = styled.div`
   overflow: hidden; /* 避免创建新的滚动上下文 */
 `;
 
-const AIAssistantPanel = styled.div`
-  width: 320px;
-  border-left: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  overflow-y: auto;
-  flex-shrink: 0;
-
-  @media (max-width: 1280px) {
-    width: 280px;
-  }
-
-  @media (max-width: 1024px) {
-    position: fixed;
-    right: 0;
-    top: 0;
-    height: 100vh;
-    width: 360px;
-    z-index: 1000;
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-    border-left: 1px solid var(--border-color);
-  }
-
-  @media (max-width: 768px) {
-    width: 100%;
-    max-width: 100vw;
-  }
-`;
-
 const Sidebar = styled.div`
   width: 320px;
   border-left: 1px solid var(--border-color);
@@ -853,11 +870,97 @@ const CoverPreview = styled.div`
   border-radius: 8px;
   overflow: hidden;
   margin-top: 8px;
+  position: relative;
 
   img {
     width: 100%;
     height: auto;
     display: block;
+  }
+`;
+
+const CoverUploadArea = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+`;
+
+const UploadButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-secondary);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .spinning {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const CoverRemoveButton = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.9);
+    transform: scale(1.1);
+  }
+`;
+
+const LoadingContainer = styled.div`
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+
+  .spinning {
+    animation: spin 1s linear infinite;
+    font-size: 24px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 `;
 

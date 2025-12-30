@@ -4,6 +4,8 @@ export interface ResizableImageOptions {
   inline: boolean;
   allowBase64: boolean;
   HTMLAttributes: Record<string, any>;
+  minWidth: number;
+  maxWidth: number;
 }
 
 declare module '@tiptap/core' {
@@ -22,6 +24,8 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
       inline: false,
       allowBase64: false,
       HTMLAttributes: {},
+      minWidth: 100,
+      maxWidth: 1200,
     };
   },
 
@@ -37,15 +41,9 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
 
   addAttributes() {
     return {
-      src: {
-        default: null,
-      },
-      alt: {
-        default: null,
-      },
-      title: {
-        default: null,
-      },
+      src: { default: null },
+      alt: { default: null },
+      title: { default: null },
       width: {
         default: null,
         parseHTML: (element) => {
@@ -53,13 +51,8 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
           return width ? parseInt(width) : null;
         },
         renderHTML: (attributes) => {
-          if (!attributes.width) {
-            return {};
-          }
-          return {
-            width: attributes.width,
-            style: `width: ${attributes.width}px`,
-          };
+          if (!attributes.width) return {};
+          return { width: attributes.width, style: `width: ${attributes.width}px` };
         },
       },
       height: {
@@ -69,48 +62,26 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
           return height ? parseInt(height) : null;
         },
         renderHTML: (attributes) => {
-          if (!attributes.height) {
-            return {};
-          }
-          return {
-            height: attributes.height,
-            style: `height: ${attributes.height}px`,
-          };
+          if (!attributes.height) return {};
+          return { height: attributes.height, style: `height: ${attributes.height}px` };
         },
       },
       align: {
         default: 'center',
-        parseHTML: (element) => {
-          return element.getAttribute('data-align') || 'center';
-        },
-        renderHTML: (attributes) => {
-          return {
-            'data-align': attributes.align,
-          };
-        },
+        parseHTML: (element) => element.getAttribute('data-align') || 'center',
+        renderHTML: (attributes) => ({ 'data-align': attributes.align }),
       },
     };
   },
 
   parseHTML() {
-    return [
-      {
-        tag: 'img[src]',
-      },
-    ];
+    return [{ tag: 'img[src]' }];
   },
 
   renderHTML({ HTMLAttributes }) {
     const attrs = mergeAttributes(this.options.HTMLAttributes, HTMLAttributes);
-
-    // 确保宽高属性正确渲染
-    if (attrs.width) {
-      attrs.style = `width: ${attrs.width}px; ${attrs.style || ''}`;
-    }
-    if (attrs.height) {
-      attrs.style = `height: ${attrs.height}px; ${attrs.style || ''}`;
-    }
-
+    if (attrs.width) attrs.style = `width: ${attrs.width}px; ${attrs.style || ''}`;
+    if (attrs.height) attrs.style = `height: ${attrs.height}px; ${attrs.style || ''}`;
     return ['img', attrs];
   },
 
@@ -118,20 +89,23 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
     return {
       setImage:
         (options) =>
-        ({ commands }) => {
-          return commands.insertContent({
-            type: this.name,
-            attrs: options,
-          });
-        },
+        ({ commands }) =>
+          commands.insertContent({ type: this.name, attrs: options }),
     };
   },
 
   addNodeView() {
     return ({ node, getPos, editor }) => {
+      const { minWidth, maxWidth } = this.options;
+
+      // 创建 DOM 结构
       const dom = document.createElement('div');
       dom.className = 'resizable-image-wrapper';
       dom.setAttribute('data-align', node.attrs.align || 'center');
+
+      const container = document.createElement('div');
+      container.className = 'resizable-image-container';
+      container.contentEditable = 'false';
 
       const img = document.createElement('img');
       img.src = node.attrs.src;
@@ -140,15 +114,13 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
       if (node.attrs.width) img.style.width = `${node.attrs.width}px`;
       if (node.attrs.height) img.style.height = `${node.attrs.height}px`;
 
-      // 图片容器
-      const container = document.createElement('div');
-      container.className = 'resizable-image-container';
-      container.contentEditable = 'false';
-      container.appendChild(img);
-
-      // 调整大小的手柄
-      const resizeHandle = document.createElement('div');
-      resizeHandle.className = 'resize-handle';
+      // 创建四个角的拖拽手柄
+      const handles = ['nw', 'ne', 'sw', 'se'].map((pos) => {
+        const handle = document.createElement('div');
+        handle.className = `resize-handle resize-handle-${pos}`;
+        handle.setAttribute('data-position', pos);
+        return handle;
+      });
 
       // 工具栏
       const toolbar = document.createElement('div');
@@ -186,114 +158,119 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
         </button>
       `;
 
+      container.appendChild(img);
       container.appendChild(toolbar);
-      container.appendChild(resizeHandle);
+      handles.forEach((h) => container.appendChild(h));
       dom.appendChild(container);
 
-      // 调整大小逻辑
+      // 拖拽状态
+      let isResizing = false;
       let startX = 0;
       let startY = 0;
       let startWidth = 0;
       let startHeight = 0;
       let aspectRatio = 1;
-      let rafId: number | null = null; // requestAnimationFrame ID
-      let currentMouseX = 0;
-      let currentMouseY = 0;
+      let currentHandle = '';
 
-      const onMouseDown = (e: MouseEvent) => {
+      const startResize = (e: MouseEvent | TouchEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
-        startX = e.clientX;
-        startY = e.clientY;
+        const target = e.target as HTMLElement;
+        currentHandle = target.getAttribute('data-position') || 'se';
+
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+        startX = clientX;
+        startY = clientY;
         startWidth = img.offsetWidth;
         startHeight = img.offsetHeight;
         aspectRatio = startWidth / startHeight;
+        isResizing = true;
 
-        // 临时移除最大宽度限制和 transition
-        img.style.maxWidth = 'none';
         img.style.transition = 'none';
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-
         dom.classList.add('resizing');
-        document.body.style.cursor = 'nwse-resize'; // 设置全局鼠标样式
+        document.body.style.cursor = getCursor(currentHandle);
+        document.body.style.userSelect = 'none';
+
+        document.addEventListener('mousemove', onResize);
+        document.addEventListener('mouseup', stopResize);
+        document.addEventListener('touchmove', onResize, { passive: false });
+        document.addEventListener('touchend', stopResize);
       };
 
-      const updateSize = () => {
-        const deltaX = currentMouseX - startX;
-        const deltaY = currentMouseY - startY;
-
-        // 使用对角线距离来计算新尺寸
-        const delta = Math.sqrt(deltaX * deltaX + deltaY * deltaY) * Math.sign(deltaX);
-        const newWidth = Math.max(100, Math.min(startWidth + delta, 1200)); // 限制最大宽度
-        const newHeight = newWidth / aspectRatio;
-
-        // 直接设置 DOM，非常快
-        img.style.width = `${newWidth}px`;
-        img.style.height = `${newHeight}px`;
-
-        rafId = null; // 重置 RAF ID
+      const getCursor = (pos: string) => {
+        const cursors: Record<string, string> = {
+          nw: 'nwse-resize',
+          ne: 'nesw-resize',
+          sw: 'nesw-resize',
+          se: 'nwse-resize',
+        };
+        return cursors[pos] || 'nwse-resize';
       };
 
-      const onMouseMove = (e: MouseEvent) => {
+      const onResize = (e: MouseEvent | TouchEvent) => {
+        if (!isResizing) return;
         e.preventDefault();
 
-        // 保存当前鼠标位置
-        currentMouseX = e.clientX;
-        currentMouseY = e.clientY;
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
 
-        // 使用 requestAnimationFrame 节流，确保最流畅的渲染
-        if (rafId === null) {
-          rafId = requestAnimationFrame(updateSize);
-        }
+        let deltaX = clientX - startX;
+        let deltaY = clientY - startY;
+
+        // 根据手柄位置调整方向
+        if (currentHandle.includes('w')) deltaX = -deltaX;
+        if (currentHandle.includes('n')) deltaY = -deltaY;
+
+        // 使用较大的变化量，保持宽高比
+        const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY * aspectRatio;
+        let newWidth = Math.round(startWidth + delta);
+        newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+        const newHeight = Math.round(newWidth / aspectRatio);
+
+        img.style.width = `${newWidth}px`;
+        img.style.height = `${newHeight}px`;
       };
 
-      const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
+      const stopResize = () => {
+        if (!isResizing) return;
+        isResizing = false;
 
-        // 取消可能待执行的 RAF
-        if (rafId !== null) {
-          cancelAnimationFrame(rafId);
-          rafId = null;
-        }
+        document.removeEventListener('mousemove', onResize);
+        document.removeEventListener('mouseup', stopResize);
+        document.removeEventListener('touchmove', onResize);
+        document.removeEventListener('touchend', stopResize);
 
         dom.classList.remove('resizing');
-        document.body.style.cursor = ''; // 恢复鼠标样式
-
-        // 恢复样式
-        img.style.maxWidth = '100%';
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
         img.style.transition = '';
 
-        // 更新节点属性到 Tiptap
+        // 更新节点属性
         const pos = getPos();
-
         if (typeof pos === 'number') {
           const finalWidth = Math.round(parseFloat(img.style.width));
           const finalHeight = Math.round(parseFloat(img.style.height));
 
-          // 使用底层 Transaction API 直接更新节点属性
-          const { state, view } = editor;
-          const { tr } = state;
-
-          // 设置新的节点属性
-          tr.setNodeMarkup(pos, undefined, {
-            ...node.attrs,
-            width: finalWidth,
-            height: finalHeight,
-          });
-
-          // 应用 transaction
-          view.dispatch(tr);
+          editor.view.dispatch(
+            editor.state.tr.setNodeMarkup(pos, undefined, {
+              ...node.attrs,
+              width: finalWidth,
+              height: finalHeight,
+            }),
+          );
         }
       };
 
-      let isDestroyed = false;
-      resizeHandle.addEventListener('mousedown', onMouseDown);
+      // 绑定事件
+      handles.forEach((handle) => {
+        handle.addEventListener('mousedown', startResize);
+        handle.addEventListener('touchstart', startResize, { passive: false });
+      });
 
-      // 工具栏按钮事件
+      // 工具栏事件
       toolbar.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
         const btn = target.closest('.toolbar-btn') as HTMLElement;
@@ -305,16 +282,11 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
 
         switch (action) {
           case 'align-left':
-            editor.commands.updateAttributes('resizableImage', { align: 'left' });
-            dom.setAttribute('data-align', 'left');
-            break;
           case 'align-center':
-            editor.commands.updateAttributes('resizableImage', { align: 'center' });
-            dom.setAttribute('data-align', 'center');
-            break;
           case 'align-right':
-            editor.commands.updateAttributes('resizableImage', { align: 'right' });
-            dom.setAttribute('data-align', 'right');
+            const align = action.replace('align-', '');
+            editor.commands.updateAttributes('resizableImage', { align });
+            dom.setAttribute('data-align', align);
             break;
           case 'delete':
             editor.commands.deleteRange({ from: pos, to: pos + node.nodeSize });
@@ -325,9 +297,7 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
       return {
         dom,
         update: (updatedNode) => {
-          if (updatedNode.type.name !== this.name) {
-            return false;
-          }
+          if (updatedNode.type.name !== this.name) return false;
 
           img.src = updatedNode.attrs.src;
           if (updatedNode.attrs.alt) img.alt = updatedNode.attrs.alt;
@@ -339,20 +309,14 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
           return true;
         },
         destroy: () => {
-          isDestroyed = true;
-
-          // 清理事件监听器
-          resizeHandle.removeEventListener('mousedown', onMouseDown);
-          document.removeEventListener('mousemove', onMouseMove);
-          document.removeEventListener('mouseup', onMouseUp);
-
-          // 取消可能待执行的 RAF
-          if (rafId !== null) {
-            cancelAnimationFrame(rafId);
-            rafId = null;
-          }
-
-          // 恢复全局鼠标样式
+          handles.forEach((handle) => {
+            handle.removeEventListener('mousedown', startResize);
+            handle.removeEventListener('touchstart', startResize);
+          });
+          document.removeEventListener('mousemove', onResize);
+          document.removeEventListener('mouseup', stopResize);
+          document.removeEventListener('touchmove', onResize);
+          document.removeEventListener('touchend', stopResize);
           document.body.style.cursor = '';
         },
       };

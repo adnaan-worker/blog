@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from '@emotion/styled';
 import {
   FiBold,
@@ -12,7 +12,6 @@ import {
   FiAlignCenter,
   FiAlignRight,
   FiAlignJustify,
-  FiType,
   FiFileText,
   FiMinus as FiStrikethrough,
   FiMessageSquare,
@@ -26,6 +25,7 @@ import {
 } from 'react-icons/fi';
 import { HeadingMenu } from './heading-menu';
 import { ColorPicker } from './color-picker';
+import { Editor } from '@tiptap/react';
 
 // 样式组件
 const FloatingToolbar = styled.div`
@@ -115,7 +115,7 @@ const ToolbarButton = styled.button<ToolbarButtonProps>`
 
 // 接口定义
 interface EditorToolbarProps {
-  editor: any;
+  editor: Editor;
   isUploading: boolean;
   onImageUploadClick: () => void;
   onLinkClick: () => void;
@@ -132,6 +132,26 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+  // 强制更新状态，用于响应编辑器选区变化
+  const [, forceUpdate] = useState(0);
+
+  // 监听编辑器选区和内容变化，触发工具栏状态更新
+  useEffect(() => {
+    if (!editor) return;
+
+    const updateToolbar = () => {
+      forceUpdate((n) => n + 1);
+    };
+
+    // 监听选区变化和事务
+    editor.on('selectionUpdate', updateToolbar);
+    editor.on('transaction', updateToolbar);
+
+    return () => {
+      editor.off('selectionUpdate', updateToolbar);
+      editor.off('transaction', updateToolbar);
+    };
+  }, [editor]);
 
   if (!editor) return null;
 

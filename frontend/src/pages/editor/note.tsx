@@ -2,19 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
-import {
-  FiSave,
-  FiX,
-  FiLock,
-  FiUnlock,
-  FiMapPin,
-  FiCloud,
-  FiSmile,
-  FiTag,
-  FiX as FiClose,
-  FiCpu,
-  FiSettings,
-} from 'react-icons/fi';
+import { FiSave, FiX, FiLock, FiUnlock, FiMapPin, FiCloud, FiSmile, FiTag, FiX as FiClose, FiSettings, FiLoader } from 'react-icons/fi';
 import RichTextEditor from '@/components/rich-text/rich-text-editor';
 import { API } from '@/utils/api';
 import { Button, Input } from 'adnaan-ui';
@@ -35,7 +23,7 @@ interface Note {
 }
 
 const NoteEditorPage: React.FC = () => {
-  const { variants, level } = useAnimationEngine();
+  const { variants } = useAnimationEngine();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -84,7 +72,6 @@ const NoteEditorPage: React.FC = () => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = '';
       }
     };
 
@@ -243,7 +230,16 @@ const NoteEditorPage: React.FC = () => {
     { label: '🌈 彩虹', value: '彩虹' },
   ];
 
-  // 加载状态由路由级别的Suspense处理，不需要额外显示
+  // 加载状态显示
+  if (isLoading) {
+    return (
+      <LoadingContainer>
+        <FiLoader className="spinning" />
+        <span>加载中...</span>
+      </LoadingContainer>
+    );
+  }
+
   return (
     <>
       <SEO
@@ -301,7 +297,9 @@ const NoteEditorPage: React.FC = () => {
 
           {/* 右侧边栏 - 可折叠 */}
           {showSidebar && (
-            <Sidebar>
+            <>
+              <MobileBackdrop onClick={() => setShowSidebar(false)} />
+              <Sidebar>
               <SidebarSection>
                 <SectionTitle>手记属性</SectionTitle>
 
@@ -387,6 +385,7 @@ const NoteEditorPage: React.FC = () => {
                 </Field>
               </SidebarSection>
             </Sidebar>
+            </>
           )}
         </MainContent>
       </EditorContainer>
@@ -498,34 +497,19 @@ const EditorSection = styled.div`
   flex-direction: column;
   position: relative;
   min-height: 0;
-  overflow: hidden; /* 避免创建新的滚动上下文 */
+  overflow: hidden;
 `;
 
-const AIAssistantPanel = styled.div`
-  width: 320px;
-  border-left: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  overflow-y: auto;
-  flex-shrink: 0;
-
-  @media (max-width: 1280px) {
-    width: 280px;
-  }
+const MobileBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+  display: none;
 
   @media (max-width: 1024px) {
-    position: fixed;
-    right: 0;
-    top: 0;
-    height: 100vh;
-    width: 360px;
-    z-index: 1000;
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-    border-left: 1px solid var(--border-color);
-  }
-
-  @media (max-width: 768px) {
-    width: 100%;
-    max-width: 100vw;
+    display: block;
   }
 `;
 
@@ -555,27 +539,22 @@ const Sidebar = styled.div`
   }
 
   @media (max-width: 1024px) {
-    width: 100%;
-    max-height: 40vh;
-    border-left: none;
-    border-top: 1px solid var(--border-color);
-    padding: 16px;
-    animation: slideInBottom 0.2s ease-out;
-
-    @keyframes slideInBottom {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 320px;
+    max-width: 80vw;
+    border-left: 1px solid var(--border-color);
+    padding: 24px;
+    z-index: 1000;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   @media (max-width: 768px) {
-    max-height: 50vh;
+    width: 100%;
+    max-width: 100%;
   }
 `;
 
@@ -713,6 +692,28 @@ const TagItem = styled.div`
     svg {
       font-size: 12px;
     }
+  }
+`;
+
+const LoadingContainer = styled.div`
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+
+  .spinning {
+    animation: spin 1s linear infinite;
+    font-size: 24px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 `;
 
