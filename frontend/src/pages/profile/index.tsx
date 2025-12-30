@@ -138,10 +138,30 @@ const IdentityColumn = styled.div`
   max-height: calc(100vh - 4rem);
   z-index: 10;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 
   @media (max-width: 1024px) {
     display: none;
   }
+`;
+
+const MusicCard = styled(motion.div)`
+  background: rgba(var(--bg-primary-rgb), 0.6);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(var(--border-rgb), 0.1);
+  overflow: hidden;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.15);
+`;
+
+const MusicCardHeader = styled.div`
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const UnifiedIdentityCard = styled(motion.div)`
@@ -723,33 +743,43 @@ const StatusTag = styled.span<{ status: string }>`
 const MusicList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  max-height: 220px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-secondary-rgb), 0.15);
+    border-radius: 2px;
+  }
 `;
 
 const MusicItem = styled(motion.div)`
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background: rgba(var(--bg-primary-rgb), 0.3);
-  border: 1px solid rgba(var(--border-rgb), 0.05);
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(var(--border-rgb), 0.05);
   transition: all 0.2s;
+  cursor: pointer;
+
+  &:last-child {
+    border-bottom: none;
+  }
 
   &:hover {
-    background: rgba(var(--bg-primary-rgb), 0.5);
-    border-color: rgba(var(--accent-rgb), 0.2);
-    transform: translateX(4px);
+    background: rgba(var(--accent-rgb), 0.05);
   }
 `;
 
 const MusicCover = styled.div<{ src: string }>`
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
   background: url(${(props) => props.src}) center/cover;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 `;
 
 const MusicInfo = styled.div`
@@ -1234,33 +1264,6 @@ const Profile: React.FC = () => {
                 )) : <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>暂无项目</div>}
               </div>
             </GroupedCard>
-
-            <GroupedCard>
-              <GroupHeader>
-                <GroupTitle><FiMusic /> 我的音乐</GroupTitle>
-                <Button variant="secondary" size="small" onClick={() => setIsAddMusicModalOpen(true)}>添加音乐</Button>
-              </GroupHeader>
-              <MusicList>
-                {isMusicLoading ? (
-                  <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>加载中...</div>
-                ) : userMusicList.length > 0 ? (
-                  userMusicList.map((music, i) => (
-                    <MusicItem key={music.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                      <MusicCover src={music.pic} />
-                      <MusicInfo>
-                        <MusicTitle>{music.title}</MusicTitle>
-                        <MusicArtist>{music.artist}</MusicArtist>
-                      </MusicInfo>
-                      <Button variant="ghost" size="small" style={{ borderRadius: '50%', width: 36, height: 36, padding: 0 }}>
-                        <FiPlay size={16} />
-                      </Button>
-                    </MusicItem>
-                  ))
-                ) : (
-                  <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>暂无收藏音乐</div>
-                )}
-              </MusicList>
-            </GroupedCard>
           </MainColumn>
 
           <SideColumn>
@@ -1337,6 +1340,34 @@ const Profile: React.FC = () => {
                 <ProfileHero user={user} achievements={achievements} onEditProfile={() => setIsEditModalOpen(true)} onAvatarChange={handleAvatarChange} isLoading={isUserLoading} />
               </UnifiedIdentityCard>
             )}
+            
+            {/* 音乐卡片 */}
+            <MusicCard initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+              <MusicCardHeader>
+                <GroupTitle style={{ fontSize: '0.95rem' }}><FiMusic /> 我的音乐</GroupTitle>
+                <Button variant="ghost" size="small" style={{ color: 'var(--accent-color)', padding: '4px 8px', fontSize: '0.8rem' }} onClick={() => setIsAddMusicModalOpen(true)}>添加</Button>
+              </MusicCardHeader>
+              <MusicList>
+                {isMusicLoading ? (
+                  <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>加载中...</div>
+                ) : userMusicList.length > 0 ? (
+                  userMusicList.map((music, i) => (
+                    <MusicItem key={music.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
+                      <MusicCover src={music.pic} />
+                      <MusicInfo>
+                        <MusicTitle>{music.title}</MusicTitle>
+                        <MusicArtist>{music.artist}</MusicArtist>
+                      </MusicInfo>
+                      <Button variant="ghost" size="small" style={{ borderRadius: '50%', width: 28, height: 28, padding: 0, flexShrink: 0 }}>
+                        <FiPlay size={12} />
+                      </Button>
+                    </MusicItem>
+                  ))
+                ) : (
+                  <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>暂无收藏音乐</div>
+                )}
+              </MusicList>
+            </MusicCard>
           </IdentityColumn>
           <StageArea>
             <MobileProfileHeader user={user} stats={userStats} onEdit={() => setIsEditModalOpen(true)} onSwitchTab={(tab: any) => setActiveTab(tab)} onOpenQuickActions={() => setRightDrawerOpen(true)} activeTab={activeTab} isAdmin={isAdmin} />
