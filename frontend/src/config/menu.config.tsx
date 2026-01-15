@@ -17,6 +17,7 @@ import {
   FiGlobe,
   FiSmile,
   FiMessageSquare,
+  FiUsers,
 } from 'react-icons/fi';
 
 /* ==================== 类型定义 ==================== */
@@ -53,6 +54,11 @@ export const mainNavItems: MenuItem[] = [
         path: '/guestbook',
         title: '留言',
         icon: FiMessageSquare,
+      },
+      {
+        path: '/friends',
+        title: '朋友',
+        icon: FiUsers,
       },
     ],
   },
