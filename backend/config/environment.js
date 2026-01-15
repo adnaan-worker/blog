@@ -198,6 +198,33 @@ class EnvironmentManager {
         requestTimeout: parseInt(process.env.GITHUB_REQUEST_TIMEOUT) || 10000,
         cacheTTL: parseInt(process.env.GITHUB_CACHE_TTL) || 900,
       },
+
+      // OAuth 第三方登录配置
+      oauth: {
+        // 前端回调地址
+        frontendCallbackUrl: process.env.OAUTH_FRONTEND_CALLBACK_URL || 'http://localhost:3000/oauth/callback',
+        
+        // GitHub OAuth
+        github: {
+          clientId: process.env.GITHUB_OAUTH_CLIENT_ID || null,
+          clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET || null,
+          callbackURL: process.env.GITHUB_OAUTH_CALLBACK_URL || '/api/auth/github/callback',
+        },
+        
+        // Google OAuth
+        google: {
+          clientId: process.env.GOOGLE_OAUTH_CLIENT_ID || null,
+          clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET || null,
+          callbackURL: process.env.GOOGLE_OAUTH_CALLBACK_URL || '/api/auth/google/callback',
+        },
+        
+        // Gitee OAuth
+        gitee: {
+          clientId: process.env.GITEE_OAUTH_CLIENT_ID || null,
+          clientSecret: process.env.GITEE_OAUTH_CLIENT_SECRET || null,
+          callbackURL: process.env.GITEE_OAUTH_CALLBACK_URL || '/api/auth/gitee/callback',
+        },
+      },
     };
 
     // 验证必需配置

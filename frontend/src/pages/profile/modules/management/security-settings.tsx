@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FiLock, FiDownload, FiTrash2, FiAlertTriangle, FiShield } from 'react-icons/fi';
+import { FiLock, FiDownload, FiTrash2, FiAlertTriangle, FiShield, FiLink } from 'react-icons/fi';
 import { Button, Input } from 'adnaan-ui';
 import { API } from '@/utils/api';
 import { storage } from '@/utils';
+import OAuthButtons from '@/components/auth/OAuthButtons';
 
 // 样式组件 - 适配玻璃拟态风格
 const Container = styled.div`
@@ -290,6 +291,21 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ className }) => {
       </Header>
 
       <Content>
+        {/* 第三方账号绑定 */}
+        <Section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <SectionHeader>
+            <SectionIcon>
+              <FiLink />
+            </SectionIcon>
+            <div>
+              <SectionTitle>第三方账号绑定</SectionTitle>
+              <SectionDescription>绑定第三方账号后可使用快捷登录</SectionDescription>
+            </div>
+          </SectionHeader>
+
+          <OAuthButtons mode="bind" />
+        </Section>
+
         {/* 修改密码 */}
         <Section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <SectionHeader>

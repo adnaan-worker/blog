@@ -8,13 +8,17 @@ const verifyToken = async (req, res, next) => {
   try {
     // 从请求头获取令牌
     const authHeader = req.headers.authorization;
+    
+    // 也支持从 URL query 参数获取（用于 OAuth 绑定等场景）
+    const queryToken = req.query.token;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.apiUnauthorized('未提供认证令牌');
+    let token = null;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (queryToken) {
+      token = queryToken;
     }
-
-    // 提取令牌
-    const token = authHeader.split(' ')[1];
 
     if (!token) {
       return res.apiUnauthorized('未提供认证令牌');

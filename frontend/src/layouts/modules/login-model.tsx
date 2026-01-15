@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
-import { FiUser, FiLock, FiGithub, FiTwitter } from 'react-icons/fi';
+import { FiUser, FiLock } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { login } from '@/store/modules/userSlice';
 import type { RootState, AppDispatch } from '@/store';
 import { Modal, Input } from 'adnaan-ui';
+import OAuthButtons from '@/components/auth/OAuthButtons';
 
 // 模态框内容容器
 const ModalContent = styled.div`
@@ -86,30 +87,24 @@ const ToggleForm = styled.button`
   }
 `;
 
-// 社交登录按钮组
-const SocialLoginGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  justify-content: center;
-`;
-
-// 社交登录按钮
-const SocialButton = styled.button`
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 0.75rem;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
+// 分隔线
+const Divider = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
+  margin-top: 1.5rem;
+  gap: 1rem;
 
-  &:hover {
-    background: var(--bg-tertiary);
-    transform: translateY(-2px);
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+  }
+
+  span {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
   }
 `;
 
@@ -181,14 +176,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToRegi
           </ToggleForm>
         </Form>
 
-        <SocialLoginGroup>
-          <SocialButton type="button">
-            <FiGithub size={20} />
-          </SocialButton>
-          <SocialButton type="button">
-            <FiTwitter size={20} />
-          </SocialButton>
-        </SocialLoginGroup>
+        <Divider>
+          <span>或使用第三方登录</span>
+        </Divider>
+        <OAuthButtons mode="login" />
       </ModalContent>
     </Modal>
   );

@@ -613,3 +613,21 @@ export interface DashboardData {
   recentProjects: Project[];
   todoItems: DashboardTodoItem[];
 }
+
+/**
+ * OAuth 第三方登录相关类型
+ */
+export type OAuthProvider = 'github' | 'google' | 'gitee';
+
+export interface OAuthStatus {
+  github: boolean;
+  google: boolean;
+  gitee: boolean;
+}
+
+export interface OAuthBinding {
+  id: number;
+  provider: OAuthProvider;
+  providerId: string;
+  bindTime: string;
+}

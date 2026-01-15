@@ -47,6 +47,10 @@ export const router = createHashRouter([
         element: elements.friends,
       },
       {
+        path: '/oauth/callback',
+        element: elements.oauthCallback,
+      },
+      {
         path: '/profile',
         element: elements.profile,
       },

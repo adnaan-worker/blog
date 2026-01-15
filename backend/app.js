@@ -24,6 +24,8 @@ const { notFound, errorHandler } = require('./middlewares/error.middleware');
 const { globalLimiter } = require('./middlewares/rate-limit.middleware');
 const routes = require('./routes');
 const socketManager = require('./utils/socket');
+const passport = require('passport');
+const passportConfig = require('./config/passport.config');
 
 // 获取环境配置
 const config = environment.get();
@@ -85,6 +87,10 @@ const setupMiddleware = () => {
   app.use(requestLogger);
   app.use(monitorMiddleware);
   app.use(responseMiddleware);
+
+  // 初始化 Passport（OAuth 第三方登录）
+  passportConfig.initialize(config);
+  app.use(passport.initialize());
 };
 
 // 路由配置

@@ -11,6 +11,9 @@ const router = express.Router();
 // 🔐 认证模块
 const authRoutes = require('./auth');
 
+// 🔐 OAuth 第三方登录模块
+const oauthRoutes = require('./oauth');
+
 // 👤 用户模块
 const userRoutes = require('./users');
 
@@ -71,6 +74,7 @@ const proxyRoutes = require('./proxy');
 
 // 核心模块
 router.use('/auth', authRoutes);
+router.use('/auth', oauthRoutes); // OAuth 路由挂载到 /auth 下
 router.use('/users', userRoutes);
 
 // 内容模块

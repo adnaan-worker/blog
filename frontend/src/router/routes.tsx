@@ -25,6 +25,9 @@ const NoteEditor = lazy(() => import('@/pages/editor/note'));
 // 友链页面
 const Friends = lazy(() => import('@/pages/friends'));
 
+// OAuth 回调页面
+const OAuthCallback = lazy(() => import('@/pages/oauth/OAuthCallback'));
+
 // 关于页面
 const AboutSite = lazy(() => import('@/pages/about/about-site'));
 const AboutMe = lazy(() => import('@/pages/about/about-me'));
@@ -60,6 +63,7 @@ export const createRouteElements = () => ({
     </Suspense>
   ),
   friends: <Friends />,
+  oauthCallback: <OAuthCallback />,
   aboutSite: <AboutSite />,
   aboutMe: <AboutMe />,
   notFound: <NotFound />,

@@ -44,6 +44,9 @@ import type {
   AIChatMessage,
   DashboardData,
   SongInfo,
+  OAuthStatus,
+  OAuthBinding,
+  OAuthProvider,
 } from '@/types/entities';
 
 /**
@@ -149,6 +152,20 @@ export const API = {
     login: (data: LoginParams) => http.post<LoginResponse>('/auth/login', data),
     register: (data: RegisterParams) => http.post<RegisterResponse>('/auth/register', data),
     logout: () => http.post('/auth/logout'),
+
+    // OAuth 第三方登录相关
+    oauth: {
+      // 获取 OAuth 配置状态（哪些平台可用）
+      getStatus: () => http.get<OAuthStatus>('/auth/status'),
+      // 获取用户绑定的第三方账号
+      getBindings: () => http.get<OAuthBinding[]>('/auth/bindings'),
+      // 解绑第三方账号
+      unbind: (provider: OAuthProvider) => http.delete(`/auth/unbind/${provider}`),
+      // 获取登录跳转 URL
+      getLoginUrl: (provider: OAuthProvider) => `/auth/${provider}`,
+      // 获取绑定跳转 URL（已登录用户）
+      getBindUrl: (provider: OAuthProvider) => `/auth/bind/${provider}`,
+    },
 
     // 用户中心相关
     getProfile: () => http.get<UserProfile>('/users/profile'),
@@ -890,4 +907,7 @@ export type {
   AIChatMessage,
   DashboardData,
   SongInfo,
+  OAuthStatus,
+  OAuthBinding,
+  OAuthProvider,
 } from '@/types';
