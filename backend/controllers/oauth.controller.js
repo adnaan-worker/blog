@@ -52,7 +52,7 @@ exports.githubLogin = (req, res, next) => {
 };
 
 /**
- * GitHub 登录回调
+ * GitHub 登录回调（同时处理登录和绑定）
  */
 exports.githubCallback = [
   (req, res, next) => {
@@ -61,29 +61,87 @@ exports.githubCallback = [
         return res.redirect(buildCallbackUrl({ error: err.message, provider: 'github' }));
       }
       
-      // 检查是否是绑定操作
-      const state = req.query.state;
+      const state = req.query.state || '';
       
-      if (state === 'bind') {
-        req.oauthProfile = info?.profile || req.authInfo?.profile;
+      // 检查是否是绑定操作（state 以 bind_ 开头）
+      if (state.startsWith('bind_')) {
+        // 绑定模式：需要手动获取 profile 并绑定到指定用户
+        req.bindUserId = parseInt(state.replace('bind_', ''), 10);
+        req.oauthProfile = info?.profile;
         req.oauthTokens = { accessToken: info?.accessToken, refreshToken: info?.refreshToken };
-        req.oauthProvider = 'github';
       }
       
       req.user = user;
+      req.oauthState = state;
       next();
     })(req, res, next);
   },
   asyncHandler(async (req, res) => {
-    const user = req.user;
-    const state = req.query.state;
+    const state = req.oauthState || '';
     
+    // 绑定模式
+    if (state.startsWith('bind_')) {
+      const userId = req.bindUserId;
+      const code = req.query.code;
+      
+      if (!code) {
+        return res.redirect(buildCallbackUrl({ error: '授权失败', provider: 'github', action: 'bind' }));
+      }
+      
+      try {
+        const config = environment.get();
+        const axios = require('axios');
+        
+        // 获取 access_token
+        const tokenRes = await axios.post(
+          'https://github.com/login/oauth/access_token',
+          {
+            client_id: config.oauth.github.clientId,
+            client_secret: config.oauth.github.clientSecret,
+            code,
+          },
+          { headers: { Accept: 'application/json' } }
+        );
+        
+        const { access_token } = tokenRes.data;
+        if (!access_token) {
+          return res.redirect(buildCallbackUrl({ error: '获取令牌失败', provider: 'github', action: 'bind' }));
+        }
+        
+        // 获取用户信息
+        const userRes = await axios.get('https://api.github.com/user', {
+          headers: { Authorization: `Bearer ${access_token}` },
+        });
+        
+        const profile = {
+          id: userRes.data.id.toString(),
+          username: userRes.data.login,
+          displayName: userRes.data.name,
+          emails: userRes.data.email ? [{ value: userRes.data.email }] : [],
+          photos: [{ value: userRes.data.avatar_url }],
+          _raw: userRes.data,
+        };
+        
+        // 绑定到用户
+        await oauthService.bindToExistingUser(userId, 'github', profile, {
+          accessToken: access_token,
+        });
+        
+        return res.redirect(buildCallbackUrl({ success: 'true', provider: 'github', action: 'bind' }));
+      } catch (error) {
+        const errorMsg = error.message || '绑定失败';
+        return res.redirect(buildCallbackUrl({ error: errorMsg, provider: 'github', action: 'bind' }));
+      }
+    }
+    
+    // 登录模式
+    const user = req.user;
     if (!user) {
       return res.redirect(buildCallbackUrl({ error: '认证失败', provider: 'github' }));
     }
     
     const token = await oauthService.generateTokenForUser(user);
-    res.redirect(buildCallbackUrl({ token, provider: 'github', action: state || 'login' }));
+    res.redirect(buildCallbackUrl({ token, provider: 'github', action: 'login' }));
   }),
 ];
 
@@ -100,7 +158,7 @@ exports.googleLogin = (req, res, next) => {
 };
 
 /**
- * Google 登录回调
+ * Google 登录回调（同时处理登录和绑定）
  */
 exports.googleCallback = [
   (req, res, next) => {
@@ -109,19 +167,69 @@ exports.googleCallback = [
         return res.redirect(buildCallbackUrl({ error: err.message, provider: 'google' }));
       }
       req.user = user;
+      req.oauthState = req.query.state || '';
       next();
     })(req, res, next);
   },
   asyncHandler(async (req, res) => {
-    const user = req.user;
-    const state = req.query.state;
+    const state = req.oauthState || '';
     
+    // 绑定模式
+    if (state.startsWith('bind_')) {
+      const userId = parseInt(state.replace('bind_', ''), 10);
+      const code = req.query.code;
+      
+      if (!code) {
+        return res.redirect(buildCallbackUrl({ error: '授权失败', provider: 'google', action: 'bind' }));
+      }
+      
+      try {
+        const config = environment.get();
+        const axios = require('axios');
+        
+        // 获取 access_token
+        const tokenRes = await axios.post('https://oauth2.googleapis.com/token', {
+          client_id: config.oauth.google.clientId,
+          client_secret: config.oauth.google.clientSecret,
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: config.oauth.google.callbackURL,
+        });
+        
+        const { access_token } = tokenRes.data;
+        
+        // 获取用户信息
+        const userRes = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${access_token}` },
+        });
+        
+        const profile = {
+          id: userRes.data.id,
+          displayName: userRes.data.name,
+          emails: [{ value: userRes.data.email }],
+          photos: [{ value: userRes.data.picture }],
+          _raw: userRes.data,
+        };
+        
+        await oauthService.bindToExistingUser(userId, 'google', profile, {
+          accessToken: access_token,
+        });
+        
+        return res.redirect(buildCallbackUrl({ success: 'true', provider: 'google', action: 'bind' }));
+      } catch (error) {
+        const errorMsg = error.message || '绑定失败';
+        return res.redirect(buildCallbackUrl({ error: errorMsg, provider: 'google', action: 'bind' }));
+      }
+    }
+    
+    // 登录模式
+    const user = req.user;
     if (!user) {
       return res.redirect(buildCallbackUrl({ error: '认证失败', provider: 'google' }));
     }
     
     const token = await oauthService.generateTokenForUser(user);
-    res.redirect(buildCallbackUrl({ token, provider: 'google', action: state || 'login' }));
+    res.redirect(buildCallbackUrl({ token, provider: 'google', action: 'login' }));
   }),
 ];
 
@@ -135,7 +243,7 @@ exports.giteeLogin = (req, res, next) => {
 };
 
 /**
- * Gitee 登录回调
+ * Gitee 登录回调（同时处理登录和绑定）
  */
 exports.giteeCallback = [
   (req, res, next) => {
@@ -144,19 +252,70 @@ exports.giteeCallback = [
         return res.redirect(buildCallbackUrl({ error: err.message, provider: 'gitee' }));
       }
       req.user = user;
+      req.oauthState = req.query.state || '';
       next();
     })(req, res, next);
   },
   asyncHandler(async (req, res) => {
-    const user = req.user;
-    const state = req.query.state;
+    const state = req.oauthState || '';
     
+    // 绑定模式
+    if (state.startsWith('bind_')) {
+      const userId = parseInt(state.replace('bind_', ''), 10);
+      const code = req.query.code;
+      
+      if (!code) {
+        return res.redirect(buildCallbackUrl({ error: '授权失败', provider: 'gitee', action: 'bind' }));
+      }
+      
+      try {
+        const config = environment.get();
+        const axios = require('axios');
+        
+        // 获取 access_token
+        const tokenRes = await axios.post('https://gitee.com/oauth/token', null, {
+          params: {
+            grant_type: 'authorization_code',
+            client_id: config.oauth.gitee.clientId,
+            client_secret: config.oauth.gitee.clientSecret,
+            code,
+            redirect_uri: config.oauth.gitee.callbackURL,
+          },
+        });
+        
+        const { access_token } = tokenRes.data;
+        
+        // 获取用户信息
+        const userRes = await axios.get(`https://gitee.com/api/v5/user?access_token=${access_token}`);
+        
+        const profile = {
+          id: userRes.data.id.toString(),
+          username: userRes.data.login,
+          displayName: userRes.data.name,
+          emails: userRes.data.email ? [{ value: userRes.data.email }] : [],
+          photos: [{ value: userRes.data.avatar_url }],
+          _raw: userRes.data,
+        };
+        
+        await oauthService.bindToExistingUser(userId, 'gitee', profile, {
+          accessToken: access_token,
+        });
+        
+        return res.redirect(buildCallbackUrl({ success: 'true', provider: 'gitee', action: 'bind' }));
+      } catch (error) {
+        const errorMsg = error.message || '绑定失败';
+        return res.redirect(buildCallbackUrl({ error: errorMsg, provider: 'gitee', action: 'bind' }));
+      }
+    }
+    
+    // 登录模式
+    const user = req.user;
     if (!user) {
       return res.redirect(buildCallbackUrl({ error: '认证失败', provider: 'gitee' }));
     }
     
     const token = await oauthService.generateTokenForUser(user);
-    res.redirect(buildCallbackUrl({ token, provider: 'gitee', action: state || 'login' }));
+    res.redirect(buildCallbackUrl({ token, provider: 'gitee', action: 'login' }));
   }),
 ];
 
@@ -206,76 +365,28 @@ exports.unbind = asyncHandler(async (req, res) => {
  * 已登录用户绑定 GitHub
  */
 exports.bindGithub = (req, res, next) => {
-  // 将用户ID存入 session state，回调时使用
   const userId = req.user.id;
-  passport.authenticate('github', {
-    scope: ['user:email'],
-    state: `bind_${userId}`,
-  })(req, res, next);
+  const config = environment.get();
+  
+  // 使用与登录相同的回调地址，通过 state 区分绑定操作
+  const callbackUrl = config.oauth.github.callbackURL;
+  
+  // 手动构建 GitHub 授权 URL
+  const authUrl = new URL('https://github.com/login/oauth/authorize');
+  authUrl.searchParams.set('client_id', config.oauth.github.clientId);
+  authUrl.searchParams.set('redirect_uri', callbackUrl);
+  authUrl.searchParams.set('scope', 'user:email');
+  authUrl.searchParams.set('state', `bind_${userId}`);
+  
+  res.redirect(authUrl.toString());
 };
 
 /**
- * 已登录用户绑定 GitHub 回调
+ * 已登录用户绑定 GitHub 回调（已合并到 githubCallback）
  */
 exports.bindGithubCallback = asyncHandler(async (req, res) => {
-  const state = req.query.state || '';
-  
-  if (!state.startsWith('bind_')) {
-    return res.redirect(buildCallbackUrl({ error: '无效的绑定请求', provider: 'github' }));
-  }
-  
-  const userId = parseInt(state.replace('bind_', ''), 10);
-  
-  // 手动处理 OAuth 认证获取 profile
-  const code = req.query.code;
-  if (!code) {
-    return res.redirect(buildCallbackUrl({ error: '授权失败', provider: 'github' }));
-  }
-  
-  try {
-    const config = environment.get();
-    const axios = require('axios');
-    
-    // 获取 access_token
-    const tokenRes = await axios.post(
-      'https://github.com/login/oauth/access_token',
-      {
-        client_id: config.oauth.github.clientId,
-        client_secret: config.oauth.github.clientSecret,
-        code,
-      },
-      { headers: { Accept: 'application/json' } }
-    );
-    
-    const { access_token } = tokenRes.data;
-    if (!access_token) {
-      return res.redirect(buildCallbackUrl({ error: '获取令牌失败', provider: 'github' }));
-    }
-    
-    // 获取用户信息
-    const userRes = await axios.get('https://api.github.com/user', {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-    
-    const profile = {
-      id: userRes.data.id.toString(),
-      username: userRes.data.login,
-      displayName: userRes.data.name,
-      emails: userRes.data.email ? [{ value: userRes.data.email }] : [],
-      photos: [{ value: userRes.data.avatar_url }],
-      _raw: userRes.data,
-    };
-    
-    // 绑定到用户
-    await oauthService.bindToExistingUser(userId, 'github', profile, {
-      accessToken: access_token,
-    });
-    
-    return res.redirect(buildCallbackUrl({ success: 'true', provider: 'github', action: 'bind' }));
-  } catch (error) {
-    const errorMsg = error.message || '绑定失败';
-    return res.redirect(buildCallbackUrl({ error: errorMsg, provider: 'github', action: 'bind' }));
-  }
+  // 绑定逻辑已合并到 githubCallback，这里重定向到主回调
+  return res.redirect(`/api/auth/github/callback${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`);
 });
 
 /**
@@ -283,68 +394,27 @@ exports.bindGithubCallback = asyncHandler(async (req, res) => {
  */
 exports.bindGoogle = (req, res, next) => {
   const userId = req.user.id;
-  passport.authenticate('google', {
-    scope: ['profile', 'email'],
-    state: `bind_${userId}`,
-  })(req, res, next);
+  const config = environment.get();
+  
+  // 使用与登录相同的回调地址，通过 state 区分绑定操作
+  const callbackUrl = config.oauth.google.callbackURL;
+  
+  // 手动构建 Google 授权 URL
+  const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  authUrl.searchParams.set('client_id', config.oauth.google.clientId);
+  authUrl.searchParams.set('redirect_uri', callbackUrl);
+  authUrl.searchParams.set('response_type', 'code');
+  authUrl.searchParams.set('scope', 'profile email');
+  authUrl.searchParams.set('state', `bind_${userId}`);
+  
+  res.redirect(authUrl.toString());
 };
 
 /**
- * 已登录用户绑定 Google 回调
+ * 已登录用户绑定 Google 回调（已合并到 googleCallback）
  */
 exports.bindGoogleCallback = asyncHandler(async (req, res) => {
-  const state = req.query.state || '';
-  
-  if (!state.startsWith('bind_')) {
-    return res.redirect(buildCallbackUrl({ error: '无效的绑定请求', provider: 'google' }));
-  }
-  
-  const userId = parseInt(state.replace('bind_', ''), 10);
-  const code = req.query.code;
-  
-  if (!code) {
-    return res.redirect(buildCallbackUrl({ error: '授权失败', provider: 'google' }));
-  }
-  
-  try {
-    const config = environment.get();
-    const axios = require('axios');
-    
-    // 获取 access_token
-    const tokenRes = await axios.post('https://oauth2.googleapis.com/token', {
-      client_id: config.oauth.google.clientId,
-      client_secret: config.oauth.google.clientSecret,
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: config.oauth.google.callbackURL.startsWith('http')
-        ? config.oauth.google.callbackURL
-        : `${req.protocol}://${req.get('host')}${config.oauth.google.callbackURL}`.replace('/bindcallback', '/bind/callback'),
-    });
-    
-    const { access_token } = tokenRes.data;
-    
-    // 获取用户信息
-    const userRes = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-    
-    const profile = {
-      id: userRes.data.id,
-      displayName: userRes.data.name,
-      emails: [{ value: userRes.data.email }],
-      photos: [{ value: userRes.data.picture }],
-      _raw: userRes.data,
-    };
-    
-    await oauthService.bindToExistingUser(userId, 'google', profile, {
-      accessToken: access_token,
-    });
-    
-    return res.redirect(buildCallbackUrl({ success: 'true', provider: 'google', action: 'bind' }));
-  } catch (error) {
-    const errorMsg = error.message || '绑定失败';
-    return res.redirect(buildCallbackUrl({ error: errorMsg, provider: 'google', action: 'bind' }));
-  }
+  return res.redirect(`/api/auth/google/callback${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`);
 });
 
 /**
@@ -352,70 +422,24 @@ exports.bindGoogleCallback = asyncHandler(async (req, res) => {
  */
 exports.bindGitee = (req, res, next) => {
   const userId = req.user.id;
-  passport.authenticate('gitee', {
-    state: `bind_${userId}`,
-  })(req, res, next);
+  const config = environment.get();
+  
+  // 使用与登录相同的回调地址，通过 state 区分绑定操作
+  const callbackUrl = config.oauth.gitee.callbackURL;
+  
+  // 手动构建 Gitee 授权 URL
+  const authUrl = new URL('https://gitee.com/oauth/authorize');
+  authUrl.searchParams.set('client_id', config.oauth.gitee.clientId);
+  authUrl.searchParams.set('redirect_uri', callbackUrl);
+  authUrl.searchParams.set('response_type', 'code');
+  authUrl.searchParams.set('state', `bind_${userId}`);
+  
+  res.redirect(authUrl.toString());
 };
 
 /**
- * 已登录用户绑定 Gitee 回调
+ * 已登录用户绑定 Gitee 回调（已合并到 giteeCallback）
  */
 exports.bindGiteeCallback = asyncHandler(async (req, res) => {
-  const state = req.query.state || '';
-  
-  if (!state.startsWith('bind_')) {
-    return res.redirect(buildCallbackUrl({ error: '无效的绑定请求', provider: 'gitee' }));
-  }
-  
-  const userId = parseInt(state.replace('bind_', ''), 10);
-  const code = req.query.code;
-  
-  if (!code) {
-    return res.redirect(buildCallbackUrl({ error: '授权失败', provider: 'gitee' }));
-  }
-  
-  try {
-    const config = environment.get();
-    const axios = require('axios');
-    
-    // 获取 access_token
-    const tokenRes = await axios.post(
-      'https://gitee.com/oauth/token',
-      null,
-      {
-        params: {
-          grant_type: 'authorization_code',
-          client_id: config.oauth.gitee.clientId,
-          client_secret: config.oauth.gitee.clientSecret,
-          code,
-          redirect_uri: config.oauth.gitee.callbackURL.startsWith('http')
-            ? config.oauth.gitee.callbackURL
-            : `${req.protocol}://${req.get('host')}${config.oauth.gitee.callbackURL}`.replace('/bindcallback', '/bind/callback'),
-        },
-      }
-    );
-    
-    const { access_token } = tokenRes.data;
-    
-    // 获取用户信息
-    const userRes = await axios.get(`https://gitee.com/api/v5/user?access_token=${access_token}`);
-    
-    const profile = {
-      id: userRes.data.id.toString(),
-      username: userRes.data.login,
-      displayName: userRes.data.name,
-      emails: userRes.data.email ? [{ value: userRes.data.email }] : [],
-      photos: [{ value: userRes.data.avatar_url }],
-      _raw: userRes.data,
-    };
-    
-    await oauthService.bindToExistingUser(userId, 'gitee', profile, {
-      accessToken: access_token,
-    });
-    
-    return res.redirect(buildCallbackUrl({ success: 'true', provider: 'gitee', action: 'bind' }));
-  } catch (error) {
-    const errorMsg = error.message || '绑定失败';
-    return res.redirect(buildCallbackUrl({ error: errorMsg, provider: 'gitee', action: 'bind' }));
-  }
+  return res.redirect(`/api/auth/gitee/callback${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`);
 });
