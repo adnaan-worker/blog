@@ -277,8 +277,8 @@
 
 /* 图片样式 - 基础样式 */
 /* 排除 ImagePreview 组件的图片（通过类名识别） */
-.rich-text-content img:not(.image-preview-img),
-.ProseMirror img {
+.rich-text-content img:not(.image-preview-img):not([data-display='inline']),
+.ProseMirror img:not([data-display='inline']) {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
@@ -287,35 +287,122 @@
   object-fit: contain;
 }
 
+/* 内联图片样式 - 支持同行显示（渲染端） */
+.rich-text-content img[data-display='inline'] {
+  display: inline-block !important;
+  vertical-align: middle;
+  max-width: 200px;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  margin: 0.25em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.rich-text-content img[data-display='inline']:hover {
+  transform: scale(1.02);
+}
+
+/* 包含内联图片的段落（渲染端） - 使用 flex 布局 */
+.rich-text-content p:has(img[data-display='inline']) {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 !important;
+}
+
+/* 内联图片样式 - 支持同行显示（编辑器端，兼容旧类名） */
+.rich-text-content img.inline-image,
+.ProseMirror img.inline-image {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 200px;
+  max-height: 1.5em;
+  height: auto;
+  margin: 0 0.25em;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rich-text-content img.inline-image:hover,
+.ProseMirror img.inline-image:hover {
+  transform: scale(1.05);
+}
+
+.ProseMirror img.inline-image.ProseMirror-selectednode {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
 /* 移动端图片强制自适应 */
-/* 排除 ImagePreview 组件的图片 */
+/* 排除 ImagePreview 组件的图片和内联图片 */
 @media (max-width: 768px) {
-  .rich-text-content img:not(.image-preview-img),
-  .ProseMirror img {
+  .rich-text-content img:not(.image-preview-img):not(.inline-image),
+  .ProseMirror img:not(.inline-image) {
     width: 100% !important;
     height: auto !important;
+  }
+
+  /* 内联图片在移动端保持内联但限制大小 */
+  .rich-text-content img.inline-image,
+  .ProseMirror img.inline-image {
+    max-width: 120px;
+    max-height: 1.2em;
   }
 }
 
 /* 可调整大小的图片容器 */
 .ProseMirror .resizable-image-wrapper {
+  position: relative;
+}
+
+/* 块级模式 - 独占一行 */
+.ProseMirror .resizable-image-wrapper.block-mode {
+  display: flex;
   width: 100%;
   margin: 1.5rem 0;
-  position: relative;
-  display: flex;
   justify-content: center;
 }
 
-.ProseMirror .resizable-image-wrapper[data-align='left'] {
+.ProseMirror .resizable-image-wrapper.block-mode[data-align='left'] {
   justify-content: flex-start;
 }
 
-.ProseMirror .resizable-image-wrapper[data-align='right'] {
+.ProseMirror .resizable-image-wrapper.block-mode[data-align='right'] {
   justify-content: flex-end;
 }
 
-.ProseMirror .resizable-image-wrapper[data-align='center'] {
+.ProseMirror .resizable-image-wrapper.block-mode[data-align='center'] {
   justify-content: center;
+}
+
+/* 内联模式 - 与文字同行 */
+.ProseMirror .resizable-image-wrapper.inline-mode {
+  display: inline-flex;
+  vertical-align: middle;
+  margin: 0.25em;
+  width: auto;
+}
+
+.ProseMirror .resizable-image-wrapper.inline-mode .resizable-image-container {
+  display: inline-block;
+}
+
+.ProseMirror .resizable-image-wrapper.inline-mode .resizable-image-container img {
+  max-height: 150px;
+  width: auto !important;
+  height: auto !important;
+  max-width: 200px;
+}
+
+/* 包含内联图片的段落不需要额外间距 */
+.ProseMirror p:has(.resizable-image-wrapper.inline-mode) {
+  margin-bottom: 0.5rem;
+  line-height: 1;
 }
 
 .ProseMirror .resizable-image-container {
@@ -328,11 +415,17 @@
 .ProseMirror .resizable-image-container img {
   display: block;
   max-width: 100%;
-  height: auto !important; /* 确保高度可以被 JS 修改 */
+  height: auto !important;
   border-radius: 8px;
   cursor: default;
-  transition: none; /* 移除过渡以避免调整时的延迟 */
+  transition: none;
   pointer-events: auto;
+}
+
+/* 工具栏按钮激活状态 */
+.ProseMirror .toolbar-btn.active {
+  background: rgba(var(--accent-rgb, 81, 131, 245), 0.15);
+  color: var(--accent-color);
 }
 
 /* 调整大小手柄 - 四角手柄 */

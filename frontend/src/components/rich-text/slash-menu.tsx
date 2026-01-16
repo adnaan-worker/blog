@@ -164,10 +164,10 @@ export const SlashMenu: React.FC<SlashMenuProps> = ({
       {
         id: 'image',
         title: '图片',
-        description: '上传或嵌入图片',
+        description: '上传或嵌入图片（可切换内联模式）',
         icon: <FiImage />,
         category: '媒体',
-        keywords: ['image', 'picture', '图片', 'img'],
+        keywords: ['image', 'picture', '图片', 'img', 'block', 'inline'],
         action: () => onImageClick(),
       },
       {

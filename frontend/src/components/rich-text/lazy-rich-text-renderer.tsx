@@ -100,7 +100,7 @@ const LazyRichTextRenderer: React.FC<LazyRichTextRendererProps> = ({
   const rafIdRef = useRef<number>(0);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // 智能分块：保持 HTML 结构完整性
+  // 智能分块：保持 HTML 结构完整性，特别处理内联图片
   const chunks = useMemo(() => {
     if (!content || content.length <= chunkSize) {
       return [content];
@@ -112,9 +112,40 @@ const LazyRichTextRenderer: React.FC<LazyRichTextRendererProps> = ({
       const elements = Array.from(doc.body.childNodes);
       const result: string[] = [];
       let currentChunk = '';
+      let inlineImageGroup: string[] = []; // 收集连续的内联图片段落
+
+      // 检查元素是否包含内联图片
+      const hasInlineImage = (el: Node): boolean => {
+        if (!(el instanceof Element)) return false;
+        return el.querySelector('img[data-display="inline"]') !== null;
+      };
+
+      // 刷新内联图片组到当前块
+      const flushInlineGroup = () => {
+        if (inlineImageGroup.length > 0) {
+          // 将所有内联图片段落合并到一个容器中，确保它们在同一块
+          const groupHtml = inlineImageGroup.join('');
+          if (currentChunk.length > 0 && currentChunk.length + groupHtml.length > chunkSize) {
+            result.push(currentChunk);
+            currentChunk = groupHtml;
+          } else {
+            currentChunk += groupHtml;
+          }
+          inlineImageGroup = [];
+        }
+      };
 
       for (const element of elements) {
         const html = element instanceof Element ? element.outerHTML : element.textContent || '';
+
+        // 如果是包含内联图片的元素，收集到组中
+        if (hasInlineImage(element)) {
+          inlineImageGroup.push(html);
+          continue;
+        }
+
+        // 遇到非内联图片元素时，先刷新之前的内联图片组
+        flushInlineGroup();
 
         // 超过限制且当前块不为空时，开始新块
         if (currentChunk.length > 0 && currentChunk.length + html.length > chunkSize) {
@@ -124,6 +155,9 @@ const LazyRichTextRenderer: React.FC<LazyRichTextRendererProps> = ({
           currentChunk += html;
         }
       }
+
+      // 处理剩余的内联图片组
+      flushInlineGroup();
 
       if (currentChunk) result.push(currentChunk);
       return result.length > 0 ? result : [content];

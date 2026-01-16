@@ -11,7 +11,15 @@ export interface ResizableImageOptions {
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     resizableImage: {
-      setImage: (options: { src: string; alt?: string; title?: string; width?: number; height?: number }) => ReturnType;
+      setImage: (options: {
+        src: string;
+        alt?: string;
+        title?: string;
+        width?: number;
+        height?: number;
+        display?: 'block' | 'inline';
+      }) => ReturnType;
+      toggleImageDisplay: () => ReturnType;
     };
   }
 }
@@ -21,21 +29,19 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
 
   addOptions() {
     return {
-      inline: false,
+      inline: true, // 改为 true，允许内联
       allowBase64: false,
       HTMLAttributes: {},
-      minWidth: 100,
+      minWidth: 50,
       maxWidth: 1200,
     };
   },
 
-  inline() {
-    return this.options.inline;
-  },
+  // 关键：设置为 inline 才能与文字同行
+  inline: true,
 
-  group() {
-    return this.options.inline ? 'inline' : 'block';
-  },
+  // 同时属于 inline 和 block 组，这样可以在段落内使用
+  group: 'inline',
 
   draggable: true,
 
@@ -52,7 +58,7 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
         },
         renderHTML: (attributes) => {
           if (!attributes.width) return {};
-          return { width: attributes.width, style: `width: ${attributes.width}px` };
+          return { width: attributes.width };
         },
       },
       height: {
@@ -63,8 +69,14 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
         },
         renderHTML: (attributes) => {
           if (!attributes.height) return {};
-          return { height: attributes.height, style: `height: ${attributes.height}px` };
+          return { height: attributes.height };
         },
+      },
+      // 显示模式：block（独占一行）或 inline（与文字同行）
+      display: {
+        default: 'block',
+        parseHTML: (element) => element.getAttribute('data-display') || 'block',
+        renderHTML: (attributes) => ({ 'data-display': attributes.display }),
       },
       align: {
         default: 'center',
@@ -75,7 +87,7 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
   },
 
   parseHTML() {
-    return [{ tag: 'img[src]' }];
+    return [{ tag: 'img[src]:not(.inline-image)' }];
   },
 
   renderHTML({ HTMLAttributes }) {
@@ -91,19 +103,32 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
         (options) =>
         ({ commands }) =>
           commands.insertContent({ type: this.name, attrs: options }),
+      toggleImageDisplay:
+        () =>
+        ({ editor, state }) => {
+          const { selection } = state;
+          const node = state.doc.nodeAt(selection.from);
+          if (node?.type.name === this.name) {
+            const newDisplay = node.attrs.display === 'block' ? 'inline' : 'block';
+            return editor.commands.updateAttributes(this.name, { display: newDisplay });
+          }
+          return false;
+        },
     };
   },
 
   addNodeView() {
     return ({ node, getPos, editor }) => {
       const { minWidth, maxWidth } = this.options;
+      const isInline = node.attrs.display === 'inline';
 
       // 创建 DOM 结构
-      const dom = document.createElement('div');
-      dom.className = 'resizable-image-wrapper';
+      const dom = document.createElement('span');
+      dom.className = `resizable-image-wrapper ${isInline ? 'inline-mode' : 'block-mode'}`;
       dom.setAttribute('data-align', node.attrs.align || 'center');
+      dom.setAttribute('data-display', node.attrs.display || 'block');
 
-      const container = document.createElement('div');
+      const container = document.createElement('span');
       container.className = 'resizable-image-container';
       container.contentEditable = 'false';
 
@@ -122,10 +147,17 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
         return handle;
       });
 
-      // 工具栏
+      // 工具栏 - 添加内联/块级切换按钮
       const toolbar = document.createElement('div');
       toolbar.className = 'image-toolbar';
       toolbar.innerHTML = `
+        <button class="toolbar-btn ${isInline ? 'active' : ''}" data-action="toggle-inline" title="切换内联/块级显示">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="7" width="8" height="8" rx="1"></rect>
+            <line x1="14" y1="9" x2="21" y2="9"></line>
+            <line x1="14" y1="13" x2="21" y2="13"></line>
+          </svg>
+        </button>
         <button class="toolbar-btn" data-action="align-left" title="左对齐">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="17" y1="10" x2="3" y2="10"></line>
@@ -281,12 +313,26 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
         if (typeof pos !== 'number') return;
 
         switch (action) {
+          case 'toggle-inline':
+            const currentDisplay = node.attrs.display || 'block';
+            const newDisplay = currentDisplay === 'block' ? 'inline' : 'block';
+            editor.view.dispatch(
+              editor.state.tr.setNodeMarkup(pos, undefined, {
+                ...node.attrs,
+                display: newDisplay,
+              }),
+            );
+            break;
           case 'align-left':
           case 'align-center':
           case 'align-right':
             const align = action.replace('align-', '');
-            editor.commands.updateAttributes('resizableImage', { align });
-            dom.setAttribute('data-align', align);
+            editor.view.dispatch(
+              editor.state.tr.setNodeMarkup(pos, undefined, {
+                ...node.attrs,
+                align,
+              }),
+            );
             break;
           case 'delete':
             editor.commands.deleteRange({ from: pos, to: pos + node.nodeSize });
@@ -304,7 +350,17 @@ export const ResizableImage = Node.create<ResizableImageOptions>({
           if (updatedNode.attrs.title) img.title = updatedNode.attrs.title;
           if (updatedNode.attrs.width) img.style.width = `${updatedNode.attrs.width}px`;
           if (updatedNode.attrs.height) img.style.height = `${updatedNode.attrs.height}px`;
+
+          const newIsInline = updatedNode.attrs.display === 'inline';
+          dom.className = `resizable-image-wrapper ${newIsInline ? 'inline-mode' : 'block-mode'}`;
           dom.setAttribute('data-align', updatedNode.attrs.align || 'center');
+          dom.setAttribute('data-display', updatedNode.attrs.display || 'block');
+
+          // 更新工具栏按钮状态
+          const toggleBtn = toolbar.querySelector('[data-action="toggle-inline"]');
+          if (toggleBtn) {
+            toggleBtn.classList.toggle('active', newIsInline);
+          }
 
           return true;
         },

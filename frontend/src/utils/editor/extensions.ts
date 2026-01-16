@@ -64,6 +64,13 @@ lowlight.register('php', php);
 let cachedExtensions: any[] | null = null;
 
 /**
+ * 清除扩展缓存（开发时使用）
+ */
+export const clearExtensionsCache = () => {
+  cachedExtensions = null;
+};
+
+/**
  * 创建扩展配置
  * 使用缓存机制，确保所有编辑器实例共享同一组扩展
  */
@@ -102,7 +109,6 @@ export const createExtensions = () => {
     }),
     ResizableImage.configure({
       allowBase64: false,
-      inline: false,
       HTMLAttributes: {
         class: 'editor-image',
       },

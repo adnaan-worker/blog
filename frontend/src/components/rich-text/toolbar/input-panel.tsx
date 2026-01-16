@@ -19,9 +19,10 @@ interface InputPanelProps {
   onChange: (value: string) => void;
   onConfirm: () => void;
   onCancel: () => void;
+  placeholder?: string;
 }
 
-export const InputPanel: React.FC<InputPanelProps> = ({ type, value, onChange, onConfirm, onCancel }) => {
+export const InputPanel: React.FC<InputPanelProps> = ({ type, value, onChange, onConfirm, onCancel, placeholder }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -37,12 +38,14 @@ export const InputPanel: React.FC<InputPanelProps> = ({ type, value, onChange, o
     }
   };
 
+  const defaultPlaceholder = type === 'link' ? '输入链接地址 (https://...)' : '输入图片地址 (https://...)';
+
   return (
     <InputPanelContainer>
       <Input
         ref={inputRef}
         type="url"
-        placeholder={type === 'link' ? '输入链接地址 (https://...)' : '输入图片地址 (https://...)'}
+        placeholder={placeholder || defaultPlaceholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}

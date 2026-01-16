@@ -354,7 +354,17 @@ SimpleCodeBlock.displayName = 'SimpleCodeBlock';
 
 // 富文本内容容器
 const RichTextContainer = styled.div`
-  /* 内联代码样式 - 由 rich-text.css 处理 */
+  /* 应用 rich-text-content 样式 */
+  &.rich-text-content {
+    /* 包含内联图片的段落 */
+    p:has(img[data-display='inline']) {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.5rem 0;
+    }
+  }
 `;
 
 // 组件接口
@@ -377,6 +387,8 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   enableTableOfContents = false,
   onImageClick,
 }) => {
+  // 用于追踪标题 ID，确保唯一性
+  const headingCounterRef = React.useRef<Map<string, number>>(new Map());
   // 处理内容：保护代码块不被破坏
   const processedContent = useMemo(() => {
     if (!content) return '';
@@ -446,6 +458,9 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
 
   // HTML 解析选项
   const parserOptions: HTMLReactParserOptions = useMemo(() => {
+    // 每次解析时重置标题计数器
+    headingCounterRef.current.clear();
+
     return {
       replace: (domNode) => {
         if (!(domNode instanceof Element)) return;
@@ -482,13 +497,15 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
           return <SimpleCodeBlock code={code} language={language} />;
         }
 
-        // 处理图片
+        // 处理图片 - 注意：图片的显示模式由父级段落决定，这里只处理单独的图片
+        // 如果图片在段落内且段落有多个图片，会在段落处理中统一处理
         if (enableImagePreview && element.name === 'img') {
           const src = element.attribs.src;
           const alt = element.attribs.alt || '';
           let width = element.attribs.width;
           let height = element.attribs.height;
           const align = element.attribs['data-align'] || 'center';
+          const display = element.attribs['data-display'] || 'block';
 
           // 如果 width/height 属性不存在，尝试从 style 中提取
           if (!width || !height) {
@@ -507,7 +524,25 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
           }
 
           if (src) {
-            // 根据对齐方式设置样式
+            // 内联模式 - 图片与文字同行
+            if (display === 'inline') {
+              return (
+                <ImagePreview
+                  src={src}
+                  alt={alt}
+                  style={{
+                    display: 'inline-block',
+                    maxHeight: '150px',
+                    maxWidth: '200px',
+                    width: width ? parseInt(width) : undefined,
+                    height: 'auto',
+                    margin: '0.25em',
+                  }}
+                />
+              );
+            }
+
+            // 块级模式 - 独占一行
             const alignStyle =
               {
                 left: 'flex-start',
@@ -553,11 +588,18 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
             return undefined;
           }
 
-          const id = `heading-${text
+          // 生成基础 ID
+          const baseId = `heading-${text
             .toLowerCase()
             .replace(/[^a-z0-9\u4e00-\u9fa5]/g, '-')
-            .replace(/^-+|-+$/g, '') // 移除开头和结尾的连字符
+            .replace(/^-+|-+$/g, '')
             .substring(0, 50)}`;
+
+          // 确保 ID 唯一性：如果已存在相同 ID，添加计数后缀
+          const counter = headingCounterRef.current;
+          const count = counter.get(baseId) || 0;
+          counter.set(baseId, count + 1);
+          const id = count === 0 ? baseId : `${baseId}-${count}`;
 
           const HeadingTag = element.name as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
@@ -566,6 +608,72 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
               {domToReact(element.children as any, parserOptions)}
             </HeadingTag>
           );
+        }
+
+        // 处理段落 - 检测是否包含多个图片，让它们同行显示
+        if (element.name === 'p' && element.children) {
+          // 统计图片数量
+          const images = element.children.filter((child: any) => child.name === 'img');
+          const hasInlineImage = element.children.some((child: any) => {
+            if (child.name === 'img') {
+              return child.attribs?.['data-display'] === 'inline';
+            }
+            return false;
+          });
+
+          // 如果段落中有多个图片，或者有标记为 inline 的图片，使用 flex 布局
+          if (images.length > 1 || hasInlineImage) {
+            // 为段落中的所有图片设置内联样式
+            const processedChildren = element.children.map((child: any, index: number) => {
+              if (child.name === 'img') {
+                const src = child.attribs?.src;
+                const alt = child.attribs?.alt || '';
+                let width = child.attribs?.width;
+                let height = child.attribs?.height;
+
+                // 从 style 中提取尺寸
+                const styleAttr = child.attribs?.style;
+                if (styleAttr) {
+                  const widthMatch = styleAttr.match(/width:\s*(\d+)px/);
+                  const heightMatch = styleAttr.match(/height:\s*(\d+)px/);
+                  if (widthMatch) width = widthMatch[1];
+                  if (heightMatch) height = heightMatch[1];
+                }
+
+                if (src) {
+                  return (
+                    <ImagePreview
+                      key={index}
+                      src={src}
+                      alt={alt}
+                      style={{
+                        maxHeight: '150px',
+                        maxWidth: '200px',
+                        width: width ? parseInt(width) : undefined,
+                        height: 'auto',
+                      }}
+                    />
+                  );
+                }
+              }
+              // 非图片元素正常处理
+              return domToReact([child] as any, parserOptions);
+            });
+
+            return (
+              <p
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  margin: '0.5rem 0',
+                }}
+              >
+                {processedChildren}
+              </p>
+            );
+          }
         }
 
         // 默认返回 undefined，让解析器使用默认处理
@@ -587,7 +695,7 @@ const RichTextRenderer: React.FC<RichTextRendererProps> = ({
   }, [processedContent, parserOptions]);
 
   return (
-    <RichTextContainer className={className} data-mode={mode}>
+    <RichTextContainer className={`rich-text-content ${className || ''}`} data-mode={mode}>
       {/* 目录 */}
       {enableTableOfContents && tableOfContents.length > 0 && (
         <div

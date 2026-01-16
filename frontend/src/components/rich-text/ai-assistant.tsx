@@ -364,54 +364,39 @@ const KeyboardHint = styled.div`
   }
 `;
 
-// 空内容提示 - 类似placeholder的样式
+// 空内容提示 - 融入原生 placeholder 样式
 const EmptyStateTrigger = styled.div`
   position: absolute;
-  top: 6rem;
-  left: 3rem;
-  text-align: left;
-  color: var(--text-tertiary);
-  font-size: 0.9375rem;
+  top: 2rem;
+  left: 4rem;
+  right: 3rem;
   pointer-events: none;
   user-select: none;
-  z-index: 1;
-  padding: 0;
+  z-index: 5;
+  color: var(--text-tertiary);
+  font-size: 1rem;
+  line-height: 1.8;
 
-  a {
+  .ai-trigger {
     color: var(--accent-color);
-    text-decoration: none;
     pointer-events: all;
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-block;
-    margin-left: 0.5rem;
     font-weight: 500;
+    transition: opacity 0.2s ease;
+    text-decoration: none;
+    border-bottom: 1px dashed var(--accent-color);
+    padding-bottom: 1px;
 
     &:hover {
       opacity: 0.8;
-      text-decoration: underline;
     }
   }
 
   @media (max-width: 768px) {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80%;
-    text-align: center;
-    font-size: 0.875rem;
-
-    a {
-      display: block;
-      margin-left: 0;
-      margin-top: 1rem;
-      padding: 0.75rem 1.5rem;
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: 20px;
-      text-align: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
+    top: 1.5rem;
+    left: 2.5rem;
+    right: 1rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -552,22 +537,47 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
     if (!editor) return;
 
     const checkEmpty = () => {
+      // 确保编辑器已挂载
+      if (!editor.view || editor.isDestroyed) return;
+
       // 获取纯文本内容
       const text = editor.getText().trim();
       // 获取 HTML 内容
       const html = editor.getHTML();
 
-      // 更严格的判断：检查是否只有空段落或完全为空
-      const isEmptyHTML = html === '<p></p>' || html === '' || html === '<p><br></p>';
+      // 更宽松的判断：检查是否只有空段落或完全为空
+      const isEmptyHTML =
+        html === '<p></p>' ||
+        html === '' ||
+        html === '<p><br></p>' ||
+        html === '<p class="is-editor-empty"></p>' ||
+        html === '<p class="is-empty"></p>' ||
+        /^<p[^>]*><\/p>$/.test(html) ||
+        /^<p[^>]*><br><\/p>$/.test(html);
       const isEmptyText = text.length === 0 || text === '';
-      const isEmpty = isEmptyHTML && isEmptyText;
+      const isEmpty = (isEmptyHTML || isEmptyText) && text.length === 0;
 
       // 只有真正为空时才显示，且不在其他状态中
-      setShowEmptyTrigger(isEmpty && !showToolbar && !showPreview && !showWritingDialog);
+      const shouldShow = isEmpty && !showToolbar && !showPreview && !showWritingDialog && !isGeneratingFromEmpty;
+      setShowEmptyTrigger(shouldShow);
+
+      // 控制原生 placeholder 的显示/隐藏
+      try {
+        const editorElement = editor.view?.dom;
+        if (editorElement) {
+          if (shouldShow && isConnected) {
+            editorElement.classList.add('hide-placeholder');
+          } else {
+            editorElement.classList.remove('hide-placeholder');
+          }
+        }
+      } catch {
+        // 忽略编辑器未挂载时的错误
+      }
     };
 
-    // 初始检查
-    checkEmpty();
+    // 初始检查 - 延迟执行确保编辑器完全初始化
+    const timer = setTimeout(checkEmpty, 100);
 
     // 监听编辑器更新
     editor.on('update', checkEmpty);
@@ -575,11 +585,18 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
     // 监听编辑器内容变化（包括 setContent）
     editor.on('transaction', checkEmpty);
 
+    // 监听焦点变化
+    editor.on('focus', checkEmpty);
+    editor.on('blur', checkEmpty);
+
     return () => {
+      clearTimeout(timer);
       editor.off('update', checkEmpty);
       editor.off('transaction', checkEmpty);
+      editor.off('focus', checkEmpty);
+      editor.off('blur', checkEmpty);
     };
-  }, [editor, showToolbar, showPreview, showWritingDialog]);
+  }, [editor, showToolbar, showPreview, showWritingDialog, isGeneratingFromEmpty, isConnected]);
 
   // 监听文本选择
   useEffect(() => {
@@ -935,7 +952,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
 
   return (
     <>
-      {/* 空内容提示 - 类似placeholder */}
+      {/* 空内容提示 - 融入原生 placeholder */}
       <AnimatePresence>
         {showEmptyTrigger && isConnected && (
           <motion.div
@@ -945,15 +962,16 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ editor, editorRef }) =
             transition={{ duration: 0.2 }}
           >
             <EmptyStateTrigger>
-              输入 / 唤起命令菜单，或直接开始输入...{' '}
-              <a
+              输入 / 唤起命令菜单，或直接开始输入，也可以
+              <span
+                className="ai-trigger"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowWritingDialog(true);
                 }}
               >
                 使用 AI 创作
-              </a>
+              </span>
             </EmptyStateTrigger>
           </motion.div>
         )}

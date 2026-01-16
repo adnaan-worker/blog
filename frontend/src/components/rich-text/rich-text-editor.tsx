@@ -426,12 +426,18 @@ const EditorContainer = styled.div`
       margin-top: 0.75em;
     }
 
+    /* 当有 AI 触发器时隐藏原生 placeholder */
     p.is-editor-empty:first-of-type::before {
       content: attr(data-placeholder);
       float: left;
       color: var(--text-tertiary);
       pointer-events: none;
       height: 0;
+    }
+
+    /* AI 连接时隐藏原生 placeholder（由 AIAssistant 组件控制显示） */
+    &.hide-placeholder p.is-editor-empty:first-of-type::before {
+      display: none;
     }
   }
 
